@@ -26,13 +26,13 @@ export const Header = async () => {
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm">{user.name || user.email}</Button>
+              <Button variant="outline">{user.name || user.email}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
                 <Link href="/auth">Account</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="w-full">
                 <LogoutButton />
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,5 +1,3 @@
-"use client";
-
 import { LoadMore } from "@/components/load-more";
 import { useDebounce } from "@/hooks/use-debounce";
 import { upfetch } from "@/lib/up-fetch";
@@ -11,7 +9,7 @@ import { BookmarkCard } from "./bookmark-card";
 import { URL_SCHEMA } from "./schema";
 import { SearchInput } from "./search-input";
 
-export default function RoutePage() {
+export function BookmarksPage() {
   const searchParams = useSearchParams();
 
   const query = searchParams.get("query") ?? "";

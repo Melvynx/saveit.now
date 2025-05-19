@@ -1,11 +1,11 @@
-import { InterceptDialog } from "@/components/intercept-dialog";
-import { getRequiredUser } from "@/lib/auth-session";
-import { prisma } from "@workspace/database";
+import { upfetch } from "@/lib/up-fetch";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
-import { DialogContent } from "@workspace/ui/components/dialog";
+import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Typography } from "@workspace/ui/components/typography";
+import { Loader } from "@workspace/ui/componentscomponents/loader";
 import {
   ExternalLink,
   Image,
@@ -14,48 +14,41 @@ import {
   TagIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { z } from "zod";
 import {
   BackButton,
   CopyLinkButton,
   ReBookmarkButton,
 } from "./bookmark-actions-button";
 import { DeleteButton } from "./delete-button";
+import { useBookmark } from "./use-bookmark";
 
-export default async function RoutePage(props: {
-  params: Promise<{ bookmarkId: string }>;
-}) {
-  const params = await props.params;
-  const user = await getRequiredUser();
+export function BookmarkPage() {
+  const [bookmarkId, setBookmarkId] = useQueryState("b");
 
-  const bookmark = await prisma.bookmark.findUnique({
-    where: {
-      id: params.bookmarkId,
-      userId: user.id,
-    },
-    include: {
-      tags: {
-        select: {
-          tag: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const query = useBookmark(bookmarkId);
+
+  const bookmark = query.data?.bookmark;
+
+  if (!bookmarkId) {
+    return null;
+  }
 
   if (!bookmark) {
-    return notFound();
+    return (
+      <Dialog open={true} key="loading">
+        <DialogContent>
+          <Loader />
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   const domainName = new URL(bookmark.url).hostname;
 
   return (
-    <InterceptDialog>
+    <Dialog open={true} onOpenChange={() => setBookmarkId(null)} key="view">
       <DialogContent
         disableClose
         className=" p-0 flex flex-col gap-0"
@@ -129,7 +122,7 @@ export default async function RoutePage(props: {
           </Button>
         </footer>
       </DialogContent>
-    </InterceptDialog>
+    </Dialog>
   );
 }
 

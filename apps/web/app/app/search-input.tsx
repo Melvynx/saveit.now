@@ -1,6 +1,7 @@
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { useAction } from "next-safe-action/hooks";
+import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
 import { createBookmarkAction } from "./bookmarks.action";
@@ -13,7 +14,7 @@ export const SearchInput = (props: SearchInputProps) => {
     defaultValue: "",
   });
 
-  console.log(query);
+  const router = useRouter();
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
 
@@ -21,6 +22,7 @@ export const SearchInput = (props: SearchInputProps) => {
     onSuccess: () => {
       // setQuery("");
       toast.success("Bookmark added");
+      router.push("/app");
     },
   });
 
@@ -38,6 +40,7 @@ export const SearchInput = (props: SearchInputProps) => {
             action.execute({ url: query });
           }}
           variant="outline"
+          className="lg:text-2xl lg:h-16 lg:py-4 lg:px-6"
         >
           Add
         </Button>

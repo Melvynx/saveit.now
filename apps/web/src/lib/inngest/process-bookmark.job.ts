@@ -3,6 +3,7 @@ import { inngest } from "./client";
 import { handleImageStep } from "./handle-image-step";
 import { handlePageStep } from "./handle-page-step";
 import { handleVideoStep } from "./handle-video-step";
+import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import { checkIfVideoUrl } from "./video.utils";
 
 export const processBookmarkJob = inngest.createFunction(
@@ -19,7 +20,7 @@ export const processBookmarkJob = inngest.createFunction(
       channel: `bookmark:${bookmarkId}`,
       topic: "status",
       data: {
-        data: "Retrieve bookmark",
+        data: BOOKMARK_STEP_ID_TO_ID["get-bookmark"],
       },
     });
 
@@ -59,7 +60,7 @@ export const processBookmarkJob = inngest.createFunction(
       channel: `bookmark:${bookmarkId}`,
       topic: "status",
       data: {
-        data: "Scrapping the content",
+        data: BOOKMARK_STEP_ID_TO_ID["scrap-content"],
       },
     });
 

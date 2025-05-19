@@ -6,6 +6,7 @@ import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
+import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import {
   getAISummary,
   getAITags,
@@ -43,7 +44,7 @@ export async function handlePageStep(
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: "Extract metadata",
+      data: BOOKMARK_STEP_ID_TO_ID["extract-metadata"],
     },
   });
 
@@ -104,7 +105,7 @@ export async function handlePageStep(
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: "Summary the page",
+      data: BOOKMARK_STEP_ID_TO_ID["summary-page"],
     },
   });
 
@@ -175,7 +176,7 @@ Do not start with "This page is about..." just start with the summary.
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: "Find relevant tags",
+      data: BOOKMARK_STEP_ID_TO_ID["find-tags"],
     },
   });
 
@@ -218,7 +219,7 @@ ${markdown}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: "Taking screenshot",
+      data: BOOKMARK_STEP_ID_TO_ID["screenshot"],
     },
   });
 
@@ -302,7 +303,7 @@ ${markdown}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: "Saving...",
+      data: BOOKMARK_STEP_ID_TO_ID["saving"],
     },
   });
 
@@ -343,7 +344,7 @@ ${markdown}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "finish",
     data: {
-      data: "Finished",
+      data: BOOKMARK_STEP_ID_TO_ID["finish"],
     },
   });
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { upfetch } from "@/lib/up-fetch";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -10,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Skeleton } from "@workspace/ui/components/skeleton";
+import { deleteBookmarkAction } from "app/app/bookmark-page/bookmarks.action";
+import { useAction } from "next-safe-action/hooks";
+import { toast } from "sonner";
 import { z } from "zod";
 import BookmarkProgress from "./bookmark-progress";
 
@@ -50,17 +53,36 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
       };
     },
   });
+  const queryClient = useQueryClient();
+
+  const deleteAction = useAction(deleteBookmarkAction, {
+    onSuccess: () => {
+      toast.success("Bookmark deleted");
+      void queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+    },
+  });
 
   return (
     <Card className="w-full p-4">
       <CardHeader className="p-0">
-        <Skeleton className="w-full h-48 object-top object-cover rounded-md">
+        <div className="w-full h-48 bg-border gap-4 object-top object-cover rounded-md flex items-center justify-center flex-col">
           {token.data ? (
             <BookmarkProgress token={token.data.token} />
           ) : (
             <p>Loading...</p>
           )}
-        </Skeleton>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              deleteAction.execute({
+                bookmarkId: props.bookmark.id,
+              })
+            }
+          >
+            Stop
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="flex items-start gap-2">

@@ -1,24 +1,14 @@
-import { inngest } from "@/lib/inngest/client";
+import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { advancedSearch } from "@/lib/search/advanced-search";
-import { prisma } from "@workspace/database";
 import { z } from "zod";
 
 export const POST = userRoute
   .body(z.object({ url: z.string().url() }))
   .handler(async (req, { body, ctx }) => {
-    const bookmark = await prisma.bookmark.create({
-      data: {
-        url: body.url,
-        userId: ctx.user.id,
-      },
-    });
-
-    await inngest.send({
-      name: "bookmark/process",
-      data: {
-        bookmarkId: bookmark.id,
-      },
+    const bookmark = await createBookmark({
+      url: body.url,
+      userId: ctx.user.id,
     });
 
     return { status: "ok", bookmark };

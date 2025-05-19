@@ -14,18 +14,13 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { z } from "zod";
-import { importBookmarksAction } from "../[bookmarkId]/imports.action";
+import { importBookmarksAction } from "./imports.action";
 
 const Schema = z.object({
   text: z.string().min(1),
 });
 
-type ImportResult = {
-  totalUrls: number;
-  createdBookmarks: number;
-};
-
-export default function ImportPage() {
+export function ImportPage() {
   const form = useZodForm({
     schema: Schema,
     defaultValues: {

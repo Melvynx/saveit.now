@@ -12,7 +12,9 @@ import {
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { CopyLinkButton } from "../@modal/(.)bookmarks/[bookmarkId]/bookmark-actions-button";
+import { useSearchParams } from "next/navigation";
+import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
+import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
 
 const DEFAULT_PREVIEW = "/images/default-preview.svg";
@@ -20,6 +22,8 @@ const DEFAULT_FAVICON = "/images/favicon.png";
 
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
+  const searchParams = useSearchParams();
+  const prefetch = usePrefetchBookmark();
 
   if (
     props.bookmark.status === "PENDING" ||
@@ -30,9 +34,22 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
 
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
-      <Card className="w-full p-0 gap-3 group">
+      <Card
+        className="w-full p-0 gap-3 group"
+        onMouseEnter={() => {
+          prefetch(props.bookmark.id);
+        }}
+      >
         <CardHeader className="px-4 pt-4 relative">
-          <Link href={`/bookmarks/${props.bookmark.id}`}>
+          <Link
+            href={{
+              pathname: "/app",
+              query: {
+                ...Object.fromEntries(searchParams.entries()),
+                b: props.bookmark.id,
+              },
+            }}
+          >
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
               fallbackImage={DEFAULT_PREVIEW}
@@ -60,7 +77,15 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
             />
           </div>
         </CardHeader>
-        <Link href={`/bookmarks/${props.bookmark.id}`}>
+        <Link
+          href={{
+            pathname: "/app",
+            query: {
+              ...Object.fromEntries(searchParams.entries()),
+              b: props.bookmark.id,
+            },
+          }}
+        >
           <CardContent className="px-4 pb-4">
             <div className="flex items-start gap-2">
               <div className="size-6 shrink-0 border rounded items-center justify-center flex">
