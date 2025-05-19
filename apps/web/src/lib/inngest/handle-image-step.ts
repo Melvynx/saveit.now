@@ -2,7 +2,7 @@ import { BookmarkType } from "@workspace/database";
 import { generateText } from "ai";
 import { nanoid } from "nanoid";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
-import { MODELS } from "../openai";
+import { AI_MODELS } from "../openai";
 import { InngestStep } from "./inngest.utils";
 import {
   getAISummary,
@@ -29,7 +29,7 @@ export async function handleImageStep(
   // Analyze the image using OpenAI Vision
   const imageAnalysis = await step.run("analyze-image", async () => {
     const analysis = await generateText({
-      model: MODELS.normal,
+      model: AI_MODELS.normal,
       messages: [
         {
           role: "user",
@@ -64,7 +64,7 @@ Just the title, 4-5 words maximum, no quotes, no explanation.
 `;
 
     const title = await generateText({
-      model: MODELS.cheap,
+      model: AI_MODELS.cheap,
       prompt: titlePrompt,
     });
 

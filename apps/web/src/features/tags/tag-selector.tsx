@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimateChangeInHeight } from "@workspace/ui/components/animate-change-in-height";
+import { AnimateChangeInHeight } from "@/components/animate-change-in-height";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Checkbox } from "@workspace/ui/components/checkbox";

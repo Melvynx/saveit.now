@@ -1,8 +1,8 @@
 "use client";
 
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
-import { cn } from "../lib/utils.js";
-import { Skeleton } from "./skeleton.js";
 
 interface ImageWithPlaceholderProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {

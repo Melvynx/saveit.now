@@ -4,7 +4,7 @@ import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
-import { MODELS } from "../openai";
+import { AI_MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import {
@@ -323,7 +323,7 @@ ${markdown}
 
   await step.run("update-embedding", async () => {
     const embedding = await embedMany({
-      model: MODELS.embedding,
+      model: AI_MODELS.embedding,
       values: [bigSummary || "", summary || "", pageMetadata.title || ""],
     });
     const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] =

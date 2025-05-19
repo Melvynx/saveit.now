@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/componentslib/utils";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -18,8 +18,10 @@ export const AnimateChangeInHeight: React.FC<AnimateChangeInHeightProps> = ({
     if (containerRef.current) {
       const resizeObserver = new ResizeObserver((entries) => {
         // We only have one entry, so we can use entries[0].
-        const observedHeight = entries[0].contentRect.height;
-        setHeight(observedHeight);
+        const observedHeight = entries[0]?.contentRect.height;
+        if (observedHeight) {
+          setHeight(observedHeight);
+        }
       });
 
       resizeObserver.observe(containerRef.current);

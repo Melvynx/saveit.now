@@ -2,7 +2,6 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { inngest } from "./client";
 import { handleImageStep } from "./handle-image-step";
 import { handlePageStep } from "./handle-page-step";
-import { handleVideoStep } from "./handle-video-step";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import { checkIfVideoUrl } from "./video.utils";
 
@@ -44,16 +43,15 @@ export const processBookmarkJob = inngest.createFunction(
     // Check if URL is a video platform before fetching content
     const isVideoUrl = checkIfVideoUrl(bookmark.url);
     if (isVideoUrl) {
-      await handleVideoStep(
-        {
-          bookmarkId,
-          content: "",
-          url: bookmark.url,
-          userId: bookmark.userId,
-        },
-        step
-      );
-      return;
+      // await handleVideoStep(
+      //   {
+      //     bookmarkId,
+      //     content: "",
+      //     url: bookmark.url,
+      //     userId: bookmark.userId,
+      //   },
+      //   step
+      // );
     }
 
     await publish({

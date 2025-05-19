@@ -10,7 +10,8 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
-    "inngest:dev": "pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest"
+    "inngest:dev": "pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest",
+    "ts": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",

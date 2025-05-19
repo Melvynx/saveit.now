@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@workspace/ui/lib/utils";
 import * as React from "react";
 import type {
   SubmitHandler,
@@ -20,7 +21,6 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { TypeOf, ZodSchema } from "zod";
-import { cn } from "../lib/utils.js";
 
 export type FormProps<T extends FieldValues> = Omit<
   React.ComponentProps<"form">,

@@ -1,7 +1,7 @@
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
-import { MODELS } from "../openai";
+import { AI_MODELS } from "../openai";
 
 /**
  * Generates tags for content using AI and saves them to the database
@@ -14,7 +14,7 @@ export async function getAITags(
   userId: string
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
-    model: MODELS.cheap,
+    model: AI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),
@@ -59,7 +59,7 @@ export async function getAITags(
  */
 export async function getAISummary(prompt: string): Promise<string> {
   const summary = await generateText({
-    model: MODELS.cheap,
+    model: AI_MODELS.cheap,
     prompt,
   });
 
