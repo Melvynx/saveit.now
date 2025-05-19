@@ -1,3 +1,4 @@
+// @ts-ignore
 import { getUser } from "@/lib/auth-session";
 import { createZodRoute } from "next-zod-route";
 import { NextResponse } from "next/server";
