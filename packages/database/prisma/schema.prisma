@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+  Tag           Tag[]
+  Bookmark      Bookmark[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+enum TagType {
+  USER
+  IA
+}
+
+/// Tag unique **par user** (ex: user A peut avoir “Design”, user B aussi)
+model Tag {
+  id     String  @id @default(cuid())
+  name   String
+  userId String
+  user   User    @relation(fields: [userId], references: [id])
+  type   TagType @default(IA)
+
+  /// pivot
+  bookmarks BookmarkTag[]
+
+  @@unique([userId, name]) // évite les doublons chez un même user
+}
+
+/// Pivot many‑to‑many : un bookmark peut avoir n tags, un tag n bookmarks
+model BookmarkTag {
+  bookmarkId String
+  tagId      String
+
+  /// relations
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([bookmarkId, tagId])
+}
+
+enum BookmarkType {
+  VIDEO // YouTube, Loom, mp4…
+  BLOG // Article markdown
+  PAGE // Page web générique
+  POST // Tweet, LinkedIn, Bluesky…
+  IMAGE // PNG, JPG, etc.
+}
+
+enum BookmarkStatus {
+  PENDING // Scraping/IA pas terminé
+  PROCESSING // IA en cours
+  READY // Tout OK, searchable
+  ERROR // Scraping KO
+}
+
+model Bookmark {
+  id     String @id @default(nanoid(7))
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Core
+  url  String
+  type BookmarkType?
+
+  title          String?
+  titleEmbedding Unsupported("vector(1536)")?
+
+  summary          String?
+  summaryEmbedding Unsupported("vector(1536)")?
+
+  note    String?
+  preview String? // URL ou markdown ou résumé → chaîne UTF‑8
+
+  detailedSummary          String?
+  detailedSummaryEmbedding Unsupported("vector(1536)")?
+
+  faviconUrl    String?
+  ogImageUrl    String?
+  ogDescription String?
+
+  metadata Json? // open field pour extras
+
+  // Gestion
+  status       BookmarkStatus @default(PENDING)
+  inngestRunId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Tags
+  tags BookmarkTag[]
+
+  // To delete
+  BookmarkChunk BookmarkChunk[]
+}
+
+model BookmarkChunk {
+  id         String                       @id @default(nanoid(7))
+  bookmarkId String
+  idx        Int // 0‑based order
+  content    String
+  embedding  Unsupported("vector(1536)")?
+
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+}
