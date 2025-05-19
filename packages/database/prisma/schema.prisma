@@ -24,8 +24,8 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  Tag           Tag[]
-  Bookmark      Bookmark[]
+  tags          Tag[]
+  bookmarks     Bookmark[]
 
   @@unique([email])
   @@map("user")
