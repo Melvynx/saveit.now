@@ -1,4 +1,4 @@
-import { BookmarkType } from "@/generated/prisma";
+import { BookmarkType } from "@workspace/database";
 import { generateText } from "ai";
 import { nanoid } from "nanoid";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
@@ -137,7 +137,7 @@ ${imageAnalysis}
       bookmarkId: context.bookmarkId,
       type: BookmarkType.IMAGE,
       title: imageTitle,
-      content: imageAnalysis,
+      // content: imageAnalysis,
       summary: getSummary || "",
       preview: saveImage,
       tags: getTags,

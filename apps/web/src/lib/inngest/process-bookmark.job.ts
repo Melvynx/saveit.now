@@ -1,5 +1,4 @@
-import { BookmarkType } from "@/generated/prisma";
-import { prisma } from "../prisma";
+import { BookmarkType, prisma } from "@workspace/database";
 import { inngest } from "./client";
 import { handleImageStep } from "./handle-image-step";
 import { handlePageStep } from "./handle-page-step";
@@ -146,7 +145,11 @@ export const processBookmarkJob = inngest.createFunction(
         content: urlContent.content,
         url: bookmark.url,
         userId: bookmark.userId,
-        bookmark,
+        bookmark: {
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        },
       },
       step,
       publish

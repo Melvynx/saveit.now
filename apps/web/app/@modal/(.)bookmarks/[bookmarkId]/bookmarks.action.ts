@@ -1,7 +1,8 @@
 "use server";
 
-import { prisma } from "@workspace/database";
+import { inngest } from "@/lib/inngest/client";
 import { userAction } from "@/lib/safe-action";
+import { prisma } from "@workspace/database";
 import { z } from "zod";
 
 export const updateBookmarkTagsAction = userAction
@@ -90,6 +91,36 @@ export const deleteBookmarkAction = userAction
   .action(async ({ parsedInput: input, ctx: { user } }) => {
     const bookmark = await prisma.bookmark.delete({
       where: { id: input.bookmarkId, userId: user.id },
+    });
+
+    return {
+      success: true,
+    };
+  });
+
+export const reBookmarkAction = userAction
+  .schema(z.object({ bookmarkId: z.string() }))
+  .action(async ({ parsedInput: input, ctx: { user } }) => {
+    const bookmark = await prisma.bookmark.findUnique({
+      where: { id: input.bookmarkId, userId: user.id },
+    });
+
+    if (!bookmark) {
+      throw new Error("Bookmark not found or unauthorized");
+    }
+
+    await inngest.send({
+      name: "bookmark/process",
+      data: {
+        bookmarkId: bookmark.id,
+      },
+    });
+
+    await prisma.bookmark.update({
+      where: { id: bookmark.id },
+      data: {
+        status: "PENDING",
+      },
     });
 
     return {

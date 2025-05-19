@@ -1,13 +1,12 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
+import { Bookmark } from "@workspace/database";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
@@ -53,9 +52,15 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   });
 
   return (
-    <Card className="w-full p-4 break-inside-avoid-column mb-4">
+    <Card className="w-full p-4">
       <CardHeader className="p-0">
-        <Skeleton className="aspect-video object-cover rounded-md" />
+        <Skeleton className="w-full h-48 object-top object-cover rounded-md">
+          {token.data ? (
+            <BookmarkProgress token={token.data.token} />
+          ) : (
+            <p>Loading...</p>
+          )}
+        </Skeleton>
       </CardHeader>
       <CardContent className="p-0">
         <div className="flex items-start gap-2">
@@ -72,13 +77,6 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
-        {token.data ? (
-          <BookmarkProgress token={token.data.token} />
-        ) : (
-          <p>bonsoir</p>
-        )}
-      </CardFooter>
     </Card>
   );
 };

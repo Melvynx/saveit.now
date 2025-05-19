@@ -1,8 +1,7 @@
-import { BookmarkStatus, BookmarkType } from "@/generated/prisma";
+import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { MODELS } from "../openai";
-import { prisma } from "../prisma";
 
 /**
  * Generates tags for content using AI and saves them to the database

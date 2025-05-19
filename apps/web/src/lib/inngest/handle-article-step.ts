@@ -1,12 +1,11 @@
-import { BookmarkType } from "@/generated/prisma";
 import mql from "@microlink/mql";
+import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import { nanoid } from "nanoid";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { MODELS } from "../openai";
-import { prisma } from "../prisma";
 import { InngestStep } from "./inngest.utils";
 import {
   chunkMarkdown,
@@ -215,7 +214,7 @@ Focus on specificity and relevance rather than generic terms.
       bookmarkId: context.bookmarkId,
       type: BookmarkType.BLOG,
       title: metadata.title,
-      content: markdown,
+      // content: markdown,
       summary: getSummary || "",
       preview: saveScreenshot,
       metadata: metadata,

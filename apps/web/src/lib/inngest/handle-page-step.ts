@@ -1,11 +1,10 @@
-import { Bookmark, BookmarkType } from "@/generated/prisma";
 import mql from "@microlink/mql";
+import { Bookmark, BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { MODELS } from "../openai";
-import { prisma } from "../prisma";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import {
   getAISummary,

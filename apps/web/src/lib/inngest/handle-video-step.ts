@@ -1,5 +1,5 @@
-import { BookmarkType } from "@/generated/prisma";
 import mql from "@microlink/mql";
+import { BookmarkType } from "@workspace/database";
 import { nanoid } from "nanoid";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { InngestStep } from "./inngest.utils";
@@ -211,7 +211,7 @@ Always include the platform name as one of the tags.
     await updateBookmark({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.VIDEO,
-      content: transcript || "",
+      // content: transcript || "",
       summary: getSummary || "",
       preview: saveThumbnail,
       metadata: {

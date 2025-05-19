@@ -51,10 +51,13 @@ export default function RoutePage() {
   return (
     <div className="flex flex-col gap-4 px-4 lg:px-12 py-4 lg:py-8 w-screen">
       <SearchInput />
-      <div className="columns-1 lg:columns-3 md:columns-2 xl:columns-4 2xl:columns-5 ">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6">
         {data.isPending
           ? Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 mb-4 bg-muted rounded-md" />
+              <Skeleton
+                key={i}
+                className="h-72 mb-[var(--grid-spacing)] bg-muted rounded-md"
+              />
             ))
           : bookmarks.map((bookmark) => (
               <BookmarkCard bookmark={bookmark} key={bookmark.id} />

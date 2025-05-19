@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Skeleton } from "./skeleton";
+import { cn } from "../lib/utils.js";
+import { Skeleton } from "./skeleton.js";
 
 interface ImageWithPlaceholderProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {
@@ -20,9 +20,14 @@ export const ImageWithPlaceholder = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  if (!props.src) {
+    props.src = fallbackImage;
+  }
+
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setIsLoading(false);
     setError(true);
+    console.log("error", e);
     if (onError) {
       onError(new Error("Failed to load image"));
     }
@@ -35,6 +40,20 @@ export const ImageWithPlaceholder = ({
       <div className={cn("relative", className)}>
         <Skeleton className={cn("absolute inset-0 w-full h-full", className)} />
       </div>
+    );
+  }
+
+  if (!isLoading) {
+    return (
+      <img
+        {...props}
+        src={src}
+        className={cn(
+          isLoading ? "opacity-0" : "opacity-100",
+          "transition-opacity duration-200",
+          className
+        )}
+      />
     );
   }
 

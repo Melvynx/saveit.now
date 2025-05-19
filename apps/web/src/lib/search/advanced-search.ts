@@ -1,6 +1,5 @@
-import { BookmarkStatus, BookmarkType } from "@/generated/prisma";
 import { MODELS } from "@/lib/openai";
-import { prisma } from "@workspace/database";
+import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { embed } from "ai";
 
 // Types pour les résultats de recherche
@@ -66,7 +65,9 @@ export async function advancedSearch({
 
     const hasMore = recentBookmarks.length > limit;
     const bookmarks = hasMore ? recentBookmarks.slice(0, -1) : recentBookmarks;
-    const nextCursor = hasMore ? bookmarks[bookmarks.length - 1].id : undefined;
+    const nextCursor = hasMore
+      ? bookmarks[bookmarks.length - 1]?.id
+      : undefined;
 
     return {
       bookmarks: bookmarks.map((bookmark) => ({
@@ -146,7 +147,7 @@ export async function advancedSearch({
   const paginatedResults = allResults.slice(startIndex, startIndex + limit + 1);
   const hasMore = paginatedResults.length > limit;
   const bookmarks = hasMore ? paginatedResults.slice(0, -1) : paginatedResults;
-  const nextCursor = hasMore ? bookmarks[bookmarks.length - 1].id : undefined;
+  const nextCursor = hasMore ? bookmarks[bookmarks.length - 1]?.id : undefined;
 
   return {
     bookmarks,

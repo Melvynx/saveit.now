@@ -26,6 +26,9 @@
     },
     "db:deploy": {
       "cache": false
+    },
+    "inngest:dev": {
+      "cache": false
     }
   }
 }

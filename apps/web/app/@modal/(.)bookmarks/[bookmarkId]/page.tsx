@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  BackButton,
+  CopyLinkButton,
+  ReBookmarkButton,
+} from "./bookmark-actions-button";
 import { DeleteButton } from "./delete-button";
-import { BackButton, CopyLinkButton } from "./utils";
 
 export default async function RoutePage(props: {
   params: Promise<{ bookmarkId: string }>;
@@ -65,6 +69,8 @@ export default async function RoutePage(props: {
             </Link>
           </Button>
           <CopyLinkButton url={bookmark.url} />
+
+          <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
         <main className="p-6 flex flex-col gap-4 lg:gap-6">

@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button, ButtonProps } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 import { Loader } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentPropsWithoutRef } from "react";

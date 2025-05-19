@@ -12,11 +12,11 @@ import {
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { CopyLinkButton } from "../@modal/(.)bookmarks/[bookmarkId]/utils";
+import { CopyLinkButton } from "../@modal/(.)bookmarks/[bookmarkId]/bookmark-actions-button";
 import { BookmarkPending } from "./bookmark-pending";
 
 const DEFAULT_PREVIEW = "/images/default-preview.svg";
-const DEFAULT_FAVICON = "/images/default-favicon.svg";
+const DEFAULT_FAVICON = "/images/favicon.png";
 
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
@@ -30,13 +30,13 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
 
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
-      <Card className="w-full p-0 mb-4 gap-3 group break-inside-avoid-column">
+      <Card className="w-full p-0 gap-3 group">
         <CardHeader className="px-4 pt-4 relative">
           <Link href={`/bookmarks/${props.bookmark.id}`}>
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
               fallbackImage={DEFAULT_PREVIEW}
-              className="w-full max-h-48 object-top object-cover rounded-md"
+              className="w-full max-h-48 object-top object-cover rounded-md border"
               alt={props.bookmark.title ?? "Preview"}
             />
           </Link>
@@ -63,15 +63,19 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
         <Link href={`/bookmarks/${props.bookmark.id}`}>
           <CardContent className="px-4 pb-4">
             <div className="flex items-start gap-2">
-              <ImageWithPlaceholder
-                src={props.bookmark.faviconUrl ?? ""}
-                fallbackImage={DEFAULT_FAVICON}
-                alt="favicon"
-                className="w-4 h-4"
-              />
+              <div className="size-6 shrink-0 border rounded items-center justify-center flex">
+                <ImageWithPlaceholder
+                  src={props.bookmark.faviconUrl ?? ""}
+                  fallbackImage={DEFAULT_FAVICON}
+                  alt="favicon"
+                  className="size-4"
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <CardTitle>{domainName}</CardTitle>
-                <CardDescription>{props.bookmark.title}</CardDescription>
+                <CardDescription className="line-clamp-1">
+                  {props.bookmark.title}
+                </CardDescription>
               </div>
             </div>
           </CardContent>
@@ -94,5 +98,5 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
     );
   }
 
-  return <Card>{props.bookmark.type}</Card>;
+  return null;
 };

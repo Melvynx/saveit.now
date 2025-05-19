@@ -2,6 +2,7 @@ import { prisma } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink } from "better-auth/plugins";
+import { resend } from "./resend";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -9,6 +10,14 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    async sendResetPassword(data, request) {
+      await resend.emails.send({
+        from: "noreply@codeline.app",
+        to: data.user.email,
+        subject: "Reset Password",
+        text: `Click here to reset your password: ${data.url}`,
+      });
+    },
   },
   socialProviders: {
     github: {
