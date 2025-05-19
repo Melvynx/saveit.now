@@ -3,7 +3,7 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
@@ -14,6 +14,7 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "dependsOn": ["^db:generate"],
       "cache": false,
       "persistent": true
     },
@@ -28,6 +29,10 @@
       "cache": false
     },
     "inngest:dev": {
+      "cache": false
+    },
+    "build:vercel": {
+      "dependsOn": ["db:generate", "build", "db:deploy"],
       "cache": false
     }
   }

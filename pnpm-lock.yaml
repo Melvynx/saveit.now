@@ -135,6 +135,12 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      import-in-the-middle:
+        specifier: ^1.13.2
+        version: 1.13.2
+      require-in-the-middle:
+        specifier: ^7.5.2
+        version: 7.5.2
       tailwindcss:
         specifier: ^4.0.8
         version: 4.0.8
