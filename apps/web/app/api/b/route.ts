@@ -11,5 +11,5 @@ export const GET = userRoute
       userId: ctx.user.id,
     });
 
-    return NextResponse.redirect(new URL("/bookmarks", req.url));
+    return NextResponse.redirect(new URL("/app", req.url));
   });

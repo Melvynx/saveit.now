@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { cn } from "@workspace/ui/componentslib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCreateTagMutation, useTags } from "./use-tags";

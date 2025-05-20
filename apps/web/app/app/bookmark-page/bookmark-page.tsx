@@ -1,11 +1,9 @@
-import { upfetch } from "@/lib/up-fetch";
-import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
+import { Loader } from "@workspace/ui/components/loader";
 import { Typography } from "@workspace/ui/components/typography";
-import { Loader } from "@workspace/ui/componentscomponents/loader";
 import {
   ExternalLink,
   Image,
@@ -15,7 +13,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
-import { z } from "zod";
 import {
   BackButton,
   CopyLinkButton,
@@ -51,8 +48,11 @@ export function BookmarkPage() {
     <Dialog open={true} onOpenChange={() => setBookmarkId(null)} key="view">
       <DialogContent
         disableClose
-        className=" p-0 flex flex-col gap-0"
-        style={{ maxWidth: "min(calc(100vw - 32px), 1000px)" }}
+        className=" p-0 flex flex-col gap-0 overflow-auto"
+        style={{
+          maxWidth: "min(calc(100vw - 32px), 1000px)",
+          maxHeight: "calc(100vh - 32px)",
+        }}
       >
         <header className="px-6 pt-6 flex items-center gap-2">
           <div className="flex-1"></div>

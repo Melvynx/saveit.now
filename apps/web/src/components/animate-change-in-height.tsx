@@ -1,4 +1,4 @@
-import { cn } from "@workspace/ui/componentslib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 

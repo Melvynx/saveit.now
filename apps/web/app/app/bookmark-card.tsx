@@ -35,12 +35,12 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
       <Card
-        className="w-full p-0 gap-3 group"
+        className="w-full p-0 gap-3 group overflow-hidden"
         onMouseEnter={() => {
           prefetch(props.bookmark.id);
         }}
       >
-        <CardHeader className="px-4 pt-4 relative">
+        <CardHeader className="p-0 relative">
           <Link
             href={{
               pathname: "/app",
