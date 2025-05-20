@@ -28,5 +28,5 @@ export async function uploadFileToS3(params: {
     return;
   }
 
-  return `${env.RW_URL}/${uniqueFileName}`;
+  return `${env.R2_URL}/${uniqueFileName}`;
 }

@@ -14,7 +14,7 @@ export const env = createEnv({
     AWS_S3_BUCKET_NAME: z.string().min(1),
     AWS_ENDPOINT: z.string().min(1),
     SCREENSHOT_WORKER_URL: z.string().min(1),
-    RW_URL: z.string().min(1),
+    R2_URL: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},
