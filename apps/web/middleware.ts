@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname.slice(1);
 
-  console.log("pathname", pathname);
   try {
     const url = new URL(pathname);
     if (url.protocol === "http:" || url.protocol === "https:") {
