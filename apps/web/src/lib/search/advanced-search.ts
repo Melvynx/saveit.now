@@ -1,4 +1,4 @@
-import { AI_MODELS } from "@/lib/openai";
+import { OPENAI_MODELS } from "@/lib/openai";
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { embed } from "ai";
 
@@ -109,7 +109,7 @@ export async function advancedSearch({
   if (query && query.trim() !== "") {
     try {
       const { embedding } = await embed({
-        model: AI_MODELS.embedding,
+        model: OPENAI_MODELS.embedding,
         value: query.trim(),
       });
 

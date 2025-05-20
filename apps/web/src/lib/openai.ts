@@ -3,7 +3,7 @@ import { EmbeddingModel, LanguageModelV1 } from "ai";
 
 const openai = createOpenAI({});
 
-export const AI_MODELS: {
+export const OPENAI_MODELS: {
   cheap: LanguageModelV1;
   normal: LanguageModelV1;
   embedding: EmbeddingModel<string>;

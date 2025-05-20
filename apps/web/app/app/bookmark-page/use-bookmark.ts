@@ -12,6 +12,7 @@ export const fetchBookmark = async (bookmarkId: string) => {
         faviconUrl: z.string().optional().nullable(),
         summary: z.string().optional().nullable(),
         preview: z.string().optional().nullable(),
+        ogImageUrl: z.string().optional().nullable(),
         tags: z.array(
           z.object({
             tag: z.object({

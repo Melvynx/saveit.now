@@ -5,7 +5,7 @@ import * as cheerio from "cheerio";
 import { nanoid } from "nanoid";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
-import { AI_MODELS } from "../openai";
+import { OPENAI_MODELS } from "../openai";
 import { InngestStep } from "./inngest.utils";
 import {
   chunkMarkdown,
@@ -118,7 +118,7 @@ Focus on specificity and relevance rather than generic terms.
     const chunks = chunkMarkdown(markdown);
 
     const { embeddings } = await embedMany({
-      model: AI_MODELS.embedding,
+      model: OPENAI_MODELS.embedding,
       values: chunks,
     });
 

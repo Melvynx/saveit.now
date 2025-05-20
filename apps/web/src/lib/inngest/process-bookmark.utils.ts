@@ -1,23 +1,26 @@
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
-import { AI_MODELS } from "../openai";
+import { GEMINI_MODELS } from "../gemini";
+import { OPENAI_MODELS } from "../openai";
 
 /**
  * Generates tags for content using AI and saves them to the database
- * @param prompt The prompt to send to the AI
+ * @param systemPrompt The prompt to send to the AI
  * @param userId The user ID to associate the tags with
  * @returns Array of tag objects with id and name
  */
 export async function getAITags(
+  systemPrompt: string,
   prompt: string,
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
-    model: AI_MODELS.cheap,
+    model: OPENAI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),
+    system: systemPrompt,
     prompt,
   });
 
@@ -57,9 +60,13 @@ export async function getAITags(
  * @param prompt The prompt to send to the AI
  * @returns The generated summary text
  */
-export async function getAISummary(prompt: string): Promise<string> {
+export async function getAISummary(
+  systemPrompt: string,
+  prompt: string,
+): Promise<string> {
   const summary = await generateText({
-    model: AI_MODELS.cheap,
+    model: GEMINI_MODELS.cheap,
+    system: systemPrompt,
     prompt,
   });
 

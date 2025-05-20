@@ -52,8 +52,8 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           >
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
-              fallbackImage={DEFAULT_PREVIEW}
-              className="max-h-48 w-full rounded-md border object-cover object-top"
+              fallbackImage={props.bookmark.ogImageUrl ?? ""}
+              className="h-48 w-full rounded-md border object-cover object-top"
               alt={props.bookmark.title ?? "Preview"}
             />
           </Link>

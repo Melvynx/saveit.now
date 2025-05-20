@@ -2,6 +2,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
+import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Loader } from "@workspace/ui/components/loader";
 import { Typography } from "@workspace/ui/components/typography";
 import {
@@ -67,8 +68,8 @@ export function BookmarkPage() {
           <BackButton />
         </header>
         <main className="flex flex-col gap-4 p-6 lg:gap-6">
-          <Card className="p-4">
-            <div className="flex items-start gap-2">
+          <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
+            <div className="flex items-start gap-2 p-4">
               <div className="flex size-8 items-center justify-center rounded border">
                 <img
                   src={bookmark.faviconUrl ?? ""}
@@ -81,6 +82,15 @@ export function BookmarkPage() {
                 <Typography variant="muted">{bookmark.title}</Typography>
               </div>
             </div>
+            {bookmark.ogImageUrl && (
+              <div className="h-full ml-auto">
+                <img
+                  src={bookmark.ogImageUrl}
+                  alt="og-image"
+                  className="rounded-md h-full max-h-24 w-auto"
+                />
+              </div>
+            )}
           </Card>
           <Card className="p-4">
             <SectionTitle icon={Sparkle} text="Summary" />
@@ -90,8 +100,9 @@ export function BookmarkPage() {
           </Card>
           <Card className="p-4">
             <SectionTitle icon={Image} text="Screenshot" />
-            <img
+            <ImageWithPlaceholder
               src={bookmark.preview ?? ""}
+              fallbackImage={bookmark.ogImageUrl ?? ""}
               alt="screenshot"
               className="rounded-md"
             />

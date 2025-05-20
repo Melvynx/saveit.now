@@ -4,7 +4,7 @@ import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { env } from "../env";
-import { AI_MODELS } from "../openai";
+import { OPENAI_MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import {
@@ -12,6 +12,11 @@ import {
   getAITags,
   updateBookmark,
 } from "./process-bookmark.utils";
+import {
+  TAGS_PROMPT,
+  USER_SUMMARY_PROMPT,
+  VECTOR_SUMMARY_PROMPT,
+} from "./prompt.const";
 
 export async function handlePageStep(
   context: {
@@ -114,62 +119,15 @@ export async function handlePageStep(
       return "";
     }
 
-    const summaryPrompt = `## Context:
-You need to create the smallest resume for a entire webpage in a markdown format.
-This resume is name a "bookmark resume" and will be used to help the user understand what is inside the page.
-
-## Goal
-The summary must help our service to search inside the page.
-The summary should ne explain WHAT is inside the page, but the purpose of the page.
-Question to think about :
-* What the page is about ? Landing page, capture page, testimonials page, etc...
-* What for ? Selling a product, getting a lead, etc...
-* What is the main idea ?
-
-## Data
-<markdown>
-${markdown}
-</markdown>
-
-## Output
-PLAIN TEXT without any formatting, just the text that summary the web page.
-Do not start with "This page is about..." just start with the summary.
-It should be 2-3 sentences maximum.
-`;
-
-    return await getAISummary(summaryPrompt);
+    return await getAISummary(USER_SUMMARY_PROMPT, markdown);
   });
 
-  const bigSummary = await step.run("get-big-summary", async () => {
+  const vectorSummary = await step.run("get-big-summary", async () => {
     if (!markdown) {
       return "";
     }
 
-    const summaryPrompt = `## Context:
-You need to create a precise summary about the purpose of this page. This summary will be used to me embeded and use vector databasae to search on it.
-It will not be show to the user.
-You will need to make a summary of a content of a webpage. In this summary, use important keywords and phrases that you find on the website.
-
-## Goal
-The summary must help our service to search inside the page.
-The summary should ne explain WHAT is inside the page, but the purpose of the page.
-Question to think about :
-* What the page is about ? Landing page, capture page, testimonials page, etc...
-* What for ? Selling a product, getting a lead, etc...
-* What is the main idea ?
-* What the user need to find later on this page ?
-
-## Data
-<markdown>
-${markdown}
-</markdown>
-
-## Output
-PLAIN TEXT without any formatting, just the text that summary the web page.
-Do not start with "This page is about..." just start with the summary.
-`;
-
-    return await getAISummary(summaryPrompt);
+    return await getAISummary(VECTOR_SUMMARY_PROMPT, markdown);
   });
 
   await publish({
@@ -185,34 +143,7 @@ Do not start with "This page is about..." just start with the summary.
       return [];
     }
 
-    const tagsPrompt = `## Context:
-You need to define every applicable tags for the entire webpage I will give you. The tags must include specific keywords like product name, product utility, page utility, etc...
-The tags must be in a array of string format.
-You should add as much useful tags as possible to simplify the search inside our bookmark data.
-The tags should me full world like :
-
-* product
-* ai
-* chatgpt
-* prisma
-* tools
-* etc...
-
-Prioritize tags by adding only between 5 to 15 tags maximum. Only add relevant tags for our search.
-
-## Data
-<markdown>
-${markdown}
-</markdown>
-
-## Output
-
-* Only add relevant tags. Between 5 and 15 tags. Only the most important.
-* All the tags is IN LOWERCASE (ALWAYS)
-
-`;
-
-    return await getAITags(tagsPrompt, context.userId);
+    return await getAITags(TAGS_PROMPT, vectorSummary, context.userId);
   });
 
   await publish({
@@ -299,7 +230,7 @@ ${markdown}
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PAGE,
       title: pageMetadata.title,
-      detailedSummary: bigSummary,
+      detailedSummary: vectorSummary,
       summary: summary || "",
       preview: screenshot,
       faviconUrl: pageMetadata.faviconUrl,
@@ -310,8 +241,8 @@ ${markdown}
 
   await step.run("update-embedding", async () => {
     const embedding = await embedMany({
-      model: AI_MODELS.embedding,
-      values: [bigSummary || "", summary || "", pageMetadata.title || ""],
+      model: OPENAI_MODELS.embedding,
+      values: [vectorSummary || "", summary || "", pageMetadata.title || ""],
     });
     const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] =
       embedding.embeddings;
