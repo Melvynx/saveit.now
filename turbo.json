@@ -41,6 +41,8 @@
       "persistent": true
     },
     "db:deploy": {
+      "env": ["DATABASE_URL", "DATABASE_URL_UNPOOLED"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "cache": false
     },
     "inngest:dev": {
