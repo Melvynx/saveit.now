@@ -29,7 +29,7 @@ export default {
           width: 1280 * QUALITY,
           height: 720 * QUALITY,
         });
-        await page.goto(url);
+        await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
         // Hide scrollbar
         await page.evaluate(() => {
           const html = document.querySelector("html");

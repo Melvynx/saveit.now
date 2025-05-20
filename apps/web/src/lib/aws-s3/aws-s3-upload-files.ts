@@ -27,5 +27,6 @@ export async function uploadFileToS3(params: {
     console.error("Invalid s3 client send");
     return;
   }
-  return `https://s3.${env.AWS_REGION}.amazonaws.com/${env.AWS_S3_BUCKET_NAME}/${uniqueFileName}`;
+
+  return `${env.RW_URL}/${uniqueFileName}`;
 }

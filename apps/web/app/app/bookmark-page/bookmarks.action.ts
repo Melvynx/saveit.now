@@ -1,5 +1,6 @@
 "use server";
 
+import { deleteBookmark } from "@/lib/database/delete-bookmark";
 import { inngest } from "@/lib/inngest/client";
 import { userAction } from "@/lib/safe-action";
 import { prisma } from "@workspace/database";
@@ -89,11 +90,13 @@ export const updateBookmarkTagsAction = userAction
 export const deleteBookmarkAction = userAction
   .schema(z.object({ bookmarkId: z.string() }))
   .action(async ({ parsedInput: input, ctx: { user } }) => {
-    const bookmark = await prisma.bookmark.delete({
-      where: { id: input.bookmarkId, userId: user.id },
+    const bookmark = await deleteBookmark({
+      id: input.bookmarkId,
+      userId: user.id,
     });
 
     return {
+      bookmark,
       success: true,
     };
   });

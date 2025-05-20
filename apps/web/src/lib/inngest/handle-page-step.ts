@@ -1,9 +1,9 @@
-import mql from "@microlink/mql";
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
+import { env } from "../env";
 import { AI_MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
@@ -226,44 +226,31 @@ ${markdown}
   const screenshot = await step.run("get-screenshot", async () => {
     if (context.bookmark.preview) return null;
     try {
-      const { status, data } = await mql(context.url, {
-        screenshot: true,
+      const url = new URL(env.SCREENSHOT_WORKER_URL);
+      url.searchParams.set("url", context.url);
+      const image = await fetch(url.toString());
+      const imageBuffer = await image.arrayBuffer();
+      const imageFile = new File([imageBuffer], "screenshot.png", {
+        type: "image/png",
       });
 
-      return data.screenshot?.url;
-    } catch {
-      // else fetch the og-image directely with fetch
-      const ogImage = await fetch(context.url);
-      const html = await ogImage.text();
-      const $ = cheerio.load(html);
-      const ogImageUrl = $("meta[property='og:image']").attr("content");
+      const screenshotUrl = await uploadFileToS3({
+        file: imageFile,
+        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        fileName: "screenshot",
+      });
 
-      return ogImageUrl;
+      return screenshotUrl;
+    } catch {
+      return null;
     }
   });
 
   const images = await step.run("save-screenshot", async () => {
     const result = {} as {
-      screenshotUrl?: string;
       ogImageUrl?: string;
       faviconUrl?: string;
     };
-
-    if (screenshot) {
-      const screenshotFile = await fetch(screenshot);
-      const screenshotBuffer = await screenshotFile.arrayBuffer();
-      const file = new File([screenshotBuffer], "screenshot.png", {
-        type: "image/png",
-      });
-
-      const screenshotUrl = await uploadFileToS3({
-        file: file,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
-        fileName: "screenshot",
-      });
-
-      result.screenshotUrl = screenshotUrl;
-    }
 
     if (pageMetadata.ogImageUrl) {
       const fetchOgImage = await fetch(pageMetadata.ogImageUrl);
@@ -314,7 +301,7 @@ ${markdown}
       title: pageMetadata.title,
       detailedSummary: bigSummary,
       summary: summary || "",
-      preview: images?.screenshotUrl,
+      preview: screenshot,
       faviconUrl: pageMetadata.faviconUrl,
       ogImageUrl: pageMetadata.ogImageUrl,
       tags: getTags,
