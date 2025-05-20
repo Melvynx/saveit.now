@@ -1,6 +1,8 @@
+import { prisma } from "@workspace/database";
 import { headers } from "next/headers";
 import { unauthorized } from "next/navigation";
 import { auth } from "./auth"; // path to your Better Auth server instance
+import { getAuthLimits } from "./auth-limits";
 
 export const getUser = async () => {
   const session = await auth.api.getSession({
@@ -16,4 +18,19 @@ export const getRequiredUser = async () => {
   if (!user) unauthorized();
 
   return user;
+};
+
+export const getUserLimits = async () => {
+  const user = await getRequiredUser();
+
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      stripeCustomerId: user?.stripeCustomerId,
+      referenceId: user?.id,
+    },
+  });
+
+  const limits = getAuthLimits(subscription);
+
+  return { ...user, limits };
 };

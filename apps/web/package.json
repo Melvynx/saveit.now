@@ -16,6 +16,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
     "@aws-sdk/client-s3": "^3.812.0",
+    "@better-auth/stripe": "^1.2.8",
     "@inngest/realtime": "^0.3.1",
     "@microlink/mql": "^0.13.14",
     "@t3-oss/env-nextjs": "^0.13.4",
@@ -25,6 +26,7 @@
     "ai": "^4.3.16",
     "better-auth": "^1.2.8",
     "cheerio": "^1.0.0",
+    "dayjs": "^1.11.13",
     "inngest": "^3.36.0",
     "lucide-react": "^0.475.0",
     "motion": "^12.12.1",
@@ -39,12 +41,14 @@
     "react-router": "^7.6.0",
     "resend": "^4.5.1",
     "sonner": "^2.0.3",
+    "stripe": "17.7.0",
     "turndown": "^7.2.0",
     "up-fetch": "^2.1.2",
     "zod": "^3.24.2",
     "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@opentelemetry/winston-transport": "^0.12.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

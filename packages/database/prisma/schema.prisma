@@ -27,6 +27,8 @@ model User {
   tags          Tag[]
   bookmarks     Bookmark[]
 
+  stripeCustomerId String?
+
   @@unique([email])
   @@map("user")
 }
@@ -82,6 +84,7 @@ enum TagType {
 }
 
 /// Tag unique **par user** (ex: user A peut avoir “Design”, user B aussi)
+
 model Tag {
   id     String  @id @default(cuid())
   name   String
@@ -92,10 +95,9 @@ model Tag {
   /// pivot
   bookmarks BookmarkTag[]
 
-  @@unique([userId, name]) // évite les doublons chez un même user
+  @@unique([userId, name])
 }
 
-/// Pivot many‑to‑many : un bookmark peut avoir n tags, un tag n bookmarks
 model BookmarkTag {
   bookmarkId String
   tagId      String
@@ -170,4 +172,19 @@ model BookmarkChunk {
   embedding  Unsupported("vector(1536)")?
 
   bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id
+  plan                 String
+  referenceId          String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  cancelAtPeriodEnd    Boolean?
+  seats                Int?
+
+  @@map("subscription")
 }
