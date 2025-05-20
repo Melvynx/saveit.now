@@ -3,6 +3,21 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "env": [
+        "GITHUB_CLIENT_ID",
+        "RESEND_API_KEY",
+        "OPENAI_API_KEY",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_S3_BUCKET_NAME",
+        "AWS_REGION",
+        "GITHUB_CLIENT_SECRET",
+        "BETTER_AUTH_SECRET",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET"
+      ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
