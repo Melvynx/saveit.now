@@ -22,7 +22,7 @@ export async function handlePageStep(
     bookmark: Bookmark;
   },
   step: InngestStep,
-  publish: InngestPublish
+  publish: InngestPublish,
 ): Promise<void> {
   const markdown = await step.run("convert-to-markdown", async () => {
     const $ = cheerio.load(context.content);

@@ -2,7 +2,7 @@ import { CheerioAPI } from "cheerio";
 
 export function chunkMarkdown(
   md: string,
-  max = 1000 // char length
+  max = 1000, // char length
 ): string[] {
   const chunks: string[] = [];
   let start = 0;

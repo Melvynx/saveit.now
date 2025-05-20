@@ -20,7 +20,7 @@ export const SignInWith = (props: { type: OAuthProvider }) => {
         authClient.signIn.social({
           provider: props.type,
           callbackURL: "/auth",
-        })
+        }),
       );
     },
     onSuccess: () => {

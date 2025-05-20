@@ -53,20 +53,20 @@ export function TagSelector({
 
   // Filter out duplicates (in case the same tag appears in multiple pages)
   const uniqueTags = Array.from(
-    new Map(allTags.map((tag: Tag) => [tag.id, tag])).values()
+    new Map(allTags.map((tag: Tag) => [tag.id, tag])).values(),
   );
 
   const selectedTagObjects = uniqueTags.filter((tag) =>
-    selectedTags.includes(tag.name)
+    selectedTags.includes(tag.name),
   );
 
   const nonSelectedTagObjects = uniqueTags.filter(
-    (tag) => !selectedTags.includes(tag.name)
+    (tag) => !selectedTags.includes(tag.name),
   );
 
   const filteredNonSelectedTags = searchQuery
     ? nonSelectedTagObjects.filter((tag) =>
-        tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+        tag.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : nonSelectedTagObjects;
 
@@ -160,8 +160,8 @@ export function TagSelector({
       <PopoverTrigger asChild>
         <div
           className={cn(
-            "border-input focus-within:ring-ring flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-within:ring-1",
-            disabled && "cursor-not-allowed opacity-50"
+            "border-input focus-within:ring-ring shadow-xs flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-within:ring-1",
+            disabled && "cursor-not-allowed opacity-50",
           )}
         >
           {renderTagsDisplay()}
@@ -195,7 +195,9 @@ export function TagSelector({
                   e.key === "Enter" &&
                   searchQuery.trim() &&
                   !allTags.some((tag) =>
-                    tag.name.toLowerCase().startsWith(searchQuery.toLowerCase())
+                    tag.name
+                      .toLowerCase()
+                      .startsWith(searchQuery.toLowerCase()),
                   )
                 ) {
                   e.preventDefault();

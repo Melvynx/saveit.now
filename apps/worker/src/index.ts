@@ -38,7 +38,7 @@ export default {
           }
           document.head.insertAdjacentHTML(
             "beforeend",
-            "<style>::-webkit-scrollbar { display: none; }</style>"
+            "<style>::-webkit-scrollbar { display: none; }</style>",
           );
         });
         img = (await page.screenshot()) as Buffer;

@@ -33,7 +33,7 @@ export function AvatarUploader(props: { onImageChange: (file: File) => void }) {
       <div className="relative inline-flex">
         {/* Drop area */}
         <button
-          className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 focus-visible:border-ring focus-visible:ring-ring/50 relative flex size-16 items-center justify-center overflow-hidden rounded-full border border-dashed transition-colors outline-none focus-visible:ring-[3px] has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none"
+          className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 focus-visible:border-ring focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 relative flex size-16 items-center justify-center overflow-hidden rounded-full border border-dashed outline-none transition-colors focus-visible:ring-[3px] has-[img]:border-none"
           onClick={openFileDialog}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
@@ -61,7 +61,7 @@ export function AvatarUploader(props: { onImageChange: (file: File) => void }) {
           <Button
             onClick={() => removeFile(files[0]?.id ?? "")}
             size="icon"
-            className="border-background focus-visible:border-background absolute -top-1 -right-1 size-6 rounded-full border-2 shadow-none"
+            className="border-background focus-visible:border-background absolute -right-1 -top-1 size-6 rounded-full border-2 shadow-none"
             aria-label="Remove image"
           >
             <XIcon className="size-3.5" />

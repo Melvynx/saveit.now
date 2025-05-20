@@ -11,7 +11,7 @@ import { AI_MODELS } from "../openai";
  */
 export async function getAITags(
   prompt: string,
-  userId: string
+  userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
     model: AI_MODELS.cheap,
@@ -46,7 +46,7 @@ export async function getAITags(
       });
 
       return { id: tag.id, name: tag.name };
-    })
+    }),
   );
 
   return results;

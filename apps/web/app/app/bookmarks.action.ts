@@ -9,7 +9,7 @@ export const createBookmarkAction = userAction
   .schema(
     z.object({
       url: URL_SCHEMA,
-    })
+    }),
   )
   .action(async ({ parsedInput: { url }, ctx: { user } }) => {
     return createBookmark({

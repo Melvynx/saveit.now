@@ -9,14 +9,14 @@ export const routeClient = createZodRoute({
     if (error instanceof SafeRouteError) {
       return NextResponse.json(
         { error: error.message },
-        { status: error.status }
+        { status: error.status },
       );
     }
 
     console.error(error);
     return NextResponse.json(
       { error: "An unexpected error occurred" },
-      { status: 500 }
+      { status: 500 },
     );
   },
 });

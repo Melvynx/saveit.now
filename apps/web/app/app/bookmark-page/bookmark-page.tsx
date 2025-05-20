@@ -48,17 +48,17 @@ export function BookmarkPage() {
     <Dialog open={true} onOpenChange={() => setBookmarkId(null)} key="view">
       <DialogContent
         disableClose
-        className=" p-0 flex flex-col gap-0 overflow-auto"
+        className="flex flex-col gap-0 overflow-auto p-0"
         style={{
           maxWidth: "min(calc(100vw - 32px), 1000px)",
           maxHeight: "calc(100vh - 32px)",
         }}
       >
-        <header className="px-6 pt-6 flex items-center gap-2">
+        <header className="flex items-center gap-2 px-6 pt-6">
           <div className="flex-1"></div>
           <Button size="icon" variant="outline" className="size-8" asChild>
             <Link href={bookmark.url} target="_blank">
-              <ExternalLink className="size-4 text-muted-foreground" />
+              <ExternalLink className="text-muted-foreground size-4" />
             </Link>
           </Button>
           <CopyLinkButton url={bookmark.url} />
@@ -66,10 +66,10 @@ export function BookmarkPage() {
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
-        <main className="p-6 flex flex-col gap-4 lg:gap-6">
+        <main className="flex flex-col gap-4 p-6 lg:gap-6">
           <Card className="p-4">
             <div className="flex items-start gap-2">
-              <div className="size-8 border rounded items-center justify-center flex">
+              <div className="flex size-8 items-center justify-center rounded border">
                 <img
                   src={bookmark.faviconUrl ?? ""}
                   alt="favicon"
@@ -110,7 +110,7 @@ export function BookmarkPage() {
             </div>
           </Card>
         </main>
-        <footer className="p-6 flex items-center gap-2 border-t-2">
+        <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
 
           <DeleteButton bookmarkId={bookmark.id} />

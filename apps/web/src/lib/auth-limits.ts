@@ -15,7 +15,7 @@ export const AUTH_LIMITS: Record<string, AuthLimits> = {
 };
 
 export const getAuthLimits = (
-  subscription?: { plan?: string | null } | null
+  subscription?: { plan?: string | null } | null,
 ): AuthLimits => {
   return (AUTH_LIMITS[subscription?.plan as keyof typeof AUTH_LIMITS] ??
     AUTH_LIMITS.free) as AuthLimits;

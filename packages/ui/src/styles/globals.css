@@ -145,7 +145,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
@@ -166,6 +166,7 @@
 
 @layer base {
   * {
+    font-feature-settings: "ss02" 1;
     @apply border-border outline-ring/50;
   }
   body {

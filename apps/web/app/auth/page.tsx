@@ -37,10 +37,10 @@ export default async function AuthPage() {
           ) : (
             <div className="space-y-4">
               {accounts.map((account) => (
-                <div key={account.id} className="border rounded-md p-4">
-                  <div className="flex justify-between items-center mb-2">
+                <div key={account.id} className="rounded-md border p-4">
+                  <div className="mb-2 flex items-center justify-between">
                     <h3 className="font-medium">{account.provider}</h3>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       ID: {account.accountId}
                     </span>
                   </div>
@@ -59,11 +59,11 @@ export default async function AuthPage() {
                       <span className="text-muted-foreground text-xs">
                         Scopes:
                       </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="mt-1 flex flex-wrap gap-1">
                         {account.scopes.map((scope) => (
                           <span
                             key={scope}
-                            className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full text-xs"
+                            className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs"
                           >
                             {scope}
                           </span>
@@ -87,12 +87,12 @@ export default async function AuthPage() {
           ) : (
             <div className="space-y-4">
               {sessions.map((session) => (
-                <div key={session.id} className="border rounded-md p-4">
-                  <div className="flex justify-between items-center mb-2">
+                <div key={session.id} className="rounded-md border p-4">
+                  <div className="mb-2 flex items-center justify-between">
                     <h3 className="font-medium">
                       {session.userAgent || "Unknown Device"}
                     </h3>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       IP: {session.ipAddress || "Unknown"}
                     </span>
                   </div>

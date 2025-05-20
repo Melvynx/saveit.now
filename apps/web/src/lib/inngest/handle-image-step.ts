@@ -16,7 +16,7 @@ export async function handleImageStep(
     userId: string;
     url: string;
   },
-  step: InngestStep
+  step: InngestStep,
 ): Promise<void> {
   // Convert ArrayBuffer to Base64 for OpenAI Vision API
   const base64Content = await step.run("get-base64-content", async () => {

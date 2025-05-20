@@ -12,7 +12,7 @@ export const importBookmarksAction = userAction
   .schema(
     z.object({
       text: z.string(),
-    })
+    }),
   )
   .action(async ({ parsedInput: { text }, ctx: { user } }) => {
     const urls = text.match(URL_REGEX) || [];
@@ -40,7 +40,7 @@ export const importBookmarksAction = userAction
           console.error(`Failed to create bookmark for ${url}:`, error);
           return null;
         }
-      })
+      }),
     );
 
     return {

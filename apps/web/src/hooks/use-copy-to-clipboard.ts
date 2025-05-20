@@ -33,7 +33,7 @@ export const useCopyToClipboard = (delay = 5000) => {
         setIsCopied(false);
       }, delay);
     },
-    [delay]
+    [delay],
   );
 
   return { isCopied, copyToClipboard };

@@ -20,7 +20,7 @@ export const BackButton = () => {
           className="size-8"
           onClick={() => router.back()}
         >
-          <X className="size-4 text-muted-foreground" />
+          <X className="text-muted-foreground size-4" />
         </Button>
       )}
     </WithUseRouter>
@@ -44,9 +44,9 @@ export const CopyLinkButton = ({
       {...props}
     >
       {isCopied ? (
-        <Check className="size-4 text-muted-foreground" />
+        <Check className="text-muted-foreground size-4" />
       ) : (
-        <Copy className="size-4 text-muted-foreground" />
+        <Copy className="text-muted-foreground size-4" />
       )}
     </Button>
   );
@@ -73,7 +73,7 @@ export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
       className="size-8"
       onClick={() => action.execute({ bookmarkId })}
     >
-      <RefreshCcw className="size-4 text-muted-foreground" />
+      <RefreshCcw className="text-muted-foreground size-4" />
     </LoadingButton>
   );
 };

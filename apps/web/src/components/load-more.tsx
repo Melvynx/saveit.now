@@ -22,7 +22,7 @@ export const LoadMore = ({
           loadNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     const currentElement = loadMoreRef.current;
@@ -40,7 +40,7 @@ export const LoadMore = ({
   return (
     <div
       ref={loadMoreRef}
-      className="h-10 w-full flex items-center justify-center text-muted-foreground text-sm"
+      className="text-muted-foreground flex h-10 w-full items-center justify-center text-sm"
     >
       {isFetchingNextPage ? (
         <Loader />

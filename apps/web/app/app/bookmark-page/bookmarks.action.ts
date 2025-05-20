@@ -11,7 +11,7 @@ export const updateBookmarkTagsAction = userAction
     z.object({
       bookmarkId: z.string(),
       tags: z.array(z.string()),
-    })
+    }),
   )
   .action(async ({ parsedInput: input, ctx: { user } }) => {
     // 1. Get current bookmark tags
@@ -57,7 +57,7 @@ export const updateBookmarkTagsAction = userAction
             },
           });
         }
-      })
+      }),
     );
 
     // Add tags
@@ -77,7 +77,7 @@ export const updateBookmarkTagsAction = userAction
             tagId: tag.id,
           },
         });
-      })
+      }),
     );
 
     // Return updated bookmark with new tags

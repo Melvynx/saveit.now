@@ -29,7 +29,7 @@ export const GET = userRoute
     if (!bookmark) {
       return NextResponse.json(
         { error: "Bookmark not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -39,6 +39,6 @@ export const GET = userRoute
         headers: {
           "Cache-Control": "public, max-age=60",
         },
-      }
+      },
     );
   });

@@ -10,17 +10,19 @@ import {
 import Link from "next/link";
 import { LogoutButton } from "../auth/logout";
 import { ModeToggle } from "../dark-mode/mode-toggle";
+import { Page } from "./page";
 
 export const Header = async () => {
   const user = await getUser();
 
   return (
-    <header className="py-2 border-b">
-      <div className="flex items-center gap-2 px-4 max-w-4xl mx-auto">
-        <Link href="/app">
-          SaveIt<span className="text-orange-500">.now</span>
-        </Link>
-        <Link href="/app">Bookmarks</Link>
+    <header className="border-b py-2">
+      <Page className="flex items-center gap-2 px-4">
+        <div className="border bg-muted/50 hover:bg-muted/80 transition rounded-sm px-2 py-0.5">
+          <Link href="/app">
+            SaveIt<span className="text-primary font-bold">.now</span>
+          </Link>
+        </div>
         <div className="flex-1"></div>
         <ModeToggle />
         {user ? (
@@ -39,13 +41,17 @@ export const Header = async () => {
           </DropdownMenu>
         ) : (
           <Link
-            className={buttonVariants({ size: "sm", variant: "outline" })}
+            className={buttonVariants({
+              size: "sm",
+              variant: "outline",
+              className: "font-inter",
+            })}
             href="/auth/signin"
           >
             SignIn
           </Link>
         )}
-      </div>
+      </Page>
     </header>
   );
 };

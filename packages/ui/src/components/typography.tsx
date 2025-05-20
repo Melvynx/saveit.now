@@ -8,7 +8,7 @@ import React, { forwardRef } from "react";
 
 // Source : https://www.totaltypescript.com/pass-component-as-prop-react
 type FixedForwardRef = <T, P = {}>(
-  render: (props: P, ref: React.Ref<T>) => React.ReactNode
+  render: (props: P, ref: React.Ref<T>) => React.ReactNode,
 ) => (props: P & React.RefAttributes<T>) => React.ReactNode;
 
 const fixedForwardRef = forwardRef as FixedForwardRef;
@@ -98,7 +98,7 @@ const InnerTypography = <
     >,
     "as"
   >,
-  ref: ForwardedRef<any>
+  ref: ForwardedRef<any>,
 ) => {
   const Comp = as ?? defaultElementMapping[variant ?? "default"];
   return (

@@ -16,9 +16,9 @@ import type { z } from "zod";
 export const isActionSuccessful = <
   T extends z.ZodType,
   Data,
-  CVE = ValidationErrors<T>
+  CVE = ValidationErrors<T>,
 >(
-  action?: SafeActionResult<string, T, readonly [], any, CVE, Data>
+  action?: SafeActionResult<string, T, readonly [], any, CVE, Data>,
 ): action is {
   data: Data;
   serverError: undefined;
@@ -48,11 +48,11 @@ export const isActionSuccessful = <
 export const resolveActionResult = async <
   T extends z.ZodType,
   Data,
-  CVE = ValidationErrors<T>
+  CVE = ValidationErrors<T>,
 >(
   action: Promise<
     SafeActionResult<string, T, readonly [], any, CVE, Data> | undefined
-  >
+  >,
 ): Promise<Data> => {
   return new Promise((resolve, reject) => {
     action
@@ -83,7 +83,7 @@ export const resolveActionResult = async <
  * @returns A string representation of the validation errors
  */
 export const validationErrorToString = (
-  validationError: ValidationErrors<any>
+  validationError: ValidationErrors<any>,
 ) => {
   const flatten = flattenValidationErrors(validationError);
   return Object.entries(flatten.fieldErrors)

@@ -28,7 +28,7 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
 
   if (monthlyBookmarks >= user.limits.monthlyBookmarks) {
     throw new Error(
-      "You have reached the maximum number of bookmarks for this month"
+      "You have reached the maximum number of bookmarks for this month",
     );
   }
 

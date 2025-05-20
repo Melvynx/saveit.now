@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
     const url = new URL(pathname);
     if (url.protocol === "http:" || url.protocol === "https:") {
       return NextResponse.redirect(
-        new URL(`/api/b?url=${encodeURIComponent(pathname)}`, request.url)
+        new URL(`/api/b?url=${encodeURIComponent(pathname)}`, request.url),
       );
     }
   } catch {}

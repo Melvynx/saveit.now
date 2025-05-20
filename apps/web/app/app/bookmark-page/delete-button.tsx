@@ -4,12 +4,21 @@ import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { Button } from "@workspace/ui/components/button";
 import { Trash } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import { useRouter } from "next/navigation";
+import { useRefreshBookmarks } from "../use-bookmarks";
 import { deleteBookmarkAction } from "./bookmarks.action";
 
 export type DeleteButtonProps = { bookmarkId: string };
 
 export const DeleteButton = (props: DeleteButtonProps) => {
-  const action = useAction(deleteBookmarkAction);
+  const refreshBookmark = useRefreshBookmarks();
+  const router = useRouter();
+  const action = useAction(deleteBookmarkAction, {
+    onSuccess: () => {
+      refreshBookmark();
+      router.push("/app");
+    },
+  });
 
   return (
     <Button

@@ -21,7 +21,7 @@ export async function handleArticleStep(
     userId: string;
     url: string;
   },
-  step: InngestStep
+  step: InngestStep,
 ): Promise<void> {
   // Extract and convert article content to markdown
   const markdown = await step.run("extract-article-to-markdown", async () => {
@@ -29,7 +29,7 @@ export async function handleArticleStep(
 
     // Remove unnecessary elements
     $(
-      "script, style, link, meta, noscript, iframe, svg, nav, footer, header, aside, .ad, .ads, .advertisement, .banner"
+      "script, style, link, meta, noscript, iframe, svg, nav, footer, header, aside, .ad, .ads, .advertisement, .banner",
     ).remove();
 
     // Extract just the article content

@@ -1,7 +1,6 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -14,38 +13,17 @@ import {
 import { deleteBookmarkAction } from "app/app/bookmark-page/bookmarks.action";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
-import { z } from "zod";
+import {
+  useBookmarkMetadata,
+  useBookmarkToken,
+} from "./bookmark-page/use-bookmark";
 import BookmarkProgress from "./bookmark-progress";
 
 export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
 
-  const token = useQuery({
-    queryKey: ["bookmark", props.bookmark.id],
-    queryFn: () => {
-      return upfetch(`/api/bookmarks/${props.bookmark.id}/subscribe`, {
-        schema: z.object({
-          token: z.any(),
-        }),
-      });
-    },
-  });
-
-  const pageMetadata = useQuery({
-    queryKey: ["bookmark", props.bookmark.id, "page-metadata"],
-    queryFn: async () => {
-      const result = await upfetch(
-        `/api/bookmarks/${props.bookmark.id}/metadata`,
-        {
-          schema: z.object({
-            title: z.string(),
-            faviconUrl: z.string(),
-          }),
-        }
-      );
-      return result;
-    },
-  });
+  const token = useBookmarkToken(props.bookmark.id);
+  const pageMetadata = useBookmarkMetadata(props.bookmark.id);
   const queryClient = useQueryClient();
 
   const deleteAction = useAction(deleteBookmarkAction, {
@@ -56,9 +34,9 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   });
 
   return (
-    <Card className="w-full p-4">
+    <Card className="w-full p-0 gap-0 overflow-hidden">
       <CardHeader className="p-0">
-        <div className="w-full h-48 bg-border gap-4 object-top object-cover rounded-md flex items-center justify-center flex-col">
+        <div className="bg-border flex h-48 w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top">
           {token.data ? (
             <BookmarkProgress token={token.data.token} />
           ) : (
@@ -77,16 +55,16 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-4">
         <div className="flex items-start gap-2">
           <img
             src={pageMetadata.data?.faviconUrl ?? ""}
             alt="favicon"
-            className="w-4 h-4"
+            className="h-4 w-4"
           />
           <div className="flex flex-col gap-2">
             <CardTitle>{domainName}</CardTitle>
-            <CardDescription>
+            <CardDescription className="line-clamp-1">
               {pageMetadata.data?.title ?? "Processing..."}
             </CardDescription>
           </div>

@@ -19,11 +19,12 @@ export const fetchBookmark = async (bookmarkId: string) => {
               name: z.string(),
               type: z.string(),
             }),
-          })
+          }),
         ),
       }),
     }),
   });
+  console.log("result", result);
   return result;
 };
 
@@ -38,6 +39,8 @@ export const useBookmark = (bookmarkId?: string | null) => {
     },
     enabled: !!bookmarkId,
   });
+
+  console.log("query", query);
 
   return query;
 };
@@ -56,4 +59,43 @@ export const usePrefetchBookmark = () => {
   };
 
   return prefetch;
+};
+
+export const useBookmarkMetadata = (bookmarkId?: string | null) => {
+  const query = useQuery({
+    queryKey: ["bookmark", bookmarkId, "page-metadata"],
+    queryFn: async () => {
+      if (!bookmarkId) {
+        return null;
+      }
+      return upfetch(`/api/bookmarks/${bookmarkId}/metadata`, {
+        schema: z.object({
+          title: z.string(),
+          faviconUrl: z.string(),
+        }),
+      });
+    },
+    enabled: !!bookmarkId,
+  });
+
+  return query;
+};
+
+export const useBookmarkToken = (bookmarkId?: string | null) => {
+  const query = useQuery({
+    queryKey: ["bookmark", bookmarkId, "token"],
+    queryFn: async () => {
+      if (!bookmarkId) {
+        return null;
+      }
+      return upfetch(`/api/bookmarks/${bookmarkId}/subscribe`, {
+        schema: z.object({
+          token: z.any(),
+        }),
+      });
+    },
+    enabled: !!bookmarkId,
+  });
+
+  return query;
 };

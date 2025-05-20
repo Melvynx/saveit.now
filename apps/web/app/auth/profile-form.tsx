@@ -54,7 +54,7 @@ export function ProfileForm({ onSuccess }: ProfileFormProps) {
       return unwrapSafePromise(
         authClient.updateUser({
           name: values.name,
-        })
+        }),
       );
     },
     onError: (error) => {
@@ -78,7 +78,7 @@ export function ProfileForm({ onSuccess }: ProfileFormProps) {
 
   return (
     <Form form={form} onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center justify-center mb-6">
+      <div className="mb-6 flex items-center justify-center">
         <AvatarUploader
           onImageChange={(file) => {
             const formData = new FormData();

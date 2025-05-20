@@ -7,6 +7,7 @@ import { useRef } from "react";
 import { toast } from "sonner";
 import { createBookmarkAction } from "./bookmarks.action";
 import { URL_SCHEMA } from "./schema";
+import { useRefreshBookmarks } from "./use-bookmarks";
 
 export type SearchInputProps = {};
 
@@ -14,6 +15,7 @@ export const SearchInput = (props: SearchInputProps) => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
+  const refreshBookmark = useRefreshBookmarks();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
@@ -22,10 +24,12 @@ export const SearchInput = (props: SearchInputProps) => {
 
   const action = useAction(createBookmarkAction, {
     onSuccess: () => {
-      // setQuery("");
+      console.log("SUCCESS ACTION !!!!");
+      console.log("Set query");
       setQuery("");
+
+      void refreshBookmark();
       toast.success("Bookmark added");
-      router.push("/app");
       if (inputRef.current) {
         inputRef.current.value = "";
       }
@@ -37,7 +41,7 @@ export const SearchInput = (props: SearchInputProps) => {
       <Input
         ref={inputRef}
         defaultValue={query}
-        className="lg:text-2xl lg:h-16 lg:py-4 lg:px-6"
+        className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl"
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search bookmarks"
         onKeyDown={(e) => {
@@ -52,7 +56,7 @@ export const SearchInput = (props: SearchInputProps) => {
             action.execute({ url: query });
           }}
           variant="outline"
-          className="lg:text-2xl lg:h-16 lg:py-4 lg:px-6"
+          className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl"
         >
           Add
         </Button>

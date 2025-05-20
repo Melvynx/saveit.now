@@ -52,7 +52,7 @@ export const useDialogManager = create<DialogManagerStore>((set, get) => ({
                     if (onClickReturn instanceof Promise) {
                       set((state) => {
                         const dialogIndex = state.dialogs.findIndex(
-                          (dialog) => dialog.id === id
+                          (dialog) => dialog.id === id,
                         );
 
                         if (dialogIndex !== -1) {

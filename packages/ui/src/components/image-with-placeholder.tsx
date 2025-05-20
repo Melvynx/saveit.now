@@ -38,7 +38,7 @@ export const ImageWithPlaceholder = ({
   if (!src) {
     return (
       <div className={cn("relative", className)}>
-        <Skeleton className={cn("absolute inset-0 w-full h-full", className)} />
+        <Skeleton className={cn("absolute inset-0 h-full w-full", className)} />
       </div>
     );
   }
@@ -51,7 +51,7 @@ export const ImageWithPlaceholder = ({
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
           "transition-opacity duration-200",
-          className
+          className,
         )}
       />
     );
@@ -60,7 +60,7 @@ export const ImageWithPlaceholder = ({
   return (
     <div className={cn("relative", className)}>
       {isLoading && (
-        <Skeleton className={cn("absolute inset-0 w-full h-full", className)} />
+        <Skeleton className={cn("absolute inset-0 h-full w-full", className)} />
       )}
       <img
         {...props}
@@ -68,7 +68,7 @@ export const ImageWithPlaceholder = ({
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
           "transition-opacity duration-200",
-          className
+          className,
         )}
         onLoad={() => setIsLoading(false)}
         onError={handleError}

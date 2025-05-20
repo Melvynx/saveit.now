@@ -35,12 +35,12 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
       <Card
-        className="w-full p-0 gap-3 group overflow-hidden"
+        className="group w-full gap-3 overflow-hidden p-0"
         onMouseEnter={() => {
           prefetch(props.bookmark.id);
         }}
       >
-        <CardHeader className="p-0 relative">
+        <CardHeader className="relative p-0">
           <Link
             href={{
               pathname: "/app",
@@ -53,11 +53,11 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
               fallbackImage={DEFAULT_PREVIEW}
-              className="w-full max-h-48 object-top object-cover rounded-md border"
+              className="max-h-48 w-full rounded-md border object-cover object-top"
               alt={props.bookmark.title ?? "Preview"}
             />
           </Link>
-          <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 gap-1 flex items-center">
+          <div className="absolute right-5 top-5 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <Button
               variant="secondary"
               size="icon"
@@ -66,7 +66,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <Link href={props.bookmark.url} target="_blank">
-                <ExternalLink className="size-4 text-muted-foreground" />
+                <ExternalLink className="text-muted-foreground size-4" />
               </Link>
             </Button>
             <CopyLinkButton
@@ -88,7 +88,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
         >
           <CardContent className="px-4 pb-4">
             <div className="flex items-start gap-2">
-              <div className="size-6 shrink-0 border rounded items-center justify-center flex">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded border">
                 <ImageWithPlaceholder
                   src={props.bookmark.faviconUrl ?? ""}
                   fallbackImage={DEFAULT_FAVICON}
@@ -118,7 +118,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         }}
-        className="h-64 w-full p-0 break-inside-avoid-column"
+        className="h-64 w-full break-inside-avoid-column p-0"
       ></Card>
     );
   }

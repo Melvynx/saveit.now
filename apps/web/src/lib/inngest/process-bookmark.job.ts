@@ -151,7 +151,7 @@ export const processBookmarkJob = inngest.createFunction(
         },
       },
       step,
-      publish
+      publish,
     );
 
     if (urlContent.type === BookmarkType.IMAGE) {
@@ -161,9 +161,9 @@ export const processBookmarkJob = inngest.createFunction(
           url: bookmark.url,
           userId: bookmark.userId,
         },
-        step
+        step,
       );
       return;
     }
-  }
+  },
 );

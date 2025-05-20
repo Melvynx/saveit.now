@@ -46,15 +46,15 @@ export type BookmarkStep = (typeof BOOKMARK_STEPS)[number];
 
 export const BOOKMARK_STEP_ID_TO_INDEX: Record<BookmarkStepId, number> =
   Object.fromEntries(
-    BOOKMARK_STEPS.map((step, idx) => [step.id, idx])
+    BOOKMARK_STEPS.map((step, idx) => [step.id, idx]),
   ) as Record<BookmarkStepId, number>;
 
 export const BOOKMARK_STEP_NAME_TO_ID: Record<string, BookmarkStepId> =
   Object.fromEntries(
-    BOOKMARK_STEPS.map((step) => [step.name, step.id])
+    BOOKMARK_STEPS.map((step) => [step.name, step.id]),
   ) as Record<string, BookmarkStepId>;
 
 export const BOOKMARK_STEP_ID_TO_ID: Record<BookmarkStepId, string> =
   Object.fromEntries(
-    BOOKMARK_STEPS.map((step) => [step.id, step.id])
+    BOOKMARK_STEPS.map((step) => [step.id, step.id]),
   ) as Record<BookmarkStepId, string>;

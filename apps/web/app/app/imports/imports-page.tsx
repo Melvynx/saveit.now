@@ -32,7 +32,7 @@ export function ImportPage() {
     onSuccess: ({ data }) => {
       if (!data) return;
       toast.success(
-        `Created ${data.createdBookmarks} bookmarks from ${data.totalUrls} URLs`
+        `Created ${data.createdBookmarks} bookmarks from ${data.totalUrls} URLs`,
       );
       form.reset();
     },

@@ -9,7 +9,7 @@ export const GET = userRoute
   .params(
     z.object({
       bookmarkId: z.string(),
-    })
+    }),
   )
   .handler(async (req, { params }) => {
     const { bookmarkId } = params;

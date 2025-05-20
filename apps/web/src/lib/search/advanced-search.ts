@@ -136,7 +136,7 @@ export async function advancedSearch({
 
   // Trier par score décroissant et appliquer la pagination
   const allResults = Array.from(resultMap.values()).sort(
-    (a, b) => b.score - a.score
+    (a, b) => b.score - a.score,
   );
 
   let startIndex = 0;
@@ -158,7 +158,7 @@ export async function advancedSearch({
 
 async function searchByTags(
   userId: string,
-  tags: string[]
+  tags: string[],
 ): Promise<SearchResult[]> {
   if (!tags || tags.length === 0) return [];
 
@@ -214,7 +214,7 @@ async function searchByTags(
 async function searchByVector(
   userId: string,
   embedding: number[],
-  tags: string[]
+  tags: string[],
 ): Promise<SearchResult[]> {
   let tagsCondition = "";
   let tagsParams: any[] = [];
@@ -286,14 +286,14 @@ async function searchByVector(
   `,
     embedding,
     userId,
-    ...tagsParams
+    ...tagsParams,
   );
 
   console.log(
     bookmarks.map((b) => ({
       url: b.url,
       distance: b.distance,
-    }))
+    })),
   );
 
   return bookmarks.map((bookmark) => {

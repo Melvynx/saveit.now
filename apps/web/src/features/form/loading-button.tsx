@@ -59,7 +59,7 @@ export const LoadingButton = ({
 };
 
 export const SubmitButtonUnstyled = (
-  props: ComponentPropsWithoutRef<"button">
+  props: ComponentPropsWithoutRef<"button">,
 ) => {
   const { pending } = useFormStatus();
 

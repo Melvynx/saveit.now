@@ -16,7 +16,7 @@ export default function BookmarkProgress({
   const router = useQueryClient();
 
   const currentStep = BOOKMARK_STEPS.find(
-    (b) => b.id === latestData?.data.data
+    (b) => b.id === latestData?.data.data,
   );
   const currentStepIdx = currentStep?.order ?? 0;
 
@@ -27,8 +27,8 @@ export default function BookmarkProgress({
   }, [latestData?.topic, router]);
 
   return (
-    <div className="flex flex-col gap-2 w-full items-center justify-center">
-      <div className="flex items-center gap-2 w-full justify-center">
+    <div className="flex w-full flex-col items-center justify-center gap-2">
+      <div className="flex w-full items-center justify-center gap-2">
         {BOOKMARK_STEPS.map((step) => {
           const idx = step.order;
           const isActive = idx === currentStepIdx;

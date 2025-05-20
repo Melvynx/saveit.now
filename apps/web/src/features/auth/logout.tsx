@@ -23,7 +23,7 @@ export const LogoutButton = (props: ComponentPropsWithRef<"button">) => {
               router.push("/");
               router.refresh();
             },
-          }
+          },
         );
       }}
     >

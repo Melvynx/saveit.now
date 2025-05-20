@@ -55,7 +55,7 @@ export type DialogManagerRendererDialogProps = DialogBaseProps &
   (StandardDialogProps | CustomDialogProps);
 
 export const isStandardDialog = (
-  props: DialogManagerRendererDialogProps
+  props: DialogManagerRendererDialogProps,
 ): props is DialogBaseProps & StandardDialogProps => {
   if ("children" in props) {
     return false;
@@ -65,11 +65,11 @@ export const isStandardDialog = (
 };
 
 export const DialogManagerRendererDialog = (
-  props: DialogManagerRendererDialogProps
+  props: DialogManagerRendererDialogProps,
 ) => {
   const [confirmText, setConfirmText] = useState("");
   const [inputValue, setInputValue] = useState(
-    isStandardDialog(props) ? (props.input?.defaultValue ?? "") : ""
+    isStandardDialog(props) ? (props.input?.defaultValue ?? "") : "",
   );
 
   if (!isStandardDialog(props)) {
