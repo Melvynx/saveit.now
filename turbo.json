@@ -16,7 +16,9 @@
         "DATABASE_URL",
         "DATABASE_URL_UNPOOLED",
         "STRIPE_SECRET_KEY",
-        "STRIPE_WEBHOOK_SECRET"
+        "STRIPE_WEBHOOK_SECRET",
+        "GOOGLE_GENERATIVE_AI_API_KEY",
+        "AWS_ENDPOINT"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

@@ -1,0 +1,14 @@
+name = "saveit-screenshot"
+main = "src/index.ts"
+compatibility_date = "2023-03-14"
+compatibility_flags = [ "nodejs_compat" ]
+
+browser = { binding = "MYBROWSER" }
+[[kv_namespaces]]
+binding = "SAVEIT_KV"
+id = "6d76cf4b513d4bc29ee4457383d18491"
+preview_id = "968abfe463974a3d83c17c92293d38b2"
+
+[observability]
+enabled = true
+head_sampling_rate = 1 # optional. default = 1.

@@ -11,8 +11,8 @@ export const env = createEnv({
   server: {
     AWS_ACCESS_KEY_ID: z.string().min(1),
     AWS_SECRET_ACCESS_KEY: z.string().min(1),
-    AWS_REGION: z.string().min(1),
     AWS_S3_BUCKET_NAME: z.string().min(1),
+    AWS_ENDPOINT: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},
