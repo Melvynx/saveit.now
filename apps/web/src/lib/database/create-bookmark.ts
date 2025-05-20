@@ -32,6 +32,17 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
     );
   }
 
+  const alreadyExists = await prisma.bookmark.findFirst({
+    where: {
+      url: body.url,
+      userId: body.userId,
+    },
+  });
+
+  if (alreadyExists) {
+    throw new Error("Bookmark already exists");
+  }
+
   const bookmark = await prisma.bookmark.create({
     data: {
       url: body.url,
