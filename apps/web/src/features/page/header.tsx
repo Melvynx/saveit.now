@@ -17,10 +17,10 @@ export const Header = async () => {
   return (
     <header className="py-2 border-b">
       <div className="flex items-center gap-2 px-4 max-w-4xl mx-auto">
-        <Link href="/">
+        <Link href="/app">
           SaveIt<span className="text-orange-500">.now</span>
         </Link>
-        <Link href="/bookmarks">Bookmarks</Link>
+        <Link href="/app">Bookmarks</Link>
         <div className="flex-1"></div>
         <ModeToggle />
         {user ? (

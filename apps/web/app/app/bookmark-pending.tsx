@@ -34,23 +34,16 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   const pageMetadata = useQuery({
     queryKey: ["bookmark", props.bookmark.id, "page-metadata"],
     queryFn: async () => {
-      const result = await fetch(props.bookmark.url);
-      const html = await result.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      // Access head content
-      const title = doc.querySelector("title")?.textContent;
-      const faviconUrl = doc
-        .querySelector("link[rel='icon']")
-        ?.getAttribute("href");
-
-      return {
-        title,
-        faviconUrl: faviconUrl?.startsWith("http")
-          ? faviconUrl
-          : `https://${domainName}${faviconUrl}`,
-      };
+      const result = await upfetch(
+        `/api/bookmarks/${props.bookmark.id}/metadata`,
+        {
+          schema: z.object({
+            title: z.string(),
+            faviconUrl: z.string(),
+          }),
+        }
+      );
+      return result;
     },
   });
   const queryClient = useQueryClient();

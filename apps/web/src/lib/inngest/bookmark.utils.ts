@@ -1,3 +1,5 @@
+import { CheerioAPI } from "cheerio";
+
 export function chunkMarkdown(
   md: string,
   max = 1000 // char length
@@ -22,3 +24,26 @@ export function chunkMarkdown(
 
   return chunks;
 }
+
+export const getFaviconUrl = ($: CheerioAPI, url: string) => {
+  const faviconSelectors = [
+    "link[rel='icon'][sizes='32x32']",
+    "link[rel='shortcut icon']",
+    "link[rel='icon']",
+    "link[rel='apple-touch-icon']",
+    "link[rel='apple-touch-icon-precomposed']",
+  ];
+
+  let faviconUrl = null;
+  for (const selector of faviconSelectors) {
+    const iconHref = $(selector).attr("href");
+    if (iconHref) {
+      faviconUrl = iconHref.startsWith("http")
+        ? iconHref
+        : `${new URL(url).origin}${iconHref}`;
+      break;
+    }
+  }
+
+  return faviconUrl;
+};
