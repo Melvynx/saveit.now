@@ -20,7 +20,7 @@ const Schema = z.object({
   text: z.string().min(1),
 });
 
-export function ImportPage() {
+export default function ImportPage() {
   const form = useZodForm({
     schema: Schema,
     defaultValues: {
