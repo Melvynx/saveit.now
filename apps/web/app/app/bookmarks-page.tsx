@@ -34,7 +34,7 @@ export function BookmarksPage() {
       <BookmarkHeader />
       <SearchInput />
       <div
-        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fit,minmax(20rem,25rem))]"
+        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
         style={{
           // @ts-expect-error
           "--card-height": "calc(var(--spacing) * 64)",

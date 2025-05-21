@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInWith } from "@/features/auth/sign-in-github";
+import { SignInWith } from "@/features/auth/sign-in-with";
 import { MaxWidthContainer } from "@/features/page/page";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";

@@ -19,7 +19,7 @@ export const SignInWith = (props: { type: OAuthProvider }) => {
       return unwrapSafePromise(
         authClient.signIn.social({
           provider: props.type,
-          callbackURL: "/auth",
+          callbackURL: "/app",
         }),
       );
     },

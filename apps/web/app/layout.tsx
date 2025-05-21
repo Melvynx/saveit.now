@@ -50,8 +50,11 @@ export default function RootLayout({
 }
 
 const InjectUserPlanServer = async () => {
-  const plan = await getUserLimits();
-  console.log({ plan });
+  try {
+    const plan = await getUserLimits();
 
-  return <InjectUserPlan name={plan.plan} limits={plan.limits} />;
+    return <InjectUserPlan name={plan.plan} limits={plan.limits} />;
+  } catch {
+    return null;
+  }
 };

@@ -22,8 +22,6 @@ export const getRequiredUser = async () => {
 export const getUserLimits = async () => {
   const user = await getRequiredUser();
 
-  console.log(user.id);
-
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers: await headers(),
   });
