@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { useFileUpload } from "@workspace/ui/componentshooks/use-file-upload";
+import { useFileUpload } from "@workspace/ui/hooks/use-file-upload";
 import { CircleUserRoundIcon, XIcon } from "lucide-react";
 
 export function AvatarUploader(props: { onImageChange: (file: File) => void }) {

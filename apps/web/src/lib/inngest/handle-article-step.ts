@@ -13,6 +13,7 @@ import {
   getAITags,
   updateBookmark,
 } from "./process-bookmark.utils";
+import { TAGS_PROMPT, USER_SUMMARY_PROMPT } from "./prompt.const";
 
 export async function handleArticleStep(
   context: {
@@ -58,59 +59,12 @@ export async function handleArticleStep(
 
   // Generate a summary focused on article content
   const getSummary = await step.run("get-article-summary", async () => {
-    const summaryPrompt = `## Context:
-You are creating a concise summary for an article that has been bookmarked.
-This summary will help the user remember what the article is about and why it might be valuable.
-
-## Goal
-Create a summary that captures:
-1. The main topic or thesis of the article
-2. Key points or arguments presented
-3. Any notable conclusions or insights
-4. Why this article might be valuable to reference later
-
-## Article Content
-<markdown>
-${markdown.substring(0, 4000)}${
-      markdown.length > 4000 ? "... (content truncated)" : ""
-    }
-</markdown>
-
-## Output Format
-Write a concise summary (60-100 words) in plain text without any markdown formatting.
-Start directly with the summary - don't begin with phrases like "This article is about..."
-`;
-
-    return await getAISummary(summaryPrompt);
+    return await getAISummary(USER_SUMMARY_PROMPT, markdown);
   });
 
   // Generate tags specific to article content
   const getTags = await step.run("get-article-tags", async () => {
-    const tagsPrompt = `## Context:
-You're analyzing an article to extract relevant tags that will help with future searching and categorization.
-
-## Goal
-Generate tags that capture:
-1. The main topic and subtopics
-2. Key concepts discussed
-3. Names of important people, organizations, products, or technologies mentioned
-4. Field or industry the article relates to
-5. Type of content (e.g., tutorial, opinion, research, news)
-
-## Article Content
-<markdown>
-${markdown.substring(0, 4000)}${
-      markdown.length > 4000 ? "... (content truncated)" : ""
-    }
-</markdown>
-
-## Output Format
-Generate 5-15 single-word tags that are most relevant to this article.
-Each tag should be a single word without spaces.
-Focus on specificity and relevance rather than generic terms.
-`;
-
-    return await getAITags(tagsPrompt, context.userId);
+    return await getAITags(TAGS_PROMPT, context.userId, markdown);
   });
 
   // Generate embeddings for searchable content

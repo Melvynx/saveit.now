@@ -9,6 +9,7 @@ import {
   getAITags,
   updateBookmark,
 } from "./process-bookmark.utils";
+import { TAGS_PROMPT, USER_SUMMARY_PROMPT } from "./prompt.const";
 
 export async function handleImageStep(
   context: {
@@ -73,47 +74,12 @@ Just the title, 4-5 words maximum, no quotes, no explanation.
 
   // Generate a summary of the image
   const getSummary = await step.run("get-summary", async () => {
-    const summaryPrompt = `## Context:
-You need to create a concise summary for an image bookmark.
-This summary will help users understand what's in the image without having to open it.
-
-## Image Analysis
-${imageAnalysis}
-
-## Output
-PLAIN TEXT without any formatting, just the text that summarizes the image.
-Focus on the main subject, colors, style, and purpose of the image.
-Keep it under 100 words.
-Do not start with "This image shows..." just start with the summary.
-`;
-
-    return await getAISummary(summaryPrompt);
+    return await getAISummary(USER_SUMMARY_PROMPT, imageAnalysis);
   });
 
   // Generate tags for the image
   const getTags = await step.run("get-tags", async () => {
-    const tagsPrompt = `## Context:
-You need to define applicable tags for the image I will describe. The tags must include specific keywords like subject matter, colors, style, mood, etc.
-The tags must be in an array of string format.
-You should add as much useful tags as possible to simplify the search inside our bookmark data.
-The tags should be full words like:
-
-* landscape
-* portrait
-* blue
-* vibrant
-* minimalist
-* infographic
-* chart
-* etc...
-
-Prioritize adding between 5 to 15 tags. Do not add multi-keyword tags. Tags should not have any space.
-
-## Image Analysis
-${imageAnalysis}
-`;
-
-    return await getAITags(tagsPrompt, context.userId);
+    return await getAITags(TAGS_PROMPT, context.userId, imageAnalysis);
   });
 
   // Save the image to S3
