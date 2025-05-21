@@ -25,6 +25,32 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Récupérer l'origine de la requête
+  const origin = request.headers.get("origin") || "";
+
+  // Vérifier si la requête concerne les routes d'API qui nécessitent CORS
+  if (
+    request.nextUrl.pathname.startsWith("/api/auth") ||
+    request.nextUrl.pathname.startsWith("/api/bookmarks")
+  ) {
+    // Créer une réponse
+    const response = NextResponse.next();
+
+    // Ajouter les en-têtes CORS dynamiquement
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS",
+    );
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+    );
+
+    return response;
+  }
+
   return NextResponse.next();
 }
 
