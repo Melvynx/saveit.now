@@ -52,10 +52,25 @@ export async function advancedSearch({
 }: SearchOptions): Promise<SearchResponse> {
   // Si aucune requête de recherche et pas de tags, retourner simplement par ordre de création
   if ((!query || query.trim() === "") && (!tags || tags.length === 0)) {
+    // Récupérer le bookmark de référence pour la pagination si cursor est fourni
+    let cursorRef;
+    if (cursor) {
+      cursorRef = await prisma.bookmark.findUnique({
+        where: { id: cursor },
+        select: { createdAt: true },
+      });
+    }
+
     const recentBookmarks = await prisma.bookmark.findMany({
       where: {
         userId,
-        id: cursor ? { lt: cursor } : undefined,
+        ...(cursorRef
+          ? {
+              createdAt: {
+                lt: cursorRef.createdAt,
+              },
+            }
+          : {}),
       },
       orderBy: {
         createdAt: "desc",

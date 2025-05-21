@@ -57,7 +57,7 @@ export async function processStandardWebpage(
   });
 
   const screenshot = await step.run("get-screenshot", async () => {
-    if (context.bookmark.preview) return null;
+    if (context.bookmark.preview) return context.bookmark.preview;
     try {
       const url = new URL(env.SCREENSHOT_WORKER_URL);
       url.searchParams.set("url", context.url);

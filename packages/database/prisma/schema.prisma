@@ -126,7 +126,7 @@ enum BookmarkStatus {
 }
 
 model Bookmark {
-  id     String @id @default(nanoid(7))
+  id     String @id @default(ulid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
