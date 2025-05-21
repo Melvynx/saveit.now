@@ -162,6 +162,9 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --breakpoint-3xl: 120rem;
+  --breakpoint-4xl: 140rem;
 }
 
 @layer base {

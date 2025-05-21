@@ -25,11 +25,16 @@ export function BookmarksPage() {
   } = useBookmarks(debounceQuery);
 
   return (
-    <div className="flex w-screen flex-col gap-4 px-4 py-4 lg:px-12">
+    <div
+      className="flex w-screen flex-col gap-4 px-4 py-4 lg:px-12 mx-auto"
+      style={{
+        maxWidth: 3000,
+      }}
+    >
       <BookmarkHeader />
       <SearchInput />
       <div
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 2xl:grid-cols-5"
+        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fit,minmax(20rem,25rem))]"
         style={{
           // @ts-expect-error
           "--card-height": "calc(var(--spacing) * 64)",

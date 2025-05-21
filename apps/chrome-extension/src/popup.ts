@@ -72,7 +72,7 @@ async function init() {
 
       // Set up login button
       loginButton.addEventListener("click", () => {
-        chrome.tabs.create({ url: `${BASE_URL}/auth/signin` });
+        chrome.tabs.create({ url: `${BASE_URL}/signin` });
       });
     }
   } catch (error) {

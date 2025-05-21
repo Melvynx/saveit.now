@@ -32,7 +32,7 @@ export const SearchInput = (props: SearchInputProps) => {
       <Input
         ref={inputRef}
         defaultValue={query}
-        className="lg:h-16 lg:px-6 lg:rounded-xl lg:py-4 lg:text-2xl"
+        className="lg:h-16 lg:px-6 lg:rounded-xl lg:py-4 lg:text-2xl bg-background"
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search bookmarks"
         onKeyDown={(e) => {

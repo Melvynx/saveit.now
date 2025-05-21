@@ -1,3 +1,6 @@
+import { ServerToaster } from "@/features/server-sonner/server-toaster";
+import { getUserLimits } from "@/lib/auth-session";
+import { InjectUserPlan } from "@/lib/auth/user-plan";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Metadata } from "next";
@@ -39,7 +42,16 @@ export default function RootLayout({
         )}
       >
         <Providers>{children}</Providers>
+        <InjectUserPlanServer />
+        <ServerToaster />
       </body>
     </html>
   );
 }
+
+const InjectUserPlanServer = async () => {
+  const plan = await getUserLimits();
+  console.log({ plan });
+
+  return <InjectUserPlan name={plan.plan} limits={plan.limits} />;
+};

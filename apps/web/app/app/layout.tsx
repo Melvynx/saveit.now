@@ -1,20 +1,23 @@
 import { Header } from "@/features/page/header";
 import { getUserLimits } from "@/lib/auth-session";
 import { InjectUserPlan } from "@/lib/auth/user-plan";
+import { cn } from "@workspace/ui/lib/utils";
 import type { ReactNode } from "react";
 
 export default async function RouteLayout(props: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      style={{
+        // @ts-expect-error Doesn't care
+        "--box-color": "color-mix(in srgb, var(--border) 30%, transparent)",
+      }}
+      className={cn(
+        "flex flex-col gap-4 h-full",
+        "bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30",
+      )}
+    >
       <Header />
       <div className="flex max-w-full items-center gap-2">{props.children}</div>
-      <InjectUserPlanServer />
     </div>
   );
 }
-
-const InjectUserPlanServer = async () => {
-  const plan = await getUserLimits();
-
-  return <InjectUserPlan name={plan.plan} limits={plan.limits} />;
-};

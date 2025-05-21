@@ -106,7 +106,7 @@ function createSaverUI() {
       
       <div id="saveit-auth" class="saveit-state saveit-auth-required">
         <div class="saveit-message">Connection required</div>
-        <a href="${BASE_URL}/auth/signin" target="_blank" class="saveit-button">Login</a>
+        <a href="${BASE_URL}/signin" target="_blank" class="saveit-button">Login</a>
       </div>
 
       <div id="saveit-max-bookmarks" class="saveit-state saveit-auth-required">

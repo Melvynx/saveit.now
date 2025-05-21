@@ -9,12 +9,24 @@ const nextConfig = {
   rewrites: async () => {
     return [
       {
-        // 👇 matches all routes except /api
-        source: "/app/:path*",
-        destination: "/app",
+        // PostHog asset proxy
+        source: "/ingest/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
+      },
+      {
+        // PostHog event ingestion proxy
+        source: "/ingest/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+      },
+      {
+        // PostHog decide endpoint proxy
+        source: "/ingest/decide",
+        destination: "https://eu.i.posthog.com/decide",
       },
     ];
   },
+  // This is required to support PostHog trailing slash API requests
+  skipTrailingSlashRedirect: true,
   webpack: (config, { isServer }) => {
     // This is a workaround to avoid this Prisma issue on Vercel
     // https://github.com/prisma/prisma/discussions/19499

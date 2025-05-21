@@ -1,6 +1,7 @@
 "use client";
 
 import { DialogManagerRenderer } from "@/features/dialog-manager/dialog-manager-renderer";
+import { PostHogProvider } from "@/features/posthog/pohsthog-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -17,19 +18,21 @@ const queryClient = new QueryClient({
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <NuqsAdapter>
-          {children}
-          <Toaster />
-          <DialogManagerRenderer />
-        </NuqsAdapter>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <PostHogProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NuqsAdapter>
+            {children}
+            <Toaster />
+            <DialogManagerRenderer />
+          </NuqsAdapter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </PostHogProvider>
   );
 };

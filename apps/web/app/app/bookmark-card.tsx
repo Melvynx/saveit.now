@@ -18,7 +18,7 @@ import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
 
 const DEFAULT_PREVIEW = "/images/default-preview.png";
-const DEFAULT_FAVICON = "/images/favicon.png";
+const DEFAULT_FAVICON = "/images/default-favicon.png";
 
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;

@@ -1,0 +1,31 @@
+import { Footer } from "@/features/page/footer";
+import { Header } from "@/features/page/header";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+export default async function RouteLayout(props: { children: ReactNode }) {
+  return (
+    <div className="flex h-full flex-col">
+      <Header />
+      <Card>
+        <CardHeader>
+          <CardTitle>Unauthorized</CardTitle>
+          <CardDescription>
+            You are not authorized to access this page.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Link href="/signin">Sign in</Link>
+        </CardFooter>
+      </Card>
+      <Footer />
+    </div>
+  );
+}
