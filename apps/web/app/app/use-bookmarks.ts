@@ -1,7 +1,6 @@
 import { upfetch } from "@/lib/up-fetch";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
-import { z } from "zod";
 import { URL_SCHEMA } from "./schema";
 
 export const useRefreshBookmarks = () => {
@@ -33,30 +32,30 @@ export const useBookmarks = (query: string) => {
           limit: 20,
           cursor: pageParam || undefined,
         },
-        schema: z.object({
-          bookmarks: z.array(
-            z.object({
-              id: z.string(),
-              url: z.string().url(),
-              title: z.string().nullable(),
-              summary: z.string().nullable(),
-              preview: z.string().nullable(),
-              type: z.enum(["PAGE", "BLOG"]),
-              status: z.enum(["READY", "PENDING", "PROCESSING", "ERROR"]),
-              ogImageUrl: z.string().nullable(),
-              ogDescription: z.string().nullable(),
-              faviconUrl: z.string().nullable(),
-              score: z.number().nullable().optional(),
-              matchType: z
-                .enum(["tag", "vector", "combined"])
-                .nullable()
-                .optional()
-                .catch("combined"),
-              createdAt: z.coerce.date(),
-            }),
-          ),
-          hasMore: z.boolean(),
-        }),
+        // schema: z.object({
+        //   bookmarks: z.array(
+        //     z.object({
+        //       id: z.string(),
+        //       url: z.string().url(),
+        //       title: z.string().nullable(),
+        //       summary: z.string().nullable(),
+        //       preview: z.string().nullable(),
+        //       type: z.enum(["PAGE", "BLOG"]),
+        //       status: z.enum(["READY", "PENDING", "PROCESSING", "ERROR"]),
+        //       ogImageUrl: z.string().nullable(),
+        //       ogDescription: z.string().nullable(),
+        //       faviconUrl: z.string().nullable(),
+        //       score: z.number().nullable().optional(),
+        //       matchType: z
+        //         .enum(["tag", "vector", "combined"])
+        //         .nullable()
+        //         .optional()
+        //         .catch("combined"),
+        //       createdAt: z.coerce.date(),
+        //     }),
+        //   ),
+        //   hasMore: z.boolean(),
+        // }),
       });
 
       const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
