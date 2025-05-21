@@ -34,9 +34,9 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   });
 
   return (
-    <Card className="w-full p-0 gap-0 overflow-hidden">
+    <Card className="w-full p-0 gap-0 overflow-hidden h-[var(--card-height)]">
       <CardHeader className="p-0">
-        <div className="bg-border flex h-48 w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top">
+        <div className="bg-border flex h-44 w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top">
           {token.data ? (
             <BookmarkProgress token={token.data.token} />
           ) : (

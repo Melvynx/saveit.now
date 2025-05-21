@@ -32,5 +32,9 @@ export const getUserLimits = async () => {
 
   const limits = getAuthLimits(subscription);
 
-  return { ...user, limits };
+  return {
+    ...user,
+    limits,
+    plan: (subscription?.plan ?? "free") as "free" | "pro",
+  };
 };

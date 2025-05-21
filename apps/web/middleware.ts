@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// This function can be marked `async` if using `await` inside
+const COOKIE_NAME = `save-it.session_token`;
+
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname.slice(1);
 
@@ -13,6 +14,16 @@ export function middleware(request: NextRequest) {
       );
     }
   } catch {}
+
+  if (request.nextUrl.pathname === "/") {
+    const cookieReq = request.cookies.get(COOKIE_NAME);
+
+    if (cookieReq) {
+      const url = new URL(request.url);
+      url.pathname = "/app";
+      return NextResponse.redirect(url.toString());
+    }
+  }
 
   return NextResponse.next();
 }

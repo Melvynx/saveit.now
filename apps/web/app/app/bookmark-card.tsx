@@ -17,7 +17,7 @@ import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
 import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
 
-const DEFAULT_PREVIEW = "/images/default-preview.svg";
+const DEFAULT_PREVIEW = "/images/default-preview.png";
 const DEFAULT_FAVICON = "/images/favicon.png";
 
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
@@ -35,7 +35,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
       <Card
-        className="group w-full gap-3 overflow-hidden p-0"
+        className="group w-full gap-3 overflow-hidden p-0 h-[var(--card-height)]"
         onMouseEnter={() => {
           prefetch(props.bookmark.id);
         }}
@@ -52,8 +52,8 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           >
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
-              fallbackImage={props.bookmark.ogImageUrl ?? ""}
-              className="h-48 w-full rounded-md border object-cover object-top"
+              fallbackImage={props.bookmark.ogImageUrl ?? DEFAULT_PREVIEW}
+              className="h-44 w-full rounded-xl border object-cover object-top"
               alt={props.bookmark.title ?? "Preview"}
             />
           </Link>

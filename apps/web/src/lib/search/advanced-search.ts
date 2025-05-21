@@ -279,7 +279,7 @@ async function searchByVector(
     FROM distances d
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
-    WHERE d.distance <= (SELECT min_dist + 0.1 FROM min_distance)
+    WHERE d.distance <= (SELECT min_dist + 0.05 FROM min_distance)
     GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.distance
     ORDER BY distance ASC
     LIMIT 50

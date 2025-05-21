@@ -1,13 +1,10 @@
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { useAction } from "next-safe-action/hooks";
-import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { createBookmarkAction } from "./bookmarks.action";
 import { URL_SCHEMA } from "./schema";
-import { useRefreshBookmarks } from "./use-bookmarks";
+import { useCreateBookmarkAction } from "./use-create-bookmark";
 
 export type SearchInputProps = {};
 
@@ -15,21 +12,15 @@ export const SearchInput = (props: SearchInputProps) => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
-  const refreshBookmark = useRefreshBookmarks();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const router = useRouter();
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
 
-  const action = useAction(createBookmarkAction, {
+  const action = useCreateBookmarkAction({
     onSuccess: () => {
-      console.log("SUCCESS ACTION !!!!");
-      console.log("Set query");
-      setQuery("");
-
-      void refreshBookmark();
       toast.success("Bookmark added");
+
+      setQuery("");
       if (inputRef.current) {
         inputRef.current.value = "";
       }
@@ -41,7 +32,7 @@ export const SearchInput = (props: SearchInputProps) => {
       <Input
         ref={inputRef}
         defaultValue={query}
-        className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl"
+        className="lg:h-16 lg:px-6 lg:rounded-xl lg:py-4 lg:text-2xl"
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search bookmarks"
         onKeyDown={(e) => {

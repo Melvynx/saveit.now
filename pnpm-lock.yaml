@@ -15,11 +15,11 @@ importers:
         specifier: workspace:*
         version: link:packages/typescript-config
       prettier:
-        specifier: ^3.5.1
-        version: 3.5.1
+        specifier: ^3.5.3
+        version: 3.5.3
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
-        version: 0.6.11(prettier@3.5.1)
+        version: 0.6.11(prettier@3.5.3)
       turbo:
         specifier: ^2.4.2
         version: 2.4.2
@@ -4756,11 +4756,6 @@ packages:
         optional: true
       prettier-plugin-svelte:
         optional: true
-
-  prettier@3.5.1:
-    resolution: {integrity: sha512-hPpFQvHwL3Qv5AdRvBFMhnKo4tYxp0ReXiPn2bxkiohEX6mBeBwEpBSQTkD458RaaDKQMYSp4hX4UtfUTA5wDw==}
-    engines: {node: '>=14'}
-    hasBin: true
 
   prettier@3.5.3:
     resolution: {integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==}
@@ -10843,11 +10838,9 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.6.11(prettier@3.5.1):
+  prettier-plugin-tailwindcss@0.6.11(prettier@3.5.3):
     dependencies:
-      prettier: 3.5.1
-
-  prettier@3.5.1: {}
+      prettier: 3.5.3
 
   prettier@3.5.3: {}
 

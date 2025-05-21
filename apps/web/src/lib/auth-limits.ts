@@ -1,4 +1,4 @@
-type AuthLimits = {
+export type AuthLimits = {
   bookmarks: number;
   monthlyBookmarks: number;
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInWith } from "@/features/auth/sign-in-github";
-import { Page } from "@/features/page/page";
+import { MaxWidthContainer } from "@/features/page/page";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
@@ -71,7 +71,7 @@ export default function SignInPage() {
   };
 
   return (
-    <Page className="flex h-full w-full flex-row gap-8 lg:my-12 lg:gap-12 xl:my-24">
+    <MaxWidthContainer className="flex h-full w-full flex-row gap-8 lg:my-12 lg:gap-12 xl:my-24">
       <div className="ml-auto flex flex-1 flex-col gap-6">
         <Typography variant="h2" className="font-bold">
           Never lose an important link again.
@@ -187,6 +187,6 @@ export default function SignInPage() {
           </div>
         </CardContent>
       </Card>
-    </Page>
+    </MaxWidthContainer>
   );
 }

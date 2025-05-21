@@ -2,12 +2,12 @@
 
 import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
-import { Page } from "./page";
+import { MaxWidthContainer } from "./page";
 
 export function Footer() {
   return (
     <footer className="bg-background border-t">
-      <Page className="my-14">
+      <MaxWidthContainer className="my-14">
         <div className="flex flex-col gap-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_2fr]">
             <div className="flex flex-col gap-3">
@@ -103,7 +103,7 @@ export function Footer() {
             </nav>
           </div>
         </div>
-      </Page>
+      </MaxWidthContainer>
     </footer>
   );
 }
