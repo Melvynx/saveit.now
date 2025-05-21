@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -8,6 +10,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { Bookmark } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { URL_SCHEMA } from "./schema";
@@ -58,15 +61,21 @@ export const BookmarkInput = () => {
           Looking for quickly add a bookmark? Install our browser extension.
         </Typography>
         <div className="flex items-center gap-2">
-          <button className="rounded-md hover:bg-accent/50 transition-colors p-2">
+          <Link
+            href="/app/extensions"
+            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+          >
             <img src="https://svgl.app/library/chrome.svg" className="size-8" />
-          </button>
-          <button className="rounded-md hover:bg-accent/50 transition-colors p-2">
+          </Link>
+          <Link
+            href="/app/extensions"
+            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+          >
             <img
               src="https://svgl.app/library/firefox.svg"
               className="size-8"
             />
-          </button>
+          </Link>
         </div>
       </CardDescription>
     </Card>

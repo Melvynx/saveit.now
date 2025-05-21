@@ -1,13 +1,8 @@
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
+import { BookmarkInput } from "./app/bookmark-input";
+import { BookmarkInputLanding } from "@/features/marketing/bookmark-input-landing";
 
 export default function Home() {
   return (
@@ -98,16 +93,9 @@ const Hero = () => {
             </li>
           </ul>
         </div>
-        <Card className="mx-auto h-fit flex-1">
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              We just need a few details to get you started.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-6"></CardContent>
-        </Card>
+        <div className="flex-1">
+          <BookmarkInputLanding />
+        </div>
       </MaxWidthContainer>
     </div>
   );

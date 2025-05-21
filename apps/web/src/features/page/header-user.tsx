@@ -58,7 +58,7 @@ export const HeaderUser = () => {
           })}
           href="/signin"
         >
-          SignIn
+          Sign In
         </Link>
       )}
     </>
