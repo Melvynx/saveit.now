@@ -22,7 +22,13 @@
       "css": ["content.css"]
     }
   ],
-  "permissions": ["activeTab", "storage", "scripting", "cookies"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "cookies",
+    "contextMenus"
+  ],
   "host_permissions": ["*://*.saveit.now/*", "https://saveit.now/*"],
   "icons": {
     "16": "images/icon16.png",

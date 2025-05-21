@@ -5,6 +5,13 @@ import type { Session } from "./auth-client";
 
 const BASE_URL = "http://localhost:3000"; // "https://saveit.now";
 
+// Types de contenu à sauvegarder
+enum SaveType {
+  PAGE = "page",
+  LINK = "link",
+  IMAGE = "image",
+}
+
 // États de l'UI
 enum SaverState {
   HIDDEN = "hidden",
@@ -17,6 +24,8 @@ enum SaverState {
 }
 
 let currentState: SaverState = SaverState.HIDDEN;
+let currentSaveType: SaveType = SaveType.PAGE;
+let currentUrl: string = "";
 
 // Fonctions de communication avec le background script
 async function getSessionFromBackground(): Promise<Session | null> {
@@ -30,18 +39,46 @@ async function getSessionFromBackground(): Promise<Session | null> {
 
 async function saveBookmarkViaBackground(
   url: string,
-): Promise<{ success: boolean; error?: string; errorType?: string }> {
+  itemType: SaveType = SaveType.PAGE,
+): Promise<{
+  success: boolean;
+  error?: string;
+  errorType?: string;
+  itemType?: SaveType;
+}> {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "SAVE_BOOKMARK", url }, (response) => {
-      console.log("Content: Save response from background", response);
-      resolve(
-        response || {
-          success: false,
-          error: "No response from background",
-        },
-      );
-    });
+    chrome.runtime.sendMessage(
+      {
+        type: "SAVE_BOOKMARK",
+        url,
+        itemType,
+      },
+      (response) => {
+        console.log("Content: Save response from background", response);
+        resolve(
+          response || {
+            success: false,
+            error: "No response from background",
+            itemType,
+          },
+        );
+      },
+    );
   });
+}
+
+// Fonction pour obtenir un texte descriptif basé sur le type de sauvegarde
+function getSaveTypeText(saveType: SaveType): string {
+  switch (saveType) {
+    case SaveType.PAGE:
+      return "page";
+    case SaveType.LINK:
+      return "link";
+    case SaveType.IMAGE:
+      return "image";
+    default:
+      return "item";
+  }
 }
 
 // Créer l'élément UI
@@ -54,12 +91,12 @@ function createSaverUI() {
     <div class="saveit-card">
       <div id="saveit-loading" class="saveit-state">
         <svg class="saveit-loader" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle-icon lucide-loader-circle"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <div class="saveit-message">Saving...</div>
+        <div id="saveit-loading-message" class="saveit-message">Saving...</div>
       </div>
       
       <div id="saveit-success" class="saveit-state">
         <svg class="saveit-checkmark" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
-        <div class="saveit-message">Page saved!</div>
+        <div id="saveit-success-message" class="saveit-message">Page saved!</div>
       </div>
       
       <div id="saveit-error" class="saveit-state">
@@ -122,11 +159,24 @@ function setState(state: SaverState) {
       container.classList.remove("hidden");
       const loadingEl = document.getElementById("saveit-loading");
       if (loadingEl) loadingEl.style.display = "flex";
+
+      // Mettre à jour le message de chargement en fonction du type
+      const loadingMsg = document.getElementById("saveit-loading-message");
+      if (loadingMsg) {
+        loadingMsg.textContent = `Saving ${getSaveTypeText(currentSaveType)}...`;
+      }
       break;
     case SaverState.SUCCESS:
       container.classList.remove("hidden");
       const successEl = document.getElementById("saveit-success");
       if (successEl) successEl.style.display = "flex";
+
+      // Mettre à jour le message de succès en fonction du type
+      const successMsg = document.getElementById("saveit-success-message");
+      if (successMsg) {
+        successMsg.textContent = `${getSaveTypeText(currentSaveType).charAt(0).toUpperCase() + getSaveTypeText(currentSaveType).slice(1)} saved!`;
+      }
+
       // Auto-hide after 2 seconds
       setTimeout(() => {
         setState(SaverState.HIDDEN);
@@ -170,8 +220,12 @@ function setErrorMessage(message: string) {
 }
 
 // Sauvegarder le bookmark
-async function saveCurrentPage() {
+async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
   try {
+    // Mettre à jour les variables globales
+    currentSaveType = type;
+    currentUrl = url;
+
     setState(SaverState.LOADING);
 
     // Vérifier l'authentification via le background
@@ -182,8 +236,8 @@ async function saveCurrentPage() {
       return;
     }
 
-    // Sauvegarder la page via le background
-    const result = await saveBookmarkViaBackground(window.location.href);
+    // Sauvegarder l'élément via le background
+    const result = await saveBookmarkViaBackground(url, type);
 
     if (result.success) {
       setState(SaverState.SUCCESS);
@@ -201,7 +255,7 @@ async function saveCurrentPage() {
       }
     }
   } catch (error) {
-    console.error("Error saving bookmark:", error);
+    console.error("Error saving content:", error);
     setErrorMessage("An error occurred");
     setState(SaverState.ERROR);
   }
@@ -209,8 +263,17 @@ async function saveCurrentPage() {
 
 // Écouter les messages du background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // S'assurer que l'UI est créée
+  if (document.getElementById("saveit-now-container") === null) {
+    createSaverUI();
+  }
+
   if (message.action === "saveBookmark" || message.action === "showSaveUI") {
-    saveCurrentPage();
+    // Obtenir le type et l'URL à partir du message ou utiliser les valeurs par défaut
+    const type = message.type ? (message.type as SaveType) : SaveType.PAGE;
+    const url = message.url || window.location.href;
+
+    saveContent(url, type);
     sendResponse({ status: "received" });
   }
 });

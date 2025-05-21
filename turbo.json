@@ -1,15 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "pipeline": {
-    "chrome-extension#build": {
-      "outputs": ["dist/**"]
-    },
-    "chrome-extension#package": {
-      "dependsOn": ["build"],
-      "outputs": ["package/**"]
-    }
-  },
   "tasks": {
     "build": {
       "env": [

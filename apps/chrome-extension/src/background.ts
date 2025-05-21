@@ -2,9 +2,67 @@
 // between the extension and the SaveIt Now website
 import { getSession, saveBookmark } from "./auth-client";
 
+// Menu contextuel IDs
+const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
+const CONTEXT_MENU_SAVE_LINK = "saveit-save-link";
+const CONTEXT_MENU_SAVE_IMAGE = "saveit-save-image";
+
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
   console.log("SaveIt Now extension installed");
+
+  // Créer les menus contextuels
+  chrome.contextMenus.create({
+    id: CONTEXT_MENU_SAVE_PAGE,
+    title: "Save this page",
+    contexts: ["page"],
+  });
+
+  chrome.contextMenus.create({
+    id: CONTEXT_MENU_SAVE_LINK,
+    title: "Save this link",
+    contexts: ["link"],
+  });
+
+  chrome.contextMenus.create({
+    id: CONTEXT_MENU_SAVE_IMAGE,
+    title: "Save this image",
+    contexts: ["image"],
+  });
+});
+
+// Gérer les clics sur les menus contextuels
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!tab?.id) return;
+
+  switch (info.menuItemId) {
+    case CONTEXT_MENU_SAVE_PAGE:
+      // Sauvegarder la page actuelle
+      chrome.tabs.sendMessage(tab.id, {
+        action: "saveBookmark",
+        type: "page",
+        url: info.pageUrl,
+      });
+      break;
+
+    case CONTEXT_MENU_SAVE_LINK:
+      // Sauvegarder le lien
+      chrome.tabs.sendMessage(tab.id, {
+        action: "saveBookmark",
+        type: "link",
+        url: info.linkUrl,
+      });
+      break;
+
+    case CONTEXT_MENU_SAVE_IMAGE:
+      // Sauvegarder l'image
+      chrome.tabs.sendMessage(tab.id, {
+        action: "saveBookmark",
+        type: "image",
+        url: info.srcUrl,
+      });
+      break;
+  }
 });
 
 // Handle messages from content scripts
@@ -33,13 +91,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "SAVE_BOOKMARK") {
     // Handle bookmark save request from content script
-    saveBookmark(message.url)
+    const url = message.url;
+    const itemType = message.itemType || "page"; // page, link, image
+
+    saveBookmark(url)
       .then((result) => {
-        console.log("Background: Bookmark save result", result);
-        sendResponse(result);
+        console.log(`Background: ${itemType} save result`, result);
+        sendResponse({ ...result, itemType });
       })
       .catch((error) => {
-        console.error("Background: Bookmark save error", error);
+        console.error(`Background: ${itemType} save error`, error);
         let errorType = "UNKNOWN";
 
         // Détecter le type d'erreur basé sur le message
@@ -55,6 +116,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           success: false,
           error: errorMessage,
           errorType: errorType,
+          itemType,
         });
       });
     return true; // Indicates async response
@@ -74,25 +136,37 @@ chrome.action.onClicked.addListener(async (tab) => {
 
   try {
     // Envoyer un message au content script pour afficher l'UI
-    chrome.tabs.sendMessage(tab.id, { action: "saveBookmark" }, (response) => {
-      if (chrome.runtime.lastError) {
-        // Le content script n'est probablement pas chargé, on l'injecte manuellement
-        chrome.scripting
-          .executeScript({
-            target: { tabId: tab.id! },
-            files: ["content.js"],
-          })
-          .then(() => {
-            // Réessayer d'envoyer le message après injection
-            setTimeout(() => {
-              chrome.tabs.sendMessage(tab.id!, { action: "saveBookmark" });
-            }, 100);
-          })
-          .catch((err) => {
-            console.error("Failed to inject content script:", err);
-          });
-      }
-    });
+    chrome.tabs.sendMessage(
+      tab.id,
+      {
+        action: "saveBookmark",
+        type: "page",
+        url: tab.url,
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          // Le content script n'est probablement pas chargé, on l'injecte manuellement
+          chrome.scripting
+            .executeScript({
+              target: { tabId: tab.id! },
+              files: ["content.js"],
+            })
+            .then(() => {
+              // Réessayer d'envoyer le message après injection
+              setTimeout(() => {
+                chrome.tabs.sendMessage(tab.id!, {
+                  action: "saveBookmark",
+                  type: "page",
+                  url: tab.url,
+                });
+              }, 100);
+            })
+            .catch((err) => {
+              console.error("Failed to inject content script:", err);
+            });
+        }
+      },
+    );
   } catch (error) {
     console.error("Error sending message:", error);
   }
