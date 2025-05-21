@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "SaveIt Now",
+  "version": "1.0.0",
+  "description": "Save your bookmarks instantly with SaveIt Now",
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png",
+      "256": "images/icon256.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "permissions": ["activeTab", "storage", "scripting", "cookies"],
+  "host_permissions": ["*://*.saveit.now/*", "https://saveit.now/*"],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png",
+    "256": "images/icon256.png"
+  }
+}
