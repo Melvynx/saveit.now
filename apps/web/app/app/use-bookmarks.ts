@@ -18,6 +18,8 @@ export const useRefreshBookmarks = () => {
 export const useBookmarks = (query: string) => {
   const data = useInfiniteQuery({
     queryKey: ["bookmarks", query],
+    refetchOnWindowFocus: true,
+    refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
       if (URL_SCHEMA.safeParse(query).success) {
         return {
