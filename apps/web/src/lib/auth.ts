@@ -82,7 +82,13 @@ Melvyn`,
 
       subscription: {
         enabled: true,
-
+        async getCheckoutSessionParams(data, request) {
+          return {
+            params: {
+              allow_promotion_codes: true,
+            },
+          };
+        },
         plans: [
           {
             name: "free",
