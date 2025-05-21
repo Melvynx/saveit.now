@@ -35,7 +35,7 @@ export function UpgradePage() {
     mutationFn: async () => {
       const client = await authClient.subscription.upgrade({
         plan: "pro",
-        successUrl: "/dashboard",
+        successUrl: "/upgrade/success",
         cancelUrl: "/upgrade?error=true",
         annual: !monthly,
       });
