@@ -52,7 +52,7 @@ export default function SignInPage() {
       return unwrapSafePromise(
         authClient.signIn.magicLink({
           email: values.email,
-          callbackURL: "/auth",
+          callbackURL: "/app",
         }),
       );
     },
@@ -60,7 +60,7 @@ export default function SignInPage() {
       toast.error(error.message || "Failed to send magic link");
     },
     onSuccess: () => {
-      router.push("/auth/verify");
+      router.push("/verify");
       router.refresh();
       toast.success("Magic link sent to your email");
     },
