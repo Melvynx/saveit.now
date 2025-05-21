@@ -13,7 +13,7 @@ export default async function RouteLayout(props: { children: ReactNode }) {
   );
 }
 
-export const InjectUserPlanServer = async () => {
+const InjectUserPlanServer = async () => {
   const plan = await getUserLimits();
 
   return <InjectUserPlan name={plan.plan} limits={plan.limits} />;
