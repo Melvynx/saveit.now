@@ -24,7 +24,9 @@
         "INNGEST_EVENT_KEY",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
-        "R2_URL"
+        "R2_URL",
+        "STRIPE_PRO_MONTHLY_PRICE_ID",
+        "STRIPE_PRO_YEARLY_PRICE_ID"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
