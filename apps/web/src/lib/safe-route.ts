@@ -2,7 +2,7 @@
 import { getUser } from "@/lib/auth-session";
 import { createZodRoute } from "next-zod-route";
 import { NextResponse } from "next/server";
-import { SafeRouteError } from "./errors";
+import { ApplicationError, SafeRouteError } from "./errors";
 
 export const routeClient = createZodRoute({
   handleServerError: (error) => {
@@ -11,6 +11,10 @@ export const routeClient = createZodRoute({
         { error: error.message },
         { status: error.status },
       );
+    }
+
+    if (error instanceof ApplicationError) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     console.error(error);

@@ -1,17 +1,28 @@
-import { createBookmark } from "@/lib/database/create-bookmark";
+import {
+  BookmarkCreationError,
+  createBookmark,
+} from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { advancedSearch } from "@/lib/search/advanced-search";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const POST = userRoute
   .body(z.object({ url: z.string().url() }))
   .handler(async (req, { body, ctx }) => {
-    const bookmark = await createBookmark({
-      url: body.url,
-      userId: ctx.user.id,
-    });
+    try {
+      const bookmark = await createBookmark({
+        url: body.url,
+        userId: ctx.user.id,
+      });
+      return { status: "ok", bookmark };
+    } catch (error) {
+      if (error instanceof BookmarkCreationError) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
 
-    return { status: "ok", bookmark };
+      throw error;
+    }
   });
 
 export const GET = userRoute
