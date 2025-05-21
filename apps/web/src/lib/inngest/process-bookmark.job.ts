@@ -1,12 +1,18 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { inngest } from "./client";
 import { handleImageStep } from "./handle-image-step";
-import { handlePageStep } from "./handle-page-step";
+import { processStandardWebpage } from "./handle-page-step";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import { checkIfVideoUrl } from "./video.utils";
 
 export const processBookmarkJob = inngest.createFunction(
-  { id: "process-bookmark" },
+  {
+    id: "process-bookmark",
+    concurrency: {
+      key: "event.data.bookmarkId",
+      limit: 1,
+    },
+  },
   { event: "bookmark/process" },
   async ({ event, step, runId, publish }) => {
     const bookmarkId = event.data.bookmarkId;
@@ -138,7 +144,7 @@ export const processBookmarkJob = inngest.createFunction(
     //   }
 
     //   // Process as regular page
-    await handlePageStep(
+    await processStandardWebpage(
       {
         bookmarkId,
         content: urlContent.content,

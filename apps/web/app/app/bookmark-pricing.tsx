@@ -14,6 +14,7 @@ export const BookmarkPricing = () => {
   const plan = useUserPlan();
 
   if (plan.isLoading) return null;
+  if (plan.name !== "free") return null;
 
   return (
     <Card className="w-full p-4 gap-0 overflow-hidden h-[var(--card-height)]">

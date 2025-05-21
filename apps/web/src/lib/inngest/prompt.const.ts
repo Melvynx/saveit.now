@@ -81,3 +81,20 @@ Return only a valid JSON array of strings, each tag in lowercase. Example:
 Never return anything else.
 </output>
 `;
+
+export const IMAGE_ANALYSIS_PROMPT = `<context>
+You are an expert in image analysis. You should make a precise description of the image.
+</context>
+
+<goal>
+Return a precise description of the image.
+</goal>
+
+<input>
+You will receive a screenshot of a webpage. You need to describe it with a precise description and everything you can tell about it.
+</input>
+
+<output>
+Return a precise description of the image.
+</output>
+`;

@@ -47,3 +47,10 @@ export const getFaviconUrl = ($: CheerioAPI, url: string) => {
 
   return faviconUrl;
 };
+
+export const getImageUrlToBase64 = async (url: string) => {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const base64Content = Buffer.from(arrayBuffer).toString("base64");
+  return base64Content;
+};

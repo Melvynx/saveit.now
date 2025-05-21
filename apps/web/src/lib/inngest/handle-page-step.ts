@@ -1,10 +1,12 @@
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
-import { embedMany } from "ai";
+import { embedMany, generateText } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { env } from "../env";
+import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
+import { getImageUrlToBase64 } from "./bookmark.utils";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import {
@@ -13,12 +15,13 @@ import {
   updateBookmark,
 } from "./process-bookmark.utils";
 import {
+  IMAGE_ANALYSIS_PROMPT,
   TAGS_PROMPT,
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
 } from "./prompt.const";
 
-export async function handlePageStep(
+export async function processStandardWebpage(
   context: {
     bookmarkId: string;
     content: string;
@@ -43,6 +46,65 @@ export async function handlePageStep(
     const markdown = turndown.turndown($("body").html() || "");
 
     return markdown.trim();
+  });
+
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "status",
+    data: {
+      data: BOOKMARK_STEP_ID_TO_ID["screenshot"],
+    },
+  });
+
+  const screenshot = await step.run("get-screenshot", async () => {
+    if (context.bookmark.preview) return null;
+    try {
+      const url = new URL(env.SCREENSHOT_WORKER_URL);
+      url.searchParams.set("url", context.url);
+      const image = await fetch(url.toString());
+      const imageBuffer = await image.arrayBuffer();
+      const imageFile = new File([imageBuffer], "screenshot.png", {
+        type: "image/png",
+      });
+
+      const screenshotUrl = await uploadFileToS3({
+        file: imageFile,
+        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        fileName: "screenshot",
+      });
+
+      return screenshotUrl;
+    } catch {
+      return null;
+    }
+  });
+
+  const pageDescription = await step.run("get-page-description", async () => {
+    if (markdown) return markdown;
+
+    if (!screenshot) return null;
+
+    const screenshotBase64 = await getImageUrlToBase64(screenshot);
+
+    const result = await generateText({
+      model: GEMINI_MODELS.cheap,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: IMAGE_ANALYSIS_PROMPT,
+            },
+            {
+              type: "image",
+              image: screenshotBase64,
+            },
+          ],
+        },
+      ],
+    });
+    return result.text;
   });
 
   await publish({
@@ -115,19 +177,19 @@ export async function handlePageStep(
   });
 
   const summary = await step.run("get-summary", async () => {
-    if (!markdown) {
+    if (!pageDescription) {
       return "";
     }
 
-    return await getAISummary(USER_SUMMARY_PROMPT, markdown);
+    return await getAISummary(USER_SUMMARY_PROMPT, pageDescription);
   });
 
   const vectorSummary = await step.run("get-big-summary", async () => {
-    if (!markdown) {
+    if (!pageDescription) {
       return "";
     }
 
-    return await getAISummary(VECTOR_SUMMARY_PROMPT, markdown);
+    return await getAISummary(VECTOR_SUMMARY_PROMPT, pageDescription);
   });
 
   await publish({
@@ -139,42 +201,11 @@ export async function handlePageStep(
   });
 
   const getTags = await step.run("get-tags", async () => {
-    if (!markdown) {
+    if (!vectorSummary) {
       return [];
     }
 
     return await getAITags(TAGS_PROMPT, vectorSummary, context.userId);
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
-    topic: "status",
-    data: {
-      data: BOOKMARK_STEP_ID_TO_ID["screenshot"],
-    },
-  });
-
-  const screenshot = await step.run("get-screenshot", async () => {
-    if (context.bookmark.preview) return null;
-    try {
-      const url = new URL(env.SCREENSHOT_WORKER_URL);
-      url.searchParams.set("url", context.url);
-      const image = await fetch(url.toString());
-      const imageBuffer = await image.arrayBuffer();
-      const imageFile = new File([imageBuffer], "screenshot.png", {
-        type: "image/png",
-      });
-
-      const screenshotUrl = await uploadFileToS3({
-        file: imageFile,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
-        fileName: "screenshot",
-      });
-
-      return screenshotUrl;
-    } catch {
-      return null;
-    }
   });
 
   const images = await step.run("save-screenshot", async () => {
@@ -233,13 +264,15 @@ export async function handlePageStep(
       detailedSummary: vectorSummary,
       summary: summary || "",
       preview: screenshot,
-      faviconUrl: pageMetadata.faviconUrl,
-      ogImageUrl: pageMetadata.ogImageUrl,
+      faviconUrl: images.faviconUrl,
+      ogImageUrl: images.ogImageUrl,
       tags: getTags,
     });
   });
 
   await step.run("update-embedding", async () => {
+    if (!vectorSummary || !summary || !pageMetadata.title) return;
+
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
       values: [vectorSummary || "", summary || "", pageMetadata.title || ""],
