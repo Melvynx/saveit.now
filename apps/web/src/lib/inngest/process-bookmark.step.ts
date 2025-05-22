@@ -39,6 +39,16 @@ export const BOOKMARK_STEPS = [
     name: "Finish",
     order: 8,
   },
+  {
+    id: "transcript-video",
+    name: "Transcript video",
+    order: 9,
+  },
+  {
+    id: "describe-screenshot",
+    name: "Describe screenshot",
+    order: 10,
+  },
 ] as const;
 
 export type BookmarkStepId = (typeof BOOKMARK_STEPS)[number]["id"];

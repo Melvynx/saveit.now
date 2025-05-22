@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { deleteBookmarkAction } from "app/app/bookmark-page/bookmarks.action";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import {
   useBookmarkToken,
 } from "./bookmark-page/use-bookmark";
 import BookmarkProgress from "./bookmark-progress";
+import { DEFAULT_FAVICON } from "./bookmark.default";
 
 export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
@@ -57,10 +59,11 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
       </CardHeader>
       <CardContent className="p-4">
         <div className="flex items-start gap-2">
-          <img
-            src={pageMetadata.data?.faviconUrl ?? ""}
+          <ImageWithPlaceholder
+            src={pageMetadata.data?.faviconUrl ?? DEFAULT_FAVICON}
+            fallbackImage={DEFAULT_FAVICON}
             alt="favicon"
-            className="h-4 w-4"
+            className="size-4"
           />
           <div className="flex flex-col gap-2">
             <CardTitle>{domainName}</CardTitle>

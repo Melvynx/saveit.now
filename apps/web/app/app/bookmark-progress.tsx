@@ -15,10 +15,12 @@ export default function BookmarkProgress({
   const { latestData } = useInngestSubscription({ token });
   const router = useQueryClient();
 
-  const currentStep = BOOKMARK_STEPS.find(
-    (b) => b.id === latestData?.data.data,
-  );
-  const currentStepIdx = currentStep?.order ?? 0;
+  const data = latestData?.data as {
+    id: string;
+    order: number;
+  };
+  const currentStep = BOOKMARK_STEPS.find((b) => b.id === data?.id);
+  const currentStepIdx = data?.order ?? 0;
 
   useEffect(() => {
     if (latestData?.topic === "finish") {
@@ -29,13 +31,12 @@ export default function BookmarkProgress({
   return (
     <div className="flex w-full flex-col items-center justify-center gap-2">
       <div className="flex w-full items-center justify-center gap-2">
-        {BOOKMARK_STEPS.map((step) => {
-          const idx = step.order;
+        {Array.from({ length: 9 }).map((_, idx) => {
           const isActive = idx === currentStepIdx;
           const isCompleted = idx < currentStepIdx;
           return (
             <motion.div
-              key={step.id}
+              key={idx}
               layout
               initial={{ scale: 0.8, opacity: 0.5 }}
               animate={{

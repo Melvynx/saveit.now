@@ -116,6 +116,7 @@ enum BookmarkType {
   PAGE // Page web générique
   POST // Tweet, LinkedIn, Bluesky…
   IMAGE // PNG, JPG, etc.
+  YOUTUBE // YouTube
 }
 
 enum BookmarkStatus {

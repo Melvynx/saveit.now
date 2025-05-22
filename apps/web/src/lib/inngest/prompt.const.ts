@@ -27,6 +27,82 @@ Here are some examples of a PERFECT summary that you SHOULD follow :
 </examples>
 `;
 
+export const IMAGE_SUMMARY_PROMPT = `<context>
+Create a summary of the purpose of the image. This summary will be show in a "bookmarked" image. The user just save this image, and we will create the best short, straight summary for this image.
+</context>
+
+<goal>
+The summary must explain the purpose of the image.
+The summary should NOT explain what is inside the image precisely, but more about what is for.
+</goal>
+
+<input>
+We will give you the description of the image.
+</input>
+
+<output>
+PLAIN TEXT without any formatting. Just that with what is the image for.
+It should be 2-3 sentences maximum.
+Start by "It's..."
+</output>
+
+Here are some examples of a PERFECT summary that you SHOULD follow :
+`;
+
+export const IMAGE_TITLE_PROMPT = `<context>
+You are generating a title for an image. This title will be show in a "bookmarked" image. The user just save this image, and we will create the best short, straight title for this image.
+</context>
+
+<goal>
+The title should be 4-5 words maximum.
+It should describe the image in a way that is easy to understand.
+</goal>
+
+<input>
+We will give you the description of the image.
+</input>
+
+<output>
+Return only the title, 4-5 words maximum, no quotes, no explanation.
+</output>
+`;
+
+export const YOUTUBE_SUMMARY_PROMPT = `<context>
+Create a summary of the purpose of the youtube video. This summary will be show in a "bookmarked" youtube video. The user just save this video, and we will create the best short, straight summary for this video.
+</context>
+
+<goal>
+The summary must explain the purpose of the video.
+The summary should NOT explain what is inside the video precisely, but more about what is for.
+You must create a summary that help the user to search this video.
+</goal>
+
+<input>
+You will receive the transcript of the youtube video.
+</input>
+
+<output>
+Return only the summary, 2-3 sentences maximum.
+</output>
+`;
+
+export const YOUTUBE_VECTOR_SUMMARY_PROMPT = `<context>
+You are generating a short, keyword-rich summary that captures the full purpose of a youtube video. This summary will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
+</context>
+
+<goal>
+Write a dense, 3–4 sentence summary in **English only**, even if the input page is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+Precise WHAT is the purpose of the website. Example : A landing page for selling a courses, for capturing leads... A portfolio, a documentation, a blog...
+</goal>
+
+<input>
+You will receive the transcript of the youtube video.
+</input>
+
+<output>
+Return **only plain text in English** (no formatting). Limit the output to 3–4 sentences, packed with relevant searchable terms.
+</output>`;
+
 export const VECTOR_SUMMARY_PROMPT = `<context>
 You are generating a short, keyword-rich summary that captures the full purpose of a web page. This summary will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
 </context>

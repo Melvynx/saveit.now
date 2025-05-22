@@ -50,9 +50,10 @@ export async function processStandardWebpage(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "status",
+    topic: "finish",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["screenshot"],
+      id: BOOKMARK_STEP_ID_TO_ID["screenshot"],
+      order: 4,
     },
   });
 
@@ -77,6 +78,15 @@ export async function processStandardWebpage(
     } catch {
       return null;
     }
+  });
+
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "finish",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["describe-screenshot"],
+      order: 5,
+    },
   });
 
   const screenshotDescription = await step.run(
@@ -133,7 +143,8 @@ ${screenshotDescription}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["extract-metadata"],
+      id: BOOKMARK_STEP_ID_TO_ID["extract-metadata"],
+      order: 6,
     },
   });
 
@@ -194,7 +205,8 @@ ${screenshotDescription}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["summary-page"],
+      id: BOOKMARK_STEP_ID_TO_ID["summary-page"],
+      order: 7,
     },
   });
 
@@ -218,7 +230,8 @@ ${screenshotDescription}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["find-tags"],
+      id: BOOKMARK_STEP_ID_TO_ID["find-tags"],
+      order: 8,
     },
   });
 
@@ -274,7 +287,8 @@ ${screenshotDescription}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["saving"],
+      id: BOOKMARK_STEP_ID_TO_ID["saving"],
+      order: 9,
     },
   });
 
@@ -318,7 +332,8 @@ ${screenshotDescription}
     channel: `bookmark:${context.bookmarkId}`,
     topic: "finish",
     data: {
-      data: BOOKMARK_STEP_ID_TO_ID["finish"],
+      id: BOOKMARK_STEP_ID_TO_ID["finish"],
+      order: 10,
     },
   });
 }

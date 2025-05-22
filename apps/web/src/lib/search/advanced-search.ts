@@ -1,5 +1,10 @@
 import { OPENAI_MODELS } from "@/lib/openai";
-import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
+import {
+  BookmarkStatus,
+  BookmarkType,
+  prisma,
+  Prisma,
+} from "@workspace/database";
 import { embed } from "ai";
 
 // Types pour les résultats de recherche
@@ -24,6 +29,7 @@ export type SearchResult = {
   matchType: "tag" | "vector" | "combined";
   matchedTags?: string[];
   createdAt?: Date;
+  metadata?: Prisma.JsonValue;
 };
 
 export type SearchResponse = {
@@ -99,6 +105,7 @@ export async function advancedSearch({
         score: 0,
         matchType: "tag" as const,
         createdAt: bookmark.createdAt,
+        metadata: bookmark.metadata,
       })),
       nextCursor,
       hasMore,
@@ -222,6 +229,7 @@ async function searchByTags(
       matchType: "tag" as const,
       matchedTags,
       createdAt: bookmark.createdAt,
+      metadata: bookmark.metadata,
     };
   });
 }
@@ -259,6 +267,7 @@ async function searchByVector(
       distance: number;
       tagNames?: string;
       createdAt: Date;
+      metadata?: Prisma.JsonValue;
     }[]
   >(
     `
@@ -275,6 +284,7 @@ async function searchByVector(
         "ogDescription",
         "faviconUrl",
         "createdAt",
+        metadata,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
           COALESCE("summaryEmbedding" <=> $1::vector, 1),
@@ -294,8 +304,8 @@ async function searchByVector(
     FROM distances d
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
-    WHERE d.distance <= (SELECT min_dist + 0.05 FROM min_distance)
-    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.distance
+    WHERE d.distance <= (SELECT min_dist + 0.1 FROM min_distance)
+    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.distance
     ORDER BY distance ASC
     LIMIT 50
   `,
@@ -331,6 +341,7 @@ async function searchByVector(
       matchType: "vector" as const,
       matchedTags: matchedTags.length > 0 ? matchedTags : undefined,
       createdAt: bookmark.createdAt,
+      metadata: bookmark.metadata,
     };
   });
 }

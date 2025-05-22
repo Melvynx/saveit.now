@@ -30,6 +30,7 @@ export async function getAITags(
   // Create or connect tags for the user
   const results = await Promise.all(
     tagNames.map(async (name) => {
+      if (!name) return null;
       const tag = await prisma.tag.upsert({
         where: {
           userId_name: {
@@ -52,7 +53,7 @@ export async function getAITags(
     }),
   );
 
-  return results;
+  return results.filter((result) => result !== null);
 }
 
 /**

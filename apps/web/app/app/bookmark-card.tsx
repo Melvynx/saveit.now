@@ -1,5 +1,6 @@
 "use client";
 
+import { YouTubeEmbed } from "@next/third-parties/google";
 import { Bookmark } from "@workspace/database";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -13,17 +14,18 @@ import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeh
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import useMeasure from "react-use-measure";
+
 import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
 import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
-
-const DEFAULT_PREVIEW = "/images/default-preview.png";
-const DEFAULT_FAVICON = "/images/default-favicon.png";
+import { DEFAULT_FAVICON, DEFAULT_PREVIEW } from "./bookmark.default";
 
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
   const searchParams = useSearchParams();
   const prefetch = usePrefetchBookmark();
+  const [ref, bounds] = useMeasure();
 
   if (
     props.bookmark.status === "PENDING" ||
@@ -91,6 +93,78 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
               <div className="flex size-6 shrink-0 items-center justify-center rounded border">
                 <ImageWithPlaceholder
                   src={props.bookmark.faviconUrl ?? ""}
+                  fallbackImage={DEFAULT_FAVICON}
+                  alt="favicon"
+                  className="size-4"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <CardTitle>{domainName}</CardTitle>
+                <CardDescription className="line-clamp-1">
+                  {props.bookmark.title}
+                </CardDescription>
+              </div>
+            </div>
+          </CardContent>
+        </Link>
+      </Card>
+    );
+  }
+
+  if (props.bookmark.type === "YOUTUBE") {
+    const metadata = props.bookmark.metadata as { youtubeId: string };
+    return (
+      <Card
+        className="group w-full gap-3 overflow-hidden p-0 h-[var(--card-height)]"
+        onMouseEnter={() => {
+          prefetch(props.bookmark.id);
+        }}
+      >
+        <CardHeader
+          ref={ref}
+          className="relative p-0"
+          style={{
+            height: 176,
+            overflow: "hidden",
+          }}
+        >
+          <YouTubeEmbed videoid={metadata.youtubeId} width={bounds.width} />
+          <div className="absolute right-5 top-5 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="size-8"
+              asChild
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link href={props.bookmark.url} target="_blank">
+                <ExternalLink className="text-muted-foreground size-4" />
+              </Link>
+            </Button>
+            <CopyLinkButton
+              url={props.bookmark.url}
+              variant="secondary"
+              size="icon"
+              className="size-8"
+            />
+          </div>
+        </CardHeader>
+        <Link
+          href={{
+            pathname: "/app",
+            query: {
+              ...Object.fromEntries(searchParams.entries()),
+              b: props.bookmark.id,
+            },
+          }}
+        >
+          <CardContent className="px-4 pb-4">
+            <div className="flex items-start gap-2">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded border">
+                <ImageWithPlaceholder
+                  src={
+                    "https://www.youtube.com/s/desktop/fc303b88/img/logos/favicon_32x32.png"
+                  }
                   fallbackImage={DEFAULT_FAVICON}
                   alt="favicon"
                   className="size-4"

@@ -1,8 +1,9 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { inngest } from "./client";
-import { handleImageStep } from "./handle-image-step";
-import { processStandardWebpage } from "./handle-page-step";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
+import { handleImageStep as processImageBookmark } from "./process-image-bookmark";
+import { processStandardWebpage as processPageBookmark } from "./process-page-bookmark";
+import { processYouTubeBookmark } from "./process-youtube-bookmark";
 import { checkIfVideoUrl } from "./video.utils";
 
 export const processBookmarkJob = inngest.createFunction(
@@ -25,7 +26,8 @@ export const processBookmarkJob = inngest.createFunction(
       channel: `bookmark:${bookmarkId}`,
       topic: "status",
       data: {
-        data: BOOKMARK_STEP_ID_TO_ID["get-bookmark"],
+        id: BOOKMARK_STEP_ID_TO_ID["get-bookmark"],
+        order: 1,
       },
     });
 
@@ -64,7 +66,8 @@ export const processBookmarkJob = inngest.createFunction(
       channel: `bookmark:${bookmarkId}`,
       topic: "status",
       data: {
-        data: BOOKMARK_STEP_ID_TO_ID["scrap-content"],
+        id: BOOKMARK_STEP_ID_TO_ID["scrap-content"],
+        order: 2,
       },
     });
 
@@ -106,45 +109,37 @@ export const processBookmarkJob = inngest.createFunction(
       };
     });
 
-    // Handle direct video files
-    // if (urlContent.type === BookmarkType.VIDEO) {
-    //   await handleVideoStep(
-    //     {
-    //       bookmarkId,
-    //       content: "",
-    //       url: bookmark.url,
-    //       userId: bookmark.userId,
-    //     },
-    //     step
-    //   );
-    //   return;
-    // }
+    if (
+      bookmark.url.includes("youtube.com") ||
+      bookmark.url.includes("youtu.be")
+    ) {
+      await processYouTubeBookmark(
+        {
+          bookmarkId,
+          url: bookmark.url,
+          userId: bookmark.userId,
+          content: urlContent.content,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
 
-    // if (urlContent.type === BookmarkType.PAGE) {
-    //   const $ = cheerio.load(urlContent.content);
+    if (urlContent.type === BookmarkType.IMAGE) {
+      await processImageBookmark(
+        {
+          bookmarkId,
+          url: bookmark.url,
+          userId: bookmark.userId,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
 
-    //   const isArticle =
-    //     $("article").length > 0 ||
-    //     // Check for common article indicators
-    //     $("meta[property='og:type'][content='article']").length > 0 ||
-    //     $("meta[property='article:published_time']").length > 0;
-
-    //   if (isArticle) {
-    //     // Process as article
-    //     await handleArticleStep(
-    //       {
-    //         bookmarkId,
-    //         content: urlContent.content,
-    //         url: bookmark.url,
-    //         userId: bookmark.userId,
-    //       },
-    //       step
-    //     );
-    //     return;
-    //   }
-
-    //   // Process as regular page
-    await processStandardWebpage(
+    await processPageBookmark(
       {
         bookmarkId,
         content: urlContent.content,
@@ -159,17 +154,5 @@ export const processBookmarkJob = inngest.createFunction(
       step,
       publish,
     );
-
-    if (urlContent.type === BookmarkType.IMAGE) {
-      await handleImageStep(
-        {
-          bookmarkId,
-          url: bookmark.url,
-          userId: bookmark.userId,
-        },
-        step,
-      );
-      return;
-    }
   },
 );

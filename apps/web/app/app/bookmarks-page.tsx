@@ -53,10 +53,9 @@ export function BookmarksPage() {
           <>
             {!query && <BookmarkInput />}
             {bookmarks.map((bookmark, i) => {
-              console.log({ query, i });
               if (query && i === 0) {
                 return (
-                  <div className="relative">
+                  <div className="relative" key={bookmark.id}>
                     <Badge
                       variant="outline"
                       className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
