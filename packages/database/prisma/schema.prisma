@@ -146,6 +146,8 @@ model Bookmark {
   detailedSummary          String?
   detailedSummaryEmbedding Unsupported("vector(1536)")?
 
+  imageDescription String?
+
   faviconUrl    String?
   ogImageUrl    String?
   ogDescription String?

@@ -79,33 +79,55 @@ export async function processStandardWebpage(
     }
   });
 
-  const pageDescription = await step.run("get-page-description", async () => {
-    if (markdown) return markdown;
+  const screenshotDescription = await step.run(
+    "get-screenshot-description",
+    async () => {
+      if (!screenshot) return null;
 
-    if (!screenshot) return null;
+      const screenshotBase64 = await getImageUrlToBase64(screenshot);
 
-    const screenshotBase64 = await getImageUrlToBase64(screenshot);
+      const result = await generateText({
+        model: GEMINI_MODELS.cheap,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: IMAGE_ANALYSIS_PROMPT,
+              },
+              {
+                type: "image",
+                image: screenshotBase64,
+              },
+            ],
+          },
+        ],
+      });
+      return result.text;
+    },
+  );
 
-    const result = await generateText({
-      model: GEMINI_MODELS.cheap,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: IMAGE_ANALYSIS_PROMPT,
-            },
-            {
-              type: "image",
-              image: screenshotBase64,
-            },
-          ],
-        },
-      ],
-    });
-    return result.text;
-  });
+  const userInput =
+    markdown || screenshotDescription
+      ? `${
+          markdown
+            ? `Here is the content in markdown of the website :
+<markdown-content>
+${markdown}
+</markdown-content>`
+            : null
+        }
+
+${
+  screenshotDescription
+    ? `Here is the description of the screenshot :
+<screenshot-description>
+${screenshotDescription}
+</screenshot-description>`
+    : null
+}`
+      : null;
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
@@ -177,19 +199,19 @@ export async function processStandardWebpage(
   });
 
   const summary = await step.run("get-summary", async () => {
-    if (!pageDescription) {
+    if (!userInput) {
       return "";
     }
 
-    return await getAISummary(USER_SUMMARY_PROMPT, pageDescription);
+    return await getAISummary(USER_SUMMARY_PROMPT, userInput);
   });
 
   const vectorSummary = await step.run("get-big-summary", async () => {
-    if (!pageDescription) {
+    if (!userInput) {
       return "";
     }
 
-    return await getAISummary(VECTOR_SUMMARY_PROMPT, pageDescription);
+    return await getAISummary(VECTOR_SUMMARY_PROMPT, userInput);
   });
 
   await publish({
@@ -267,6 +289,7 @@ export async function processStandardWebpage(
       faviconUrl: images.faviconUrl,
       ogImageUrl: images.ogImageUrl,
       tags: getTags,
+      imageDescription: screenshotDescription,
     });
   });
 

@@ -131,6 +131,7 @@ export async function updateBookmark(params: {
   faviconUrl?: string | null;
   ogImageUrl?: string | null;
   ogDescription?: string | null;
+  imageDescription?: string | null;
 }) {
   return await prisma.bookmark.update({
     where: { id: params.bookmarkId },
@@ -141,6 +142,7 @@ export async function updateBookmark(params: {
       faviconUrl: params.faviconUrl,
       ogImageUrl: params.ogImageUrl,
       ogDescription: params.ogDescription,
+      imageDescription: params.imageDescription,
       summary: params.summary || "",
       preview: params.preview,
       status: params.status || BookmarkStatus.READY,
