@@ -5,7 +5,7 @@ const maxWidthContainerVariants = cva("mx-auto max-w-5xl px-4 w-full", {
   variants: {
     spacing: {
       default: "",
-      sm: "my-8",
+      sm: "py-8 lg:py-12 xl:py-24",
     },
   },
   defaultVariants: {

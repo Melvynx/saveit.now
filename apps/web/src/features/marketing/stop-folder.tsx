@@ -9,7 +9,7 @@ export const StopFolder = () => {
         <Typography variant="h2">Embrass the mess.</Typography>
         <Typography variant="lead">And say goodbye to folder</Typography>
       </div>
-      <div className="w-full flex flex-row gap-4">
+      <div className="w-full flex flex-col lg:flex-row gap-4">
         <div className="flex-1 flex flex-col border rounded-lg p-4">
           <Typography variant="h3">
             Organizing into folder ? For what ?

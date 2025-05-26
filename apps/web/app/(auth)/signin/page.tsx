@@ -71,8 +71,11 @@ export default function SignInPage() {
   };
 
   return (
-    <MaxWidthContainer className="flex h-full w-full flex-row gap-8 lg:my-12 lg:gap-12 xl:my-24">
-      <div className="ml-auto flex flex-1 flex-col gap-6">
+    <MaxWidthContainer
+      spacing="sm"
+      className="flex h-full w-full min-h-fit items-start flex-col lg:flex-row gap-8 lg:gap-12"
+    >
+      <div className="ml-auto flex lg:flex-1 flex-col gap-6">
         <Typography variant="h2" className="font-bold">
           Never lose an important link again.
         </Typography>
@@ -80,7 +83,7 @@ export default function SignInPage() {
           Save it now—find it in seconds, whether it’s an article, video, post,
           or tool.
         </Typography>
-        <ul className="flex flex-col gap-4">
+        <ul className="hidden lg:flex flex-col gap-4">
           <li className="flex items-start gap-2">
             <span className="text-lg">⚡</span>
             <div>
@@ -141,7 +144,7 @@ export default function SignInPage() {
           </li>
         </ul>
       </div>
-      <Card className="mx-auto h-fit flex-1">
+      <Card className="mx-auto h-fit flex-1 @container w-full">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
           <CardDescription>
@@ -181,9 +184,9 @@ export default function SignInPage() {
             <span className="text-muted-foreground text-xs">Or</span>
           </div>
 
-          <div className="justify- flex items-center gap-2">
-            <SignInWith type="github" />
-            <SignInWith type="google" />
+          <div className="@sm:flex-row flex-col flex items-center gap-2">
+            <SignInWith className="w-full" type="github" />
+            <SignInWith className="w-full" type="google" />
           </div>
         </CardContent>
       </Card>

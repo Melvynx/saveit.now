@@ -5,6 +5,7 @@ import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LoadingButton } from "../form/loading-button";
+import { cn } from "@workspace/ui/lib/utils";
 
 type OAuthProvider = "github" | "google";
 
@@ -13,7 +14,10 @@ const IconMap: Record<OAuthProvider, string> = {
   google: "google.svg",
 };
 
-export const SignInWith = (props: { type: OAuthProvider }) => {
+export const SignInWith = (props: {
+  type: OAuthProvider;
+  className?: string;
+}) => {
   const mutation = useMutation({
     mutationFn: () => {
       return unwrapSafePromise(
@@ -34,7 +38,7 @@ export const SignInWith = (props: { type: OAuthProvider }) => {
   return (
     <LoadingButton
       disabled={mutation.isPending}
-      className="flex-1"
+      className={cn("flex-1", props.className)}
       variant="outline"
       onClick={() => {
         mutation.mutate();
