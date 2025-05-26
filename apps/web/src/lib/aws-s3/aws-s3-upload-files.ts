@@ -1,4 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import mime from "mime-types";
 import { env } from "../env";
 import { s3 } from "./aws-s3-client";
 
@@ -29,4 +30,41 @@ export async function uploadFileToS3(params: {
   }
 
   return `${env.R2_URL}/${uniqueFileName}`;
+}
+
+/**
+ * Upload a file from a URL directly to S3
+ */
+export async function uploadFileFromURLToS3(params: {
+  url: string;
+  prefix: string;
+  fileName: string;
+}): Promise<string | null> {
+  try {
+    const response = await fetch(params.url);
+    if (!response.ok) {
+      console.error(`Failed to fetch URL: ${params.url}`);
+      return null;
+    }
+
+    const contentType =
+      response.headers.get("content-type") || "application/octet-stream";
+    const fileExtension = mime.extension(contentType) || "bin";
+    const buffer = await response.arrayBuffer();
+
+    const uniqueFileName = `${params.prefix}/${params.fileName}.${fileExtension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: uniqueFileName,
+      Body: Buffer.from(buffer),
+      ContentType: contentType,
+    });
+
+    await s3.send(command);
+    return `${env.R2_URL}/${uniqueFileName}`;
+  } catch (error) {
+    console.error(`Error uploading file from URL: ${params.url}`, error);
+    return null;
+  }
 }

@@ -164,6 +164,8 @@ You are an expert in image analysis. You should make a precise description of th
 
 <goal>
 Return a precise description of the image.
+
+Important : if the image is invalid, call the tool "invalid-image" with the reason.
 </goal>
 
 <input>

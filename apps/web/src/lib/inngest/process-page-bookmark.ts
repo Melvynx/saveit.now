@@ -1,8 +1,9 @@
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateText } from "ai";
+import { embedMany, generateText, tool } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
-import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
+import { z } from "zod";
+import { uploadFileFromURLToS3 } from "../aws-s3/aws-s3-upload-files";
 import { env } from "../env";
 import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
@@ -56,88 +57,6 @@ export async function processStandardWebpage(
       order: 4,
     },
   });
-
-  const screenshot = await step.run("get-screenshot", async () => {
-    if (context.bookmark.preview) return context.bookmark.preview;
-    try {
-      const url = new URL(env.SCREENSHOT_WORKER_URL);
-      url.searchParams.set("url", context.url);
-      const image = await fetch(url.toString());
-      const imageBuffer = await image.arrayBuffer();
-      const imageFile = new File([imageBuffer], "screenshot.png", {
-        type: "image/png",
-      });
-
-      const screenshotUrl = await uploadFileToS3({
-        file: imageFile,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
-        fileName: "screenshot",
-      });
-
-      return screenshotUrl;
-    } catch {
-      return null;
-    }
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
-    data: {
-      id: BOOKMARK_STEP_ID_TO_ID["describe-screenshot"],
-      order: 5,
-    },
-  });
-
-  const screenshotDescription = await step.run(
-    "get-screenshot-description",
-    async () => {
-      if (!screenshot) return null;
-
-      const screenshotBase64 = await getImageUrlToBase64(screenshot);
-
-      const result = await generateText({
-        model: GEMINI_MODELS.cheap,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: IMAGE_ANALYSIS_PROMPT,
-              },
-              {
-                type: "image",
-                image: screenshotBase64,
-              },
-            ],
-          },
-        ],
-      });
-      return result.text;
-    },
-  );
-
-  const userInput =
-    markdown || screenshotDescription
-      ? `${
-          markdown
-            ? `Here is the content in markdown of the website :
-<markdown-content>
-${markdown}
-</markdown-content>`
-            : null
-        }
-
-${
-  screenshotDescription
-    ? `Here is the description of the screenshot :
-<screenshot-description>
-${screenshotDescription}
-</screenshot-description>`
-    : null
-}`
-      : null;
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
@@ -201,6 +120,107 @@ ${screenshotDescription}
     };
   });
 
+  const screenshot = await step.run("get-screenshot", async () => {
+    if (context.bookmark.preview) return context.bookmark.preview;
+    try {
+      const url = new URL(env.SCREENSHOT_WORKER_URL);
+      url.searchParams.set("url", context.url);
+
+      const screenshotUrl = await uploadFileFromURLToS3({
+        url: url.toString(),
+        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        fileName: "screenshot",
+      });
+
+      // Vérifier si la capture d'écran est utilisable (pas noire ou trop petite)
+      if (screenshotUrl) {
+        console.log(
+          `Screenshot for ${context.url} is unusable (too dark or small)`,
+        );
+        return null;
+      }
+
+      return screenshotUrl;
+    } catch {
+      return null;
+    }
+  });
+
+  const screenshotUrl = screenshot ?? pageMetadata.ogImageUrl;
+
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "finish",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["describe-screenshot"],
+      order: 5,
+    },
+  });
+
+  const screenshotDescription = await step.run(
+    "get-screenshot-description",
+    async () => {
+      if (!screenshotUrl) return null;
+
+      const screenshotBase64 = await getImageUrlToBase64(screenshotUrl);
+
+      const result = await generateText({
+        model: GEMINI_MODELS.cheap,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: IMAGE_ANALYSIS_PROMPT,
+              },
+              {
+                type: "image",
+                image: screenshotBase64,
+              },
+            ],
+          },
+        ],
+        tools: {
+          "invalid-image": tool({
+            description: "The image is black, invalid, you see nothing on it.",
+            parameters: z.object({
+              reason: z.string(),
+            }),
+          }),
+        },
+        toolChoice: "auto",
+      });
+
+      if (result.toolCalls?.[0]?.toolName === "invalid-image") {
+        return null;
+      }
+
+      return result.text;
+    },
+  );
+
+  const userInput =
+    markdown || screenshotDescription
+      ? `${
+          markdown
+            ? `Here is the content in markdown of the website :
+<markdown-content>
+${markdown}
+</markdown-content>`
+            : null
+        }
+
+${
+  screenshotDescription
+    ? `Here is the description of the screenshot :
+<screenshot-description>
+${screenshotDescription}
+</screenshot-description>`
+    : null
+}`
+      : null;
+
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
@@ -250,34 +270,29 @@ ${screenshotDescription}
     };
 
     if (pageMetadata.ogImageUrl) {
-      const fetchOgImage = await fetch(pageMetadata.ogImageUrl);
-      const ogImageBuffer = await fetchOgImage.arrayBuffer();
-      const ogImageFile = new File([ogImageBuffer], "og-image.jpg", {
-        type: "image/png",
-      });
-
-      const ogImageUrl = await uploadFileToS3({
-        file: ogImageFile,
+      const ogImageUrl = await uploadFileFromURLToS3({
+        url: pageMetadata.ogImageUrl,
         prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
         fileName: "og-image",
       });
-      result.ogImageUrl = ogImageUrl;
+
+      // Vérifier si l'image OG est utilisable
+      if (ogImageUrl) {
+        result.ogImageUrl = ogImageUrl;
+      } else if (ogImageUrl) {
+        console.log(
+          `OG Image for ${context.url} is unusable (too dark or small)`,
+        );
+      }
     }
 
     if (pageMetadata.faviconUrl) {
-      const fetchFavicon = await fetch(pageMetadata.faviconUrl);
-      const faviconBuffer = await fetchFavicon.arrayBuffer();
-      const faviconFile = new File([faviconBuffer], "favicon.png", {
-        type: "image/png",
-      });
-
-      const faviconUrl = await uploadFileToS3({
-        file: faviconFile,
+      const faviconUrl = await uploadFileFromURLToS3({
+        url: pageMetadata.faviconUrl,
         prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
         fileName: "favicon",
       });
-
-      result.faviconUrl = faviconUrl;
+      result.faviconUrl = faviconUrl || undefined;
     }
 
     return result;
@@ -299,11 +314,14 @@ ${screenshotDescription}
       title: pageMetadata.title,
       detailedSummary: vectorSummary,
       summary: summary || "",
-      preview: screenshot,
+      preview: screenshotDescription ? screenshot : images.ogImageUrl,
       faviconUrl: images.faviconUrl,
       ogImageUrl: images.ogImageUrl,
       tags: getTags,
-      imageDescription: screenshotDescription,
+      imageDescription:
+        typeof screenshotDescription === "string"
+          ? screenshotDescription
+          : null,
     });
   });
 
