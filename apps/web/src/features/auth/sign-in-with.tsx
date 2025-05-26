@@ -3,9 +3,9 @@
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
+import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
 import { LoadingButton } from "../form/loading-button";
-import { cn } from "@workspace/ui/lib/utils";
 
 type OAuthProvider = "github" | "google";
 
@@ -37,7 +37,7 @@ export const SignInWith = (props: {
 
   return (
     <LoadingButton
-      disabled={mutation.isPending}
+      loading={mutation.isPending}
       className={cn("flex-1", props.className)}
       variant="outline"
       onClick={() => {

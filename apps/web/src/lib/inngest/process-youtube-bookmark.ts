@@ -1,7 +1,7 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import * as cheerio from "cheerio";
-import { YoutubeTranscript } from "youtube-transcript";
+import { Innertube } from "youtubei.js";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
 import { OPENAI_MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
@@ -53,14 +53,34 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Analyze the image using OpenAI Vision
+  // Get the transcript using Innertube
   const transcript = await step.run("get-transcript", async () => {
-    const transcript: TranscriptEntry[] =
-      await YoutubeTranscript.fetchTranscript(youtubeId);
-    return transcript.map((t) => t.text).join(" ");
-  });
+    try {
+      // Create Innertube instance
+      const youtube = await Innertube.create({
+        lang: "en",
+        location: "US",
+        retrieve_player: false,
+      });
 
-  // Generate a title for the image
+      // Get video info and transcript
+      const info = await youtube.getInfo(youtubeId);
+      const transcriptData = await info.getTranscript();
+
+      // Extract transcript text
+      if (!transcriptData?.transcript?.content?.body?.initial_segments) {
+        throw new Error("No transcript segments found");
+      }
+
+      // Map segments to text and join with spaces
+      return transcriptData.transcript.content.body.initial_segments
+        .map((segment) => segment.snippet.text)
+        .join(" ");
+    } catch (error) {
+      console.error("Error fetching transcript:", error);
+      throw error;
+    }
+  });
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,

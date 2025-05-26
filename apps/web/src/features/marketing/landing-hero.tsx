@@ -8,7 +8,7 @@ export const LandingHero = () => {
       style={{
         // @ts-expect-error Doesn't care
         "--box-color": "color-mix(in srgb, var(--border) 30%, transparent)",
-        "min-height": "min(1000px, 100dvh)",
+        "min-height": "min(800px, 100dvh)",
       }}
       className="bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30"
     >
@@ -82,8 +82,31 @@ export const LandingHero = () => {
             </li>
           </ul>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col gap-4">
           <BookmarkInputLanding />
+          <div
+            style={{
+              position: "relative",
+              paddingBottom: "56.25%",
+              height: "0",
+              borderRadius: "12px",
+              overflow: "hidden",
+            }}
+          >
+            <iframe
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                border: "0",
+              }}
+              src="https://www.tella.tv/video/cmb4nsi2h00000bl10w833n83/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
+              allowFullScreen
+              allowTransparency
+            ></iframe>
+          </div>
         </div>
       </MaxWidthContainer>
     </div>
