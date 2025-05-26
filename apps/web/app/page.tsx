@@ -1,3 +1,4 @@
+import { KeyFeatures } from "@/features/marketing/key-features";
 import { LandingHero } from "@/features/marketing/landing-hero";
 import { StopFolder } from "@/features/marketing/stop-folder";
 import { Footer } from "@/features/page/footer";
@@ -8,6 +9,7 @@ export default function Home() {
     <div>
       <Header />
       <LandingHero />
+      <KeyFeatures />
       <StopFolder />
       <Footer />
     </div>
