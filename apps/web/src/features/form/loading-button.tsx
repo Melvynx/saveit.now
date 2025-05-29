@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, ButtonProps } from "@workspace/ui/components/button";
+import { Loader } from "@workspace/ui/components/loader";
 import { cn } from "@workspace/ui/lib/utils";
-import { Loader } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentPropsWithoutRef } from "react";
 import { useFormStatus } from "react-dom";

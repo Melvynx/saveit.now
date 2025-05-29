@@ -21,6 +21,8 @@ import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
 import { DEFAULT_FAVICON, DEFAULT_PREVIEW } from "./bookmark.default";
 
+const HEADER_HEIGHT = 180;
+
 export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
   const searchParams = useSearchParams();
@@ -37,12 +39,18 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
   if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
     return (
       <Card
-        className="group w-full gap-3 overflow-hidden p-0 h-[var(--card-height)]"
+        className="group w-full gap-4 overflow-hidden p-0 h-[var(--card-height)]"
         onMouseEnter={() => {
           prefetch(props.bookmark.id);
         }}
       >
-        <CardHeader className="relative p-0">
+        <CardHeader
+          className="relative p-0 rounded-xl border"
+          style={{
+            height: HEADER_HEIGHT,
+            overflow: "hidden",
+          }}
+        >
           <Link
             href={{
               pathname: "/app",
@@ -55,7 +63,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
               fallbackImage={props.bookmark.ogImageUrl ?? DEFAULT_PREVIEW}
-              className="h-44 w-full rounded-xl border object-cover object-top"
+              className="h-full w-full object-cover object-top"
               alt={props.bookmark.title ?? "Preview"}
             />
           </Link>
@@ -115,16 +123,15 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
     const metadata = props.bookmark.metadata as { youtubeId: string };
     return (
       <Card
-        className="group w-full gap-3 overflow-hidden p-0 h-[var(--card-height)]"
+        className="group w-full gap-4 overflow-hidden p-0 h-[var(--card-height)]"
         onMouseEnter={() => {
           prefetch(props.bookmark.id);
         }}
       >
         <CardHeader
-          ref={ref}
-          className="relative p-0"
+          className="relative p-0 rounded-xl border"
           style={{
-            height: 176,
+            height: HEADER_HEIGHT,
             overflow: "hidden",
           }}
         >

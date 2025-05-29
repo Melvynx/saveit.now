@@ -1,7 +1,9 @@
+import { useDebounce } from "@/hooks/use-debounce";
 import { upfetch } from "@/lib/up-fetch";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
-import { URL_SCHEMA } from "./schema";
+import { useSearchParams } from "next/navigation";
+import { z } from "zod";
 
 export const useRefreshBookmarks = () => {
   const queryClient = useQueryClient();
@@ -15,49 +17,40 @@ export const useRefreshBookmarks = () => {
   return refresh;
 };
 
-export const useBookmarks = (query: string) => {
+const URL_SCHEMA = z.string().url();
+
+export const useBookmarks = () => {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("query") ?? "";
+  const matchingDistance = parseFloat(
+    searchParams.get("matchingDistance") ?? "0.1",
+  );
+  const debouncedQuery = useDebounce(query);
+
+  // Use debouncedQuery for the actual search, fallback to query if not provided
+  const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
+
   const data = useInfiniteQuery({
-    queryKey: ["bookmarks", query],
+    queryKey: ["bookmarks", searchQuery, matchingDistance],
     refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
-      if (URL_SCHEMA.safeParse(query).success) {
+      if (URL_SCHEMA.safeParse(searchQuery).success) {
         return {
           bookmarks: [],
           hasMore: false,
         };
       }
 
+      console.log("fetching bookmarks", searchQuery, matchingDistance);
+
       const result = await upfetch("/api/bookmarks", {
         params: {
-          query,
+          query: searchQuery,
           limit: 20,
           cursor: pageParam || undefined,
+          matchingDistance,
         },
-        // schema: z.object({
-        //   bookmarks: z.array(
-        //     z.object({
-        //       id: z.string(),
-        //       url: z.string().url(),
-        //       title: z.string().nullable(),
-        //       summary: z.string().nullable(),
-        //       preview: z.string().nullable(),
-        //       type: z.enum(["PAGE", "BLOG"]),
-        //       status: z.enum(["READY", "PENDING", "PROCESSING", "ERROR"]),
-        //       ogImageUrl: z.string().nullable(),
-        //       ogDescription: z.string().nullable(),
-        //       faviconUrl: z.string().nullable(),
-        //       score: z.number().nullable().optional(),
-        //       matchType: z
-        //         .enum(["tag", "vector", "combined"])
-        //         .nullable()
-        //         .optional()
-        //         .catch("combined"),
-        //       createdAt: z.coerce.date(),
-        //     }),
-        //   ),
-        //   hasMore: z.boolean(),
-        // }),
       });
 
       const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
@@ -80,5 +73,41 @@ export const useBookmarks = (query: string) => {
   return {
     ...data,
     bookmarks,
+    query,
+    matchingDistance,
   };
+};
+
+export const usePrefetchBookmarks = () => {
+  const queryClient = useQueryClient();
+
+  const prefetch = (query: string, matchingDistance: number) => {
+    return queryClient.prefetchInfiniteQuery({
+      queryKey: ["bookmarks", query, matchingDistance],
+      getNextPageParam: () => {
+        return undefined;
+      },
+      initialPageParam: "",
+      queryFn: async () => {
+        console.log("prefetching bookmarks", query, matchingDistance);
+
+        const result = await upfetch("/api/bookmarks", {
+          params: {
+            query,
+            limit: 20,
+            cursor: undefined,
+            matchingDistance,
+          },
+        });
+
+        console.log("prefetching bookmarks", result);
+
+        const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
+
+        return json;
+      },
+    });
+  };
+
+  return prefetch;
 };

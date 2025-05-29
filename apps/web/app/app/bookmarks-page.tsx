@@ -1,28 +1,24 @@
 import { LoadMore } from "@/components/load-more";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { BookmarkCard } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
 import { BookmarkInput } from "./bookmark-input";
 import { BookmarkPricing } from "./bookmark-pricing";
+import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
 
 export function BookmarksPage() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get("query") ?? "";
-  const debounceQuery = useDebounce(query);
-
   const {
     bookmarks,
     isPending,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useBookmarks(debounceQuery);
+    query,
+  } = useBookmarks();
 
   return (
     <div
@@ -42,7 +38,7 @@ export function BookmarksPage() {
       >
         {isPending ? (
           <>
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
               <Skeleton
                 key={i}
                 className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
@@ -71,6 +67,7 @@ export function BookmarksPage() {
               return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
             })}
             {!query && <BookmarkPricing />}
+            {query && <MoreResultsButton />}
           </>
         )}
       </div>

@@ -44,6 +44,19 @@ type SearchOptions = {
   tags?: string[];
   limit?: number;
   cursor?: string;
+  matchingDistance?: number;
+};
+
+type SearchByVectorOptions = {
+  userId: string;
+  embedding: number[];
+  tags: string[];
+  matchingDistance: number;
+};
+
+type SearchByTagsOptions = {
+  userId: string;
+  tags: string[];
 };
 
 /**
@@ -55,6 +68,7 @@ export async function advancedSearch({
   tags = [],
   limit = 20,
   cursor,
+  matchingDistance = 0.1,
 }: SearchOptions): Promise<SearchResponse> {
   // Si aucune requête de recherche et pas de tags, retourner simplement par ordre de création
   if ((!query || query.trim() === "") && (!tags || tags.length === 0)) {
@@ -117,7 +131,7 @@ export async function advancedSearch({
 
   // Niveau 1: Recherche par tags si des tags sont fournis
   if (tags && tags.length > 0) {
-    const tagResults = await searchByTags(userId, tags);
+    const tagResults = await searchByTags({ userId, tags });
     for (const result of tagResults) {
       resultMap.set(result.id, {
         ...result,
@@ -135,7 +149,12 @@ export async function advancedSearch({
         value: query.trim(),
       });
 
-      const vectorResults = await searchByVector(userId, embedding, tags || []);
+      const vectorResults = await searchByVector({
+        userId,
+        embedding,
+        tags: tags || [],
+        matchingDistance,
+      });
       for (const result of vectorResults) {
         if (resultMap.has(result.id)) {
           const existing = resultMap.get(result.id)!;
@@ -178,10 +197,10 @@ export async function advancedSearch({
   };
 }
 
-async function searchByTags(
-  userId: string,
-  tags: string[],
-): Promise<SearchResult[]> {
+async function searchByTags({
+  userId,
+  tags,
+}: SearchByTagsOptions): Promise<SearchResult[]> {
   if (!tags || tags.length === 0) return [];
 
   const bookmarks = await prisma.bookmark.findMany({
@@ -234,11 +253,12 @@ async function searchByTags(
   });
 }
 
-async function searchByVector(
-  userId: string,
-  embedding: number[],
-  tags: string[],
-): Promise<SearchResult[]> {
+async function searchByVector({
+  userId,
+  embedding,
+  tags,
+  matchingDistance,
+}: SearchByVectorOptions): Promise<SearchResult[]> {
   let tagsCondition = "";
   let tagsParams: any[] = [];
 
@@ -247,7 +267,7 @@ async function searchByVector(
       SELECT 1 FROM "BookmarkTag" bt
       JOIN "Tag" t ON bt."tagId" = t.id
       WHERE bt."bookmarkId" = b.id
-      AND t.name IN (${tags.map((_, i) => `$${i + 3}`).join(",")})
+      AND t.name IN (${tags.map((_, i) => `$${i + 4}`).join(",")})
     )`;
     tagsParams = tags;
   }
@@ -304,13 +324,14 @@ async function searchByVector(
     FROM distances d
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
-    WHERE d.distance <= (SELECT min_dist + 0.1 FROM min_distance)
+    WHERE d.distance <= (SELECT min_dist + $3 FROM min_distance)
     GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.distance
     ORDER BY distance ASC
     LIMIT 50
   `,
     embedding,
     userId,
+    matchingDistance,
     ...tagsParams,
   );
 

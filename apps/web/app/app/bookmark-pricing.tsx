@@ -2,6 +2,7 @@ import { useUserPlan } from "@/lib/auth/user-plan";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -27,7 +28,7 @@ export const BookmarkPricing = () => {
           One simple plan that cover <b>all your needs.</b>
         </CardDescription>
       </CardHeader>
-      <CardDescription className="flex flex-row gap-2 px-0 pb-4">
+      <CardContent className="flex flex-row gap-2 px-0 pb-4">
         <ul className="flex flex-col gap-2 flex-2">
           <li className="flex items-center gap-2">
             <Infinity className="text-primary size-4" />
@@ -57,7 +58,7 @@ export const BookmarkPricing = () => {
             /month
           </Typography>
         </div>
-      </CardDescription>
+      </CardContent>
       <CardFooter className="p-0 mt-auto">
         <Button size="sm" className="w-full">
           Upgrade

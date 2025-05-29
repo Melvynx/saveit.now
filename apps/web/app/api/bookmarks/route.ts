@@ -32,6 +32,7 @@ export const GET = userRoute
       tags: z.array(z.string()).optional(),
       cursor: z.string().optional(),
       limit: z.coerce.number().min(1).max(50).optional(),
+      matchingDistance: z.coerce.number().min(0.1).max(2).optional(),
     }),
   )
   .handler(async (req, { ctx, query }) => {
@@ -41,6 +42,7 @@ export const GET = userRoute
       tags: query.tags || [],
       limit: query.limit || 20,
       cursor: query.cursor,
+      matchingDistance: query.matchingDistance || 0.1,
     });
 
     return searchResults;
