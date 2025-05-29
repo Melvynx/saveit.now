@@ -26,7 +26,10 @@
         "GOOGLE_CLIENT_SECRET",
         "R2_URL",
         "STRIPE_PRO_MONTHLY_PRICE_ID",
-        "STRIPE_PRO_YEARLY_PRICE_ID"
+        "STRIPE_PRO_YEARLY_PRICE_ID",
+        "VERCEL_PROJECT_PRODUCTION_URL",
+        "VERCEL_URL",
+        "PLAYWRIGHT_TEST_BASE_URL"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

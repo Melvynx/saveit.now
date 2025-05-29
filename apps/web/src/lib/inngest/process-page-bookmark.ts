@@ -120,7 +120,7 @@ export async function processStandardWebpage(
     };
   });
 
-  const screenshot = await step.run("get-screenshot", async () => {
+  const screenshot = await step.run("get-screenshot-v2", async () => {
     if (context.bookmark.preview) return context.bookmark.preview;
     try {
       const url = new URL(env.SCREENSHOT_WORKER_URL);
