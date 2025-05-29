@@ -1,9 +1,11 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
-import * as cheerio from "cheerio";
-import { Innertube } from "youtubei.js";
+import { z } from "zod";
 import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
+import { env } from "../env";
 import { OPENAI_MODELS } from "../openai";
+import { getServerUrl } from "../server-url";
+import { upfetch } from "../up-fetch";
 import { InngestPublish, InngestStep } from "./inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import {
@@ -17,18 +19,19 @@ import {
   YOUTUBE_VECTOR_SUMMARY_PROMPT,
 } from "./prompt.const";
 
-interface TranscriptEntry {
-  text: string;
-  duration: number;
-  offset: number;
-}
-
 function getVideoId(url: string): string {
   const regex =
     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
   if (!match) throw new Error("Invalid YouTube URL");
   return match[1] || "";
+}
+
+// Define a transcript segment interface that matches the actual API response
+interface TranscriptSegment {
+  text: string;
+  duration: number;
+  offset: number;
 }
 
 export async function processYouTubeBookmark(
@@ -41,7 +44,6 @@ export async function processYouTubeBookmark(
   step: InngestStep,
   publish: InngestPublish,
 ): Promise<void> {
-  // Convert ArrayBuffer to Base64 for OpenAI Vision API
   const youtubeId = getVideoId(context.url);
 
   await publish({
@@ -53,33 +55,19 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Get the transcript using Innertube
-  const transcript = await step.run("get-transcript", async () => {
-    try {
-      // Create Innertube instance
-      const youtube = await Innertube.create({
-        lang: "en",
-        location: "US",
-        retrieve_player: false,
-      });
-
-      // Get video info and transcript
-      const info = await youtube.getInfo(youtubeId);
-      const transcriptData = await info.getTranscript();
-
-      // Extract transcript text
-      if (!transcriptData?.transcript?.content?.body?.initial_segments) {
-        throw new Error("No transcript segments found");
-      }
-
-      // Map segments to text and join with spaces
-      return transcriptData.transcript.content.body.initial_segments
-        .map((segment) => segment.snippet.text)
-        .join(" ");
-    } catch (error) {
-      console.error("Error fetching transcript:", error);
-      throw error;
-    }
+  // Get video info including title, thumbnails, and other metadata
+  const videoInfo = await step.run("get-video-info", async () => {
+    const data = await upfetch(
+      `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
+      {
+        schema: z.object({
+          title: z.string(),
+          thumbnail: z.string(),
+          transcript: z.string().optional(),
+        }),
+      },
+    );
+    return data;
   });
 
   await publish({
@@ -91,59 +79,6 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Extract the page title
-  const pageMetadata = await step.run("extract-page-metadata", async () => {
-    const $ = cheerio.load(context.content);
-
-    // Try to get the title from common meta tags first, then fallback to the <title> tag
-    const title =
-      $("meta[property='og:title']").attr("content") ||
-      $("meta[name='twitter:title']").attr("content") ||
-      $("title").text() ||
-      new URL(context.url).hostname; // Fallback to the domain name if no title is found
-
-    // Find favicon in order of preference
-    const faviconSelectors = [
-      "link[rel='icon'][sizes='32x32']",
-      "link[rel='shortcut icon']",
-      "link[rel='icon']",
-      "link[rel='apple-touch-icon']",
-      "link[rel='apple-touch-icon-precomposed']",
-    ];
-
-    let faviconUrl = null;
-    for (const selector of faviconSelectors) {
-      const iconHref = $(selector).attr("href");
-      if (iconHref) {
-        faviconUrl = iconHref.startsWith("http")
-          ? iconHref
-          : `${new URL(context.url).origin}${iconHref}`;
-        break;
-      }
-    }
-
-    // If no favicon found, try the default /favicon.ico
-    if (!faviconUrl) {
-      faviconUrl = `${new URL(context.url).origin}/favicon.ico`;
-    }
-
-    const ogImageHref = $("meta[property='og:image']").attr("content");
-    const ogImageUrl = ogImageHref
-      ? ogImageHref.startsWith("http")
-        ? ogImageHref
-        : `${new URL(context.url).origin}${ogImageHref}`
-      : null;
-    const ogDescription =
-      $("meta[property='og:description']").attr("content") || null;
-
-    return {
-      title: title.trim(),
-      faviconUrl,
-      ogImageUrl,
-      ogDescription,
-    };
-  });
-
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
@@ -153,13 +88,22 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Generate a summary of the image
+  // Generate a summary of the transcript
   const summary = await step.run("get-summary", async () => {
-    return await getAISummary(YOUTUBE_SUMMARY_PROMPT, transcript);
+    if (!videoInfo.transcript) {
+      return "";
+    }
+    return await getAISummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
   });
 
   const vectorSummary = await step.run("get-vector-summary", async () => {
-    return await getAISummary(YOUTUBE_VECTOR_SUMMARY_PROMPT, transcript);
+    if (!videoInfo.transcript) {
+      return "";
+    }
+    return await getAISummary(
+      YOUTUBE_VECTOR_SUMMARY_PROMPT,
+      videoInfo.transcript,
+    );
   });
 
   await publish({
@@ -171,7 +115,7 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Generate tags for the image
+  // Generate tags for the video
   const tags = await step.run("get-tags", async () => {
     console.log({ userId: context.userId, summary });
     return await getAITags(TAGS_PROMPT, summary, context.userId);
@@ -187,23 +131,25 @@ export async function processYouTubeBookmark(
   });
 
   const images = await step.run("save-screenshot", async () => {
-    const result = {} as {
-      ogImageUrl?: string;
-    };
+    const result: { ogImageUrl?: string } = {};
 
-    if (pageMetadata.ogImageUrl) {
-      const fetchOgImage = await fetch(pageMetadata.ogImageUrl);
-      const ogImageBuffer = await fetchOgImage.arrayBuffer();
-      const ogImageFile = new File([ogImageBuffer], "og-image.jpg", {
-        type: "image/png",
-      });
+    if (videoInfo.thumbnail) {
+      try {
+        const fetchOgImage = await fetch(videoInfo.thumbnail);
+        const ogImageBuffer = await fetchOgImage.arrayBuffer();
+        const ogImageFile = new File([ogImageBuffer], "og-image.jpg", {
+          type: "image/png",
+        });
 
-      const ogImageUrl = await uploadFileToS3({
-        file: ogImageFile,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
-        fileName: "og-image",
-      });
-      result.ogImageUrl = ogImageUrl;
+        const ogImageUrl = await uploadFileToS3({
+          file: ogImageFile,
+          prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+          fileName: "og-image",
+        });
+        result.ogImageUrl = ogImageUrl;
+      } catch (error) {
+        console.error("Error saving thumbnail:", error);
+      }
     }
 
     return result;
@@ -223,9 +169,10 @@ export async function processYouTubeBookmark(
     await updateBookmark({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.YOUTUBE,
-      title: pageMetadata.title,
+      title: videoInfo.title,
       summary: summary || "",
       preview: images.ogImageUrl,
+      faviconUrl: `${getServerUrl()}/favicon/youtube.svg`,
       tags: tags,
       metadata: {
         youtubeId,
@@ -236,7 +183,7 @@ export async function processYouTubeBookmark(
   await step.run("update-embedding", async () => {
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
-      values: [pageMetadata.title, summary, vectorSummary],
+      values: [videoInfo.title, summary, vectorSummary],
     });
     const [titleEmbedding, summaryEmbedding, vectorSummaryEmbedding] =
       embedding.embeddings;

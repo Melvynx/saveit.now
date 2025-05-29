@@ -42,11 +42,11 @@ function copyFiles(source, target) {
 // Compile TypeScript files
 async function compileTypeScript() {
   try {
+    // Build background and popup with ESM format
     await build({
       entryPoints: [
         path.join(srcDir, "popup.ts"),
         path.join(srcDir, "background.ts"),
-        path.join(srcDir, "content.ts"),
       ],
       bundle: true,
       outdir: targetDir,
@@ -56,6 +56,19 @@ async function compileTypeScript() {
       target: "es2020",
       loader: { ".ts": "ts" },
     });
+
+    // Build content script with IIFE format to avoid export token issues
+    await build({
+      entryPoints: [path.join(srcDir, "content.ts")],
+      bundle: true,
+      outdir: targetDir,
+      platform: "browser",
+      minify: true,
+      format: "iife", // Use IIFE format for content scripts
+      target: "es2020",
+      loader: { ".ts": "ts" },
+    });
+
     console.log("TypeScript files compiled successfully!");
     return true;
   } catch (error) {

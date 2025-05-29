@@ -133,7 +133,7 @@ export async function processStandardWebpage(
       });
 
       // Vérifier si la capture d'écran est utilisable (pas noire ou trop petite)
-      if (screenshotUrl) {
+      if (!screenshotUrl) {
         console.log(
           `Screenshot for ${context.url} is unusable (too dark or small)`,
         );
