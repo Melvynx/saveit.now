@@ -8,7 +8,7 @@ import { checkIfVideoUrl } from "./video.utils";
 
 export const processBookmarkJob = inngest.createFunction(
   {
-    id: "process-bookmark",
+    id: "process-bookmark-2",
     concurrency: {
       key: "event.data.bookmarkId",
       limit: 1,
