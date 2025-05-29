@@ -171,12 +171,6 @@ importers:
       up-fetch:
         specifier: ^2.1.2
         version: 2.1.2
-      youtube-transcript:
-        specifier: ^1.2.1
-        version: 1.2.1
-      youtubei.js:
-        specifier: ^13.4.0
-        version: 13.4.0
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -235,6 +229,12 @@ importers:
       playwright-core:
         specifier: ^1.42.1
         version: 1.52.0
+      youtube-transcript:
+        specifier: ^1.2.1
+        version: 1.2.1
+      youtubei.js:
+        specifier: ^13.4.0
+        version: 13.4.0
     devDependencies:
       '@cloudflare/playwright':
         specifier: ^0.0.10
