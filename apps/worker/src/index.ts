@@ -17,7 +17,7 @@ interface YouTubeMetadata {
   transcript?: string;
 }
 
-const QUALITY = 1.5;
+const QUALITY = 1;
 
 export default {
   async fetch(request, env, ctx): Promise<any> {
