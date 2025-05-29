@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
+import { BookmarkFavicon } from "../bookmark-favicon";
 import {
   BackButton,
   CopyLinkButton,
@@ -71,10 +72,9 @@ export function BookmarkPage() {
           <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
             <div className="flex items-start gap-2 p-4">
               <div className="flex size-8 items-center justify-center rounded border">
-                <img
-                  src={bookmark.faviconUrl ?? ""}
-                  alt="favicon"
-                  className="size-5"
+                <BookmarkFavicon
+                  faviconUrl={bookmark.faviconUrl ?? undefined}
+                  bookmarkType={bookmark.type}
                 />
               </div>
               <div className="flex flex-col gap-1">

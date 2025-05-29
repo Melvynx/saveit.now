@@ -20,6 +20,7 @@ import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
 import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
 import { DEFAULT_FAVICON, DEFAULT_PREVIEW } from "./bookmark.default";
+import { BookmarkFavicon } from "./bookmark-favicon";
 
 const HEADER_HEIGHT = 180;
 
@@ -168,13 +169,9 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           <CardContent className="px-4 pb-4">
             <div className="flex items-start gap-2">
               <div className="flex size-6 shrink-0 items-center justify-center rounded border">
-                <ImageWithPlaceholder
-                  src={
-                    "https://www.youtube.com/s/desktop/fc303b88/img/logos/favicon_32x32.png"
-                  }
-                  fallbackImage={DEFAULT_FAVICON}
-                  alt="favicon"
-                  className="size-4"
+                <BookmarkFavicon
+                  faviconUrl={props.bookmark.faviconUrl}
+                  bookmarkType={props.bookmark.type}
                 />
               </div>
               <div className="flex flex-col gap-2">

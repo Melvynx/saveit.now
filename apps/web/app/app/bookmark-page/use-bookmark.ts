@@ -1,5 +1,6 @@
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BookmarkType } from "@workspace/database";
 import { z } from "zod";
 
 export const fetchBookmark = async (bookmarkId: string) => {
@@ -13,6 +14,7 @@ export const fetchBookmark = async (bookmarkId: string) => {
         summary: z.string().optional().nullable(),
         preview: z.string().optional().nullable(),
         ogImageUrl: z.string().optional().nullable(),
+        type: z.nativeEnum(BookmarkType),
         tags: z.array(
           z.object({
             tag: z.object({
