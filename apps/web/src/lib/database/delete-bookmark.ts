@@ -10,7 +10,7 @@ export const deleteBookmark = async (body: { id: string; userId: string }) => {
   });
 
   await deleteFileFromS3({
-    key: `saveit/users/${body.userId}/bookmarks/${body.id}`,
+    key: `users/${body.userId}/bookmarks/${body.id}`,
   });
 
   return bookmark;

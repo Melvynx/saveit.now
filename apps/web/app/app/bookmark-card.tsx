@@ -16,11 +16,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import useMeasure from "react-use-measure";
 
+import { BookmarkFavicon } from "./bookmark-favicon";
 import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
 import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
 import { BookmarkPending } from "./bookmark-pending";
-import { DEFAULT_FAVICON, DEFAULT_PREVIEW } from "./bookmark.default";
-import { BookmarkFavicon } from "./bookmark-favicon";
+import { DEFAULT_PREVIEW } from "./bookmark.default";
 
 const HEADER_HEIGHT = 180;
 
@@ -37,7 +37,12 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
     return <BookmarkPending bookmark={props.bookmark} />;
   }
 
-  if (props.bookmark.type === "PAGE" || props.bookmark.type === "BLOG") {
+  if (
+    props.bookmark.type &&
+    ["PAGE", "BLOG", "IMAGE"].includes(props.bookmark.type)
+  ) {
+    const metadata = props.bookmark.metadata as any;
+    const isVerticalImage = metadata?.width < metadata?.height;
     return (
       <Card
         className="group w-full gap-4 overflow-hidden p-0 h-[var(--card-height)]"
@@ -51,6 +56,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
             height: HEADER_HEIGHT,
             overflow: "hidden",
           }}
+          ref={ref}
         >
           <Link
             href={{
@@ -64,8 +70,19 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
             <ImageWithPlaceholder
               src={props.bookmark.preview ?? ""}
               fallbackImage={props.bookmark.ogImageUrl ?? DEFAULT_PREVIEW}
-              className="h-full w-full object-cover object-top"
+              className="h-full w-full object-cover object-center mx-auto"
               alt={props.bookmark.title ?? "Preview"}
+              style={
+                props.bookmark.type === "IMAGE"
+                  ? {
+                      width: isVerticalImage ? bounds.width : "auto",
+                      height: isVerticalImage ? "auto" : bounds.height,
+                    }
+                  : {
+                      width: bounds.width,
+                      height: bounds.height,
+                    }
+              }
             />
           </Link>
           <div className="absolute right-5 top-5 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -100,11 +117,9 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           <CardContent className="px-4 pb-4">
             <div className="flex items-start gap-2">
               <div className="flex size-6 shrink-0 items-center justify-center rounded border">
-                <ImageWithPlaceholder
-                  src={props.bookmark.faviconUrl ?? ""}
-                  fallbackImage={DEFAULT_FAVICON}
-                  alt="favicon"
-                  className="size-4"
+                <BookmarkFavicon
+                  faviconUrl={props.bookmark.faviconUrl}
+                  bookmarkType={props.bookmark.type}
                 />
               </div>
               <div className="flex flex-col gap-2">

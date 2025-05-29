@@ -143,7 +143,7 @@ export async function processYouTubeBookmark(
 
         const ogImageUrl = await uploadFileToS3({
           file: ogImageFile,
-          prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+          prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
           fileName: "og-image",
         });
         result.ogImageUrl = ogImageUrl;

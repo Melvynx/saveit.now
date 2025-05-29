@@ -1,5 +1,6 @@
 import { BookmarkType } from "@workspace/database";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
+import { Image } from "lucide-react";
 import { DEFAULT_FAVICON } from "./bookmark.default";
 
 export type BookmarkFaviconProps = {
@@ -15,6 +16,10 @@ export const BookmarkFavicon = (props: BookmarkFaviconProps) => {
 
     return props.faviconUrl ?? "";
   };
+
+  if (props.bookmarkType === "IMAGE") {
+    return <Image className="size-4" />;
+  }
 
   return (
     <ImageWithPlaceholder

@@ -128,7 +128,7 @@ export async function processStandardWebpage(
 
       const screenshotUrl = await uploadFileFromURLToS3({
         url: url.toString(),
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
         fileName: "screenshot",
       });
 
@@ -272,7 +272,7 @@ ${screenshotDescription}
     if (pageMetadata.ogImageUrl) {
       const ogImageUrl = await uploadFileFromURLToS3({
         url: pageMetadata.ogImageUrl,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
         fileName: "og-image",
       });
 
@@ -289,7 +289,7 @@ ${screenshotDescription}
     if (pageMetadata.faviconUrl) {
       const faviconUrl = await uploadFileFromURLToS3({
         url: pageMetadata.faviconUrl,
-        prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
+        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
         fileName: "favicon",
       });
       result.faviconUrl = faviconUrl || undefined;

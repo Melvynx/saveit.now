@@ -1,6 +1,7 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany, generateText } from "ai";
-import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
+import sharp from "sharp";
+import { uploadFileFromURLToS3 } from "../aws-s3/aws-s3-upload-files";
 import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
 import { InngestPublish, InngestStep } from "./inngest.utils";
@@ -27,12 +28,18 @@ export async function handleImageStep(
   publish: InngestPublish,
 ): Promise<void> {
   // Convert ArrayBuffer to Base64 for OpenAI Vision API
-  const base64Content = await step.run("get-base64-content", async () => {
-    const response = await fetch(context.url);
-    const arrayBuffer = await response.arrayBuffer();
-    const base64Content = Buffer.from(arrayBuffer).toString("base64");
-    return base64Content;
-  });
+  const { base64Content, metadata } = await step.run(
+    "get-base64-content",
+    async () => {
+      const response = await fetch(context.url);
+      const buffer = await response.arrayBuffer();
+      const metadata = await sharp(buffer).metadata();
+      const { width, height } = metadata;
+
+      const base64Content = Buffer.from(buffer).toString("base64");
+      return { base64Content, metadata: { width, height } };
+    },
+  );
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
@@ -100,19 +107,24 @@ export async function handleImageStep(
 
   // Generate tags for the image
   const tags = await step.run("get-tags", async () => {
-    return await getAITags(TAGS_PROMPT, context.userId, summary);
+    try {
+      return await getAITags(TAGS_PROMPT, context.userId, summary);
+    } catch (error) {
+      console.error(
+        "Error generating tags for image bookmark",
+        context.bookmarkId,
+        error,
+      );
+      return null;
+    }
   });
 
   // Save the image to S3
   const saveImage = await step.run("save-image", async () => {
-    const file = new File([base64Content], "image.png", {
-      type: "image/png", // Assuming PNG, but this should be determined from the actual content type
-    });
-
-    const imageUrl = await uploadFileToS3({
-      file: file,
-      prefix: `saveit/users/${context.userId}/bookmarks/${context.bookmarkId}`,
-      fileName: `preview.png`,
+    const imageUrl = await uploadFileFromURLToS3({
+      url: context.url,
+      prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
+      fileName: `preview`,
     });
 
     return imageUrl;
@@ -135,7 +147,8 @@ export async function handleImageStep(
       title: title,
       summary: summary || "",
       preview: saveImage,
-      tags: tags,
+      tags: tags ?? [],
+      metadata: metadata,
     });
   });
 
