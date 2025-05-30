@@ -1,5 +1,6 @@
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
+import { APP_LINKS } from "@/lib/app-links";
 import {
   Card,
   CardDescription,
@@ -22,7 +23,7 @@ export default async function RouteLayout(props: { children: ReactNode }) {
           </CardDescription>
         </CardHeader>
         <CardFooter>
-          <Link href="/signin">Sign in</Link>
+          <Link href={APP_LINKS.signin}>Sign in</Link>
         </CardFooter>
       </Card>
       <Footer />

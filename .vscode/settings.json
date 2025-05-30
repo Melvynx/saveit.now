@@ -1,4 +1,4 @@
 {
   "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css",
-  "cSpell.words": ["MYBROWSER"]
+  "cSpell.words": ["MYBROWSER", "Retriable"]
 }

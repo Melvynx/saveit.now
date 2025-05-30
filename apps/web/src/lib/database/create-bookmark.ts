@@ -1,23 +1,13 @@
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
 import { getUserLimits } from "../auth-session";
-import { ApplicationError } from "../errors";
+import { ApplicationError, BookmarkErrorType } from "../errors";
 import { inngest } from "../inngest/client";
 
-const BookmarkErrorType = {
-  MAX_BOOKMARKS: "MAX_BOOKMARKS",
-  BOOKMARK_ALREADY_EXISTS: "BOOKMARK_ALREADY_EXISTS",
-} as const;
-
-type BookmarkErrorType =
-  (typeof BookmarkErrorType)[keyof typeof BookmarkErrorType];
-
 export class BookmarkCreationError extends ApplicationError {
-  type: BookmarkErrorType;
-  constructor(message: string, type: BookmarkErrorType) {
-    super(message);
+  constructor(message: string, type: string) {
+    super(message, type);
     this.name = "BookmarkCreationError";
-    this.type = type;
   }
 }
 

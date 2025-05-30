@@ -1,3 +1,4 @@
+import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
@@ -29,7 +30,7 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
       </Button>
       {plan.name === "free" && (
         <Link
-          href="/upgrade"
+          href={APP_LINKS.upgrade}
           className={buttonVariants({ size: "sm", variant: "secondary" })}
         >
           Upgrade

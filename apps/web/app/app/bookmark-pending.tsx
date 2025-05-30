@@ -1,8 +1,9 @@
 "use client";
 
+import { LoadingButton } from "@/features/form/loading-button";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
-import { Button } from "@workspace/ui/components/button";
+import { ButtonProps } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -19,6 +20,7 @@ import {
   useBookmarkToken,
 } from "./bookmark-page/use-bookmark";
 import BookmarkProgress from "./bookmark-progress";
+import { useRefreshBookmarks } from "./use-bookmarks";
 
 export const BookmarkPending = (props: { bookmark: Bookmark }) => {
   const domainName = new URL(props.bookmark.url).hostname;
@@ -43,17 +45,7 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
           ) : (
             <p>Loading...</p>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              deleteAction.execute({
-                bookmarkId: props.bookmark.id,
-              })
-            }
-          >
-            Stop
-          </Button>
+          <DeleteButtonAction bookmarkId={props.bookmark.id} />
         </div>
       </CardHeader>
       <CardContent className="p-4">
@@ -71,5 +63,34 @@ export const BookmarkPending = (props: { bookmark: Bookmark }) => {
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+export const DeleteButtonAction = ({
+  bookmarkId,
+  ...props
+}: ButtonProps & { bookmarkId: string }) => {
+  const refreshBookmarks = useRefreshBookmarks();
+  const deleteAction = useAction(deleteBookmarkAction, {
+    onSuccess: () => {
+      toast.success("Bookmark deleted");
+      void refreshBookmarks();
+    },
+  });
+
+  return (
+    <LoadingButton
+      loading={deleteAction.isExecuting}
+      variant="ghost"
+      size="sm"
+      onClick={() =>
+        deleteAction.execute({
+          bookmarkId,
+        })
+      }
+      {...props}
+    >
+      {props.children ?? "Stop"}
+    </LoadingButton>
   );
 };

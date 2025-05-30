@@ -5,16 +5,16 @@ import { ApplicationError, SafeActionError } from "./errors";
 export const action = createSafeActionClient({
   handleServerError: (error) => {
     if (error instanceof SafeActionError) {
-      return error.message;
+      return { message: error.message };
     }
 
     if (error instanceof ApplicationError) {
-      return error.message;
+      return { message: error.message, type: error.type };
     }
 
     console.error(error);
 
-    return "An unexpected error occurred";
+    return { message: "An unexpected error occurred" };
   },
 });
 

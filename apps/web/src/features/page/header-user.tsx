@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_LINKS } from "@/lib/app-links";
 import { useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
@@ -56,7 +57,7 @@ export const HeaderUser = () => {
             variant: "outline",
             className: "font-inter",
           })}
-          href="/signin"
+          href={APP_LINKS.signin}
         >
           Sign In
         </Link>

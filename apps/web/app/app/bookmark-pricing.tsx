@@ -1,5 +1,6 @@
+import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
-import { Button } from "@workspace/ui/components/button";
+import { buttonVariants } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { FileUp, Gem, Heart, Infinity, Phone } from "lucide-react";
+import Link from "next/link";
 
 export const BookmarkPricing = () => {
   const plan = useUserPlan();
@@ -60,9 +62,12 @@ export const BookmarkPricing = () => {
         </div>
       </CardContent>
       <CardFooter className="p-0 mt-auto">
-        <Button size="sm" className="w-full">
+        <Link
+          href={APP_LINKS.upgrade}
+          className={buttonVariants({ size: "sm", className: "w-full" })}
+        >
           Upgrade
-        </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
