@@ -1,8 +1,7 @@
 "use server";
 
-import { inngest } from "@/lib/inngest/client";
+import { createBookmark } from "@/lib/database/create-bookmark";
 import { userAction } from "@/lib/safe-action";
-import { prisma } from "@workspace/database";
 import { z } from "zod";
 
 const URL_REGEX =
@@ -21,19 +20,9 @@ export const importBookmarksAction = userAction
     const bookmarks = await Promise.all(
       uniqueUrls.map(async (url) => {
         try {
-          const bookmark = await prisma.bookmark.create({
-            data: {
-              url,
-              userId: user.id,
-            },
-          });
-
-          await inngest.send({
-            name: "bookmark/process",
-            data: {
-              bookmarkId: bookmark.id,
-              userId: user.id,
-            },
+          const bookmark = await createBookmark({
+            url,
+            userId: user.id,
           });
 
           return bookmark;
