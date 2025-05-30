@@ -116,6 +116,7 @@ export const reBookmarkAction = userAction
       name: "bookmark/process",
       data: {
         bookmarkId: bookmark.id,
+        userId: user.id,
       },
     });
 

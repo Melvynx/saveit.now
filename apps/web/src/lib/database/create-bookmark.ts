@@ -69,6 +69,7 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
     name: "bookmark/process",
     data: {
       bookmarkId: bookmark.id,
+      userId: body.userId,
     },
   });
 
