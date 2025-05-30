@@ -38,7 +38,7 @@ export default function ImportPage() {
     },
     onError: ({ error }) => {
       if (error.serverError) {
-        toast.error(error.serverError);
+        toast.error(error.serverError.message);
       } else if (error.validationErrors?._errors) {
         toast.error(error.validationErrors._errors.join(", "));
       }
