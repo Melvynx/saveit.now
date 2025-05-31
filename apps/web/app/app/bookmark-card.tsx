@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import useMeasure from "react-use-measure";
 
+import { Input } from "@workspace/ui/components/input";
 import { BookmarkFavicon } from "./bookmark-favicon";
 import { CopyLinkButton } from "./bookmark-page/bookmark-actions-button";
 import { usePrefetchBookmark } from "./bookmark-page/use-bookmark";
@@ -51,6 +52,7 @@ export const BookmarkCard = (props: { bookmark: Bookmark }) => {
           <DeleteButtonAction bookmarkId={props.bookmark.id}>
             Delete
           </DeleteButtonAction>
+          <Input type="text" value={props.bookmark.url} className="max-w-xs" />
         </CardHeader>
         <Link
           href={{

@@ -61,7 +61,7 @@ export const StopFolder = () => {
             height: "100%",
             border: 0,
           }}
-          src="https://www.tella.tv/video/cmaxmmrly000b0bla9y100tf2/embed?b=0&title=1&a=1&loop=0&t=0&muted=0&wt=0"
+          src="https://www.tella.tv/video/cmbbtucsq00000bl78kz905hf/embed?b=0&title=1&a=1&loop=0&t=0&muted=0&wt=0"
           allowFullScreen
           allowTransparency
         />

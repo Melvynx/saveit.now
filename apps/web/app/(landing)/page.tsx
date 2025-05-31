@@ -1,21 +1,3 @@
-import { FAQ } from "@/features/marketing/faq";
-import { KeyFeatures } from "@/features/marketing/key-features";
-import { LandingHero } from "@/features/marketing/landing-hero";
-import { LandingPricing } from "@/features/marketing/landing-pricing";
-import { StopFolder } from "@/features/marketing/stop-folder";
-import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
+import LandingPage from "./landing/page";
 
-export default function Home() {
-  return (
-    <div>
-      <Header />
-      <LandingHero />
-      <KeyFeatures />
-      <StopFolder />
-      <LandingPricing />
-      <FAQ />
-      <Footer />
-    </div>
-  );
-}
+export default LandingPage;

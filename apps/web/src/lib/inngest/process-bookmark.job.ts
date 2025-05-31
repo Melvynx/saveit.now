@@ -5,7 +5,6 @@ import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 import { handleImageStep as processImageBookmark } from "./process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./process-page-bookmark";
 import { processYouTubeBookmark } from "./process-youtube-bookmark";
-import { checkIfVideoUrl } from "./video.utils";
 
 export const processBookmarkJob = inngest.createFunction(
   {
@@ -71,20 +70,6 @@ export const processBookmarkJob = inngest.createFunction(
       throw new Error("Bookmark not found");
     }
 
-    // Check if URL is a video platform before fetching content
-    const isVideoUrl = checkIfVideoUrl(bookmark.url);
-    if (isVideoUrl) {
-      // await handleVideoStep(
-      //   {
-      //     bookmarkId,
-      //     content: "",
-      //     url: bookmark.url,
-      //     userId: bookmark.userId,
-      //   },
-      //   step
-      // );
-    }
-
     await publish({
       channel: `bookmark:${bookmarkId}`,
       topic: "status",
@@ -97,6 +82,7 @@ export const processBookmarkJob = inngest.createFunction(
     const urlContent = await step.run("get-url-content", async () => {
       try {
         const response = await fetch(bookmark.url);
+        console.log(response);
         if (!response.ok) {
           throw new Error("No response");
         }
@@ -126,13 +112,15 @@ export const processBookmarkJob = inngest.createFunction(
           // We don't need to fetch the content for direct video files
         }
 
-        return {
+        const result = {
           ok: response.ok,
           status: response.status,
           headers,
           content,
           type,
         };
+
+        return result;
       } catch (error) {
         throw new NonRetriableError(
           `Failed to fetch ${bookmark.url}: ${error}`,
