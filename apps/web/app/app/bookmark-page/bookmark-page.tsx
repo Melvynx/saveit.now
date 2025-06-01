@@ -4,6 +4,7 @@ import { Card } from "@workspace/ui/components/card";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Loader } from "@workspace/ui/components/loader";
+import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Typography } from "@workspace/ui/components/typography";
 import {
   ExternalLink,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
+import { useHotkeys } from "react-hotkeys-hook";
+import { toast } from "sonner";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import {
   BackButton,
@@ -30,6 +33,23 @@ export function BookmarkPage() {
 
   const bookmark = query.data?.bookmark;
 
+  useHotkeys("c", () => {
+    // copy
+    if (!bookmark) return;
+    window.navigator.clipboard.writeText(bookmark.url);
+    toast.success("Copied to clipboard");
+  });
+
+  useHotkeys("o", () => {
+    if (!bookmark) return;
+    window.open(bookmark.url, "_blank");
+  });
+
+  useHotkeys("x", () => {
+    if (!bookmark) return;
+    setBookmarkId(null);
+  });
+
   if (!bookmarkId) {
     return null;
   }
@@ -43,8 +63,6 @@ export function BookmarkPage() {
       </Dialog>
     );
   }
-
-  const domainName = new URL(bookmark.url).hostname;
 
   return (
     <Dialog open={true} onOpenChange={() => setBookmarkId(null)} key="view">
@@ -63,7 +81,10 @@ export function BookmarkPage() {
               <ExternalLink className="text-muted-foreground size-4" />
             </Link>
           </Button>
-          <CopyLinkButton url={bookmark.url} />
+
+          <InlineTooltip title="Copy Link (⌘C)">
+            <CopyLinkButton url={bookmark.url} />
+          </InlineTooltip>
 
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
@@ -78,7 +99,9 @@ export function BookmarkPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Typography variant="large">{domainName}</Typography>
+                <Typography as={Link} href={bookmark.url} variant="large">
+                  {bookmark.url}
+                </Typography>
                 <Typography variant="muted">{bookmark.title}</Typography>
               </div>
             </div>
@@ -123,14 +146,15 @@ export function BookmarkPage() {
         </main>
         <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
-
           <DeleteButton bookmarkId={bookmark.id} />
-          <Button variant="default" asChild>
-            <Link href={bookmark.url} target="_blank">
-              <ExternalLink className="size-4" />
-              <span>Open</span>
-            </Link>
-          </Button>
+          <InlineTooltip title="Open (O)">
+            <Button variant="default" asChild>
+              <Link href={bookmark.url} target="_blank">
+                <ExternalLink className="size-4" />
+                <span>Open</span>
+              </Link>
+            </Button>
+          </InlineTooltip>
         </footer>
       </DialogContent>
     </Dialog>

@@ -3,6 +3,13 @@ import { useUserPlan } from "@/lib/auth/user-plan";
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import { FileDownIcon, Menu } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
@@ -36,6 +43,20 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
           Upgrade
         </Link>
       )}
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Button variant="outline" size="sm">
+            <Menu className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem asChild>
+            <Link href={APP_LINKS.imports}>
+              <FileDownIcon className="size-4 mr-2" /> Imports
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

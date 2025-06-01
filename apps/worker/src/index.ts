@@ -57,14 +57,18 @@ const handleScreenshot: ExportedHandler<Env>["fetch"] = async (
       await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
       // Hide scrollbar
       await page.evaluate(() => {
-        const html = document.querySelector("html");
-        if (html) {
-          html.style.overflow = "hidden";
+        try {
+          const html = document.querySelector("html");
+          if (html) {
+            html.style.overflow = "hidden";
+          }
+          // Use createElement instead of insertAdjacentHTML to avoid TrustedHTML error
+          const style = document.createElement("style");
+          style.textContent = "::-webkit-scrollbar { display: none; }";
+          document.head.appendChild(style);
+        } catch (error) {
+          console.error("Error hiding scrollbar:", error);
         }
-        document.head.insertAdjacentHTML(
-          "beforeend",
-          "<style>::-webkit-scrollbar { display: none; }</style>",
-        );
       });
       img = (await page.screenshot()) as Buffer;
       await env.SAVEIT_KV.put(url, img, {

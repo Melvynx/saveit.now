@@ -48,6 +48,7 @@
     "posthog-node": "^4.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hotkeys-hook": "^5.1.0",
     "react-router": "^7.6.0",
     "react-use-measure": "^2.1.7",
     "resend": "^4.5.1",

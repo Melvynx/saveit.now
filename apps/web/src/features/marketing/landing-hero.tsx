@@ -1,3 +1,4 @@
+import { Badge } from "@workspace/ui/components/badge";
 import { Typography } from "@workspace/ui/components/typography";
 import { MaxWidthContainer } from "../page/page";
 import { BookmarkInputLanding } from "./bookmark-input-landing";
@@ -14,6 +15,7 @@ export const LandingHero = () => {
     >
       <MaxWidthContainer className="w-full my-12 lg:my-24 flex flex-col lg:flex-row gap-8 lg:gap-12">
         <div className="ml-auto flex flex-1 flex-col gap-6">
+          <Badge>Beta</Badge>
           <Typography variant="h2" className="font-bold">
             Never lose an important link again.
           </Typography>

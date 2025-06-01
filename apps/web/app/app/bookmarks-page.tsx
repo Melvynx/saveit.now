@@ -1,8 +1,8 @@
-import { LoadMore } from "@/components/load-more";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
 import { BookmarkCard } from "./bookmark-card";
+import { BookmarkCardLoadMore } from "./bookmark-card/bookmark-card-load-more";
 import { BookmarkHeader } from "./bookmark-header";
 import { BookmarkInput } from "./bookmark-input";
 import { BookmarkPricing } from "./bookmark-pricing";
@@ -68,14 +68,16 @@ export function BookmarksPage() {
             })}
             {!query && <BookmarkPricing />}
             {query && <MoreResultsButton />}
+            {!query && (
+              <BookmarkCardLoadMore
+                loadNextPage={() => fetchNextPage()}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
+            )}
           </>
         )}
       </div>
-      <LoadMore
-        loadNextPage={() => fetchNextPage()}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-      />
     </div>
   );
 }
