@@ -43,7 +43,9 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
 export { BookmarkCardBase } from "./bookmark-card-base";
 export { BookmarkCardError } from "./bookmark-card-error";
 export { BookmarkCardImage } from "./bookmark-card-image";
+export { BookmarkCardInput } from "./bookmark-card-input";
 export { BookmarkCardLoadMore } from "./bookmark-card-load-more";
 export { BookmarkCardPage } from "./bookmark-card-page";
 export { BookmarkCardPending } from "./bookmark-card-pending";
+export { BookmarkCardPricing } from "./bookmark-card-pricing";
 export { BookmarkCardYouTube } from "./bookmark-card-youtube";

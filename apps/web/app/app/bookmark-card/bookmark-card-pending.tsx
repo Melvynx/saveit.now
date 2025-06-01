@@ -2,12 +2,17 @@
 
 import { Bookmark } from "@workspace/database";
 
+import { LoadingButton } from "@/features/form/loading-button";
+import { ButtonProps } from "@workspace/ui/components/button";
+import { useAction } from "next-safe-action/hooks";
+import { toast } from "sonner";
+import { deleteBookmarkAction } from "../bookmark-page/bookmarks.action";
 import {
   useBookmarkMetadata,
   useBookmarkToken,
 } from "../bookmark-page/use-bookmark";
-import { DeleteButtonAction } from "../bookmark-pending";
 import BookmarkProgress from "../bookmark-progress";
+import { useRefreshBookmarks } from "../use-bookmarks";
 import {
   BookmarkCardContainer,
   BookmarkCardContent,
@@ -45,5 +50,34 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
         </BookmarkCardDescription>
       </BookmarkCardContent>
     </BookmarkCardContainer>
+  );
+};
+
+export const DeleteButtonAction = ({
+  bookmarkId,
+  ...props
+}: ButtonProps & { bookmarkId: string }) => {
+  const refreshBookmarks = useRefreshBookmarks();
+  const deleteAction = useAction(deleteBookmarkAction, {
+    onSuccess: () => {
+      toast.success("Bookmark deleted");
+      void refreshBookmarks();
+    },
+  });
+
+  return (
+    <LoadingButton
+      loading={deleteAction.isExecuting}
+      variant="ghost"
+      size="sm"
+      onClick={() =>
+        deleteAction.execute({
+          bookmarkId,
+        })
+      }
+      {...props}
+    >
+      {props.children ?? "Stop"}
+    </LoadingButton>
   );
 };

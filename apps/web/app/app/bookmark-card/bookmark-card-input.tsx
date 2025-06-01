@@ -1,36 +1,46 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { URL_SCHEMA } from "./schema";
-import { useCreateBookmarkAction } from "./use-create-bookmark";
 
-export const BookmarkInput = () => {
+import {
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { URL_SCHEMA } from "../schema";
+import { useCreateBookmarkAction } from "../use-create-bookmark";
+import { BookmarkCardContainer } from "./bookmark-card-base";
+
+export const BookmarkCardInput = () => {
   const [url, setUrl] = useState("");
 
   const action = useCreateBookmarkAction({
     onSuccess: () => {
       toast.success("Bookmark added");
-
       setUrl("");
     },
   });
+
   const isUrl = URL_SCHEMA.safeParse(url).success;
 
+  // Mock bookmark object for the container
+  const mockBookmark = {
+    id: "input",
+    url: "https://example.com",
+    faviconUrl: null,
+    type: "PAGE" as const,
+  };
+
   return (
-    <Card className="w-full p-4 gap-0 overflow-hidden h-[var(--card-height)]">
-      <CardHeader className="pb-4 px-0">
+    <BookmarkCardContainer bookmark={mockBookmark as any}>
+      <CardHeader className="pt-6">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />
           <CardTitle>Add a bookmark</CardTitle>
@@ -56,7 +66,8 @@ export const BookmarkInput = () => {
           ) : null}
         </div>
       </CardHeader>
-      <CardDescription className="flex flex-col gap-2">
+
+      <CardFooter className="flex flex-col gap-2 border-t">
         <Typography variant="muted">
           Looking for quickly add a bookmark? Install our browser extension.
         </Typography>
@@ -77,7 +88,7 @@ export const BookmarkInput = () => {
             />
           </Link>
         </div>
-      </CardDescription>
-    </Card>
+      </CardFooter>
+    </BookmarkCardContainer>
   );
 };

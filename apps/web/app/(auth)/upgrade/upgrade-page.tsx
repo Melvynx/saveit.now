@@ -4,6 +4,7 @@ import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
 import { authClient } from "@/lib/auth-client";
+import { useUserPlan } from "@/lib/auth/user-plan";
 import { useMutation } from "@tanstack/react-query";
 import {
   Alert,
@@ -21,7 +22,15 @@ import {
 } from "@workspace/ui/components/card";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
-import { AlertTriangle, FileUp, Heart, Infinity, Phone } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleAlert,
+  FileUp,
+  Heart,
+  Infinity,
+  Phone,
+} from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -30,6 +39,7 @@ export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const plan = useUserPlan();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -131,13 +141,24 @@ export function UpgradePage() {
                 <span>Support of a creator</span>
               </li>
             </ul>
-            <LoadingButton
-              loading={mutation.isPending}
-              onClick={() => mutation.mutate()}
-              className="w-full"
-            >
-              Upgrade
-            </LoadingButton>
+            {plan.name === "free" ? (
+              <LoadingButton
+                loading={mutation.isPending}
+                onClick={() => mutation.mutate()}
+                className="w-full"
+              >
+                Upgrade
+              </LoadingButton>
+            ) : (
+              <Alert variant="default">
+                <CircleAlert className="size-4" />
+                <AlertTitle>You are already a member of SaveIt.pro</AlertTitle>
+                <AlertDescription>
+                  You are already a member of SaveIt.pro. You can manage your
+                  subscription in the <Link href="/app/settings">settings</Link>
+                </AlertDescription>
+              </Alert>
+            )}
           </CardFooter>
         </Card>
       </div>

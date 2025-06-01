@@ -7,7 +7,7 @@ import { useState } from "react";
 interface ImageWithPlaceholderProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {
   className?: string;
-  fallbackImage?: string;
+  fallbackImage?: string | null;
   onError?: (error: Error) => void;
 }
 
@@ -21,7 +21,7 @@ export const ImageWithPlaceholder = ({
   const [error, setError] = useState(false);
 
   if (!props.src) {
-    props.src = fallbackImage;
+    props.src = fallbackImage ?? "";
   }
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -37,9 +37,17 @@ export const ImageWithPlaceholder = ({
 
   if (!src) {
     return (
-      <div className={cn("relative", className)}>
-        <Skeleton className={cn("absolute inset-0 h-full w-full", className)} />
-      </div>
+      <div
+        style={{
+          // @ts-expect-error CSS Variable
+          "--color-bg": `color-mix(in srgb, var(--border) 50%, transparent)`,
+        }}
+        className={cn(
+          "relative w-full h-full",
+          className,
+          "bg-[image:repeating-linear-gradient(315deg,_var(--color-bg)_0,_var(--color-bg)_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed",
+        )}
+      ></div>
     );
   }
 

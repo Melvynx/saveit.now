@@ -1,11 +1,13 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { BookmarkCard } from "./bookmark-card";
-import { BookmarkCardLoadMore } from "./bookmark-card/bookmark-card-load-more";
+import {
+  BookmarkCard,
+  BookmarkCardInput,
+  BookmarkCardLoadMore,
+  BookmarkCardPricing,
+} from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
-import { BookmarkInput } from "./bookmark-input";
-import { BookmarkPricing } from "./bookmark-pricing";
 import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
@@ -47,7 +49,7 @@ export function BookmarksPage() {
           </>
         ) : (
           <>
-            {!query && <BookmarkInput />}
+            {!query && <BookmarkCardInput />}
             {bookmarks.map((bookmark, i) => {
               if (query && i === 0) {
                 return (
@@ -66,7 +68,7 @@ export function BookmarksPage() {
 
               return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
             })}
-            {!query && <BookmarkPricing />}
+            {!query && <BookmarkCardPricing />}
             {query && <MoreResultsButton />}
             {!query && (
               <BookmarkCardLoadMore

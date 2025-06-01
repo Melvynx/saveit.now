@@ -65,3 +65,12 @@ export const HeaderUser = () => {
     </>
   );
 };
+
+export const HeaderAppNameExtension = () => {
+  const plan = useUserPlan();
+
+  if (plan.name === "pro") {
+    return ".pro";
+  }
+  return ".now";
+};

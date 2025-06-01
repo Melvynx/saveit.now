@@ -4,7 +4,6 @@ import { Bookmark } from "@workspace/database";
 import { Input } from "@workspace/ui/components/input";
 import { XCircle } from "lucide-react";
 
-import { DeleteButtonAction } from "../bookmark-pending";
 import {
   BookmarkCardContainer,
   BookmarkCardContent,
@@ -13,6 +12,7 @@ import {
   BookmarkCardTitle,
   HEADER_HEIGHT,
 } from "./bookmark-card-base";
+import { DeleteButtonAction } from "./bookmark-card-pending";
 
 interface BookmarkCardErrorProps {
   bookmark: Bookmark;

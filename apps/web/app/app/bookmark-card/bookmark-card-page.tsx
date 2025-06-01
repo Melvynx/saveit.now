@@ -5,7 +5,6 @@ import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeh
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { DEFAULT_PREVIEW } from "../bookmark.default";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -13,7 +12,6 @@ import {
   BookmarkCardDescription,
   BookmarkCardHeader,
   BookmarkCardTitle,
-  HEADER_HEIGHT,
 } from "./bookmark-card-base";
 
 interface BookmarkCardPageProps {
@@ -37,29 +35,25 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>
-      <BookmarkCardHeader height={HEADER_HEIGHT}>
-        {() => (
-          <>
-            <Link href={bookmarkUrl}>
-              <ImageWithPlaceholder
-                src={bookmark.preview ?? ""}
-                fallbackImage={bookmark.ogImageUrl ?? DEFAULT_PREVIEW}
-                className="h-full w-full object-cover object-center mx-auto"
-                alt={bookmark.title ?? "Preview"}
-                style={
-                  bookmark.type === "IMAGE"
-                    ? {
-                        objectFit: isVerticalImage ? "contain" : "cover",
-                      }
-                    : {
-                        objectFit: "cover",
-                      }
-                }
-              />
-            </Link>
-            <BookmarkCardActions url={bookmark.url} />
-          </>
-        )}
+      <BookmarkCardHeader>
+        <Link href={bookmarkUrl} className="h-full w-full flex-1">
+          <ImageWithPlaceholder
+            src={bookmark.preview ?? ""}
+            fallbackImage={bookmark.ogImageUrl ?? null}
+            className="h-full w-full object-cover object-center mx-auto"
+            alt={bookmark.title ?? "Preview"}
+            style={
+              bookmark.type === "IMAGE"
+                ? {
+                    objectFit: isVerticalImage ? "contain" : "cover",
+                  }
+                : {
+                    objectFit: "cover",
+                  }
+            }
+          />
+        </Link>
+        <BookmarkCardActions url={bookmark.url} />
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>

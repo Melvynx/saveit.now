@@ -59,6 +59,104 @@ type SearchByTagsOptions = {
   tags: string[];
 };
 
+type SearchByDomainOptions = {
+  userId: string;
+  domain: string;
+};
+
+/**
+ * Détecte si une query est un domaine
+ */
+function isDomainQuery(query: string): boolean {
+  // Nettoie la query
+  const cleanQuery = query.trim().toLowerCase();
+
+  // Patterns pour détecter un domaine
+  const domainPatterns = [
+    /^[a-z0-9.-]+\.[a-z]{2,}$/i, // domain.com
+    /^www\.[a-z0-9.-]+\.[a-z]{2,}$/i, // www.domain.com
+    /^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}/i, // http(s)://domain.com
+  ];
+
+  return domainPatterns.some((pattern) => pattern.test(cleanQuery));
+}
+
+/**
+ * Extrait le domaine d'une query
+ */
+function extractDomain(query: string): string {
+  let domain = query.trim().toLowerCase();
+
+  // Enlève le protocole
+  domain = domain.replace(/^https?:\/\//, "");
+
+  // Enlève www.
+  domain = domain.replace(/^www\./, "");
+
+  // Enlève le path et les paramètres
+  domain = domain.split("/")[0] || domain;
+  domain = domain.split("?")[0] || domain;
+  domain = domain.split("#")[0] || domain;
+
+  return domain;
+}
+
+/**
+ * Recherche par domaine
+ */
+async function searchByDomain({
+  userId,
+  domain,
+}: SearchByDomainOptions): Promise<SearchResult[]> {
+  const bookmarks = await prisma.bookmark.findMany({
+    where: {
+      userId,
+      url: {
+        contains: domain,
+        mode: "insensitive",
+      },
+    },
+    include: {
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+    },
+  });
+
+  return bookmarks
+    .filter((bookmark) => {
+      // Vérifie que l'URL contient vraiment le domaine
+      const bookmarkDomain = extractDomain(bookmark.url);
+      return bookmarkDomain.includes(domain) || domain.includes(bookmarkDomain);
+    })
+    .map((bookmark) => {
+      const bookmarkDomain = extractDomain(bookmark.url);
+      // Score élevé si c'est un match exact de domaine
+      const isExactMatch = bookmarkDomain === domain;
+      const score = isExactMatch ? 150 : 120; // Score très élevé pour les domaines
+
+      return {
+        id: bookmark.id,
+        url: bookmark.url,
+        title: bookmark.title,
+        summary: bookmark.summary,
+        preview: bookmark.preview,
+        type: bookmark.type,
+        status: bookmark.status,
+        ogImageUrl: bookmark.ogImageUrl,
+        ogDescription: bookmark.ogDescription,
+        faviconUrl: bookmark.faviconUrl,
+        score,
+        matchType: "tag" as const, // On utilise "tag" pour les domaines
+        matchedTags: bookmark.tags.map((bt) => bt.tag.name),
+        createdAt: bookmark.createdAt,
+        metadata: bookmark.metadata,
+      };
+    });
+}
+
 /**
  * Effectue une recherche avancée multi-niveaux dans les bookmarks
  */
@@ -143,6 +241,27 @@ export async function advancedSearch({
 
   // Si une requête de recherche est fournie
   if (query && query.trim() !== "") {
+    // Vérifier si c'est une recherche par domaine
+    if (isDomainQuery(query)) {
+      const domain = extractDomain(query);
+      const domainResults = await searchByDomain({ userId, domain });
+      for (const result of domainResults) {
+        if (resultMap.has(result.id)) {
+          const existing = resultMap.get(result.id)!;
+          resultMap.set(result.id, {
+            ...existing,
+            score: existing.score + result.score,
+            matchType: "combined",
+          });
+        } else {
+          resultMap.set(result.id, {
+            ...result,
+            matchType: "tag", // Les domaines sont traités comme des tags
+          });
+        }
+      }
+    }
+
     try {
       const { embedding } = await embed({
         model: OPENAI_MODELS.embedding,

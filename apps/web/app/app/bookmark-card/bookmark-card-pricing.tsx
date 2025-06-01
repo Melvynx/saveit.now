@@ -1,26 +1,40 @@
+"use client";
+
 import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { buttonVariants } from "@workspace/ui/components/button";
+import { Typography } from "@workspace/ui/components/typography";
+import { FileUp, Gem, Heart, Infinity, Phone } from "lucide-react";
+import Link from "next/link";
+
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
-import { FileUp, Gem, Heart, Infinity, Phone } from "lucide-react";
-import Link from "next/link";
+import { BookmarkCardContainer } from "./bookmark-card-base";
 
-export const BookmarkPricing = () => {
+export const BookmarkCardPricing = () => {
   const plan = useUserPlan();
 
   if (plan.isLoading) return null;
   if (plan.name !== "free") return null;
 
+  // Mock bookmark object for the container
+  const mockBookmark = {
+    id: "pricing",
+    url: "https://example.com",
+    faviconUrl: null,
+    type: "PAGE" as const,
+  };
+
   return (
-    <Card className="w-full p-4 gap-0 overflow-hidden h-[var(--card-height)]">
+    <BookmarkCardContainer
+      bookmark={mockBookmark as any}
+      className="p-3 flex flex-col gap-3"
+    >
       <CardHeader className="pb-4 px-0">
         <div className="flex items-center gap-2">
           <Gem className="text-primary size-4" />
@@ -31,7 +45,7 @@ export const BookmarkPricing = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-row gap-2 px-0 pb-4">
-        <ul className="flex flex-col gap-2 flex-2">
+        <ul className="flex flex-col gap-2 flex-2 text-sm text-muted-foreground">
           <li className="flex items-center gap-2">
             <Infinity className="text-primary size-4" />
             <span>Unlimited bookmarks</span>
@@ -69,6 +83,6 @@ export const BookmarkPricing = () => {
           Upgrade
         </Link>
       </CardFooter>
-    </Card>
+    </BookmarkCardContainer>
   );
 };
