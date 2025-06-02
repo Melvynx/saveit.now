@@ -35,7 +35,10 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
       <BookmarkCardHeader>
         <div className="bg-border flex h-44 w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top">
           {token.data ? (
-            <BookmarkProgress token={token.data.token} />
+            <BookmarkProgress
+              bookmarkId={bookmark.id}
+              token={token.data.token}
+            />
           ) : (
             <p>Loading...</p>
           )}

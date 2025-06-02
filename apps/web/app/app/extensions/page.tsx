@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
-import Link from "next/link";
 
 export default function RoutePage() {
   const downloadChromeExtension = () => {
@@ -75,9 +75,14 @@ export default function RoutePage() {
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
                 <Typography>Go on the extensions settings</Typography>
-                <Link href="chrome://extensions/" target="_blank">
-                  <Button>Go to extensions settings</Button>
-                </Link>
+                <Typography variant="muted">
+                  Copy and paste this URL in your browser :
+                </Typography>
+                <Input
+                  value="chrome://extensions/"
+                  readOnly
+                  className="select-all"
+                />
               </div>
             </div>
           </div>

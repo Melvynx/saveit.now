@@ -9,8 +9,10 @@ import { useEffect } from "react";
 
 export default function BookmarkProgress({
   token,
+  bookmarkId,
 }: {
   token: Realtime.Subscribe.Token;
+  bookmarkId: string;
 }) {
   const { latestData } = useInngestSubscription({ token });
   const router = useQueryClient();
@@ -25,6 +27,7 @@ export default function BookmarkProgress({
   useEffect(() => {
     if (latestData?.topic === "finish") {
       void router.invalidateQueries({ queryKey: ["bookmarks"] });
+      void router.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
     }
   }, [latestData?.topic, router]);
 

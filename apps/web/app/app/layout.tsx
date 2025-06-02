@@ -1,3 +1,4 @@
+import { AlertExtensions } from "@/features/extensions/alert-extensions";
 import { Header } from "@/features/page/header";
 import { cn } from "@workspace/ui/lib/utils";
 import type { ReactNode } from "react";

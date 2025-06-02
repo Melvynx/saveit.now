@@ -1,3 +1,4 @@
+import { AlertExtensions } from "@/features/extensions/alert-extensions";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
@@ -29,6 +30,8 @@ export function BookmarksPage() {
         maxWidth: 3000,
       }}
     >
+      <AlertExtensions />
+
       <BookmarkHeader />
       <SearchInput />
       <div
@@ -70,7 +73,7 @@ export function BookmarksPage() {
             })}
             {!query && <BookmarkCardPricing />}
             {query && <MoreResultsButton />}
-            {!query && (
+            {bookmarks.length > 10 && (
               <BookmarkCardLoadMore
                 loadNextPage={() => fetchNextPage()}
                 hasNextPage={hasNextPage}

@@ -1,5 +1,8 @@
+import { APP_LINKS } from "@/lib/app-links";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
+import Link from "next/link";
 import { MaxWidthContainer } from "../page/page";
 import { BookmarkInputLanding } from "./bookmark-input-landing";
 
@@ -83,6 +86,9 @@ export const LandingHero = () => {
               </div>
             </li>
           </ul>
+          <Button asChild>
+            <Link href={APP_LINKS.signin}>Get started</Link>
+          </Button>
         </div>
         <div className="flex-1 flex flex-col gap-4">
           <BookmarkInputLanding />

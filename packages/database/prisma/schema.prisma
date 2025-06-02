@@ -27,6 +27,7 @@ model User {
   accounts      Account[]
   tags          Tag[]
   bookmarks     Bookmark[]
+  onboarding    Boolean    @default(false)
 
   stripeCustomerId String?
 
