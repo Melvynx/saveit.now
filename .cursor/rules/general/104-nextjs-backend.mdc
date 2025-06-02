@@ -1,0 +1,60 @@
+---
+description: EXPLAIN how NextJS 15 backend methods work.
+globs: *.ts,*.tsx
+alwaysApply: false
+---
+## Context
+
+* NextJS 15 give us backend methods we should use.
+
+## Header
+
+Enable you to get the header of the request.
+
+```tsx
+import { headers } from 'next/headers'
+ 
+export default async function Page() {
+  const headersList = await headers()
+  const userAgent = headersList.get('user-agent')
+}
+```
+
+
+## Cookie
+
+Enable you to get the cookie of the request.
+
+```tsx
+import { cookies } from 'next/headers'
+ 
+export default async function Page() {
+  const cookieStore = await cookies()
+  const theme = cookieStore.get('theme')
+  return '...'
+}
+```
+
+To set a cookie, you must be in an [201-api-route.mdc](mdc:.cursor/rules/project/201-api-route.mdc) or [208-server-actions.mdc](mdc:.cursor/rules/project/208-server-actions.mdc) :
+
+```tsx
+'use server'
+ 
+import { cookies } from 'next/headers'
+ 
+export async function create(data) {
+  const cookieStore = await cookies()
+ 
+  cookieStore.set('name', 'lee')
+  // or
+  cookieStore.set('name', 'lee', { secure: true })
+  // or
+  cookieStore.set({
+    name: 'name',
+    value: 'lee',
+    httpOnly: true,
+    path: '/',
+  })
+}
+```
+

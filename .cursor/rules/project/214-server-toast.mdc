@@ -1,0 +1,46 @@
+---
+description: Everytime you want to use "Toast"
+globs: 
+alwaysApply: false
+---
+## Context
+
+Toast is a little notification that appear in the corner of our application.
+
+## Rules
+
+There is 2 kinds of toast trigger : 
+
+* [server-toast.tsx](mdc:src/lib/server-toast.tsx)
+* `toast` 
+
+### Client Toast
+
+```tsx
+"use client"
+
+import { toast } from "sonner";
+
+function MyComponent() {
+  <button onClick={() => toast("Hello")}>Hello</button>
+}
+```
+
+### Server Toast
+
+* Only available in API Route or Server Component
+
+```tsx
+import { serverToast } from "@/lib/server-toast";
+
+export const updateProject = orgAction
+  .metadata({
+    permissions: {
+      project: ["update"],
+    },
+  })
+  .schema(updateProjectSchema)
+  .action(async ({ parsedInput: input, ctx }) => {
+    serverToast("Hello", "error")
+  });
+```

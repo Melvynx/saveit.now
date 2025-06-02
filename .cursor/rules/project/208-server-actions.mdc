@@ -1,0 +1,83 @@
+---
+description: EXPLAIN how to create and USE server action with next-safe-action library
+globs: *.ts, *.tsx
+alwaysApply: false
+---
+## Context
+## Context
+
+* Server Action is a way to execute server-side code like to mutate database etc... but without API endpoint. It's a React abstraction to handle the server-code.
+* We use `next-safe-action` to handle authentification, security and to verify the data we received
+
+## Usage
+
+1. Create a server action files
+
+We use `server-action-name.action.ts` converntion to easily reconize server-action.
+
+```ts
+// All server action must start with "use server" to inform NextJS that this method must be executed on the server
+"use server";
+
+// action is a utility from the library "next-safe-action" that handle middleware to verify the permission of the user.
+import { action } from "@/lib/safe-action";
+
+const Schema = z.object({
+  name: z.string(),
+  schema: z.string(),
+})
+
+// Server action must ALWAYS be suffix by "Action" like "deleteUserAction"
+export const demoAction = action
+  // The schema is used to validate the input of the action
+  .schema(Schema)
+  .action(async ({ parsedInput: input }) => {
+    // we can do async code here
+    const database = await prisma.database.create({
+      data: {
+        name: input.name,
+        schema: input.schema,
+      },
+    });
+
+    return database;
+  });
+```
+
+2. Use the server action in a client component
+
+In any client component we can use Server Action like the following example :
+
+```tsx
+import { demoAction } from "./server-action-name.action";
+import { useMutation } from "@tanstack/react-query";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
+
+export const Form = () => {
+  // ...
+
+  const mutation = useMutation({
+    mutationFn: async (data: FormData) =>
+      resolveActionResult(demoAction(data)),
+    onError: (error) => toast.error(error.message),
+    onSuccess: (result) => {
+      toast.success("Demo Action executed!");
+    },
+  });
+```
+
+## Rules
+
+- Always suffix server action with "Action" like "updateUserAction" or "createSubscriberAction"
+
+## Available actions
+
+* action : for general action without any authentification
+* userAction : for action that need to be authentificated
+
+## Files
+
+* [safe-action.ts](mdc:src/lib/safe-action.ts)
+
+
+

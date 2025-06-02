@@ -1,0 +1,73 @@
+---
+description: EXPLAIN how to use API Route in our project
+globs: **/route.ts
+alwaysApply: false
+---
+## Context
+## Context
+
+* We use `next-zod-route` to handle API routes in our application
+* This library helps us validate request data and handle errors in a consistent way
+
+## Usage
+
+1. Create an API route file
+
+We use `route.ts` convention in the `app/api` folder to create API routes.
+
+```ts
+import { routeClient } from "@/lib/safe-route";
+import { z } from "zod";
+
+const Schema = z.object({
+  name: z.string(),
+});
+
+export const POST = routeClient
+  .schema(Schema)
+  .handler(async ({ parsedBody }) => {
+    // Handle the request here
+    return NextResponse.json({ 
+      message: `Hello ${parsedBody.name}!` 
+    });
+  });
+```
+
+2. Create a protected API route
+
+For routes that need authentication:
+
+```ts
+import { userRoute } from "@/lib/safe-route";
+import { z } from "zod";
+
+const Schema = z.object({
+  name: z.string(),
+});
+
+export const POST = userRoute
+  .schema(Schema)
+  .handler(async ({ parsedBody, ctx }) => {
+    // ctx.user is available here
+    return NextResponse.json({ 
+      message: `Hello ${ctx.user.name}!` 
+    });
+  });
+```
+
+## Available methods
+
+* routeClient : for public API routes without authentication
+* userRoute : for protected API routes that require authentication
+
+## Error Handling
+
+The routes automatically handle different types of errors:
+
+* SafeRouteError: Returns the error message with custom status code
+* ApplicationError: Returns the error message with 500 status code
+* Unexpected errors: Returns "An unexpected error occurred" with 500 status code
+
+## Files
+
+* [safe-route.ts](mdc:src/lib/safe-route.ts)

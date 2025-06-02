@@ -1,0 +1,78 @@
+---
+description: EXPLAIN how to use Dialog Manager to easily create Dialog without boilerplate code.
+globs: *.ts, *.tsx
+alwaysApply: false
+---
+## Context
+
+* DialogManager enables you to show a global popup with many features. The basic one is just a validation dialog:
+
+## Example
+
+```tsx
+import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
+
+dialogManager.add({
+  title: "Delete step",
+  description: "Are you sure you want to delete this step?",
+  action: {
+    label: "Delete",
+    onClick: async () => {
+      // function...
+    }
+  },
+});
+```
+
+## Options
+
+### Input
+
+You can define an input to retreive a value from the alert dialog.
+
+```tsx
+dialogManager.add({
+  title: "Rename campaign",
+  description: "Enter a new name for this campaign",
+  input: {
+    label: "Name",
+    defaultValue: "Some value",
+    placeholder: "Enter a new name",
+  },
+  action: {
+    label: "Rename",
+    onClick: async (value) => {
+      if (!value) return;
+      // function ...
+    },
+  },
+});
+```
+
+### Confirm Text
+
+For important action, you can ask a `confirmText` so the user need to type it before going forward.
+
+```tsx
+dialogManager.add({
+  title: "Delete Segment",
+  description:
+    "Are you sure you want to delete this segment? This action cannot be undone.",
+  confirmText: "DELETE",
+  action: {
+    label: "Delete",
+    onClick: () => {
+      deleteMutation.mutate(segment.id);
+    },
+  },
+});
+```
+
+## Files
+
+Files : 
+
+* [dialog-manager-dialog.tsx](mdc:src/features/dialog-manager/dialog-manager-dialog.tsx)
+* [dialog-manager-store.ts](mdc:src/features/dialog-manager/dialog-manager-store.ts)
+
+
