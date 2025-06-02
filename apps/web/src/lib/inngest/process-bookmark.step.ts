@@ -1,5 +1,10 @@
 export const BOOKMARK_STEPS = [
   {
+    id: "pending",
+    name: "Pending",
+    order: 0,
+  },
+  {
     id: "get-bookmark",
     name: "Retrieve bookmark",
     order: 1,
@@ -48,6 +53,11 @@ export const BOOKMARK_STEPS = [
     id: "describe-screenshot",
     name: "Describe screenshot",
     order: 10,
+  },
+  {
+    id: "get-tweet",
+    name: "Get tweet",
+    order: 11,
   },
 ] as const;
 

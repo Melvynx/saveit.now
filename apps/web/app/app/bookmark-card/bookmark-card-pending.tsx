@@ -4,6 +4,7 @@ import { Bookmark } from "@workspace/database";
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { ButtonProps } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { deleteBookmarkAction } from "../bookmark-page/bookmarks.action";
@@ -33,20 +34,25 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
   return (
     <BookmarkCardContainer bookmark={bookmark}>
       <BookmarkCardHeader>
-        <div className="bg-border flex h-44 w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top">
-          {token.data ? (
-            <BookmarkProgress
-              bookmarkId={bookmark.id}
-              token={token.data.token}
-            />
-          ) : (
-            <p>Loading...</p>
+        <div
+          className={cn(
+            "flex h-full w-full flex-col items-center justify-center gap-4 rounded-md object-cover object-top",
+            "bg-[image:repeating-linear-gradient(315deg,_var(--color-bg)_0,_var(--color-bg)_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed",
           )}
+          style={{
+            // @ts-expect-error CSS Variable
+            "--color-bg": `color-mix(in srgb, var(--border) 50%, transparent)`,
+          }}
+        >
+          <BookmarkProgress
+            bookmarkId={bookmark.id}
+            token={token.data?.token}
+          />
           <DeleteButtonAction bookmarkId={bookmark.id} />
         </div>
       </BookmarkCardHeader>
 
-      <BookmarkCardContent bookmark={bookmark} href={null} className="p-4">
+      <BookmarkCardContent bookmark={bookmark} href={null}>
         <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
         <BookmarkCardDescription>
           {pageMetadata.data?.title ?? "Processing..."}

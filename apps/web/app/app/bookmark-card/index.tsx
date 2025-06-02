@@ -6,6 +6,7 @@ import { BookmarkCardError } from "./bookmark-card-error";
 import { BookmarkCardImage } from "./bookmark-card-image";
 import { BookmarkCardPage } from "./bookmark-card-page";
 import { BookmarkCardPending } from "./bookmark-card-pending";
+import { BookmarkCardTweet } from "./bookmark-card-tweet";
 import { BookmarkCardYouTube } from "./bookmark-card-youtube";
 
 interface BookmarkCardProps {
@@ -31,6 +32,9 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
     case "IMAGE":
       // Special case: standalone image for masonry layout
       return <BookmarkCardImage bookmark={bookmark} />;
+
+    case "TWEET":
+      return <BookmarkCardTweet bookmark={bookmark} />;
 
     case "PAGE":
     case "BLOG":

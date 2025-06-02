@@ -1,23 +1,23 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import { z } from "zod";
-import { uploadFileToS3 } from "../aws-s3/aws-s3-upload-files";
-import { env } from "../env";
-import { OPENAI_MODELS } from "../openai";
-import { getServerUrl } from "../server-url";
-import { upfetch } from "../up-fetch";
-import { InngestPublish, InngestStep } from "./inngest.utils";
-import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
+import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
+import { env } from "../../env";
+import { OPENAI_MODELS } from "../../openai";
+import { getServerUrl } from "../../server-url";
+import { upfetch } from "../../up-fetch";
+import { InngestPublish, InngestStep } from "../inngest.utils";
+import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
   getAISummary,
   getAITags,
   updateBookmark,
-} from "./process-bookmark.utils";
+} from "../process-bookmark.utils";
 import {
   TAGS_PROMPT,
   YOUTUBE_SUMMARY_PROMPT,
   YOUTUBE_VECTOR_SUMMARY_PROMPT,
-} from "./prompt.const";
+} from "../prompt.const";
 
 function getVideoId(url: string): string {
   const regex =
@@ -83,50 +83,8 @@ export async function processYouTubeBookmark(
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
-      id: BOOKMARK_STEP_ID_TO_ID["summary-page"],
-      order: 5,
-    },
-  });
-
-  // Generate a summary of the transcript
-  const summary = await step.run("get-summary", async () => {
-    if (!videoInfo.transcript) {
-      return "";
-    }
-    return await getAISummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
-  });
-
-  const vectorSummary = await step.run("get-vector-summary", async () => {
-    if (!videoInfo.transcript) {
-      return "";
-    }
-    return await getAISummary(
-      YOUTUBE_VECTOR_SUMMARY_PROMPT,
-      videoInfo.transcript,
-    );
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
-    topic: "status",
-    data: {
-      id: BOOKMARK_STEP_ID_TO_ID["find-tags"],
-      order: 6,
-    },
-  });
-
-  // Generate tags for the video
-  const tags = await step.run("get-tags", async () => {
-    console.log({ userId: context.userId, summary });
-    return await getAITags(TAGS_PROMPT, summary, context.userId);
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
-    topic: "status",
-    data: {
       id: BOOKMARK_STEP_ID_TO_ID["screenshot"],
-      order: 7,
+      order: 5,
     },
   });
 
@@ -153,6 +111,48 @@ export async function processYouTubeBookmark(
     }
 
     return result;
+  });
+
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "status",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["summary-page"],
+      order: 6,
+    },
+  });
+
+  // Generate a summary of the transcript
+  const summary = await step.run("get-summary", async () => {
+    if (!videoInfo.transcript) {
+      return "";
+    }
+    return await getAISummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
+  });
+
+  const vectorSummary = await step.run("get-vector-summary", async () => {
+    if (!videoInfo.transcript) {
+      return "";
+    }
+    return await getAISummary(
+      YOUTUBE_VECTOR_SUMMARY_PROMPT,
+      videoInfo.transcript,
+    );
+  });
+
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "status",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["find-tags"],
+      order: 7,
+    },
+  });
+
+  // Generate tags for the video
+  const tags = await step.run("get-tags", async () => {
+    console.log({ userId: context.userId, summary });
+    return await getAITags(TAGS_PROMPT, summary, context.userId);
   });
 
   await publish({

@@ -176,3 +176,47 @@ You will receive a screenshot of a webpage. You need to describe it with a preci
 Return a precise description of the image.
 </output>
 `;
+
+export const TWEET_SUMMARY_PROMPT = `<context>
+Create a summary of the purpose of the tweet. This summary will be show in a "bookmark" page. The user just save this tweet, and we will create the best short, straight summary for this application.
+</context>
+
+<goal>
+The summary must explain the purpose of the tweet, what it explain to be easily search.
+The summary should NOT explain what is inside the tweet precisely, but more about what is for.
+</goal>
+
+<input>
+The user will give you the current markdown of the tweet.
+</input>
+
+<output>
+PLAIN TEXT without any formatting. Just that with what is the page for.
+It should be 2-3 sentences maximum.
+</output>
+
+Here are some examples of a PERFECT summary that you SHOULD follow :
+
+<examples>
+1. A tweet about an advice from Naval Ravikan explaining how to be successful in life. It emphasise on the importance of being a good person and the value of hard work.
+</examples>
+`;
+
+export const TWEET_VECTOR_SUMMARY_PROMPT = `<context>
+Create a summary of the purpose of the tweet. This summary will only be used internally for a vector database to enable precise semantic search among thousands of saved bookmarks.
+</context>
+
+<goal>
+The summary should explain the purpose of the tweet, what is inside, what is for, what is about, and include a maximum of keywords.
+</goal>
+
+<input>
+The user will give you the current markdown of the tweet.
+</input>
+
+<output>
+PLAIN TEXT without any formatting. Just that with what is the page for.
+It should be 2-3 sentences maximum.
+</output>
+
+`;

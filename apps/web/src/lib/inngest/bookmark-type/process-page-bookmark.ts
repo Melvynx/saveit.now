@@ -3,24 +3,24 @@ import { embedMany, generateText, tool } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { z } from "zod";
-import { uploadFileFromURLToS3 } from "../aws-s3/aws-s3-upload-files";
-import { env } from "../env";
-import { GEMINI_MODELS } from "../gemini";
-import { OPENAI_MODELS } from "../openai";
-import { getImageUrlToBase64 } from "./bookmark.utils";
-import { InngestPublish, InngestStep } from "./inngest.utils";
-import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
+import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
+import { env } from "../../env";
+import { GEMINI_MODELS } from "../../gemini";
+import { OPENAI_MODELS } from "../../openai";
+import { getImageUrlToBase64 } from "../bookmark.utils";
+import { InngestPublish, InngestStep } from "../inngest.utils";
+import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
   getAISummary,
   getAITags,
   updateBookmark,
-} from "./process-bookmark.utils";
+} from "../process-bookmark.utils";
 import {
   IMAGE_ANALYSIS_PROMPT,
   TAGS_PROMPT,
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
-} from "./prompt.const";
+} from "../prompt.const";
 
 export async function processStandardWebpage(
   context: {
@@ -51,19 +51,10 @@ export async function processStandardWebpage(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
-    data: {
-      id: BOOKMARK_STEP_ID_TO_ID["screenshot"],
-      order: 4,
-    },
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["extract-metadata"],
-      order: 6,
+      order: 3,
     },
   });
 
@@ -120,6 +111,15 @@ export async function processStandardWebpage(
     };
   });
 
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "finish",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["screenshot"],
+      order: 4,
+    },
+  });
+
   const screenshot = await step.run("get-screenshot-v2", async () => {
     if (context.bookmark.preview) return context.bookmark.preview;
     try {
@@ -150,7 +150,7 @@ export async function processStandardWebpage(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
+    topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["describe-screenshot"],
       order: 5,
@@ -226,7 +226,7 @@ ${screenshotDescription}
     topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["summary-page"],
-      order: 7,
+      order: 6,
     },
   });
 
@@ -251,7 +251,7 @@ ${screenshotDescription}
     topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["find-tags"],
-      order: 8,
+      order: 7,
     },
   });
 
@@ -303,7 +303,7 @@ ${screenshotDescription}
     topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["saving"],
-      order: 9,
+      order: 8,
     },
   });
 
@@ -325,6 +325,15 @@ ${screenshotDescription}
     });
   });
 
+  await publish({
+    channel: `bookmark:${context.bookmarkId}`,
+    topic: "finish",
+    data: {
+      id: BOOKMARK_STEP_ID_TO_ID["finish"],
+      order: 9,
+    },
+  });
+
   await step.run("update-embedding", async () => {
     if (!vectorSummary || !summary || !pageMetadata.title) return;
 
@@ -332,7 +341,7 @@ ${screenshotDescription}
       model: OPENAI_MODELS.embedding,
       values: [vectorSummary || "", summary || "", pageMetadata.title || ""],
     });
-    const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] =
+    const [detailedSummaryEmbedding, summaryEmbedding, titleEmbedding] =
       embedding.embeddings;
 
     // Update embeddings in database
@@ -344,14 +353,5 @@ ${screenshotDescription}
         "detailedSummaryEmbedding" = ${detailedSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
-  });
-
-  await publish({
-    channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
-    data: {
-      id: BOOKMARK_STEP_ID_TO_ID["finish"],
-      order: 10,
-    },
   });
 }

@@ -4,7 +4,6 @@ globs: **/route.ts
 alwaysApply: false
 ---
 ## Context
-## Context
 
 * We use `next-zod-route` to handle API routes in our application
 * This library helps us validate request data and handle errors in a consistent way

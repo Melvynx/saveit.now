@@ -1,5 +1,5 @@
 ---
-description: Everytime you want to use "Toast"
+description: Everytime you want to use "Toast" in a Server Function or Server Component or API Routes
 globs: 
 alwaysApply: false
 ---

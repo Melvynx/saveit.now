@@ -1,21 +1,21 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany, generateText } from "ai";
 import sharp from "sharp";
-import { uploadFileFromURLToS3 } from "../aws-s3/aws-s3-upload-files";
-import { GEMINI_MODELS } from "../gemini";
-import { OPENAI_MODELS } from "../openai";
-import { InngestPublish, InngestStep } from "./inngest.utils";
-import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
+import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
+import { GEMINI_MODELS } from "../../gemini";
+import { OPENAI_MODELS } from "../../openai";
+import { InngestPublish, InngestStep } from "../inngest.utils";
+import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
   getAISummary,
   getAITags,
   updateBookmark,
-} from "./process-bookmark.utils";
+} from "../process-bookmark.utils";
 import {
   IMAGE_SUMMARY_PROMPT,
   IMAGE_TITLE_PROMPT,
   TAGS_PROMPT,
-} from "./prompt.const";
+} from "../prompt.const";
 
 export async function handleImageStep(
   context: {
@@ -43,10 +43,10 @@ export async function handleImageStep(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
+    topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["describe-screenshot"],
-      order: 4,
+      order: 3,
     },
   });
 
@@ -76,10 +76,10 @@ export async function handleImageStep(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
+    topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["summary-page"],
-      order: 5,
+      order: 4,
     },
   });
 
@@ -98,10 +98,10 @@ export async function handleImageStep(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
+    topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["find-tags"],
-      order: 6,
+      order: 5,
     },
   });
 
@@ -132,10 +132,10 @@ export async function handleImageStep(
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
-    topic: "finish",
+    topic: "status",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["saving"],
-      order: 7,
+      order: 6,
     },
   });
 
@@ -174,7 +174,7 @@ export async function handleImageStep(
     topic: "finish",
     data: {
       id: BOOKMARK_STEP_ID_TO_ID["finish"],
-      order: 8,
+      order: 7,
     },
   });
 }

@@ -1,10 +1,11 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
+import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
+import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
+import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
+import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
-import { handleImageStep as processImageBookmark } from "./process-image-bookmark";
-import { processStandardWebpage as processPageBookmark } from "./process-page-bookmark";
-import { processYouTubeBookmark } from "./process-youtube-bookmark";
 
 export const processBookmarkJob = inngest.createFunction(
   {
@@ -78,6 +79,22 @@ export const processBookmarkJob = inngest.createFunction(
         order: 2,
       },
     });
+
+    if (
+      bookmark.url.includes("twitter.com") ||
+      bookmark.url.startsWith("https://x.com/")
+    ) {
+      await processTweetBookmark(
+        {
+          bookmarkId,
+          url: bookmark.url,
+          userId: bookmark.userId,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
 
     const urlContent = await step.run("get-url-content", async () => {
       try {

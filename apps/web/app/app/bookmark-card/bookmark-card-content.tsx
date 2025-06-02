@@ -38,6 +38,7 @@ export const BookmarkCardContent = ({
           <BookmarkFavicon
             faviconUrl={bookmark.faviconUrl}
             bookmarkType={bookmark.type ?? "PAGE"}
+            status={bookmark.status}
           />
         </div>
         <div className="flex flex-col gap-2 flex-1">{children}</div>

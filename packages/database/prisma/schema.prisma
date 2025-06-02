@@ -118,6 +118,7 @@ enum BookmarkType {
   POST // Tweet, LinkedIn, Bluesky…
   IMAGE // PNG, JPG, etc.
   YOUTUBE // YouTube
+  TWEET // Twitter
 }
 
 enum BookmarkStatus {

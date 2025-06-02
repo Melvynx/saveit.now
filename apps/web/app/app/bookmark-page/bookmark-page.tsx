@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useHotkeys } from "react-hotkeys-hook";
+import { Tweet } from "react-tweet";
 import { toast } from "sonner";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import {
@@ -122,13 +123,26 @@ export function BookmarkPage() {
             </div>
           </Card>
           <Card className="p-4">
-            <SectionTitle icon={Image} text="Screenshot" />
-            <ImageWithPlaceholder
-              src={bookmark.preview ?? ""}
-              fallbackImage={bookmark.ogImageUrl ?? ""}
-              alt="screenshot"
-              className="rounded-md"
-            />
+            {bookmark.type === "TWEET" ? (
+              <>
+                <SectionTitle icon={Image} text="Post" />
+                <div className="tweet-container">
+                  <Tweet
+                    id={(bookmark.metadata as { tweetId: string }).tweetId}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <SectionTitle icon={Image} text="Screenshot" />
+                <ImageWithPlaceholder
+                  src={bookmark.preview ?? ""}
+                  fallbackImage={bookmark.ogImageUrl ?? ""}
+                  alt="screenshot"
+                  className="rounded-md"
+                />
+              </>
+            )}
           </Card>
           <Card className="p-4">
             <SectionTitle icon={TagIcon} text="Tags" />

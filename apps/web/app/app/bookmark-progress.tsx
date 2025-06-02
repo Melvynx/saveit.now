@@ -11,13 +11,13 @@ export default function BookmarkProgress({
   token,
   bookmarkId,
 }: {
-  token: Realtime.Subscribe.Token;
+  token?: Realtime.Subscribe.Token;
   bookmarkId: string;
 }) {
   const { latestData } = useInngestSubscription({ token });
   const router = useQueryClient();
 
-  const data = latestData?.data as {
+  const data = (latestData?.data ?? BOOKMARK_STEPS[0]) as {
     id: string;
     order: number;
   };
@@ -32,7 +32,7 @@ export default function BookmarkProgress({
   }, [latestData?.topic, router]);
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-2">
+    <div className="flex flex-col items-start w-fit mx-auto justify-center gap-2">
       <div className="flex w-full items-center justify-center gap-2">
         {Array.from({ length: 9 }).map((_, idx) => {
           const isActive = idx === currentStepIdx;
@@ -46,7 +46,7 @@ export default function BookmarkProgress({
                 scale: isActive ? 1.2 : 1,
                 opacity: isActive ? 1 : isCompleted ? 0.8 : 0.4,
                 backgroundColor:
-                  isActive || isCompleted ? "var(--primary)" : "var(--muted)",
+                  isActive || isCompleted ? "var(--primary)" : "var(--accent)",
               }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="h-1 rounded-full"
@@ -59,7 +59,7 @@ export default function BookmarkProgress({
           );
         })}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative -left-0.5">
         <Loader className="text-muted-foreground size-4" />
         <Typography variant="muted">{currentStep?.name}</Typography>
       </div>

@@ -53,6 +53,7 @@ export function BookmarksPage() {
         ) : (
           <>
             {!query && <BookmarkCardInput />}
+
             {bookmarks.map((bookmark, i) => {
               if (query && i === 0) {
                 return (

@@ -176,3 +176,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+.tweet-container {
+  & .react-tweet-theme {
+    margin: 0 !important;
+    font-size: 12px !important;
+    overflow: auto;
+    --tweet-body-font-size: 1rem !important;
+    --tweet-body-line-height: 1.2 !important;
+    @apply !rounded-xl;
+  }
+}

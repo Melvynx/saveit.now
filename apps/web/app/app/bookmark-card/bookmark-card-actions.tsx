@@ -9,11 +9,13 @@ import { CopyLinkButton } from "../bookmark-page/bookmark-actions-button";
 interface BookmarkCardActionsProps {
   url: string;
   className?: string;
+  children?: React.ReactNode;
 }
 
 export const BookmarkCardActions = ({
   url,
   className = "",
+  children,
 }: BookmarkCardActionsProps) => {
   return (
     <div
@@ -22,7 +24,7 @@ export const BookmarkCardActions = ({
       <Button
         variant="secondary"
         size="icon"
-        className="size-8"
+        className="size-8 hover:bg-accent"
         asChild
         onClick={(e) => e.stopPropagation()}
       >
@@ -34,8 +36,9 @@ export const BookmarkCardActions = ({
         url={url}
         variant="secondary"
         size="icon"
-        className="size-8"
+        className="size-8 hover:bg-accent"
       />
+      {children}
     </div>
   );
 };
