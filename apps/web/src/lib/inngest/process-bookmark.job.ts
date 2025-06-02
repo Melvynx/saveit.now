@@ -98,7 +98,12 @@ export const processBookmarkJob = inngest.createFunction(
 
     const urlContent = await step.run("get-url-content", async () => {
       try {
-        const response = await fetch(bookmark.url);
+        const response = await fetch(bookmark.url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            Accept: "text/html",
+          },
+        });
         console.log(response);
         if (!response.ok) {
           throw new Error("No response");
