@@ -9,7 +9,7 @@ import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 
 export const processBookmarkJob = inngest.createFunction(
   {
-    id: "process-bookmark-2",
+    id: "process-bookmark",
     concurrency: {
       key: "event.data.userId",
       limit: 1,
