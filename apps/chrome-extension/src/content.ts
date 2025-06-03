@@ -105,18 +105,18 @@ function createSaverUI() {
       </div>
       
       <div id="saveit-auth" class="saveit-state saveit-auth-required">
-        <div class="saveit-message">Connection required</div>
+        <div class="saveit-message">Please login to save bookmarks</div>
         <a href="${BASE_URL}/signin" target="_blank" class="saveit-button">Login</a>
       </div>
 
       <div id="saveit-max-bookmarks" class="saveit-state saveit-auth-required">
-        <div class="saveit-message">You've reached your bookmark limit</div>
+        <div class="saveit-message">Bookmark limit reached. Upgrade to save more!</div>
         <a href="${BASE_URL}/upgrade" target="_blank" class="saveit-button">Upgrade</a>
       </div>
 
       <div id="saveit-bookmark-exists" class="saveit-state">
         <svg class="saveit-error" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-        <div class="saveit-message">Bookmark already exists</div>
+        <div class="saveit-message">This bookmark already exists in your collection</div>
       </div>
     </div>
   `;
@@ -177,15 +177,20 @@ function setState(state: SaverState) {
         successMsg.textContent = `${getSaveTypeText(currentSaveType).charAt(0).toUpperCase() + getSaveTypeText(currentSaveType).slice(1)} saved!`;
       }
 
-      // Auto-hide after 2 seconds
+      // Auto-hide after 2.4 seconds (2000ms * 1.2)
       setTimeout(() => {
         setState(SaverState.HIDDEN);
-      }, 2000);
+      }, 2400);
       break;
     case SaverState.ERROR:
       container.classList.remove("hidden");
       const errorEl = document.getElementById("saveit-error");
       if (errorEl) errorEl.style.display = "flex";
+
+      // Auto-hide after 4.8 seconds (4000ms * 1.2)
+      setTimeout(() => {
+        setState(SaverState.HIDDEN);
+      }, 4800);
       break;
     case SaverState.AUTH_REQUIRED:
       container.classList.remove("hidden");
@@ -203,10 +208,10 @@ function setState(state: SaverState) {
         "saveit-bookmark-exists",
       );
       if (bookmarkExistsEl) bookmarkExistsEl.style.display = "flex";
-      // Auto-hide after 3 seconds
+      // Auto-hide after 3.6 seconds (3000ms * 1.2)
       setTimeout(() => {
         setState(SaverState.HIDDEN);
-      }, 3000);
+      }, 3600);
       break;
   }
 }
@@ -242,21 +247,42 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
     if (result.success) {
       setState(SaverState.SUCCESS);
     } else {
-      // Gérer les différents types d'erreurs
+      // Gérer les différents types d'erreurs basé sur errorType
+      const errorType = result.errorType;
       const errorMessage = result.error || "Error saving bookmark";
 
-      if (errorMessage.includes("maximum number of bookmarks")) {
-        setState(SaverState.MAX_BOOKMARKS);
-      } else if (errorMessage.includes("already exists")) {
-        setState(SaverState.BOOKMARK_EXISTS);
-      } else {
-        setErrorMessage(errorMessage);
-        setState(SaverState.ERROR);
+      switch (errorType) {
+        case "BOOKMARK_ALREADY_EXISTS":
+          setState(SaverState.BOOKMARK_EXISTS);
+          break;
+        case "MAX_BOOKMARKS":
+          setState(SaverState.MAX_BOOKMARKS);
+          break;
+        case "AUTH_REQUIRED":
+          setState(SaverState.AUTH_REQUIRED);
+          break;
+        case "NETWORK_ERROR":
+          setErrorMessage("Network error. Please check your connection.");
+          setState(SaverState.ERROR);
+          break;
+        default:
+          // Fallback to message-based detection for backward compatibility
+          if (errorMessage.includes("maximum number of bookmarks")) {
+            setState(SaverState.MAX_BOOKMARKS);
+          } else if (errorMessage.includes("already exists")) {
+            setState(SaverState.BOOKMARK_EXISTS);
+          } else if (errorMessage.includes("logged in")) {
+            setState(SaverState.AUTH_REQUIRED);
+          } else {
+            setErrorMessage(errorMessage);
+            setState(SaverState.ERROR);
+          }
+          break;
       }
     }
   } catch (error) {
     console.error("Error saving content:", error);
-    setErrorMessage("An error occurred");
+    setErrorMessage("An unexpected error occurred");
     setState(SaverState.ERROR);
   }
 }

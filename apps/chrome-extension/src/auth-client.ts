@@ -48,7 +48,7 @@ export async function getSession(): Promise<Session | null> {
 
 export async function saveBookmark(
   url: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; errorType?: string }> {
   try {
     console.log("Saving bookmark for URL:", url);
 
@@ -59,6 +59,7 @@ export async function saveBookmark(
       return {
         success: false,
         error: "You must be logged in to save a bookmark",
+        errorType: "AUTH_REQUIRED",
       };
     }
 
@@ -77,17 +78,36 @@ export async function saveBookmark(
     // Gérer la réponse
     if (!response.ok) {
       let errorMessage = "Failed to save bookmark";
+      let errorType = "UNKNOWN";
+
       try {
         const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
+        console.error("Error data:", errorData);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+
+        // Detect specific error types based on the message
+        if (errorMessage.includes("already exists")) {
+          errorType = "BOOKMARK_ALREADY_EXISTS";
+        } else if (errorMessage.includes("maximum number of bookmarks")) {
+          errorType = "MAX_BOOKMARKS";
+        } else if (response.status === 401) {
+          errorType = "AUTH_REQUIRED";
+        }
       } catch (e) {
         // Si la réponse n'est pas du JSON, on utilise le message par défaut
+        console.error("Failed to parse error response:", e);
       }
 
-      console.error("Error response:", response.status, errorMessage);
+      console.error(
+        "Error response:",
+        response.status,
+        errorMessage,
+        errorType,
+      );
       return {
         success: false,
         error: errorMessage,
+        errorType,
       };
     }
 
@@ -98,6 +118,7 @@ export async function saveBookmark(
     return {
       success: false,
       error: "Network error occurred. Please try again.",
+      errorType: "NETWORK_ERROR",
     };
   }
 }

@@ -19,12 +19,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 
   chrome.contextMenus.create({
-    id: CONTEXT_MENU_SAVE_LINK,
-    title: "Save this link",
-    contexts: ["link"],
-  });
-
-  chrome.contextMenus.create({
     id: CONTEXT_MENU_SAVE_IMAGE,
     title: "Save this image",
     contexts: ["image"],
@@ -61,13 +55,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       }
     });
   };
-
-  // If there's an image URL (srcUrl), prioritize image saving over link saving
-  if (info.srcUrl && info.menuItemId === CONTEXT_MENU_SAVE_LINK) {
-    // Don't handle link clicks when there's an image present
-    // The user should use "Save this image" instead
-    return;
-  }
 
   switch (info.menuItemId) {
     case CONTEXT_MENU_SAVE_PAGE:
@@ -132,23 +119,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })
       .catch((error) => {
         console.error(`Background: ${itemType} save error`, error);
-        let errorType = "UNKNOWN";
 
-        // Détecter le type d'erreur basé sur le message
-        const errorMessage = error?.message || "Failed to save bookmark";
-
-        if (errorMessage.includes("maximum number of bookmarks")) {
-          errorType = "MAX_BOOKMARKS";
-        } else if (errorMessage.includes("already exists")) {
-          errorType = "BOOKMARK_ALREADY_EXISTS";
+        // If it's already an object with error info, use it directly
+        if (error && typeof error === "object" && error.success === false) {
+          sendResponse({ ...error, itemType });
+        } else {
+          // Fallback for unexpected errors
+          sendResponse({
+            success: false,
+            error: error?.message || "Failed to save bookmark",
+            errorType: "UNKNOWN",
+            itemType,
+          });
         }
-
-        sendResponse({
-          success: false,
-          error: errorMessage,
-          errorType: errorType,
-          itemType,
-        });
       });
     return true; // Indicates async response
   }
