@@ -35,10 +35,36 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
 
+  const sendMessageWithInjection = (message: any) => {
+    chrome.tabs.sendMessage(tab.id!, message, (response) => {
+      if (chrome.runtime.lastError) {
+        // Content script not loaded, inject it
+        chrome.scripting
+          .executeScript({
+            target: { tabId: tab.id! },
+            files: ["content.js"],
+          })
+          .then(() => {
+            // Also inject CSS
+            chrome.scripting.insertCSS({
+              target: { tabId: tab.id! },
+              files: ["content.css"],
+            });
+            // Retry sending message after injection
+            setTimeout(() => {
+              chrome.tabs.sendMessage(tab.id!, message);
+            }, 100);
+          })
+          .catch((err) => {
+            console.error("Failed to inject content script:", err);
+          });
+      }
+    });
+  };
+
   switch (info.menuItemId) {
     case CONTEXT_MENU_SAVE_PAGE:
-      // Sauvegarder la page actuelle
-      chrome.tabs.sendMessage(tab.id, {
+      sendMessageWithInjection({
         action: "saveBookmark",
         type: "page",
         url: info.pageUrl,
@@ -46,8 +72,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       break;
 
     case CONTEXT_MENU_SAVE_LINK:
-      // Sauvegarder le lien
-      chrome.tabs.sendMessage(tab.id, {
+      sendMessageWithInjection({
         action: "saveBookmark",
         type: "link",
         url: info.linkUrl,
@@ -55,8 +80,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       break;
 
     case CONTEXT_MENU_SAVE_IMAGE:
-      // Sauvegarder l'image
-      chrome.tabs.sendMessage(tab.id, {
+      sendMessageWithInjection({
         action: "saveBookmark",
         type: "image",
         url: info.srcUrl,
@@ -152,6 +176,11 @@ chrome.action.onClicked.addListener(async (tab) => {
               files: ["content.js"],
             })
             .then(() => {
+              // Also inject CSS
+              chrome.scripting.insertCSS({
+                target: { tabId: tab.id! },
+                files: ["content.css"],
+              });
               // Réessayer d'envoyer le message après injection
               setTimeout(() => {
                 chrome.tabs.sendMessage(tab.id!, {

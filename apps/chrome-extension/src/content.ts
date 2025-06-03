@@ -3,7 +3,7 @@
 // Import type uniquement, plus d'import de fonctions
 import type { Session } from "./auth-client";
 
-const BASE_URL = "http://localhost:3000"; // "https://saveit.now";
+const BASE_URL = "https://saveit.now";
 
 // Types de contenu à sauvegarder
 enum SaveType {
