@@ -11,7 +11,7 @@ const CONTEXT_MENU_SAVE_IMAGE = "saveit-save-image";
 chrome.runtime.onInstalled.addListener(() => {
   console.log("SaveIt Now extension installed");
 
-  // Créer les menus contextuels
+  // Create context menus
   chrome.contextMenus.create({
     id: CONTEXT_MENU_SAVE_PAGE,
     title: "Save this page",
@@ -61,6 +61,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       }
     });
   };
+
+  // If there's an image URL (srcUrl), prioritize image saving over link saving
+  if (info.srcUrl && info.menuItemId === CONTEXT_MENU_SAVE_LINK) {
+    // Don't handle link clicks when there's an image present
+    // The user should use "Save this image" instead
+    return;
+  }
 
   switch (info.menuItemId) {
     case CONTEXT_MENU_SAVE_PAGE:
