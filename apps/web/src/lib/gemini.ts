@@ -10,7 +10,7 @@ export const GEMINI_MODELS: {
   normal: LanguageModelV1;
   embedding: EmbeddingModel<string>;
 } = {
-  cheap: google("gemini-1.5-flash"),
-  normal: google("gemini-2.5-pro-preview-05-0"),
+  cheap: google("gemini-2.0-flash"),
+  normal: google("gemini-2.5-pro-preview-05-06"),
   embedding: google.textEmbeddingModel("text-embedding-004"),
 };

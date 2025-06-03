@@ -134,9 +134,6 @@ export async function processStandardWebpage(
 
       // Vérifier si la capture d'écran est utilisable (pas noire ou trop petite)
       if (!screenshotUrl) {
-        console.log(
-          `Screenshot for ${context.url} is unusable (too dark or small)`,
-        );
         return null;
       }
 
@@ -183,7 +180,8 @@ export async function processStandardWebpage(
         ],
         tools: {
           "invalid-image": tool({
-            description: "The image is black, invalid, you see nothing on it.",
+            description:
+              "The image is black, invalid, you see nothing on it. Or it's just a captcha or invalid website image.",
             parameters: z.object({
               reason: z.string(),
             }),

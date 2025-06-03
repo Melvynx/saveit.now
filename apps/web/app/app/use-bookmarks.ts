@@ -42,8 +42,6 @@ export const useBookmarks = () => {
         };
       }
 
-      console.log("fetching bookmarks", searchQuery, matchingDistance);
-
       const result = await upfetch("/api/bookmarks", {
         params: {
           query: searchQuery,
