@@ -14,7 +14,7 @@ import { ArrowRight, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ImportForm } from "../(layout)/imports/import-form";
+import { ImportForm } from "../imports/import-form";
 
 export default function StartPage() {
   const [hasImported, setHasImported] = useState(false);
