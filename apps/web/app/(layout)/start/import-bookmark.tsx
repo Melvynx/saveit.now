@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { ImportForm } from "../imports/import-form";
+import { ImportForm } from "../(layout)/imports/import-form";
 
 export type ImportBookmarkProps = {};
 

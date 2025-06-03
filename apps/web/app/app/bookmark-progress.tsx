@@ -3,7 +3,7 @@ import type { Realtime } from "@inngest/realtime";
 import { useInngestSubscription } from "@inngest/realtime/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader } from "@workspace/ui/components/loader";
-import { Typography } from "@workspace/ui/components/typography";
+import { Text } from "@workspace/ui/components/text";
 import { motion } from "motion/react";
 import { useEffect } from "react";
 
@@ -61,7 +61,9 @@ export default function BookmarkProgress({
       </div>
       <div className="flex items-center gap-2 relative -left-0.5">
         <Loader className="text-muted-foreground size-4" />
-        <Typography variant="muted">{currentStep?.name}</Typography>
+        <Text variant="shine" key={currentStep?.name}>
+          {currentStep?.name}
+        </Text>
       </div>
     </div>
   );

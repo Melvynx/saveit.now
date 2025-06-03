@@ -20,7 +20,7 @@ export const LandingHero = () => {
         <div className="ml-auto flex flex-1 flex-col gap-6">
           <Badge>Beta</Badge>
           <Typography variant="h2" className="font-bold">
-            Never lose an important link again.
+            Organize nothing. Find everything.
           </Typography>
           <Typography variant="lead">
             Save it now—find it in seconds, whether it’s an article, video,

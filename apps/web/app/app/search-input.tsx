@@ -1,5 +1,6 @@
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { Plus, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -29,18 +30,25 @@ export const SearchInput = (props: SearchInputProps) => {
 
   return (
     <div className="flex items-center gap-2">
-      <Input
-        ref={inputRef}
-        defaultValue={query}
-        className="lg:h-16 lg:px-6 lg:rounded-xl lg:py-4 lg:text-2xl bg-background"
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search bookmarks"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && isUrl) {
-            action.execute({ url: query });
-          }
-        }}
-      />
+      <div className="flex-1 relative">
+        {isUrl ? (
+          <Plus className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        ) : (
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        )}
+        <Input
+          ref={inputRef}
+          defaultValue={query}
+          className="lg:h-16 lg:px-6 lg:rounded-xl lg:py-4 lg:text-2xl bg-background pl-8 lg:pl-12"
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search bookmarks"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && isUrl) {
+              action.execute({ url: query });
+            }
+          }}
+        />
+      </div>
       {isUrl ? (
         <Button
           onClick={() => {

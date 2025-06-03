@@ -1,3 +1,8 @@
+import { ModeToggle } from "@/features/dark-mode/mode-toggle";
+import {
+  HeaderAppNameExtension,
+  HeaderUser,
+} from "@/features/page/header-user";
 import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { upfetch } from "@/lib/up-fetch";
@@ -30,6 +35,12 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
 
   return (
     <div className="flex items-center gap-2">
+      <Link href="/app">
+        SaveIt
+        <span className="text-primary font-bold">
+          <HeaderAppNameExtension />
+        </span>
+      </Link>
       <div className="flex-1"></div>
       <Button variant="outline" size="sm">
         {bookmarksInfo.data?.bookmarksCount ?? 0}/
@@ -57,6 +68,9 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ModeToggle />
+      <HeaderUser />
     </div>
   );
 };

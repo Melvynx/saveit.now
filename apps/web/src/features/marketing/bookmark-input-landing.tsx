@@ -67,7 +67,7 @@ export const BookmarkInputLanding = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-row gap-2 w-full">
+        <div className="flex flex-row gap-2 w-full items-center">
           <div className="shrink-0 size-6 justify-center flex text-sm border-primary bg-primary/10 rounded-full items-center border text-primary">
             2
           </div>
