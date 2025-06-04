@@ -25,6 +25,7 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -39,6 +40,7 @@ const MagicLinkSchema = z.object({
 
 export default function SignInPage() {
   const router = useRouter();
+  const posthog = usePostHog();
 
   const magicLinkForm = useZodForm({
     schema: MagicLinkSchema,
@@ -49,6 +51,9 @@ export default function SignInPage() {
 
   const magicLinkMutation = useMutation({
     mutationFn: async (values: z.infer<typeof MagicLinkSchema>) => {
+      posthog.capture("sign_in_with_email", {
+        email: values.email,
+      });
       return unwrapSafePromise(
         authClient.signIn.magicLink({
           email: values.email,

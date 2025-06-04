@@ -42,19 +42,7 @@ function copyFiles(source, target) {
 // Compile TypeScript files
 async function compileTypeScript() {
   try {
-    // Build popup with ESM format
-    await build({
-      entryPoints: [path.join(srcDir, "popup.ts")],
-      bundle: true,
-      outdir: targetDir,
-      platform: "browser",
-      minify: true,
-      format: "esm",
-      target: "es2020",
-      loader: { ".ts": "ts" },
-    });
-
-    // Build background and content scripts with IIFE format
+    // Build background and content scripts with IIFE format for Chrome extension compatibility
     await build({
       entryPoints: [
         path.join(srcDir, "background.ts"),

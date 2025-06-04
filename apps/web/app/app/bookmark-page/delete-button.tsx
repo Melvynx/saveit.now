@@ -1,11 +1,13 @@
 "use client";
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
-import { Button, ButtonProps } from "@workspace/ui/components/button";
+import { LoadingButton } from "@/features/form/loading-button";
+import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Trash } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useRefreshBookmarks } from "../use-bookmarks";
 import { deleteBookmarkAction } from "./bookmarks.action";
@@ -14,6 +16,7 @@ export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
 
 export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
   const action = useDeleteBookmark();
+  const posthog = usePostHog();
 
   const handleDelete = () => {
     dialogManager.add({
@@ -22,6 +25,9 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
       action: {
         label: "Delete",
         onClick: () => {
+          posthog.capture("bookmark+delete", {
+            bookmark_id: bookmarkId,
+          });
           action.execute({ bookmarkId });
         },
       },
@@ -34,7 +40,8 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 
   return (
     <InlineTooltip title="Delete (⌘D)">
-      <Button
+      <LoadingButton
+        loading={action.isExecuting}
         variant="destructive"
         onClick={() => {
           handleDelete();
@@ -43,7 +50,7 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
       >
         <Trash className="size-4" />
         <span className="">Delete</span>
-      </Button>
+      </LoadingButton>
     </InlineTooltip>
   );
 };
@@ -54,7 +61,6 @@ export const useDeleteBookmark = () => {
   const action = useAction(deleteBookmarkAction, {
     onSuccess: () => {
       refreshBookmark();
-      router.push("/app");
     },
   });
 

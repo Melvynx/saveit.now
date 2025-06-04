@@ -8,6 +8,7 @@ import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, X } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { reBookmarkAction } from "./bookmarks.action";
 
 export const BackButton = () => {
@@ -32,6 +33,7 @@ export const CopyLinkButton = ({
   ...props
 }: { url: string } & ButtonProps) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard(5000);
+  const posthog = usePostHog();
 
   return (
     <Button
@@ -39,6 +41,9 @@ export const CopyLinkButton = ({
       variant="outline"
       className="size-8"
       onClick={() => {
+        posthog.capture("bookmark+copy_link", {
+          url,
+        });
         copyToClipboard(url);
       }}
       {...props}
@@ -55,6 +60,7 @@ export const CopyLinkButton = ({
 export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const posthog = usePostHog();
   const action = useAction(reBookmarkAction, {
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -71,7 +77,12 @@ export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
       size="icon"
       variant="outline"
       className="size-8"
-      onClick={() => action.execute({ bookmarkId })}
+      onClick={() => {
+        posthog.capture("bookmark+rebookmark", {
+          bookmark_id: bookmarkId,
+        });
+        action.execute({ bookmarkId });
+      }}
     >
       <RefreshCcw className="text-muted-foreground size-4" />
     </LoadingButton>

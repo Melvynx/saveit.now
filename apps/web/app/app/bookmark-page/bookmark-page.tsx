@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
+import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Tweet } from "react-tweet";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import { useBookmark } from "./use-bookmark";
 
 export function BookmarkPage() {
   const [bookmarkId, setBookmarkId] = useQueryState("b");
+  const posthog = usePostHog();
 
   const query = useBookmark(bookmarkId);
 

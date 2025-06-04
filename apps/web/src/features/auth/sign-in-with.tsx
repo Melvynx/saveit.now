@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { cn } from "@workspace/ui/lib/utils";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { LoadingButton } from "../form/loading-button";
 
@@ -18,8 +19,12 @@ export const SignInWith = (props: {
   type: OAuthProvider;
   className?: string;
 }) => {
+  const posthog = usePostHog();
   const mutation = useMutation({
     mutationFn: () => {
+      posthog.capture("sign_in_with_social", {
+        provider: props.type,
+      });
       return unwrapSafePromise(
         authClient.signIn.social({
           provider: props.type,

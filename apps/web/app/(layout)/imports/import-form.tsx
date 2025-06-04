@@ -14,6 +14,7 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { cn } from "@workspace/ui/lib/utils";
 import { FileText, Upload } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import { usePostHog } from "posthog-js/react";
 import { DragEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,6 +37,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const posthog = usePostHog();
 
   const form = useZodForm({
     schema: Schema,
@@ -60,6 +62,11 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
         "An error occurred while importing";
       toast.error(errorMessage);
       onError?.(errorMessage);
+    },
+    onExecute: () => {
+      posthog.capture("import_bookmarks", {
+        total_urls: form.getValues("text").split("\n").length,
+      });
     },
   });
 
