@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { FileDownIcon, Menu } from "lucide-react";
+import { FileDownIcon, FileUpIcon, Menu } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
@@ -64,6 +64,11 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
           <DropdownMenuItem asChild>
             <Link href={APP_LINKS.imports}>
               <FileDownIcon className="size-4 mr-2" /> Imports
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={APP_LINKS.exports}>
+              <FileUpIcon className="size-4 mr-2" /> Exports
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
