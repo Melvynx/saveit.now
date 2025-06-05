@@ -25,6 +25,7 @@ import {
   CopyLinkButton,
   ReBookmarkButton,
 } from "./bookmark-actions-button";
+import { BookmarkNote } from "./bookmark-note";
 import { DeleteButton } from "./delete-button";
 import { useBookmark } from "./use-bookmark";
 
@@ -159,6 +160,7 @@ export function BookmarkPage() {
               </div>
             </div>
           </Card>
+          <BookmarkNote note={bookmark.note} bookmarkId={bookmark.id} />
         </main>
         <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
