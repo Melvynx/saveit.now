@@ -14,11 +14,11 @@ import {
   TagIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useQueryState } from "nuqs";
-import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useParams } from "react-router";
 import { Tweet } from "react-tweet";
 import { toast } from "sonner";
+import { useNavigateWithQuery } from "../bookmark-card/link-with-query";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import {
   BackButton,
@@ -30,8 +30,9 @@ import { DeleteButton } from "./delete-button";
 import { useBookmark } from "./use-bookmark";
 
 export function BookmarkPage() {
-  const [bookmarkId, setBookmarkId] = useQueryState("b");
-  const posthog = usePostHog();
+  const params = useParams();
+  const navigate = useNavigateWithQuery();
+  const bookmarkId = params.id as string;
 
   const query = useBookmark(bookmarkId);
 
@@ -51,7 +52,7 @@ export function BookmarkPage() {
 
   useHotkeys("x", () => {
     if (!bookmark) return;
-    setBookmarkId(null);
+    navigate("/app");
   });
 
   if (!bookmarkId) {
@@ -69,7 +70,7 @@ export function BookmarkPage() {
   }
 
   return (
-    <Dialog open={true} onOpenChange={() => setBookmarkId(null)} key="view">
+    <Dialog open={true} onOpenChange={() => navigate("/app")} key="view">
       <DialogContent
         disableClose
         className="flex flex-col gap-0 overflow-auto p-0"
@@ -96,14 +97,19 @@ export function BookmarkPage() {
         <main className="flex flex-col gap-4 p-6 lg:gap-6">
           <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
             <div className="flex items-start gap-2 p-4">
-              <div className="flex size-8 items-center justify-center rounded border">
+              <div className="flex size-8 items-center justify-center rounded border shrink-0">
                 <BookmarkFavicon
                   faviconUrl={bookmark.faviconUrl ?? undefined}
                   bookmarkType={bookmark.type}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Typography as={Link} href={bookmark.url} variant="large">
+                <Typography
+                  as={Link}
+                  href={bookmark.url}
+                  variant="large"
+                  className="line-clamp-1"
+                >
                   {bookmark.url}
                 </Typography>
                 <Typography variant="muted">{bookmark.title}</Typography>
@@ -122,7 +128,9 @@ export function BookmarkPage() {
           <Card className="p-4">
             <SectionTitle icon={Sparkle} text="Summary" />
             <div className="flex flex-col gap-2">
-              <Typography variant="muted">{bookmark.summary}</Typography>
+              <Typography variant="muted">
+                {bookmark.summary || "No summary generated"}
+              </Typography>
             </div>
           </Card>
           <Card className="p-4">

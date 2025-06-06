@@ -34,6 +34,8 @@ export const updateBookmarkNoteAction = userAction
       },
     });
 
+    console.log("bookmark", bookmark);
+
     if (!bookmark) {
       throw new Error("Bookmark not found or unauthorized");
     }

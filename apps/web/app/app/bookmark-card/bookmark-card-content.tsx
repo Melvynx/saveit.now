@@ -2,11 +2,11 @@
 
 import { Bookmark } from "@workspace/database";
 import { CardContent } from "@workspace/ui/components/card";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import { BookmarkFavicon } from "../bookmark-favicon";
+import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardContentProps {
   bookmark: Bookmark;
@@ -22,14 +22,6 @@ export const BookmarkCardContent = ({
   href,
 }: BookmarkCardContentProps) => {
   const searchParams = useSearchParams();
-
-  const defaultHref = href || {
-    pathname: "/app",
-    query: {
-      ...Object.fromEntries(searchParams.entries()),
-      b: bookmark.id,
-    },
-  };
 
   const content = (
     <CardContent className={`px-4 pb-4 ${className}`}>
@@ -50,5 +42,5 @@ export const BookmarkCardContent = ({
     return content;
   }
 
-  return <Link href={defaultHref}>{content}</Link>;
+  return <LinkWithQuery to={`/app/b/${bookmark.id}`}>{content}</LinkWithQuery>;
 };
