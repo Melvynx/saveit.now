@@ -1,0 +1,132 @@
+/* Styles pour l'UI de SaveIt */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.saveit-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647; /* Valeur max pour être toujours au dessus */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.saveit-container:not(.hidden) {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.saveit-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.saveit-card {
+  width: 260px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid oklch(70.9% 0.01 56.259);
+
+  --box-color: oklch(92.2% 0 0);
+  background-image:
+    linear-gradient(var(--box-color) 1px, transparent 1px),
+    linear-gradient(to right, var(--box-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.saveit-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.saveit-logo {
+  width: 160px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.saveit-state {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.saveit-state.saveit-auth-required {
+  flex-direction: column;
+}
+
+.saveit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.saveit-message {
+  font-size: 14px;
+  color: #4b5563;
+  text-align: center;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.saveit-checkmark {
+  width: 24px;
+  height: 24px;
+  color: #10b981;
+}
+
+.saveit-error {
+  width: 24px;
+  height: 24px;
+  color: #ef4444;
+}
+
+.saveit-loader {
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  color: #000000;
+}
+
+.saveit-button {
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveit-button:hover {
+  background-color: #0060df;
+}
