@@ -107,14 +107,14 @@ const handleYouTube: ExportedHandler<Env>["fetch"] = async (
   }
 
   // Check if we have cached data
-  const cachedData = await env.SAVEIT_KV.get(`youtube:${videoId}`, {
-    type: "json",
-  });
-  if (cachedData) {
-    return new Response(JSON.stringify(cachedData), {
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  // const cachedData = await env.SAVEIT_KV.get(`youtube:${videoId}`, {
+  //   type: "json",
+  // });
+  // if (cachedData) {
+  //   return new Response(JSON.stringify(cachedData), {
+  //     headers: { "Content-Type": "application/json" },
+  //   });
+  // }
 
   try {
     // Récupérer les métadonnées de la vidéo via l'API YouTube oEmbed
@@ -129,6 +129,8 @@ const handleYouTube: ExportedHandler<Env>["fetch"] = async (
 
     const oembedData = await oembedResponse.json();
 
+    console.log("oembedData", oembedData);
+
     // Construire l'URL de la miniature (thumbnail)
     const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
@@ -139,8 +141,13 @@ const handleYouTube: ExportedHandler<Env>["fetch"] = async (
 
     // Récupérer la transcription
     try {
-      const transcriptResponse =
-        await YoutubeTranscript.fetchTranscript(videoId);
+      const transcriptResponse = await YoutubeTranscript.fetchTranscript(
+        videoId,
+        {
+          lang: "fr",
+        },
+      );
+      console.log("transcriptResponse", transcriptResponse);
       if (transcriptResponse && transcriptResponse.length > 0) {
         metadata.transcript = transcriptResponse
           .map((entry) => `[${formatTime(entry.offset)}] ${entry.text}`)

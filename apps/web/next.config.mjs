@@ -23,6 +23,10 @@ const nextConfig = {
         source: "/ingest/decide",
         destination: "https://eu.i.posthog.com/decide",
       },
+      {
+        source: "/app/:path*",
+        destination: "/app",
+      },
     ];
   },
   // This is required to support PostHog trailing slash API requests

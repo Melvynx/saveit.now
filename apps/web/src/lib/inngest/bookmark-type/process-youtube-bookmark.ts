@@ -181,6 +181,23 @@ export async function processYouTubeBookmark(
   });
 
   await step.run("update-embedding", async () => {
+    if (!summary && !vectorSummary) {
+      const embedding = await embedMany({
+        model: OPENAI_MODELS.embedding,
+        values: [videoInfo.title],
+      });
+      const [titleEmbedding] = embedding.embeddings;
+
+      // Update embeddings in database
+      await prisma.$executeRaw`
+        UPDATE "Bookmark"
+        SET 
+          "titleEmbedding" = ${titleEmbedding}::vector
+        WHERE id = ${context.bookmarkId}
+      `;
+      return;
+    }
+
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
       values: [videoInfo.title, summary, vectorSummary],

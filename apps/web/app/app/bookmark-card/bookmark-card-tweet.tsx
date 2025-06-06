@@ -3,12 +3,12 @@
 import { Bookmark } from "@workspace/database";
 
 import { Button } from "@workspace/ui/components/button";
-import Link from "next/link";
 import { Tweet } from "react-tweet";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
 } from "./bookmark-card-base";
+import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardTweetProps {
   bookmark: Bookmark;
@@ -25,16 +25,7 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       <Tweet id={metadata.tweetId} />
       <BookmarkCardActions url={bookmark.url} className="z-50">
         <Button asChild variant="secondary" className="hover:bg-accent">
-          <Link
-            href={{
-              href: "/app",
-              query: {
-                b: bookmark.id,
-              },
-            }}
-          >
-            Open
-          </Link>
+          <LinkWithQuery to={`/app/b/${bookmark.id}`}>Open</LinkWithQuery>
         </Button>
       </BookmarkCardActions>
     </BookmarkCardContainer>

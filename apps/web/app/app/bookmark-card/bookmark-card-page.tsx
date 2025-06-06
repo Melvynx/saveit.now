@@ -2,7 +2,6 @@
 
 import { Bookmark } from "@workspace/database";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -13,6 +12,7 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
+import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardPageProps {
   bookmark: Bookmark;
@@ -25,18 +25,13 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
   const metadata = bookmark.metadata as any;
   const isVerticalImage = metadata?.width < metadata?.height;
 
-  const bookmarkUrl = {
-    pathname: "/app",
-    query: {
-      ...Object.fromEntries(searchParams.entries()),
-      b: bookmark.id,
-    },
-  };
-
   return (
     <BookmarkCardContainer bookmark={bookmark}>
       <BookmarkCardHeader>
-        <Link href={bookmarkUrl} className="h-full w-full flex-1">
+        <LinkWithQuery
+          to={`/app/b/${bookmark.id}`}
+          className="h-full w-full flex-1"
+        >
           <ImageWithPlaceholder
             src={bookmark.preview ?? ""}
             fallbackImage={bookmark.ogImageUrl ?? null}
@@ -52,7 +47,7 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
                   }
             }
           />
-        </Link>
+        </LinkWithQuery>
         <BookmarkCardActions url={bookmark.url} />
       </BookmarkCardHeader>
 
