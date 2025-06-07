@@ -1,8 +1,28 @@
 // Background script for Firefox WebExtension
+import browser from "webextension-polyfill";
 import { getSession, saveBookmark } from "./auth-client";
 
-// Use browser API (with polyfill for compatibility)
-const browser = globalThis.browser || globalThis.chrome;
+// Types pour les APIs d'extension
+interface Tab {
+  id?: number;
+  url?: string;
+}
+
+interface ContextMenuInfo {
+  menuItemId: string;
+  pageUrl?: string;
+  linkUrl?: string;
+  srcUrl?: string;
+}
+
+interface MessageSender {
+  tab?: Tab;
+}
+
+interface StorageChange {
+  newValue?: any;
+  oldValue?: any;
+}
 
 // Menu contextuel IDs
 const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
@@ -27,11 +47,17 @@ browser.runtime.onInstalled.addListener(() => {
   });
 });
 
+interface SaveBookmarkMessage {
+  action: string;
+  type: string;
+  url: string;
+}
+
 // Gérer les clics sur les menus contextuels
 browser.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
 
-  const sendMessageWithInjection = (message: any) => {
+  const sendMessageWithInjection = (message: SaveBookmarkMessage) => {
     browser.tabs.sendMessage(tab.id!, message).catch(() => {
       // Content script not loaded, inject it
       browser.tabs
@@ -59,7 +85,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       sendMessageWithInjection({
         action: "saveBookmark",
         type: "page",
-        url: info.pageUrl,
+        url: info.pageUrl || "",
       });
       break;
 
@@ -67,7 +93,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       sendMessageWithInjection({
         action: "saveBookmark",
         type: "link",
-        url: info.linkUrl,
+        url: info.linkUrl || "",
       });
       break;
 
@@ -75,65 +101,87 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       sendMessageWithInjection({
         action: "saveBookmark",
         type: "image",
-        url: info.srcUrl,
+        url: info.srcUrl || "",
       });
       break;
   }
 });
 
+interface MessageRequest {
+  action?: string;
+  type?: string;
+  url?: string;
+  itemType?: string;
+}
+
+interface MessageResponse {
+  status?: string;
+  session?: any;
+  error?: string;
+  success?: boolean;
+  errorType?: string;
+  itemType?: string;
+}
+
 // Handle messages from content scripts
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "saveBookmark") {
-    // Forward to content script to show UI
-    if (sender.tab?.id) {
-      browser.tabs.sendMessage(sender.tab.id, { action: "showSaveUI" });
+browser.runtime.onMessage.addListener(
+  (
+    message: MessageRequest,
+    sender,
+    sendResponse: (response: MessageResponse) => void,
+  ) => {
+    if (message.action === "saveBookmark") {
+      // Forward to content script to show UI
+      if (sender.tab?.id) {
+        browser.tabs.sendMessage(sender.tab.id, { action: "showSaveUI" });
+      }
+      sendResponse({ status: "received" });
     }
-    sendResponse({ status: "received" });
-  }
 
-  if (message.type === "GET_SESSION") {
-    // Handle session request from content script
-    getSession()
-      .then((session) => {
-        console.log("Background: Session obtained", session);
-        sendResponse({ session });
-      })
-      .catch((error) => {
-        console.error("Background: Session error", error);
-        sendResponse({ session: null, error: error?.message });
-      });
-    return true; // Indicates async response
-  }
+    if (message.type === "GET_SESSION") {
+      // Handle session request from content script
+      getSession()
+        .then((session) => {
+          console.log("Background: Session obtained", session);
+          sendResponse({ session });
+        })
+        .catch((error) => {
+          console.error("Background: Session error", error);
+          sendResponse({ session: null, error: error?.message });
+        });
+      return true; // Indicates async response
+    }
 
-  if (message.type === "SAVE_BOOKMARK") {
-    // Handle bookmark save request from content script
-    const url = message.url;
-    const itemType = message.itemType || "page"; // page, link, image
+    if (message.type === "SAVE_BOOKMARK") {
+      // Handle bookmark save request from content script
+      const url = message.url || "";
+      const itemType = message.itemType || "page"; // page, link, image
 
-    saveBookmark(url)
-      .then((result) => {
-        console.log(`Background: ${itemType} save result`, result);
-        sendResponse({ ...result, itemType });
-      })
-      .catch((error) => {
-        console.error(`Background: ${itemType} save error`, error);
+      saveBookmark(url)
+        .then((result) => {
+          console.log(`Background: ${itemType} save result`, result);
+          sendResponse({ ...result, itemType });
+        })
+        .catch((error: any) => {
+          console.error(`Background: ${itemType} save error`, error);
 
-        // If it's already an object with error info, use it directly
-        if (error && typeof error === "object" && error.success === false) {
-          sendResponse({ ...error, itemType });
-        } else {
-          // Fallback for unexpected errors
-          sendResponse({
-            success: false,
-            error: error?.message || "Failed to save bookmark",
-            errorType: "UNKNOWN",
-            itemType,
-          });
-        }
-      });
-    return true; // Indicates async response
-  }
-});
+          // If it's already an object with error info, use it directly
+          if (error && typeof error === "object" && error.success === false) {
+            sendResponse({ ...error, itemType });
+          } else {
+            // Fallback for unexpected errors
+            sendResponse({
+              success: false,
+              error: error?.message || "Failed to save bookmark",
+              errorType: "UNKNOWN",
+              itemType,
+            });
+          }
+        });
+      return true; // Indicates async response
+    }
+  },
+);
 
 // Listen for auth events
 browser.storage.onChanged.addListener((changes, namespace) => {
@@ -152,7 +200,7 @@ browser.browserAction.onClicked.addListener(async (tab) => {
       .sendMessage(tab.id, {
         action: "saveBookmark",
         type: "page",
-        url: tab.url,
+        url: tab.url || "",
       })
       .catch(() => {
         // Le content script n'est probablement pas chargé, on l'injecte manuellement
@@ -170,7 +218,7 @@ browser.browserAction.onClicked.addListener(async (tab) => {
               browser.tabs.sendMessage(tab.id!, {
                 action: "saveBookmark",
                 type: "page",
-                url: tab.url,
+                url: tab.url || "",
               });
             }, 100);
           })

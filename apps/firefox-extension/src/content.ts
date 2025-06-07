@@ -1,12 +1,37 @@
 // Content script - s'exécute dans le contexte de la page web
 
 // Import type uniquement, plus d'import de fonctions
+import browser from "webextension-polyfill";
 import type { Session } from "./auth-client";
 
 const BASE_URL = "https://saveit.now";
 
-// Use browser API (with polyfill for compatibility)
-const browser = globalThis.browser || globalThis.chrome;
+// Types pour les APIs d'extension
+interface MessageResponse {
+  session?: Session | null;
+  error?: string;
+  success?: boolean;
+  errorType?: string;
+  itemType?: SaveType;
+}
+
+interface MessageRequest {
+  type: string;
+  url?: string;
+  itemType?: SaveType;
+}
+
+interface RuntimeMessage {
+  action?: string;
+  type?: string;
+  url?: string;
+}
+
+interface MessageSender {
+  tab?: {
+    id?: number;
+  };
+}
 
 // Types de contenu à sauvegarder
 enum SaveType {
@@ -32,12 +57,16 @@ let currentUrl: string = "";
 
 // Fonctions de communication avec le background script
 async function getSessionFromBackground(): Promise<Session | null> {
-  return new Promise((resolve) => {
-    browser.runtime.sendMessage({ type: "GET_SESSION" }, (response) => {
-      console.log("Content: Session response from background", response);
-      resolve(response?.session || null);
-    });
-  });
+  try {
+    const response = (await browser.runtime.sendMessage({
+      type: "GET_SESSION",
+    })) as MessageResponse;
+    console.log("Content: Session response from background", response);
+    return response?.session || null;
+  } catch (error) {
+    console.error("Error getting session:", error);
+    return null;
+  }
 }
 
 async function saveBookmarkViaBackground(
@@ -49,25 +78,28 @@ async function saveBookmarkViaBackground(
   errorType?: string;
   itemType?: SaveType;
 }> {
-  return new Promise((resolve) => {
-    browser.runtime.sendMessage(
-      {
-        type: "SAVE_BOOKMARK",
-        url,
-        itemType,
-      },
-      (response) => {
-        console.log("Content: Save response from background", response);
-        resolve(
-          response || {
-            success: false,
-            error: "No response from background",
-            itemType,
-          },
-        );
-      },
-    );
-  });
+  try {
+    const response = (await browser.runtime.sendMessage({
+      type: "SAVE_BOOKMARK",
+      url,
+      itemType,
+    })) as MessageResponse;
+
+    console.log("Content: Save response from background", response);
+    return {
+      success: response?.success ?? false,
+      error: response?.error || "No response from background",
+      errorType: response?.errorType,
+      itemType: response?.itemType || itemType,
+    };
+  } catch (error) {
+    console.error("Error saving bookmark:", error);
+    return {
+      success: false,
+      error: "Failed to communicate with background script",
+      itemType,
+    };
+  }
 }
 
 // Fonction pour obtenir un texte descriptif basé sur le type de sauvegarde
@@ -291,21 +323,27 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
 }
 
 // Écouter les messages du background script
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // S'assurer que l'UI est créée
-  if (document.getElementById("saveit-now-container") === null) {
-    createSaverUI();
-  }
+browser.runtime.onMessage.addListener(
+  (
+    message: RuntimeMessage,
+    sender: MessageSender,
+    sendResponse: (response: { status: string }) => void,
+  ) => {
+    // S'assurer que l'UI est créée
+    if (document.getElementById("saveit-now-container") === null) {
+      createSaverUI();
+    }
 
-  if (message.action === "saveBookmark" || message.action === "showSaveUI") {
-    // Obtenir le type et l'URL à partir du message ou utiliser les valeurs par défaut
-    const type = message.type ? (message.type as SaveType) : SaveType.PAGE;
-    const url = message.url || window.location.href;
+    if (message.action === "saveBookmark" || message.action === "showSaveUI") {
+      // Obtenir le type et l'URL à partir du message ou utiliser les valeurs par défaut
+      const type = message.type ? (message.type as SaveType) : SaveType.PAGE;
+      const url = message.url || window.location.href;
 
-    saveContent(url, type);
-    sendResponse({ status: "received" });
-  }
-});
+      saveContent(url, type);
+      sendResponse({ status: "received" });
+    }
+  },
+);
 
 // Initialiser l'UI au chargement
 document.addEventListener("DOMContentLoaded", () => {
