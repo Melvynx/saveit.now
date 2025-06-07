@@ -2,8 +2,10 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { authClient } from "@/lib/auth-client";
+import { AUTH_LIMITS } from "@/lib/auth-limits";
 import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
@@ -11,7 +13,14 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const includedFeatures = [
+const freeFeatures = [
+  `${AUTH_LIMITS.free?.bookmarks ?? 20} bookmarks`,
+  `${AUTH_LIMITS.free?.monthlyBookmarks ?? 20} bookmarks per month`,
+  "Basic exports",
+  "Community support",
+];
+
+const proFeatures = [
   "Unlimited bookmarks",
   "Unlimited exports",
   "Priority support",
@@ -53,8 +62,8 @@ export function PricingSection() {
             variant="muted"
             className="mx-auto mt-6 max-w-2xl text-lg font-medium sm:text-xl"
           >
-            Became a SaveIt.pro member in one simple subscription with
-            straightforward pricing. No hidden fees, just great features.
+            Start for free, upgrade when you need more. No hidden fees, just
+            great features.
           </Typography>
         </div>
 
@@ -80,16 +89,33 @@ export function PricingSection() {
           </Tabs>
         </div>
 
-        <div className="mx-auto mt-10 max-w-2xl rounded-3xl ring-1 ring-border sm:mt-12 lg:mx-0 lg:flex lg:max-w-none">
-          <div className="p-8 sm:p-10 lg:flex-auto">
-            <Typography as="h3" className="text-3xl font-semibold">
-              SaveIt<span className="text-primary font-bold">.pro</span>
-            </Typography>
+        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
+          {/* Free Plan */}
+          <Card className="rounded-3xl ring-1 ring-border p-8 sm:p-10">
+            <div className="flex items-center justify-between">
+              <Typography as="h3" className="text-3xl font-semibold">
+                SaveIt<span className="text-muted-foreground">.free</span>
+              </Typography>
+              <Badge variant="secondary">Free</Badge>
+            </div>
+
             <Typography as="p" variant="muted" className="mt-6">
-              Elevate your browsing experience with powerful bookmarking, AI
-              summaries, and unlimited exports. Take control of your digital
-              knowledge with SaveIt.pro.
+              Perfect for getting started with bookmarking and organizing your
+              digital content.
             </Typography>
+
+            <div className="mt-6 flex items-baseline gap-x-2">
+              <Typography as="span" className="text-5xl font-semibold">
+                $0
+              </Typography>
+              <Typography
+                as="span"
+                variant="muted"
+                className="text-sm font-semibold"
+              >
+                /month
+              </Typography>
+            </div>
 
             <div className="mt-10 flex items-center gap-x-4">
               <Typography
@@ -101,59 +127,92 @@ export function PricingSection() {
               <div className="h-px flex-auto bg-border" />
             </div>
 
-            <ul
-              role="list"
-              className="mt-8 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 sm:gap-6"
-            >
-              {includedFeatures.map((feature) => (
+            <ul role="list" className="mt-8 space-y-4 text-sm">
+              {freeFeatures.map((feature) => (
                 <li key={feature} className="flex gap-x-3 items-center">
                   <Check className="h-5 w-5 flex-none text-primary" />
                   <Typography variant="muted">{feature}</Typography>
                 </li>
               ))}
             </ul>
-          </div>
 
-          <div className="-mt-2 p-2 lg:mt-0 lg:w-full lg:max-w-md lg:flex-shrink-0">
-            <Card className="h-full rounded-2xl py-10 text-center lg:flex lg:flex-col lg:justify-center lg:py-16">
-              <div className="mx-auto max-w-xs px-8">
-                <Typography as="p" className="font-semibold">
-                  {monthly ? "Billed monthly" : "Billed annually"}
-                </Typography>
+            <Button variant="outline" className="mt-10 w-full" disabled>
+              Current Plan
+            </Button>
+          </Card>
 
-                <div className="mt-6 flex items-baseline justify-center gap-x-2">
-                  <Typography as="span" className="text-5xl font-semibold">
-                    ${monthly ? "9" : "5"}
-                  </Typography>
-                  <Typography
-                    as="span"
-                    variant="muted"
-                    className="text-sm font-semibold"
-                  >
-                    /month
-                  </Typography>
-                </div>
+          {/* Pro Plan */}
+          <Card className="rounded-3xl ring-2 ring-primary p-8 sm:p-10 relative">
+            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+              Most Popular
+            </Badge>
 
-                {!monthly && (
-                  <Typography variant="muted" className="text-green-500 mt-2">
-                    5 months free!
-                  </Typography>
-                )}
+            <div className="flex items-center justify-between">
+              <Typography as="h3" className="text-3xl font-semibold">
+                SaveIt<span className="text-primary font-bold">.pro</span>
+              </Typography>
+              <Badge>Pro</Badge>
+            </div>
 
-                <LoadingButton
-                  loading={mutation.isPending}
-                  onClick={() => mutation.mutate()}
-                  className="mt-10 w-full"
-                >
-                  Upgrade Now
-                </LoadingButton>
+            <Typography as="p" variant="muted" className="mt-6">
+              Elevate your browsing experience with powerful bookmarking, AI
+              summaries, and unlimited exports.
+            </Typography>
 
-                <Typography as="p" variant="muted" className="mt-6 text-xs">
-                  Simple and transparent pricing. No hidden fees.
-                </Typography>
-              </div>
-            </Card>
-          </div>
+            <div className="mt-6 flex items-baseline gap-x-2">
+              <Typography as="span" className="text-5xl font-semibold">
+                ${monthly ? "9" : "5"}
+              </Typography>
+              <Typography
+                as="span"
+                variant="muted"
+                className="text-sm font-semibold"
+              >
+                /month
+              </Typography>
+            </div>
+
+            {!monthly && (
+              <Typography variant="muted" className="text-green-500 mt-2">
+                5 months free!
+              </Typography>
+            )}
+
+            <div className="mt-10 flex items-center gap-x-4">
+              <Typography
+                as="h4"
+                className="flex-none text-sm font-semibold text-primary"
+              >
+                Everything in Free, plus
+              </Typography>
+              <div className="h-px flex-auto bg-border" />
+            </div>
+
+            <ul role="list" className="mt-8 space-y-4 text-sm">
+              {proFeatures.map((feature) => (
+                <li key={feature} className="flex gap-x-3 items-center">
+                  <Check className="h-5 w-5 flex-none text-primary" />
+                  <Typography variant="muted">{feature}</Typography>
+                </li>
+              ))}
+            </ul>
+
+            <LoadingButton
+              loading={mutation.isPending}
+              onClick={() => mutation.mutate()}
+              className="mt-10 w-full"
+            >
+              Upgrade Now
+            </LoadingButton>
+
+            <Typography
+              as="p"
+              variant="muted"
+              className="mt-6 text-xs text-center"
+            >
+              Simple and transparent pricing. No hidden fees.
+            </Typography>
+          </Card>
         </div>
       </div>
     </div>
