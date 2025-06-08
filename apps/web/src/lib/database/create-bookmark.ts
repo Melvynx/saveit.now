@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { getUserLimits } from "../auth-session";
 import { ApplicationError, BookmarkErrorType } from "../errors";
 import { inngest } from "../inngest/client";
+import { getPostHogClient } from "../posthog";
 
 export class BookmarkCreationError extends ApplicationError {
   constructor(message: string, type: string) {
@@ -13,6 +14,7 @@ export class BookmarkCreationError extends ApplicationError {
 
 export const createBookmark = async (body: { url: string; userId: string }) => {
   const user = await getUserLimits();
+  const posthogClient = getPostHogClient();
   const totalBookmarks = await prisma.bookmark.count({
     where: {
       userId: body.userId,
@@ -20,6 +22,14 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
   });
 
   if (totalBookmarks >= user.limits.bookmarks) {
+    posthogClient.capture({
+      distinctId: body.userId,
+      event: "bookmark_limit_reached",
+      properties: {
+        bookmarks: totalBookmarks,
+        limit: user.limits.bookmarks,
+      },
+    });
     throw new BookmarkCreationError(
       "You have reached the maximum number of bookmarks",
       BookmarkErrorType.MAX_BOOKMARKS,
@@ -38,6 +48,14 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
   });
 
   if (monthlyBookmarks >= user.limits.monthlyBookmarks) {
+    posthogClient.capture({
+      distinctId: body.userId,
+      event: "monthly_bookmark_limit_reached",
+      properties: {
+        bookmarks: monthlyBookmarks,
+        limit: user.limits.monthlyBookmarks,
+      },
+    });
     throw new BookmarkCreationError(
       "You have reached the maximum number of bookmarks for this month",
       BookmarkErrorType.MAX_BOOKMARKS,
@@ -52,6 +70,13 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
   });
 
   if (alreadyExists) {
+    posthogClient.capture({
+      distinctId: body.userId,
+      event: "bookmark_already_exists",
+      properties: {
+        url: body.url,
+      },
+    });
     throw new BookmarkCreationError(
       "Bookmark already exists",
       BookmarkErrorType.BOOKMARK_ALREADY_EXISTS,
@@ -70,6 +95,14 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
     data: {
       bookmarkId: bookmark.id,
       userId: body.userId,
+    },
+  });
+
+  posthogClient.capture({
+    distinctId: body.userId,
+    event: "bookmark_created",
+    properties: {
+      url: body.url,
     },
   });
 
