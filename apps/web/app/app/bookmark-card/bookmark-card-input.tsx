@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { APP_LINKS } from "@/lib/app-links";
 import {
   CardDescription,
   CardFooter,
@@ -40,7 +41,7 @@ export const BookmarkCardInput = () => {
 
   return (
     <BookmarkCardContainer bookmark={mockBookmark as any}>
-      <CardHeader className="pt-6">
+      <CardHeader className="pt-4">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />
           <CardTitle>Add a bookmark</CardTitle>
@@ -67,19 +68,19 @@ export const BookmarkCardInput = () => {
         </div>
       </CardHeader>
 
-      <CardFooter className="flex flex-col gap-2 border-t">
+      <CardFooter className="flex flex-col gap-2 border-t !pt-4">
         <Typography variant="muted">
           Looking for quickly add a bookmark? Install our browser extension.
         </Typography>
         <div className="flex items-center gap-2">
           <Link
-            href="/app/extensions"
+            href={APP_LINKS.extensions}
             className="rounded-md hover:bg-accent/50 transition-colors p-2"
           >
             <img src="https://svgl.app/library/chrome.svg" className="size-8" />
           </Link>
           <Link
-            href="/app/extensions"
+            href={APP_LINKS.extensions}
             className="rounded-md hover:bg-accent/50 transition-colors p-2"
           >
             <img
