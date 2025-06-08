@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -40,9 +41,14 @@ export function UpgradePage() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const plan = useUserPlan();
+  const posthog = usePostHog();
 
   const mutation = useMutation({
     mutationFn: async () => {
+      posthog.capture("upgrade_subscription", {
+        plan: monthly ? "monthly" : "yearly",
+      });
+
       const client = await authClient.subscription.upgrade({
         plan: "pro",
         successUrl: "/upgrade/success",
