@@ -14,15 +14,6 @@ import { Typography } from "@workspace/ui/components/typography";
 import Link from "next/link";
 
 export default function RoutePage() {
-  const downloadChromeExtension = () => {
-    const link = document.createElement("a");
-    link.href = "/extensions/chrome/v1.0.0.zip";
-    link.download = "chrome-extension.zip";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <MaxWidthContainer>
       <Card className="w-full">
@@ -34,7 +25,7 @@ export default function RoutePage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2 lg:flex-row">
           <Button asChild className="flex-1" variant="outline" size="lg">
-            <Link href={APP_LINKS.extensions} target="_blank">
+            <Link href={APP_LINKS.chrome} target="_blank">
               <img
                 src="https://svgl.app/library/chrome.svg"
                 className="size-6"
