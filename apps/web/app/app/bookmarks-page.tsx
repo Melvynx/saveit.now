@@ -72,7 +72,7 @@ export function BookmarksPage() {
 
               return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
             })}
-            {!query && <BookmarkCardPricing />}
+            {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
             {query && <MoreResultsButton />}
             {bookmarks.length > 10 && (
               <BookmarkCardLoadMore
