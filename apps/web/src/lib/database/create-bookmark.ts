@@ -100,7 +100,7 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
 
   posthogClient.capture({
     distinctId: body.userId,
-    event: "bookmark_created",
+    event: "bookmark+created",
     properties: {
       url: body.url,
     },
