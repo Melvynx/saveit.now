@@ -15,6 +15,7 @@ export const useUserPlan = create<UserPlan>((set) => ({
   limits: {
     bookmarks: 20,
     monthlyBookmarks: 20,
+    canExport: 0,
   },
   isLoading: true,
 }));
