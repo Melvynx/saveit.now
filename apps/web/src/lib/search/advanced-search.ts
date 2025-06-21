@@ -167,37 +167,48 @@ async function searchByDomain({
     },
   });
 
-  return bookmarks
-    .filter((bookmark) => {
-      // Vérifie que l'URL contient vraiment le domaine
-      const bookmarkDomain = extractDomain(bookmark.url);
-      return bookmarkDomain.includes(domain) || domain.includes(bookmarkDomain);
-    })
-    .map((bookmark) => {
-      const bookmarkDomain = extractDomain(bookmark.url);
-      // Score élevé si c'est un match exact de domaine
-      const isExactMatch = bookmarkDomain === domain;
-      const score = isExactMatch ? 150 : 120; // Score très élevé pour les domaines
+  const filteredBookmarks = bookmarks.filter((bookmark) => {
+    // Vérifie que l'URL contient vraiment le domaine
+    const bookmarkDomain = extractDomain(bookmark.url);
+    return bookmarkDomain.includes(domain) || domain.includes(bookmarkDomain);
+  });
 
-      return {
-        id: bookmark.id,
-        url: bookmark.url,
-        title: bookmark.title,
-        summary: bookmark.summary,
-        preview: bookmark.preview,
-        type: bookmark.type,
-        status: bookmark.status,
-        ogImageUrl: bookmark.ogImageUrl,
-        ogDescription: bookmark.ogDescription,
-        faviconUrl: bookmark.faviconUrl,
-        score,
-        matchType: "tag" as const, // On utilise "tag" pour les domaines
-        matchedTags: bookmark.tags.map((bt) => bt.tag.name),
-        createdAt: bookmark.createdAt,
-        metadata: bookmark.metadata,
-        starred: bookmark.starred,
-      };
-    });
+  // Get open counts for filtered bookmarks
+  const bookmarkIds = filteredBookmarks.map((bookmark) => bookmark.id);
+  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+
+  return filteredBookmarks.map((bookmark) => {
+    const bookmarkDomain = extractDomain(bookmark.url);
+    // Score élevé si c'est un match exact de domaine
+    const isExactMatch = bookmarkDomain === domain;
+    const baseScore = isExactMatch ? 150 : 120; // Score très élevé pour les domaines
+
+    // Apply open frequency boost
+    const openCount = openCounts.get(bookmark.id) || 0;
+    const score = applyOpenFrequencyBoost(baseScore, openCount);
+
+    return {
+      id: bookmark.id,
+      url: bookmark.url,
+      title: bookmark.title,
+      summary: bookmark.summary,
+      preview: bookmark.preview,
+      type: bookmark.type,
+      status: bookmark.status,
+      ogImageUrl: bookmark.ogImageUrl,
+      ogDescription: bookmark.ogDescription,
+      faviconUrl: bookmark.faviconUrl,
+      score,
+      matchType: "tag" as const, // On utilise "tag" pour les domaines
+      matchedTags: bookmark.tags.map(
+        (bt: { tag: { name: string } }) => bt.tag.name,
+      ),
+      createdAt: bookmark.createdAt,
+      metadata: bookmark.metadata,
+      openCount,
+      starred: bookmark.starred,
+    };
+  });
 }
 
 /**
@@ -414,13 +425,21 @@ async function searchByTags({
     },
   });
 
+  // Get open counts for all bookmarks
+  const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
+  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+
   return bookmarks.map((bookmark) => {
     const matchedTags = bookmark.tags
-      .filter((bt) => tags.includes(bt.tag.name))
-      .map((bt) => bt.tag.name);
+      .filter((bt: { tag: { name: string } }) => tags.includes(bt.tag.name))
+      .map((bt: { tag: { name: string } }) => bt.tag.name);
 
     const tagMatchRatio = matchedTags.length / tags.length;
-    const score = tagMatchRatio * 100;
+    const baseScore = tagMatchRatio * 100;
+
+    // Apply open frequency boost
+    const openCount = openCounts.get(bookmark.id) || 0;
+    const score = applyOpenFrequencyBoost(baseScore, openCount);
 
     return {
       id: bookmark.id,
@@ -438,6 +457,7 @@ async function searchByTags({
       matchedTags,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      openCount,
       starred: bookmark.starred,
     };
   });
@@ -533,10 +553,18 @@ async function searchByVector({
     })),
   );
 
+  // Get open counts for all bookmarks
+  const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
+  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+
   return bookmarks.map((bookmark) => {
-    const score = Math.max(0, 100 * (1 - bookmark.distance));
+    const baseScore = Math.max(0, 100 * (1 - bookmark.distance));
     const bookmarkTags = bookmark.tagNames ? bookmark.tagNames.split(",") : [];
     const matchedTags = bookmarkTags.filter((tag) => tags.includes(tag));
+
+    // Apply open frequency boost
+    const openCount = openCounts.get(bookmark.id) || 0;
+    const score = applyOpenFrequencyBoost(baseScore, openCount);
 
     return {
       id: bookmark.id,
@@ -554,6 +582,7 @@ async function searchByVector({
       matchedTags: matchedTags.length > 0 ? matchedTags : undefined,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      openCount,
       starred: bookmark.starred,
     };
   });
