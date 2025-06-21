@@ -18,6 +18,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { useParams } from "react-router";
 import { Tweet } from "react-tweet";
 import { toast } from "sonner";
+import { ExternalLinkTracker } from "../external-link-tracker";
 import { useNavigateWithQuery } from "../bookmark-card/link-with-query";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import {
@@ -81,11 +82,11 @@ export function BookmarkPage() {
       >
         <header className="flex items-center gap-2 px-6 pt-6">
           <div className="flex-1"></div>
-          <Button size="icon" variant="outline" className="size-8" asChild>
-            <Link href={bookmark.url} target="_blank">
+          <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+            <Button size="icon" variant="outline" className="size-8">
               <ExternalLink className="text-muted-foreground size-4" />
-            </Link>
-          </Button>
+            </Button>
+          </ExternalLinkTracker>
 
           <InlineTooltip title="Copy Link (⌘C)">
             <CopyLinkButton url={bookmark.url} />
@@ -104,14 +105,14 @@ export function BookmarkPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Typography
-                  as={Link}
-                  href={bookmark.url}
-                  variant="large"
-                  className="line-clamp-1"
-                >
-                  {bookmark.url}
-                </Typography>
+                <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+                  <Typography
+                    variant="large"
+                    className="line-clamp-1 cursor-pointer hover:underline"
+                  >
+                    {bookmark.url}
+                  </Typography>
+                </ExternalLinkTracker>
                 <Typography variant="muted">{bookmark.title}</Typography>
               </div>
             </div>
@@ -174,12 +175,12 @@ export function BookmarkPage() {
           <div className="flex-1"></div>
           <DeleteButton bookmarkId={bookmark.id} />
           <InlineTooltip title="Open (O)">
-            <Button variant="default" asChild>
-              <Link href={bookmark.url} target="_blank">
+            <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+              <Button variant="default">
                 <ExternalLink className="size-4" />
                 <span>Open</span>
-              </Link>
-            </Button>
+              </Button>
+            </ExternalLinkTracker>
           </InlineTooltip>
         </footer>
       </DialogContent>

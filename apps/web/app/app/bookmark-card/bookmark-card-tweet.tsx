@@ -23,7 +23,7 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       className="py-0 tweet-container relative"
     >
       <Tweet id={metadata.tweetId} />
-      <BookmarkCardActions url={bookmark.url} className="z-50">
+      <BookmarkCardActions bookmarkId={bookmark.id} url={bookmark.url} className="z-50">
         <Button asChild variant="secondary" className="hover:bg-accent">
           <LinkWithQuery to={`/app/b/${bookmark.id}`}>Open</LinkWithQuery>
         </Button>

@@ -32,7 +32,7 @@ export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <BookmarkCardActions url={bookmark.url} />
+        <BookmarkCardActions bookmarkId={bookmark.id} url={bookmark.url} />
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>

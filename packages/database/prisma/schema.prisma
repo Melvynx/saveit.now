@@ -27,6 +27,7 @@ model User {
   accounts      Account[]
   tags          Tag[]
   bookmarks     Bookmark[]
+  bookmarkOpens BookmarkOpen[]
   onboarding    Boolean    @default(false)
 
   stripeCustomerId String?
@@ -166,6 +167,9 @@ model Bookmark {
   // Tags
   tags BookmarkTag[]
 
+  // Opens tracking
+  opens BookmarkOpen[]
+
   // To delete
   BookmarkChunk BookmarkChunk[]
 }
@@ -178,6 +182,19 @@ model BookmarkChunk {
   embedding  Unsupported("vector(1536)")?
 
   bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+}
+
+model BookmarkOpen {
+  id         String   @id @default(nanoid(7))
+  bookmarkId String
+  userId     String
+  openedAt   DateTime @default(now())
+
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookmarkId, userId])
+  @@index([userId, openedAt])
 }
 
 model Subscription {

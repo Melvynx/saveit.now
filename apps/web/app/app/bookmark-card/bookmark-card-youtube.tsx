@@ -27,7 +27,7 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
         {(bounds) => (
           <>
             <YouTubeEmbed videoid={metadata.youtubeId} width={bounds.width} />
-            <BookmarkCardActions url={bookmark.url} />
+            <BookmarkCardActions bookmarkId={bookmark.id} url={bookmark.url} />
           </>
         )}
       </BookmarkCardHeader>

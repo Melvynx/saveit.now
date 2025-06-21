@@ -2,17 +2,19 @@
 
 import { Button } from "@workspace/ui/components/button";
 import { ExternalLink } from "lucide-react";
-import Link from "next/link";
 
 import { CopyLinkButton } from "../bookmark-page/bookmark-actions-button";
+import { ExternalLinkTracker } from "../external-link-tracker";
 
 interface BookmarkCardActionsProps {
+  bookmarkId: string;
   url: string;
   className?: string;
   children?: React.ReactNode;
 }
 
 export const BookmarkCardActions = ({
+  bookmarkId,
   url,
   className = "",
   children,
@@ -21,17 +23,19 @@ export const BookmarkCardActions = ({
     <div
       className={`absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${className}`}
     >
-      <Button
-        variant="secondary"
-        size="icon"
-        className="size-8 hover:bg-accent"
-        asChild
+      <ExternalLinkTracker
+        bookmarkId={bookmarkId}
+        url={url}
         onClick={(e) => e.stopPropagation()}
       >
-        <Link href={url} target="_blank">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="size-8 hover:bg-accent"
+        >
           <ExternalLink className="text-muted-foreground size-4" />
-        </Link>
-      </Button>
+        </Button>
+      </ExternalLinkTracker>
       <CopyLinkButton
         url={url}
         variant="secondary"

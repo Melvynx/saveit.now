@@ -51,7 +51,7 @@ export const BookmarkCardBase = ({
             {typeof headerContent === "function"
               ? headerContent(bounds)
               : headerContent}
-            {showActions && <BookmarkCardActions url={bookmark.url} />}
+            {showActions && <BookmarkCardActions bookmarkId={bookmark.id} url={bookmark.url} />}
           </>
         )}
       </BookmarkCardHeader>
