@@ -17,6 +17,7 @@ export const fetchBookmark = async (bookmarkId: string) => {
         note: z.string().optional().nullable(),
         type: z.nativeEnum(BookmarkType),
         metadata: z.any().optional().nullable(),
+        starred: z.boolean().optional(),
         tags: z.array(
           z.object({
             tag: z.object({

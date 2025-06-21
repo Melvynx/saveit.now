@@ -131,3 +131,32 @@ export const reBookmarkAction = userAction
       success: true,
     };
   });
+
+export const toggleStarBookmarkAction = userAction
+  .schema(z.object({ bookmarkId: z.string() }))
+  .action(async ({ parsedInput: input, ctx: { user } }) => {
+    const bookmark = await prisma.bookmark.findUnique({
+      where: { id: input.bookmarkId, userId: user.id },
+      select: { starred: true },
+    });
+
+    if (!bookmark) {
+      throw new Error("Bookmark not found or unauthorized");
+    }
+
+    const updatedBookmark = await prisma.bookmark.update({
+      where: { id: input.bookmarkId },
+      data: {
+        starred: !bookmark.starred,
+      },
+      select: {
+        id: true,
+        starred: true,
+      },
+    });
+
+    return {
+      bookmarkId: updatedBookmark.id,
+      starred: updatedBookmark.starred,
+    };
+  });

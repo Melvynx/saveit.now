@@ -5,7 +5,7 @@
   "description": "Organize nothing. Find everything.",
   "author": "@melvynxdev",
   "homepage_url": "https://saveit.now",
-  
+
   "browser_action": {
     "default_icon": {
       "16": "images/icon16.png",
@@ -15,12 +15,12 @@
     },
     "default_title": "SaveIt.now"
   },
-  
+
   "background": {
     "scripts": ["background.js"],
     "persistent": true
   },
-  
+
   "permissions": [
     "activeTab",
     "storage",
@@ -28,25 +28,22 @@
     "cookies",
     "https://saveit.now/*"
   ],
-  
+
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
     "128": "images/icon128.png",
     "256": "images/icon256.png"
   },
-  
+
   "content_security_policy": "script-src 'self'; object-src 'self'",
-  
-  "web_accessible_resources": [
-    "images/*",
-    "content.css"
-  ],
+
+  "web_accessible_resources": ["images/*", "content.css"],
 
   "applications": {
     "gecko": {
       "id": "saveit-now@melvynxdev.com",
-      "strict_min_version": "57.0"
+      "strict_min_version": "58.0"
     }
   }
 }
