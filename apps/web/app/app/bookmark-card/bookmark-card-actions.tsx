@@ -2,13 +2,14 @@
 
 import { Button } from "@workspace/ui/components/button";
 import { ExternalLink } from "lucide-react";
-
 import { CopyLinkButton } from "../bookmark-page/bookmark-actions-button";
+import { StarButton } from "../bookmark-page/star-button";
 import { ExternalLinkTracker } from "../external-link-tracker";
 
 interface BookmarkCardActionsProps {
   bookmarkId: string;
   url: string;
+  starred: boolean;
   className?: string;
   children?: React.ReactNode;
 }
@@ -16,6 +17,7 @@ interface BookmarkCardActionsProps {
 export const BookmarkCardActions = ({
   bookmarkId,
   url,
+  starred,
   className = "",
   children,
 }: BookmarkCardActionsProps) => {
@@ -41,6 +43,14 @@ export const BookmarkCardActions = ({
         variant="secondary"
         size="icon"
         className="size-8 hover:bg-accent"
+      />
+      <StarButton
+        bookmarkId={bookmarkId}
+        starred={starred}
+        variant="secondary"
+        size="icon"
+        className="size-8 hover:bg-accent"
+        showTooltip={false}
       />
       {children}
     </div>

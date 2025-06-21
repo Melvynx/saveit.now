@@ -28,6 +28,7 @@ import {
 } from "./bookmark-actions-button";
 import { BookmarkNote } from "./bookmark-note";
 import { DeleteButton } from "./delete-button";
+import { StarButton } from "./star-button";
 import { useBookmark } from "./use-bookmark";
 
 export function BookmarkPage() {
@@ -92,6 +93,10 @@ export function BookmarkPage() {
             <CopyLinkButton url={bookmark.url} />
           </InlineTooltip>
 
+          <StarButton
+            bookmarkId={bookmark.id}
+            starred={bookmark.starred || false}
+          />
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>

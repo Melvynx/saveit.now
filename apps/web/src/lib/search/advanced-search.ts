@@ -31,6 +31,7 @@ export type SearchResult = {
   createdAt?: Date;
   metadata?: Prisma.JsonValue;
   openCount?: number;
+  starred?: boolean;
 };
 
 export type SearchResponse = {
@@ -107,7 +108,7 @@ function extractDomain(query: string): string {
  */
 async function getBookmarkOpenCounts(
   userId: string,
-  bookmarkIds: string[]
+  bookmarkIds: string[],
 ): Promise<Map<string, number>> {
   if (bookmarkIds.length === 0) return new Map();
 
@@ -126,7 +127,7 @@ async function getBookmarkOpenCounts(
     openCounts.map((count: { bookmarkId: string; _count: { id: number } }) => [
       count.bookmarkId,
       count._count.id,
-    ])
+    ]),
   );
 }
 
@@ -135,7 +136,7 @@ async function getBookmarkOpenCounts(
  */
 function applyOpenFrequencyBoost(score: number, openCount: number): number {
   if (openCount === 0) return score;
-  
+
   // Boost logarithmique pour éviter qu'un bookmark très ouvert domine complètement
   const boost = Math.log(openCount + 1) * 10;
   return score + boost;
@@ -193,6 +194,7 @@ async function searchByDomain({
         matchedTags: bookmark.tags.map((bt) => bt.tag.name),
         createdAt: bookmark.createdAt,
         metadata: bookmark.metadata,
+        starred: bookmark.starred,
       };
     });
 }
@@ -230,9 +232,14 @@ export async function advancedSearch({
             }
           : {}),
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        {
+          starred: "desc", // Starred bookmarks first
+        },
+        {
+          createdAt: "desc", // Then by creation date
+        },
+      ],
       take: limit + 1,
     });
 
@@ -247,26 +254,29 @@ export async function advancedSearch({
     const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
 
     return {
-      bookmarks: bookmarks.map((bookmark) => {
-        const openCount = openCounts.get(bookmark.id) || 0;
-        return {
-          id: bookmark.id,
-          url: bookmark.url,
-          title: bookmark.title,
-          summary: bookmark.summary,
-          preview: bookmark.preview,
-          type: bookmark.type,
-          status: bookmark.status,
-          ogImageUrl: bookmark.ogImageUrl,
-          ogDescription: bookmark.ogDescription,
-          faviconUrl: bookmark.faviconUrl,
-          score: applyOpenFrequencyBoost(0, openCount),
-          matchType: "tag" as const,
-          createdAt: bookmark.createdAt,
-          metadata: bookmark.metadata,
-          openCount,
-        };
-      }).sort((a, b) => b.score - a.score), // Trier par fréquence d'ouverture
+      bookmarks: bookmarks
+        .map((bookmark) => {
+          const openCount = openCounts.get(bookmark.id) || 0;
+          return {
+            id: bookmark.id,
+            url: bookmark.url,
+            title: bookmark.title,
+            summary: bookmark.summary,
+            preview: bookmark.preview,
+            type: bookmark.type,
+            status: bookmark.status,
+            ogImageUrl: bookmark.ogImageUrl,
+            ogDescription: bookmark.ogDescription,
+            faviconUrl: bookmark.faviconUrl,
+            score: applyOpenFrequencyBoost(0, openCount),
+            matchType: "tag" as const,
+            createdAt: bookmark.createdAt,
+            metadata: bookmark.metadata,
+            openCount,
+            starred: bookmark.starred,
+          };
+        })
+        .sort((a, b) => b.score - a.score), // Trier par fréquence d'ouverture
       nextCursor,
       hasMore,
     };
@@ -427,6 +437,7 @@ async function searchByTags({
       matchedTags,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      starred: bookmark.starred,
     };
   });
 }
@@ -466,6 +477,7 @@ async function searchByVector({
       tagNames?: string;
       createdAt: Date;
       metadata?: Prisma.JsonValue;
+      starred?: boolean;
     }[]
   >(
     `
@@ -483,6 +495,7 @@ async function searchByVector({
         "faviconUrl",
         "createdAt",
         metadata,
+        starred,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
           COALESCE("summaryEmbedding" <=> $1::vector, 1),
@@ -503,7 +516,7 @@ async function searchByVector({
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
     WHERE d.distance <= (SELECT min_dist + $3 FROM min_distance)
-    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.distance
+    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.starred, d.distance
     ORDER BY distance ASC
     LIMIT 50
   `,
@@ -541,6 +554,7 @@ async function searchByVector({
       matchedTags: matchedTags.length > 0 ? matchedTags : undefined,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      starred: bookmark.starred,
     };
   });
 }
