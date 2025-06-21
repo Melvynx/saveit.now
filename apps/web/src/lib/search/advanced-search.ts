@@ -6,6 +6,7 @@ import {
   Prisma,
 } from "@workspace/database";
 import { embed } from "ai";
+import { logger } from "../logger";
 
 // Types pour les résultats de recherche
 export type SearchResultChunk = {
@@ -498,7 +499,6 @@ async function searchByVector({
         starred,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
-          COALESCE("summaryEmbedding" <=> $1::vector, 1),
           COALESCE("detailedSummaryEmbedding" <=> $1::vector, 1)
         ) as distance
       FROM "Bookmark" b
@@ -526,7 +526,7 @@ async function searchByVector({
     ...tagsParams,
   );
 
-  console.log(
+  logger.info(
     bookmarks.map((b) => ({
       url: b.url,
       distance: b.distance,

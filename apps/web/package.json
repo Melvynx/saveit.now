@@ -36,6 +36,7 @@
     "better-auth": "^1.2.8",
     "canvas-confetti": "^1.9.3",
     "cheerio": "^1.0.0",
+    "consola": "^3.4.2",
     "dayjs": "^1.11.13",
     "inngest": "^3.36.0",
     "input-otp": "^1.4.2",

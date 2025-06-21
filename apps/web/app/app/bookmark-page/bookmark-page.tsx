@@ -89,9 +89,7 @@ export function BookmarkPage() {
             </Button>
           </ExternalLinkTracker>
 
-          <InlineTooltip title="Copy Link (⌘C)">
-            <CopyLinkButton url={bookmark.url} />
-          </InlineTooltip>
+          <CopyLinkButton url={bookmark.url} />
 
           <StarButton
             bookmarkId={bookmark.id}
@@ -110,7 +108,10 @@ export function BookmarkPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+                <ExternalLinkTracker
+                  bookmarkId={bookmark.id}
+                  url={bookmark.url}
+                >
                   <Typography
                     variant="large"
                     className="line-clamp-1 cursor-pointer hover:underline"
