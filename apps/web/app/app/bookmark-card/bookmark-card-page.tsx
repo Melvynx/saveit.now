@@ -48,7 +48,11 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
             }
           />
         </LinkWithQuery>
-        <BookmarkCardActions url={bookmark.url} />
+        <BookmarkCardActions
+          url={bookmark.url}
+          bookmarkId={bookmark.id}
+          starred={bookmark.starred || false}
+        />
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>

@@ -86,7 +86,7 @@ export const LandingHero = () => {
               </div>
             </li>
           </ul>
-          <Button asChild>
+          <Button asChild size="lg">
             <Link href={APP_LINKS.signin}>Get started</Link>
           </Button>
         </div>

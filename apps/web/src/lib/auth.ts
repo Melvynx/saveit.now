@@ -3,7 +3,7 @@ import { prisma } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { magicLink } from "better-auth/plugins";
+import { emailOTP, magicLink } from "better-auth/plugins";
 import { resend } from "./resend";
 import { stripeClient } from "./stripe";
 
@@ -75,6 +75,20 @@ Melvyn`,
     cookiePrefix: "save-it",
   },
   plugins: [
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        // Implement email sending here
+        // Example with Resend, Nodemailer, etc.
+        await resend.emails.send({
+          to: email,
+          subject: "Your verification code",
+          html: `Your OTP code is: <strong>${otp}</strong>`,
+          from: "noreply@codeline.app",
+        });
+      },
+      otpLength: 6,
+      expiresIn: 300, // 5 minutes
+    }),
     stripe({
       stripeClient: stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,

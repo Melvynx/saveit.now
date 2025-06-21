@@ -30,6 +30,7 @@ export type SearchResult = {
   matchedTags?: string[];
   createdAt?: Date;
   metadata?: Prisma.JsonValue;
+  starred?: boolean;
 };
 
 export type SearchResponse = {
@@ -153,6 +154,7 @@ async function searchByDomain({
         matchedTags: bookmark.tags.map((bt) => bt.tag.name),
         createdAt: bookmark.createdAt,
         metadata: bookmark.metadata,
+        starred: bookmark.starred,
       };
     });
 }
@@ -190,9 +192,14 @@ export async function advancedSearch({
             }
           : {}),
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        {
+          starred: "desc", // Starred bookmarks first
+        },
+        {
+          createdAt: "desc", // Then by creation date
+        },
+      ],
       take: limit + 1,
     });
 
@@ -217,6 +224,7 @@ export async function advancedSearch({
         score: 0,
         matchType: "tag" as const,
         createdAt: bookmark.createdAt,
+        starred: bookmark.starred,
         metadata: bookmark.metadata,
       })),
       nextCursor,
@@ -368,6 +376,7 @@ async function searchByTags({
       matchedTags,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      starred: bookmark.starred,
     };
   });
 }
@@ -407,6 +416,7 @@ async function searchByVector({
       tagNames?: string;
       createdAt: Date;
       metadata?: Prisma.JsonValue;
+      starred?: boolean;
     }[]
   >(
     `
@@ -424,6 +434,7 @@ async function searchByVector({
         "faviconUrl",
         "createdAt",
         metadata,
+        starred,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
           COALESCE("summaryEmbedding" <=> $1::vector, 1),
@@ -444,7 +455,7 @@ async function searchByVector({
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
     WHERE d.distance <= (SELECT min_dist + $3 FROM min_distance)
-    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.distance
+    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.starred, d.distance
     ORDER BY distance ASC
     LIMIT 50
   `,
@@ -482,6 +493,7 @@ async function searchByVector({
       matchedTags: matchedTags.length > 0 ? matchedTags : undefined,
       createdAt: bookmark.createdAt,
       metadata: bookmark.metadata,
+      starred: bookmark.starred,
     };
   });
 }

@@ -1,11 +1,11 @@
 "use client";
 
+import { OtpForm } from "@/components/better-auth-otp";
 import { SignInWith } from "@/features/auth/sign-in-with";
 import { MaxWidthContainer } from "@/features/page/page";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
-import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -13,16 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  useZodForm,
-} from "@workspace/ui/components/form";
-import { Input } from "@workspace/ui/components/input";
+import { useZodForm } from "@workspace/ui/components/form";
 import { Typography } from "@workspace/ui/components/typography";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
@@ -158,32 +149,24 @@ export default function SignInPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <Form
-            form={magicLinkForm}
-            onSubmit={handleMagicLinkSubmit}
-            className="space-y-5"
-          >
-            <FormField
-              control={magicLinkForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="hi@yourcompany.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              disabled={magicLinkMutation.isPending}
-              type="submit"
-              className="w-full"
-            >
-              Send magic link
-            </Button>
-          </Form>
+          <OtpForm
+            sendOtp={async (email) => {
+              console.log("Sending OTP to", email);
+              const result = await authClient.emailOtp.sendVerificationOtp({
+                email,
+                type: "sign-in",
+              });
+              if (result.error) throw new Error(result.error.message);
+            }}
+            verifyOtp={async (email, otp) => {
+              const result = await authClient.signIn.emailOtp({ email, otp });
+              if (result.error) throw new Error(result.error.message);
+            }}
+            onSuccess={() => {
+              router.push("/app");
+            }}
+            onError={(error) => toast.error(error)}
+          />
 
           <div className="before:bg-border after:bg-border flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1">
             <span className="text-muted-foreground text-xs">Or</span>
