@@ -16,7 +16,7 @@ datasource db {
 }
 
 model User {
-  id            String     @id
+  id            String         @id
   name          String
   email         String
   emailVerified Boolean
@@ -28,9 +28,14 @@ model User {
   tags          Tag[]
   bookmarks     Bookmark[]
   bookmarkOpens BookmarkOpen[]
-  onboarding    Boolean    @default(false)
+  onboarding    Boolean        @default(false)
 
   stripeCustomerId String?
+
+  role       String?
+  banned     Boolean?
+  banReason  String?
+  banExpires DateTime?
 
   @@unique([email])
   @@map("user")
@@ -46,6 +51,8 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
 
   @@unique([token])
   @@map("session")
