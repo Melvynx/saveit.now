@@ -54,7 +54,12 @@ const handleScreenshot: ExportedHandler<Env>["fetch"] = async (
         width: 1280 * QUALITY,
         height: 720 * QUALITY,
       });
-      await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
+      try {
+        await page.goto(url, { waitUntil: "networkidle0", timeout: 15000 });
+      } catch {
+        console.error("Can't finish the load");
+      }
+
       // Hide scrollbar
       await page.evaluate(() => {
         try {

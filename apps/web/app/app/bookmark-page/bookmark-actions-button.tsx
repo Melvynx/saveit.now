@@ -6,6 +6,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
@@ -41,6 +42,7 @@ export const CopyLinkButton = ({
       variant="outline"
       className="size-8"
       onClick={() => {
+        console.log("copying link", url);
         posthog.capture("bookmark+copy_link", {
           url,
         });
@@ -48,11 +50,29 @@ export const CopyLinkButton = ({
       }}
       {...props}
     >
-      {isCopied ? (
-        <Check className="text-muted-foreground size-4" />
-      ) : (
-        <Copy className="text-muted-foreground size-4" />
-      )}
+      <AnimatePresence mode="popLayout">
+        {isCopied ? (
+          <motion.div
+            key="copied"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Check className="text-muted-foreground size-4" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="copy"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Copy className="text-muted-foreground size-4" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Button>
   );
 };

@@ -37,7 +37,9 @@ export const GET = userRoute
       { bookmark },
       {
         headers: {
-          "Cache-Control": "public, max-age=60",
+          ...(bookmark.status === "READY" && {
+            "Cache-Control": "public, max-age=60",
+          }),
         },
       },
     );
