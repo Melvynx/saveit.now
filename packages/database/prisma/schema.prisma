@@ -32,10 +32,11 @@ model User {
 
   stripeCustomerId String?
 
-  role       String?
-  banned     Boolean?
-  banReason  String?
-  banExpires DateTime?
+  role          String?
+  banned        Boolean?
+  banReason     String?
+  banExpires    DateTime?
+  subscriptions Subscription[]
 
   @@unique([email])
   @@map("user")
@@ -211,6 +212,7 @@ model Subscription {
   id                   String    @id
   plan                 String
   referenceId          String
+  user                 User      @relation(fields: [referenceId], references: [id], onDelete: Cascade)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   status               String?
