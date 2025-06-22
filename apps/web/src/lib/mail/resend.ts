@@ -6,7 +6,10 @@ export const resend = new Resend(env.RESEND_API_KEY);
 
 export const resendMailAdapter: MailAdapter = {
   send: async (params) => {
-    const result = await resend.emails.send(params);
+    const result = await resend.emails.send({
+      ...params,
+      replyTo: params.replyTo ?? env.HELP_EMAIL,
+    });
 
     if (result.error) {
       return { error: new Error(result.error.message), data: null };

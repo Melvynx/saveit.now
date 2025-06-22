@@ -16,8 +16,12 @@ export const env = createEnv({
     R2_URL: z.string().min(1),
     SCREENSHOT_WORKER_URL: z.string().min(1),
     NODE_ENV: z.enum(["development", "production"]),
-    RESEND_EMAIL_FROM: z.string().default("noreply@codeline.app"),
+    RESEND_EMAIL_FROM: z
+      .string()
+      .default("Melvyn from SaveIt.now <help@re.saveit.now>"),
+    HELP_EMAIL: z.string().min(1),
     STRIPE_COUPON_ID: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},
