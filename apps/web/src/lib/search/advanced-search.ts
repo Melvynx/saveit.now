@@ -33,6 +33,7 @@ export type SearchResult = {
   metadata?: Prisma.JsonValue;
   openCount?: number;
   starred?: boolean;
+  read?: boolean;
 };
 
 export type SearchResponse = {
@@ -207,6 +208,7 @@ async function searchByDomain({
       metadata: bookmark.metadata,
       openCount,
       starred: bookmark.starred,
+      read: bookmark.read,
     };
   });
 }
@@ -286,6 +288,7 @@ export async function advancedSearch({
             metadata: bookmark.metadata,
             openCount,
             starred: bookmark.starred,
+            read: bookmark.read,
           };
         })
         .sort((a, b) => b.score - a.score), // Trier par fréquence d'ouverture
@@ -459,6 +462,7 @@ async function searchByTags({
       metadata: bookmark.metadata,
       openCount,
       starred: bookmark.starred,
+      read: bookmark.read,
     };
   });
 }
@@ -517,6 +521,7 @@ async function searchByVector({
         "createdAt",
         metadata,
         starred,
+        read,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
           COALESCE("detailedSummaryEmbedding" <=> $1::vector, 1)
@@ -536,7 +541,7 @@ async function searchByVector({
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
     WHERE d.distance <= (SELECT min_dist + $3 FROM min_distance)
-    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.starred, d.distance
+    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.starred, d.read, d.distance
     ORDER BY distance ASC
     LIMIT 50
   `,
@@ -584,6 +589,7 @@ async function searchByVector({
       metadata: bookmark.metadata,
       openCount,
       starred: bookmark.starred,
+      read: bookmark.read,
     };
   });
 }

@@ -160,3 +160,36 @@ export const toggleStarBookmarkAction = userAction
       starred: updatedBookmark.starred,
     };
   });
+
+export const toggleReadBookmarkAction = userAction
+  .schema(z.object({ bookmarkId: z.string() }))
+  .action(async ({ parsedInput: input, ctx: { user } }) => {
+    const bookmark = await prisma.bookmark.findUnique({
+      where: { id: input.bookmarkId, userId: user.id },
+      select: { read: true, type: true },
+    });
+
+    if (!bookmark) {
+      throw new Error("Bookmark not found or unauthorized");
+    }
+
+    if (bookmark.type !== "ARTICLE") {
+      throw new Error("Bookmark is not an article");
+    }
+
+    const updatedBookmark = await prisma.bookmark.update({
+      where: { id: input.bookmarkId },
+      data: {
+        read: !bookmark.read,
+      },
+      select: {
+        id: true,
+        read: true,
+      },
+    });
+
+    return {
+      bookmarkId: updatedBookmark.id,
+      read: updatedBookmark.read,
+    };
+  });

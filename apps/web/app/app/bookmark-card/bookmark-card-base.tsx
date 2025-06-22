@@ -56,6 +56,8 @@ export const BookmarkCardBase = ({
                 url={bookmark.url}
                 bookmarkId={bookmark.id}
                 starred={bookmark.starred || false}
+                read={bookmark.read || false}
+                isArticle={bookmark.type === "ARTICLE"}
               />
             )}
           </>
