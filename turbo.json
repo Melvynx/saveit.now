@@ -29,7 +29,10 @@
         "STRIPE_PRO_YEARLY_PRICE_ID",
         "VERCEL_PROJECT_PRODUCTION_URL",
         "VERCEL_URL",
-        "PLAYWRIGHT_TEST_BASE_URL"
+        "PLAYWRIGHT_TEST_BASE_URL",
+        "HELP_EMAIL",
+        "RESEND_EMAIL_FROM",
+        "STRIPE_COUPON_ID"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

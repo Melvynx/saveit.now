@@ -19,12 +19,6 @@ import { headers } from "next/headers";
 
 export default async function AuthPage() {
   const user = await getUser();
-  const accounts = await auth.api.listUserAccounts({
-    headers: await headers(),
-  });
-  const sessions = await auth.api.listSessions({
-    headers: await headers(),
-  });
 
   return (
     <MaxWidthContainer className="my-8 flex flex-col gap-6 lg:gap-10">

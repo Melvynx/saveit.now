@@ -259,6 +259,7 @@ export const useFileUpload = (
         inputRef.current.value = "";
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       state.files.length,
       maxFiles,

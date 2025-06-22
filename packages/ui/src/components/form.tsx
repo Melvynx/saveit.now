@@ -29,7 +29,6 @@ export type FormProps<T extends FieldValues> = Omit<
   form: UseFormReturn<T>;
   onSubmit: SubmitHandler<T>;
   disabled?: boolean;
-  submitOnBlur?: boolean;
 };
 
 const Form = <T extends FieldValues>({
@@ -38,7 +37,6 @@ const Form = <T extends FieldValues>({
   children,
   className,
   disabled,
-  submitOnBlur = false,
   ...props
 }: FormProps<T>) => {
   return (
