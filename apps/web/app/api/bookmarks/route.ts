@@ -4,6 +4,7 @@ import {
 } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { advancedSearch } from "@/lib/search/advanced-search";
+import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -30,6 +31,7 @@ export const GET = userRoute
     z.object({
       query: z.string().optional(),
       tags: z.array(z.string()).optional(),
+      types: z.array(z.nativeEnum(BookmarkType)).optional(),
       cursor: z.string().optional(),
       limit: z.coerce.number().min(1).max(50).optional(),
       matchingDistance: z.coerce.number().min(0.1).max(2).optional(),
@@ -40,6 +42,7 @@ export const GET = userRoute
       userId: ctx.user.id,
       query: query.query,
       tags: query.tags || [],
+      types: query.types || [],
       limit: query.limit || 20,
       cursor: query.cursor,
       matchingDistance: query.matchingDistance || 0.1,
