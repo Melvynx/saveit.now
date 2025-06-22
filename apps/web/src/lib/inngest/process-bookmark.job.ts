@@ -2,6 +2,7 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
+import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
 import { inngest } from "./client";
@@ -160,6 +161,30 @@ export const processBookmarkJob = inngest.createFunction(
           url: bookmark.url,
           userId: bookmark.userId,
           content: urlContent.content,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
+
+    if (
+      urlContent.type === BookmarkType.PAGE &&
+      typeof urlContent.content === "string" &&
+      (urlContent.content.includes("<article") ||
+        urlContent.content.includes('property="og:type" content="article"'))
+    ) {
+      await processArticleBookmark(
+        {
+          bookmarkId,
+          content: urlContent.content,
+          url: bookmark.url,
+          userId: bookmark.userId,
+          bookmark: {
+            ...bookmark,
+            createdAt: new Date(bookmark.createdAt),
+            updatedAt: new Date(bookmark.updatedAt),
+          },
         },
         step,
         publish,

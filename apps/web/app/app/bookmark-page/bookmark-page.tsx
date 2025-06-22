@@ -29,6 +29,8 @@ import {
 import { BookmarkNote } from "./bookmark-note";
 import { DeleteButton } from "./delete-button";
 import { StarButton } from "./star-button";
+import { ReadButton } from "./read-button";
+import { ArticleReader } from "./article-reader";
 import { useBookmark } from "./use-bookmark";
 
 export function BookmarkPage() {
@@ -95,6 +97,12 @@ export function BookmarkPage() {
             bookmarkId={bookmark.id}
             starred={bookmark.starred || false}
           />
+          {bookmark.type === "ARTICLE" && (
+            <ReadButton
+              bookmarkId={bookmark.id}
+              read={bookmark.read || false}
+            />
+          )}
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
@@ -162,6 +170,11 @@ export function BookmarkPage() {
               </>
             )}
           </Card>
+          {bookmark.type === "ARTICLE" && bookmark.metadata && (
+            <ArticleReader
+              content={(bookmark.metadata as any).articleContent}
+            />
+          )}
           <Card className="p-4">
             <SectionTitle icon={TagIcon} text="Tags" />
             <div className="flex flex-col gap-2">
