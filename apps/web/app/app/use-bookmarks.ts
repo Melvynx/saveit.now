@@ -2,6 +2,29 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { upfetch } from "@/lib/up-fetch";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@workspace/database";
+
+const TAG_REGEX = /#([^\s#@]+)/g;
+const TYPE_REGEX = /@([^\s#@]+)/g;
+
+function parseQuery(input: string) {
+  const tags: string[] = [];
+  const types: string[] = [];
+
+  let match;
+  while ((match = TAG_REGEX.exec(input))) {
+    tags.push(match[1]);
+  }
+  while ((match = TYPE_REGEX.exec(input))) {
+    types.push(match[1].toUpperCase());
+  }
+
+  const cleaned = input
+    .replace(TAG_REGEX, "")
+    .replace(TYPE_REGEX, "")
+    .trim();
+
+  return { query: cleaned, tags, types };
+}
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 
@@ -42,9 +65,13 @@ export const useBookmarks = () => {
         };
       }
 
+      const parsed = parseQuery(searchQuery);
+
       const result = await upfetch("/api/bookmarks", {
         params: {
-          query: searchQuery,
+          query: parsed.query,
+          tags: parsed.tags,
+          types: parsed.types,
           limit: 20,
           cursor: pageParam || undefined,
           matchingDistance,
@@ -80,6 +107,7 @@ export const usePrefetchBookmarks = () => {
   const queryClient = useQueryClient();
 
   const prefetch = (query: string, matchingDistance: number) => {
+    const parsed = parseQuery(query);
     return queryClient.prefetchInfiniteQuery({
       queryKey: ["bookmarks", query, matchingDistance],
       getNextPageParam: () => {
@@ -91,7 +119,9 @@ export const usePrefetchBookmarks = () => {
 
         const result = await upfetch("/api/bookmarks", {
           params: {
-            query,
+            query: parsed.query,
+            tags: parsed.tags,
+            types: parsed.types,
             limit: 20,
             cursor: undefined,
             matchingDistance,

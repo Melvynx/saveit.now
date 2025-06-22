@@ -45,6 +45,7 @@ type SearchOptions = {
   userId: string;
   query?: string;
   tags?: string[];
+  types?: BookmarkType[];
   limit?: number;
   cursor?: string;
   matchingDistance?: number;
@@ -54,17 +55,20 @@ type SearchByVectorOptions = {
   userId: string;
   embedding: number[];
   tags: string[];
+  types: BookmarkType[];
   matchingDistance: number;
 };
 
 type SearchByTagsOptions = {
   userId: string;
   tags: string[];
+  types: BookmarkType[];
 };
 
 type SearchByDomainOptions = {
   userId: string;
   domain: string;
+  types: BookmarkType[];
 };
 
 /**
@@ -149,6 +153,7 @@ function applyOpenFrequencyBoost(score: number, openCount: number): number {
 async function searchByDomain({
   userId,
   domain,
+  types,
 }: SearchByDomainOptions): Promise<SearchResult[]> {
   const bookmarks = await prisma.bookmark.findMany({
     where: {
@@ -157,6 +162,7 @@ async function searchByDomain({
         contains: domain,
         mode: "insensitive",
       },
+      ...(types.length > 0 ? { type: { in: types } } : {}),
     },
     include: {
       tags: {
@@ -218,6 +224,7 @@ export async function advancedSearch({
   userId,
   query = "",
   tags = [],
+  types = [],
   limit = 20,
   cursor,
   matchingDistance = 0.1,
@@ -236,6 +243,7 @@ export async function advancedSearch({
     const recentBookmarks = await prisma.bookmark.findMany({
       where: {
         userId,
+        ...(types && types.length > 0 ? { type: { in: types } } : {}),
         ...(cursorRef
           ? {
               createdAt: {
@@ -299,7 +307,7 @@ export async function advancedSearch({
 
   // Niveau 1: Recherche par tags si des tags sont fournis
   if (tags && tags.length > 0) {
-    const tagResults = await searchByTags({ userId, tags });
+    const tagResults = await searchByTags({ userId, tags, types });
     for (const result of tagResults) {
       resultMap.set(result.id, {
         ...result,
@@ -314,7 +322,7 @@ export async function advancedSearch({
     // Vérifier si c'est une recherche par domaine
     if (isDomainQuery(query)) {
       const domain = extractDomain(query);
-      const domainResults = await searchByDomain({ userId, domain });
+      const domainResults = await searchByDomain({ userId, domain, types });
       for (const result of domainResults) {
         if (resultMap.has(result.id)) {
           const existing = resultMap.get(result.id)!;
@@ -342,6 +350,7 @@ export async function advancedSearch({
         userId,
         embedding,
         tags: tags || [],
+        types,
         matchingDistance,
       });
       for (const result of vectorResults) {
@@ -400,12 +409,14 @@ export async function advancedSearch({
 async function searchByTags({
   userId,
   tags,
+  types,
 }: SearchByTagsOptions): Promise<SearchResult[]> {
   if (!tags || tags.length === 0) return [];
 
   const bookmarks = await prisma.bookmark.findMany({
     where: {
       userId,
+      ...(types.length > 0 ? { type: { in: types } } : {}),
       tags: {
         some: {
           tag: {
@@ -467,19 +478,32 @@ async function searchByVector({
   userId,
   embedding,
   tags,
+  types,
   matchingDistance,
 }: SearchByVectorOptions): Promise<SearchResult[]> {
   let tagsCondition = "";
   let tagsParams: any[] = [];
+  let typeCondition = "";
+  let typeParams: any[] = [];
+  let paramIndex = 4;
 
   if (tags.length > 0) {
     tagsCondition = `AND EXISTS (
       SELECT 1 FROM "BookmarkTag" bt
       JOIN "Tag" t ON bt."tagId" = t.id
       WHERE bt."bookmarkId" = b.id
-      AND t.name IN (${tags.map((_, i) => `$${i + 4}`).join(",")})
+      AND t.name IN (${tags.map((_, i) => `$${paramIndex + i}`).join(",")})
     )`;
     tagsParams = tags;
+    paramIndex += tags.length;
+  }
+
+  if (types.length > 0) {
+    typeCondition = `AND type IN (${types
+      .map((_, i) => `$${paramIndex + i}`)
+      .join(",")})`;
+    typeParams = types;
+    paramIndex += types.length;
   }
 
   const bookmarks = await prisma.$queryRawUnsafe<
@@ -524,6 +548,7 @@ async function searchByVector({
       FROM "Bookmark" b
       WHERE "userId" = $2
       ${tagsCondition}
+      ${typeCondition}
     ),
     min_distance AS (
       SELECT MIN(distance) as min_dist
@@ -544,6 +569,7 @@ async function searchByVector({
     userId,
     matchingDistance,
     ...tagsParams,
+    ...typeParams,
   );
 
   logger.info(
