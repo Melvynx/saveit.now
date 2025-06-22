@@ -55,7 +55,7 @@ export const BookmarkHeader = (props: BookmarkHeaderProps) => {
         </Link>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
             <Menu className="size-4" />
           </Button>

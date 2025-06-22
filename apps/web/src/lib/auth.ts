@@ -1,9 +1,10 @@
 import { stripe } from "@better-auth/stripe";
+
 import { prisma } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { emailOTP, magicLink } from "better-auth/plugins";
+import { admin, emailOTP, magicLink } from "better-auth/plugins";
 import { resend } from "./resend";
 import { stripeClient } from "./stripe";
 
@@ -134,5 +135,6 @@ Melvyn`,
       },
     }),
     nextCookies(),
+    admin({}),
   ],
 });
