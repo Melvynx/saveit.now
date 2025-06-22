@@ -4,7 +4,7 @@ export type AuthLimits = {
   canExport: number;
 };
 
-export const AUTH_LIMITS: Record<string, AuthLimits> = {
+export const AUTH_LIMITS: Record<"pro" | "free", AuthLimits> = {
   free: {
     bookmarks: 20,
     monthlyBookmarks: 20,

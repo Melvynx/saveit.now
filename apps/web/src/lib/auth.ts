@@ -5,6 +5,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { admin, emailOTP, magicLink } from "better-auth/plugins";
+import { AUTH_LIMITS } from "./auth-limits";
+import { inngest } from "./inngest/client";
 import { resend } from "./resend";
 import { stripeClient } from "./stripe";
 
@@ -62,6 +64,20 @@ Melvyn`,
       },
     },
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          inngest.send({
+            name: "user/new-subscriber",
+            data: {
+              userId: user.id,
+            },
+          });
+        },
+      },
+    },
+  },
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
@@ -94,7 +110,6 @@ Melvyn`,
       stripeClient: stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       createCustomerOnSignUp: true,
-
       subscription: {
         enabled: true,
         async getCheckoutSessionParams(data, request) {
@@ -104,22 +119,24 @@ Melvyn`,
             },
           };
         },
+        async onSubscriptionComplete(data, request) {
+          inngest.send({
+            name: "user/subscription",
+            data: {
+              userId: data.subscription.referenceId,
+            },
+          });
+        },
         plans: [
           {
             name: "free",
-            limits: {
-              bookmarks: 20,
-              monthlyBookmarks: 20,
-            },
+            limits: AUTH_LIMITS.free,
           },
           {
             name: "pro",
             priceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
             annualDiscountPriceId: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
-            limits: {
-              bookmarks: 50000,
-              monthlyBookmarks: 1000,
-            },
+            limits: AUTH_LIMITS.pro,
           },
         ],
       },

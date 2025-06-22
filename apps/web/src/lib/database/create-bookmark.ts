@@ -21,6 +21,15 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
     },
   });
 
+  if (user.plan === "free" && totalBookmarks >= 19) {
+    inngest.send({
+      name: "marketing/email-on-limit-reached",
+      data: {
+        userId: body.userId,
+      },
+    });
+  }
+
   if (totalBookmarks >= user.limits.bookmarks) {
     posthogClient.capture({
       distinctId: body.userId,

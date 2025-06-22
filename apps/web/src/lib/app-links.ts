@@ -4,6 +4,8 @@ export const APP_LINKS = {
   imports: "/imports",
   exports: "/exports",
   extensions: "/extensions",
+  app: "/app",
   chrome: "https://mlv.sh/saveit-chrome",
   firefox: "https://mlv.sh/saveit-firefox",
+  changelog: "/changelog",
 };
