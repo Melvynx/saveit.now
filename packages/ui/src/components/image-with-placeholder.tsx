@@ -3,6 +3,7 @@
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
+import { useIsClient } from "../hooks/use-is-client.js";
 
 interface ImageWithPlaceholderProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {
@@ -19,6 +20,19 @@ export const ImageWithPlaceholder = ({
 }: ImageWithPlaceholderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const isClient = useIsClient();
+
+  if (!isClient) {
+    return (
+      <div className={cn("relative", className)}>
+        {isLoading && (
+          <Skeleton
+            className={cn("absolute inset-0 h-full w-full", className)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (!props.src) {
     props.src = fallbackImage ?? "";
@@ -34,6 +48,8 @@ export const ImageWithPlaceholder = ({
   };
 
   const src = error && fallbackImage ? fallbackImage : props.src;
+
+  console.log({ src });
 
   if (!src) {
     return (
@@ -51,6 +67,7 @@ export const ImageWithPlaceholder = ({
     );
   }
 
+  console.log({ isLoading });
   if (!isLoading) {
     return (
       <img
@@ -75,10 +92,13 @@ export const ImageWithPlaceholder = ({
         src={src}
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
-          "transition-opacity duration-200",
+          "transition-opacity duration-200 relative z-10",
           className,
         )}
-        onLoad={() => setIsLoading(false)}
+        onLoad={() => {
+          console.log("onLoad");
+          setIsLoading(false);
+        }}
         onError={handleError}
       />
     </div>
