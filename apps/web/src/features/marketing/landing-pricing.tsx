@@ -37,9 +37,7 @@ function classNames(...classes: (string | boolean | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-export type PricingSectionProps = {};
-
-export const LandingPricing = (props: PricingSectionProps) => {
+export const LandingPricing = () => {
   return (
     <div className="relative isolate bg-background px-6 py-24 sm:py-32 lg:px-8">
       <div
