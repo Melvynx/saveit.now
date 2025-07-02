@@ -1,14 +1,16 @@
 "use client";
 
+import { MaxWidthContainer } from "@/features/page/page";
+import { Typography } from "@workspace/ui/components/typography";
 import { ImportForm } from "./import-form";
 
 export default function ImportPage() {
   return (
-    <div className="container py-8">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-8 text-2xl font-bold">Import Bookmarks</h1>
-        <ImportForm />
-      </div>
-    </div>
+    <MaxWidthContainer>
+      <Typography className="mb-8" variant="h1">
+        Import Bookmarks
+      </Typography>
+      <ImportForm />
+    </MaxWidthContainer>
   );
 }

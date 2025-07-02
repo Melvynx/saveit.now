@@ -8,8 +8,6 @@ import { prisma } from "@workspace/database";
 import { z } from "zod";
 import { URL_REGEX } from "./url-regex";
 
-const MAX_BULK_IMPORT_SIZE = 500;
-
 interface ImportResult {
   url: string;
   success: boolean;
@@ -26,14 +24,6 @@ export const importBookmarksAction = userAction
   .action(async ({ parsedInput: { text }, ctx: { user } }) => {
     const urls = text.match(URL_REGEX) || [];
     const uniqueUrls = [...new Set(urls)];
-
-    // Apply bulk import size limit
-    if (uniqueUrls.length > MAX_BULK_IMPORT_SIZE) {
-      throw new ApplicationError(
-        `Too many URLs. Maximum ${MAX_BULK_IMPORT_SIZE} URLs allowed per import.`,
-        "BULK_IMPORT_SIZE_EXCEEDED"
-      );
-    }
 
     // Pre-import quota validation
     const userLimits = await getUserLimits();
