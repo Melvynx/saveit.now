@@ -11,9 +11,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 
-export type AlertExtensionsProps = {};
-
-export const AlertExtensions = (props: AlertExtensionsProps) => {
+export const AlertExtensions = () => {
   const [state, setState] = useState<"loading" | "installed" | "not-installed">(
     "loading",
   );
@@ -28,9 +26,9 @@ export const AlertExtensions = (props: AlertExtensionsProps) => {
     setTimeout(() => {
       const container = document.querySelector("#saveit-now-container");
 
-      setState(!Boolean(container) ? "installed" : "not-installed");
+      setState(!container ? "installed" : "not-installed");
     }, 2000);
-  }, []);
+  }, [state]);
 
   if (state === "loading") return;
 

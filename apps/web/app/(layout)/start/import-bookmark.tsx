@@ -7,11 +7,7 @@ import {
 } from "@workspace/ui/components/card";
 import { ImportForm } from "../imports/import-form";
 
-export type ImportBookmarkProps = {};
-
-type BookmarkSource = "chrome" | "mymind";
-
-export const ImportBookmark = (props: ImportBookmarkProps) => {
+export const ImportBookmark = () => {
   return (
     <Card>
       <CardHeader>

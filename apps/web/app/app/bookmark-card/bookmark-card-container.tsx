@@ -2,7 +2,7 @@
 
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { Bookmark } from "@workspace/database";
+import { BookmarkStatus } from "@workspace/database";
 import { Card } from "@workspace/ui/components/card";
 import {
   ContextMenu,
@@ -16,7 +16,7 @@ import { useDeleteBookmark } from "../bookmark-page/delete-button";
 import { usePrefetchBookmark } from "../bookmark-page/use-bookmark";
 
 interface BookmarkCardContainerProps {
-  bookmark: Bookmark;
+  bookmark: { id: string; url: string; status: BookmarkStatus };
   children: ReactNode;
   className?: string;
   onMouseEnter?: () => void;

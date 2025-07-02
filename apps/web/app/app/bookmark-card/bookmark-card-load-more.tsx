@@ -5,6 +5,7 @@ import { Typography } from "@workspace/ui/components/typography";
 import { ChevronDown, Package } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { BookmarkStatus, BookmarkType } from "@workspace/database";
 import {
   BookmarkCardContainer,
   BookmarkCardContent,
@@ -54,12 +55,13 @@ export function BookmarkCardLoadMore({
     id: "load-more",
     url: "https://example.com",
     faviconUrl: null,
-    type: "PAGE" as const,
+    status: "READY" as BookmarkStatus,
+    type: "PAGE" as BookmarkType,
   };
 
   if (!hasNextPage && !isFetchingNextPage) {
     return (
-      <BookmarkCardContainer bookmark={mockBookmark as any} ref={loadMoreRef}>
+      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
         <BookmarkCardHeader className="flex items-center justify-center bg-muted/30">
           <div className="flex flex-col items-center gap-4 text-center p-6">
             <Package className="text-muted-foreground size-12" />
@@ -77,7 +79,7 @@ export function BookmarkCardLoadMore({
           </div>
         </BookmarkCardHeader>
 
-        <BookmarkCardContent bookmark={mockBookmark as any} href={null}>
+        <BookmarkCardContent bookmark={mockBookmark} href={null}>
           <BookmarkCardTitle className="text-muted-foreground">
             End of collection
           </BookmarkCardTitle>
@@ -91,7 +93,7 @@ export function BookmarkCardLoadMore({
 
   if (isFetchingNextPage) {
     return (
-      <BookmarkCardContainer bookmark={mockBookmark as any} ref={loadMoreRef}>
+      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
         <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
           <div className="flex flex-col items-center gap-4 text-center p-6">
             <Loader className="text-primary" />
@@ -99,7 +101,7 @@ export function BookmarkCardLoadMore({
           </div>
         </BookmarkCardHeader>
 
-        <BookmarkCardContent bookmark={mockBookmark as any} href={null}>
+        <BookmarkCardContent bookmark={mockBookmark} href={null}>
           <BookmarkCardTitle className="text-primary">
             Loading...
           </BookmarkCardTitle>
@@ -113,7 +115,7 @@ export function BookmarkCardLoadMore({
 
   // Default state - ready to load more
   return (
-    <BookmarkCardContainer bookmark={mockBookmark as any} ref={loadMoreRef}>
+    <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
       <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
         <div className="flex flex-col items-center gap-4 text-center p-6">
           <div className="animate-bounce">
@@ -128,7 +130,7 @@ export function BookmarkCardLoadMore({
         </div>
       </BookmarkCardHeader>
 
-      <BookmarkCardContent bookmark={mockBookmark as any} href={null}>
+      <BookmarkCardContent bookmark={mockBookmark} href={null}>
         <BookmarkCardTitle className="text-primary">
           Ready to load
         </BookmarkCardTitle>

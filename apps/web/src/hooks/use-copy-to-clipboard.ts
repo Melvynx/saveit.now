@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 
 const copyToClipboardSafe = (text: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (window.navigator.clipboard === undefined) {
     const textArea = document.createElement("textarea");
     textArea.value = text;

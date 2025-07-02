@@ -153,7 +153,6 @@ export const DialogManagerRendererDialog = (
             <AlertDialogAction asChild>
               <LoadingButton
                 loading={props.loading}
-                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                 disabled={props.loading || isConfirmDisabled}
                 onClick={() => {
                   if (props.action && "onClick" in props.action) {

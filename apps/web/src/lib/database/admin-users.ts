@@ -86,20 +86,7 @@ export const getUsersWithStats = async ({
     orderBy: orderByClause,
     skip: (page - 1) * pageSize,
     take: pageSize,
-    include: {
-      subscriptions: {
-        select: {
-          status: true,
-          periodEnd: true,
-        },
-      },
-      _count: {
-        select: {
-          bookmarks: true,
-          bookmarkOpens: true,
-        },
-      },
-    },
+    include: UserInclude,
   });
 
   // Get total count

@@ -30,9 +30,10 @@ async function getBookmark(bookmarkId: string) {
 export default async function PublicBookmarkPage({
   params,
 }: {
-  params: { bookmarkId: string };
+  params: Promise<{ bookmarkId: string }>;
 }) {
-  const bookmark = await getBookmark(params.bookmarkId);
+  const { bookmarkId } = await params;
+  const bookmark = await getBookmark(bookmarkId);
   const user = await getUser();
 
   if (!bookmark) {

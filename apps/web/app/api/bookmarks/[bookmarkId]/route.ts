@@ -1,6 +1,5 @@
 import { getUserBookmark } from "@/lib/database/get-bookmark";
 import { userRoute } from "@/lib/safe-route";
-import { prisma } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 

@@ -9,9 +9,8 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-export default async function RouteLayout(props: { children: ReactNode }) {
+export default async function RouteLayout() {
   return (
     <div className="flex h-full flex-col">
       <Header />
