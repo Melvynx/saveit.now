@@ -47,14 +47,10 @@ Best regards,
 Melvyn`,
         });
       },
-      sendDeleteAccountVerification: async (
-        {
-          user, // The user object
-          url, // The auto-generated URL for deletion
-          token, // The verification token  (can be used to generate custom URL)
-        },
-        request, // The original request object (optional)
-      ) => {
+      sendDeleteAccountVerification: async ({
+        user, // The user object
+        url, // The auto-generated URL for deletion
+      }) => {
         await resend.emails.send({
           from: "noreply@codeline.app",
           to: user.email,
@@ -93,7 +89,7 @@ Melvyn`,
   },
   plugins: [
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
+      async sendVerificationOTP({ email, otp }) {
         // Implement email sending here
         // Example with Resend, Nodemailer, etc.
         await resend.emails.send({
@@ -112,14 +108,14 @@ Melvyn`,
       createCustomerOnSignUp: true,
       subscription: {
         enabled: true,
-        async getCheckoutSessionParams(data, request) {
+        async getCheckoutSessionParams() {
           return {
             params: {
               allow_promotion_codes: true,
             },
           };
         },
-        async onSubscriptionComplete(data, request) {
+        async onSubscriptionComplete(data) {
           inngest.send({
             name: "user/subscription",
             data: {
@@ -142,7 +138,7 @@ Melvyn`,
       },
     }),
     magicLink({
-      async sendMagicLink(data, request) {
+      async sendMagicLink(data) {
         await resend.emails.send({
           from: "noreply@codeline.app",
           to: data.email,

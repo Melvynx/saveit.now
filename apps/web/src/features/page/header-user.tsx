@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
-import { CreditCard, Gem, LogOut, Shield, User, UserX } from "lucide-react";
+import { CreditCard, Gem, Shield, User, UserX } from "lucide-react";
 import Link from "next/link";
 import { LogoutButton } from "../auth/logout";
 

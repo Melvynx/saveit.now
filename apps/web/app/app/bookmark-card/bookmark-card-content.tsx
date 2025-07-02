@@ -1,15 +1,20 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@workspace/database";
 import { CardContent } from "@workspace/ui/components/card";
-import { useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import { BookmarkFavicon } from "../bookmark-favicon";
 import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardContentProps {
-  bookmark: Bookmark;
+  bookmark: {
+    id: string;
+    url: string;
+    status: BookmarkStatus;
+    faviconUrl: string | null;
+    type: BookmarkType | null;
+  };
   children?: ReactNode;
   className?: string;
   href?: string | null;
@@ -21,8 +26,6 @@ export const BookmarkCardContent = ({
   className = "",
   href,
 }: BookmarkCardContentProps) => {
-  const searchParams = useSearchParams();
-
   const content = (
     <CardContent className={`px-4 pb-4 ${className}`}>
       <div className="flex items-start gap-2">

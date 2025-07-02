@@ -32,7 +32,9 @@
         "PLAYWRIGHT_TEST_BASE_URL",
         "HELP_EMAIL",
         "RESEND_EMAIL_FROM",
-        "STRIPE_COUPON_ID"
+        "STRIPE_COUPON_ID",
+        "VERCEL_ENV",
+        "NODE_ENV"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

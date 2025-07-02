@@ -4,8 +4,6 @@ import { OtpForm } from "@/components/better-auth-otp";
 import { SignInWith } from "@/features/auth/sign-in-with";
 import { MaxWidthContainer } from "@/features/page/page";
 import { authClient } from "@/lib/auth-client";
-import { unwrapSafePromise } from "@/lib/promises";
-import { useMutation } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -13,58 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { useZodForm } from "@workspace/ui/components/form";
 import { Typography } from "@workspace/ui/components/typography";
 import { useRouter } from "next/navigation";
-import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const EmailPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const MagicLinkSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-});
 
 export default function SignInPage() {
   const router = useRouter();
-  const posthog = usePostHog();
-
-  const magicLinkForm = useZodForm({
-    schema: MagicLinkSchema,
-    defaultValues: {
-      email: "",
-    },
-  });
-
-  const magicLinkMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof MagicLinkSchema>) => {
-      posthog.capture("sign_in_with_email", {
-        email: values.email,
-      });
-      return unwrapSafePromise(
-        authClient.signIn.magicLink({
-          email: values.email,
-          callbackURL: "/app",
-        }),
-      );
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send magic link");
-    },
-    onSuccess: () => {
-      router.push("/verify");
-      router.refresh();
-      toast.success("Magic link sent to your email");
-    },
-  });
-
-  const handleMagicLinkSubmit = (data: z.infer<typeof MagicLinkSchema>) => {
-    magicLinkMutation.mutate(data);
-  };
 
   return (
     <MaxWidthContainer

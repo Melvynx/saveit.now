@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OPENAI_MODELS } from "@/lib/openai";
 import {
   BookmarkStatus,

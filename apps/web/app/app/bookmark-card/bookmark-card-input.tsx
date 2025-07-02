@@ -9,6 +9,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { APP_LINKS } from "@/lib/app-links";
+import { BookmarkStatus } from "@workspace/database";
 import {
   CardDescription,
   CardFooter,
@@ -35,12 +36,11 @@ export const BookmarkCardInput = () => {
   const mockBookmark = {
     id: "input",
     url: "https://example.com",
-    faviconUrl: null,
-    type: "PAGE" as const,
+    status: "READY" as BookmarkStatus,
   };
 
   return (
-    <BookmarkCardContainer bookmark={mockBookmark as any}>
+    <BookmarkCardContainer bookmark={mockBookmark}>
       <CardHeader className="pt-4">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />

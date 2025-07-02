@@ -20,7 +20,6 @@ interface BookmarkCardErrorProps {
 
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
   const metadata = bookmark.metadata as { error: string };
-  const domainName = new URL(bookmark.url).hostname;
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>

@@ -23,13 +23,9 @@ export function MoreResultsButton() {
   const query = searchParams.get("query");
   const prefetch = usePrefetchBookmarks();
 
-  if (!query || query.trim() === "") {
-    return null;
-  }
-
   const mutation = useMutation({
     mutationFn: async ({ n }: { n: number; prefetchOnly?: boolean }) => {
-      await prefetch(query, n);
+      await prefetch(query ?? "", n);
     },
     onSuccess: (_, params) => {
       const newParams = new URLSearchParams(searchParams.toString());
@@ -38,6 +34,10 @@ export function MoreResultsButton() {
       router.push(`?${newParams.toString()}`);
     },
   });
+
+  if (!query || query.trim() === "") {
+    return null;
+  }
 
   const handleMoreResults = () => {
     mutation.mutate({ n: currentMatchingDistance + 0.1 });

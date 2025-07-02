@@ -2,7 +2,6 @@
 
 import { Bookmark } from "@workspace/database";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
-import { useSearchParams } from "next/navigation";
 
 import {
   BookmarkCardActions,
@@ -19,9 +18,9 @@ interface BookmarkCardPageProps {
 }
 
 export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
-  const searchParams = useSearchParams();
   const domainName = new URL(bookmark.url).hostname;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metadata = bookmark.metadata as any;
   const isVerticalImage = metadata?.width < metadata?.height;
 

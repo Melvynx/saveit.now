@@ -27,7 +27,7 @@ import {
   CircleAlert,
   FileUp,
   Heart,
-  Infinity,
+  Infinity as InfinityIcon,
   Phone,
 } from "lucide-react";
 import Link from "next/link";
@@ -131,7 +131,7 @@ export function UpgradePage() {
             </Typography>
             <ul className="flex flex-col gap-2 flex-2 text-muted-foreground text-sm">
               <li className="flex items-center gap-2">
-                <Infinity className="text-primary size-4" />
+                <InfinityIcon className="text-primary size-4" />
                 <span>Unlimited bookmarks</span>
               </li>
               <li className="flex items-center gap-2">

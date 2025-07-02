@@ -21,17 +21,10 @@ import {
 
 function getVideoId(url: string): string {
   const regex =
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
   if (!match) throw new Error("Invalid YouTube URL");
   return match[1] || "";
-}
-
-// Define a transcript segment interface that matches the actual API response
-interface TranscriptSegment {
-  text: string;
-  duration: number;
-  offset: number;
 }
 
 export async function processYouTubeBookmark(

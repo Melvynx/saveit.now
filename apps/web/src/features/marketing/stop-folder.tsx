@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { MaxWidthContainer } from "../page/page";

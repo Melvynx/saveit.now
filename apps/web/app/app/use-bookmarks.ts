@@ -55,7 +55,7 @@ export const useBookmarks = () => {
 
       return json;
     },
-    getNextPageParam: (lastPage, pages) => {
+    getNextPageParam: (lastPage) => {
       if (lastPage.bookmarks.length === 0) return undefined;
       if (!lastPage.hasMore) return;
 

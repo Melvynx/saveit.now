@@ -40,7 +40,6 @@ export default async function RoutePage() {
               }}
               src="https://www.tella.tv/video/cmaxiv6tk001z0blda2iu5epj/embed?b=0&title=1&a=1&loop=0&t=0&muted=0&wt=0"
               allowFullScreen
-              allowTransparency
             />
           </div>
         </CardContent>

@@ -277,10 +277,6 @@ ${screenshotDescription}
       // Vérifier si l'image OG est utilisable
       if (ogImageUrl) {
         result.ogImageUrl = ogImageUrl;
-      } else if (ogImageUrl) {
-        console.log(
-          `OG Image for ${context.url} is unusable (too dark or small)`,
-        );
       }
     }
 

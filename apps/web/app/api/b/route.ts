@@ -6,7 +6,7 @@ import { z } from "zod";
 export const GET = userRoute
   .query(z.object({ url: z.string().url() }))
   .handler(async (req, { query, ctx }) => {
-    const bookmark = await createBookmark({
+    await createBookmark({
       url: query.url,
       userId: ctx.user.id,
     });

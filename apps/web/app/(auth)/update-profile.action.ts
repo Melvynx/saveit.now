@@ -9,9 +9,7 @@ const UpdateProfileSchema = z.object({
 
 export const updateProfileAction = userAction
   .schema(UpdateProfileSchema)
-  .action(async ({ parsedInput: input, ctx }) => {
-    const file = input.formData.get("file");
-
+  .action(async () => {
     return {
       url: "https://x.com",
     };

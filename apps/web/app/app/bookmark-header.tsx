@@ -18,9 +18,7 @@ import { FileDownIcon, FileUpIcon, Menu } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
-export type BookmarkHeaderProps = {};
-
-export const BookmarkHeader = (props: BookmarkHeaderProps) => {
+export const BookmarkHeader = () => {
   const plan = useUserPlan();
 
   const bookmarksInfo = useQuery({

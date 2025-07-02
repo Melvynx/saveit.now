@@ -11,7 +11,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
       key: "event.data.email",
       limit: 1,
     },
-    onFailure: async ({ event, step, runId, publish }) => {
+    onFailure: async ({ event, runId }) => {
       const data = event.data.event.data;
       const email = data.email;
 
@@ -28,7 +28,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     },
   },
   { event: "user/new-subscriber" },
-  async ({ event, step, runId, publish }) => {
+  async ({ event, step }) => {
     const userId = event.data.userId;
 
     const user = await step.run("get-user", async () => {
