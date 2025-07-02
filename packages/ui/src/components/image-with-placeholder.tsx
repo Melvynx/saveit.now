@@ -1,9 +1,9 @@
 "use client";
 
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import { useIsClient } from "@workspace/ui/hooks/use-is-client.js";
 import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
-import { useIsClient } from "../hooks/use-is-client.js";
 
 interface ImageWithPlaceholderProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {
