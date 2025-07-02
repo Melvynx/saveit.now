@@ -1,4 +1,5 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
+import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { Button } from "@workspace/ui/components/button";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
@@ -7,8 +8,8 @@ import { ExternalLink } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useParams } from "react-router";
 import { toast } from "sonner";
-import { ExternalLinkTracker } from "../external-link-tracker";
 import { useNavigateWithQuery } from "../bookmark-card/link-with-query";
+import { ExternalLinkTracker } from "../external-link-tracker";
 import {
   BackButton,
   CopyLinkButton,
@@ -39,8 +40,6 @@ export function BookmarkPage() {
     if (!bookmark) return;
     window.open(bookmark.url, "_blank");
   });
-
-  
 
   if (!bookmarkId) {
     return null;
@@ -84,7 +83,7 @@ export function BookmarkPage() {
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
-        <BookmarkContentView bookmark={bookmark} />
+        <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
         <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
           <DeleteButton bookmarkId={bookmark.id} />
@@ -101,5 +100,3 @@ export function BookmarkPage() {
     </Dialog>
   );
 }
-
-
