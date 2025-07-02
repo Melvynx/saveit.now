@@ -2,6 +2,13 @@
 
 import { Button } from "@workspace/ui/components/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import {
   Form,
   FormControl,
   FormField,
@@ -11,8 +18,9 @@ import {
   useZodForm,
 } from "@workspace/ui/components/form";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
-import { FileText, Upload } from "lucide-react";
+import { CheckCircle2, FileText, Link, Upload } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { usePostHog } from "posthog-js/react";
 import { DragEvent, useEffect, useRef, useState } from "react";
@@ -58,12 +66,14 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
 
   // Update URL preview when text changes
   useEffect(() => {
-    const subscription = form.watch((value) => {
+    const subscription = form.watch((value: z.infer<typeof Schema>) => {
       const text = value.text || "";
       const urls = extractUrlsFromText(text);
       setUrlPreview(urls);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [form]);
 
   const { execute, status } = useAction(importBookmarksAction, {
@@ -205,122 +215,155 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const isLoading = status === "executing" || isProcessingFile;
 
   return (
-    <div className={cn("relative", className)}>
-      <Form form={form} onSubmit={async (data) => execute(data)}>
-        <div
-          className={cn(
-            "relative border-2 border-dashed rounded-lg transition-all duration-200",
-            isDragOver
-              ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50",
-          )}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <FormField
-            control={form.control}
-            name="text"
-            render={({ field }) => (
-              <FormItem className="p-6">
-                <FormLabel className="flex items-center gap-2">
-                  <FileText className="size-4" />
-                  Paste your text containing URLs or drag files here
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Paste any text containing URLs here, or drag and drop text files..."
-                    className="min-h-[200px] resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
+    <div className={cn("space-y-6", className)}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="size-5" />
+            Import Your Bookmarks
+          </CardTitle>
+          <CardDescription>
+            Paste URLs directly, upload text files, or drag and drop files
+            containing bookmarks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form form={form} onSubmit={async (data) => execute(data)}>
+            <div
+              className={cn(
+                "relative border-2 border-dashed rounded-lg transition-all duration-200",
+                isDragOver
+                  ? "border-primary bg-primary/5 scale-[1.02]"
+                  : "border-muted-foreground/25 hover:border-muted-foreground/50",
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <FormField
+                control={form.control}
+                name="text"
+                render={({ field }) => (
+                  <FormItem className="p-6">
+                    <FormLabel className="text-base font-medium">
+                      Paste URLs or Text Content
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Paste any text containing URLs here, or drag and drop text files...\n\nSupported formats:\n• Plain text with URLs\n• Bookmark export files\n• HTML files\n• JSON files"
+                        className="min-h-[120px] max-h-[300px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
 
-                <div className="flex items-center gap-4 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading}
-                  >
-                    <Upload className="size-4 mr-2" />
-                    Choose Files
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Supports .txt, .md, .html, .json files
-                  </span>
+                    <div className="flex items-center gap-4 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading}
+                      >
+                        <Upload className="size-4 mr-2" />
+                        Choose Files
+                      </Button>
+                      <div className="text-sm text-muted-foreground">
+                        <p>Supports .txt, .md, .html, .json files</p>
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* Drag Overlay */}
+              {isDragOver && (
+                <div className="absolute inset-0 bg-primary/10 border-2 border-primary rounded-lg flex items-center justify-center z-10">
+                  <div className="text-center">
+                    <Upload className="size-12 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-medium text-primary">
+                      Drop files here
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      We'll extract URLs from your files
+                    </p>
+                  </div>
                 </div>
-              </FormItem>
-            )}
-          />
-
-          {/* Drag Overlay */}
-          {isDragOver && (
-            <div className="absolute inset-0 bg-primary/10 border-2 border-primary rounded-lg flex items-center justify-center z-10">
-              <div className="text-center">
-                <Upload className="size-12 text-primary mx-auto mb-2" />
-                <p className="text-lg font-medium text-primary">
-                  Drop files here
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  We'll extract URLs from your files
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* URL Preview */}
-        {urlPreview.length > 0 && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                Found {urlPreview.length} unique URL
-                {urlPreview.length !== 1 ? "s" : ""}
-              </span>
-              {urlPreview.length > 500 && (
-                <span className="text-xs text-destructive font-medium">
-                  Max 500 URLs per import
-                </span>
               )}
             </div>
+
+            <Button
+              type="submit"
+              className="mt-6 w-full"
+              size="lg"
+              disabled={isLoading || urlPreview.length === 0}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="size-4 mr-2" />
+                  Import {urlPreview.length} URL
+                  {urlPreview.length !== 1 ? "s" : ""}
+                </>
+              )}
+            </Button>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* URL Preview Card */}
+      {urlPreview.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link className="size-5" />
+              Preview ({urlPreview.length} URL
+              {urlPreview.length !== 1 ? "s" : ""} found)
+            </CardTitle>
+            <CardDescription>
+              These URLs will be imported as bookmarks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             {urlPreview.length <= 10 ? (
-              <ul className="text-xs space-y-1">
+              <ul className="space-y-2">
                 {urlPreview.map((url, index) => (
-                  <li key={index} className="truncate text-muted-foreground">
-                    {url}
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 p-2 bg-muted/50 rounded-md"
+                  >
+                    <Link className="size-3 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate text-sm">{url}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-xs text-muted-foreground">
-                <p>First 5 URLs:</p>
-                <ul className="space-y-1 mb-2">
+              <div className="space-y-2">
+                <ul className="space-y-1">
                   {urlPreview.slice(0, 5).map((url, index) => (
-                    <li key={index} className="truncate">
-                      {url}
-                    </li>
+                    <Typography
+                      variant="muted"
+                      as="li"
+                      key={index}
+                      className="flex items-center gap-2 rounded-md"
+                    >
+                      <Link className="size-3 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate text-sm">{url}</span>
+                    </Typography>
                   ))}
                 </ul>
-                <p>... and {urlPreview.length - 5} more</p>
+                <Typography variant="muted">
+                  ... and {urlPreview.length - 5} more URLs
+                </Typography>
               </div>
             )}
-          </div>
-        )}
-
-        <Button
-          type="submit"
-          className="mt-4 w-full"
-          disabled={isLoading || urlPreview.length === 0}
-        >
-          {isLoading
-            ? "Processing..."
-            : urlPreview.length > 500
-              ? `Import first 500 URLs`
-              : `Import ${urlPreview.length} URL${urlPreview.length !== 1 ? "s" : ""}`}
-        </Button>
-      </Form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Hidden file input */}
       <input
