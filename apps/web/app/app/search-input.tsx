@@ -7,9 +7,7 @@ import { toast } from "sonner";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
 
-export type SearchInputProps = {};
-
-export const SearchInput = (props: SearchInputProps) => {
+export const SearchInput = () => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });

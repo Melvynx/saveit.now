@@ -4,7 +4,13 @@ import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
-import { FileUp, Gem, Heart, Infinity, Phone } from "lucide-react";
+import {
+  FileUp,
+  Gem,
+  Heart,
+  Infinity as InfinityIcon,
+  Phone,
+} from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -22,17 +28,13 @@ export const BookmarkCardPricing = () => {
   if (plan.isLoading) return null;
   if (plan.name !== "free") return null;
 
-  // Mock bookmark object for the container
-  const mockBookmark = {
-    id: "pricing",
-    url: "https://example.com",
-    faviconUrl: null,
-    type: "PAGE" as const,
-  };
-
   return (
     <BookmarkCardContainer
-      bookmark={mockBookmark as any}
+      bookmark={{
+        id: "pricing",
+        url: "https://example.com",
+        status: "READY",
+      }}
       className="p-3 flex flex-col gap-3"
     >
       <CardHeader className="pb-4 px-0">
@@ -47,7 +49,7 @@ export const BookmarkCardPricing = () => {
       <CardContent className="flex flex-row gap-2 px-0 pb-4">
         <ul className="flex flex-col gap-2 flex-2 text-sm text-muted-foreground">
           <li className="flex items-center gap-2">
-            <Infinity className="text-primary size-4" />
+            <InfinityIcon className="text-primary size-4" />
             <span>Unlimited bookmarks</span>
           </li>
           <li className="flex items-center gap-2">

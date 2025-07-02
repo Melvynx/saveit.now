@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20240208.0",
+    "@danielxceron/youtube-transcript": "^1.2.3",
     "playwright-core": "^1.42.1",
-    "youtube-transcript": "^1.2.1",
-    "youtubei.js": "^13.4.0"
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@cloudflare/playwright": "^0.0.10",

@@ -126,6 +126,7 @@ export async function updateBookmark(params: {
   detailedSummary?: string;
   summary?: string;
   preview?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>;
   tags: Array<{ id: string; name: string }>;
   status?: BookmarkStatus;

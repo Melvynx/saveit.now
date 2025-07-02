@@ -11,7 +11,7 @@ export const GET = userRoute
       limit: z.coerce.number().min(1).max(50).optional(),
     }),
   )
-  .handler(async (req, { ctx, query }) => {
+  .handler(async (req, { ctx }) => {
     const bookmarksCount = await prisma.bookmark.count({
       where: {
         userId: ctx.user.id,

@@ -29,7 +29,7 @@ export default function BookmarkProgress({
       void router.invalidateQueries({ queryKey: ["bookmarks"] });
       void router.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
     }
-  }, [latestData?.topic, router]);
+  }, [bookmarkId, latestData?.topic, router]);
 
   return (
     <div className="flex flex-col items-start w-fit mx-auto justify-center gap-2">

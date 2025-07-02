@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { ImportForm } from "../imports/import-form";
 
 export default function StartPage() {
-  const [hasImported, setHasImported] = useState(false);
+  const [, setHasImported] = useState(false);
 
   const handleImportSuccess = (data: {
     createdBookmarks: number;

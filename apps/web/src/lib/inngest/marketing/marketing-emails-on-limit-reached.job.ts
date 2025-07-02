@@ -62,7 +62,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
     const promoCode = await step.run("create-promo-code", async () => {
       const code = generatePromoCode();
 
-      const coupon = await stripeClient.promotionCodes.create({
+      await stripeClient.promotionCodes.create({
         coupon: env.STRIPE_COUPON_ID,
         code,
         max_redemptions: 1,

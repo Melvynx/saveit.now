@@ -4,7 +4,7 @@ import {
   Fetcher,
   KVNamespace,
 } from "@cloudflare/workers-types";
-import { YoutubeTranscript } from "youtube-transcript";
+import { YoutubeTranscript } from "@danielxceron/youtube-transcript";
 
 interface Env {
   MYBROWSER: Fetcher;
@@ -146,13 +146,9 @@ const handleYouTube: ExportedHandler<Env>["fetch"] = async (
 
     // Récupérer la transcription
     try {
-      const transcriptResponse = await YoutubeTranscript.fetchTranscript(
-        videoId,
-        {
-          lang: "fr",
-        },
-      );
-      console.log("transcriptResponse", transcriptResponse);
+      const transcriptResponse =
+        await YoutubeTranscript.fetchTranscript(videoId);
+
       if (transcriptResponse && transcriptResponse.length > 0) {
         metadata.transcript = transcriptResponse
           .map((entry) => `[${formatTime(entry.offset)}] ${entry.text}`)

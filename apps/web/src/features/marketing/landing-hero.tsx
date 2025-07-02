@@ -112,7 +112,6 @@ export const LandingHero = () => {
               }}
               src="https://www.tella.tv/video/cmb4nsi2h00000bl10w833n83/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
               allowFullScreen
-              allowTransparency
             ></iframe>
           </div>
         </div>

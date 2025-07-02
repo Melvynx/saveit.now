@@ -57,7 +57,6 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 
 export const useDeleteBookmark = () => {
   const refreshBookmark = useRefreshBookmarks();
-  const router = useRouter();
   const action = useAction(deleteBookmarkAction, {
     onSuccess: () => {
       refreshBookmark();
