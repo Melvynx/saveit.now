@@ -1,5 +1,6 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
+import { validateBookmarkLimits } from "../database/bookmark-validation";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
 import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
@@ -15,7 +16,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event, step, runId, publish }) => {
+    onFailure: async ({ event }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -35,7 +36,9 @@ export const processBookmarkJob = inngest.createFunction(
             },
           },
         });
-      } catch {}
+      } catch {
+        // ignore
+      }
     },
   },
   { event: "bookmark/process" },
@@ -71,6 +74,19 @@ export const processBookmarkJob = inngest.createFunction(
     if (!bookmark) {
       throw new Error("Bookmark not found");
     }
+
+    // Validate bookmark limits before processing
+    await step.run("validate-bookmark-limits", async () => {
+      try {
+        await validateBookmarkLimits({
+          userId: bookmark.userId,
+          url: bookmark.url,
+          skipExistenceCheck: true, // Skip existence check since bookmark already exists
+        });
+      } catch {
+        throw new NonRetriableError("Bookmark limits exceeded");
+      }
+    });
 
     await publish({
       channel: `bookmark:${bookmarkId}`,

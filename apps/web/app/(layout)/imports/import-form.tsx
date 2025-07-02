@@ -15,20 +15,29 @@ import { cn } from "@workspace/ui/lib/utils";
 import { FileText, Upload } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { usePostHog } from "posthog-js/react";
-import { DragEvent, useRef, useState } from "react";
+import { DragEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { importBookmarksAction } from "./imports.action";
+import { URL_REGEX } from "./url-regex";
 
 const Schema = z.object({
   text: z.string().min(1),
 });
 
-const URL_REGEX =
-  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+type ImportResult = {
+  totalUrls: number;
+  processedUrls: number;
+  skippedUrls: number;
+  createdBookmarks: number;
+  failedBookmarks: number;
+  availableSlots: number;
+  hasMoreUrls: boolean;
+  limitReached: boolean;
+};
 
 type ImportFormProps = {
-  onSuccess?: (data: { createdBookmarks: number; totalUrls: number }) => void;
+  onSuccess?: (data: ImportResult) => void;
   onError?: (error: string) => void;
   className?: string;
 };
@@ -36,6 +45,7 @@ type ImportFormProps = {
 export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [urlPreview, setUrlPreview] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const posthog = usePostHog();
 
@@ -46,12 +56,44 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     },
   });
 
+  // Update URL preview when text changes
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const text = value.text || "";
+      const urls = extractUrlsFromText(text);
+      setUrlPreview(urls);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const { execute, status } = useAction(importBookmarksAction, {
     onSuccess: ({ data }) => {
       if (!data) return;
-      toast.success(
-        `Created ${data.createdBookmarks} bookmarks from ${data.totalUrls} URLs`,
-      );
+
+      // Enhanced success feedback
+      let message = `Created ${data.createdBookmarks} bookmarks`;
+
+      if (data.failedBookmarks > 0) {
+        message += `, ${data.failedBookmarks} failed`;
+      }
+
+      if (data.skippedUrls > 0) {
+        message += `, ${data.skippedUrls} skipped due to limit`;
+      }
+
+      message += ` (${data.processedUrls}/${data.totalUrls} processed)`;
+
+      if (data.limitReached) {
+        toast.warning(
+          message +
+            ". You've reached your bookmark limit. Consider upgrading your plan!",
+        );
+      } else if (data.failedBookmarks > 0) {
+        toast.warning(message);
+      } else {
+        toast.success(message);
+      }
+
       form.reset();
       onSuccess?.(data);
     },
@@ -64,8 +106,9 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
       onError?.(errorMessage);
     },
     onExecute: () => {
+      const urls = extractUrlsFromText(form.getValues("text"));
       posthog.capture("import_bookmarks", {
-        total_urls: form.getValues("text").split("\n").length,
+        total_urls: urls.length,
       });
     },
   });
@@ -228,8 +271,54 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
           )}
         </div>
 
-        <Button type="submit" className="mt-4 w-full" disabled={isLoading}>
-          {isLoading ? "Processing..." : "Import URLs"}
+        {/* URL Preview */}
+        {urlPreview.length > 0 && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">
+                Found {urlPreview.length} unique URL
+                {urlPreview.length !== 1 ? "s" : ""}
+              </span>
+              {urlPreview.length > 500 && (
+                <span className="text-xs text-destructive font-medium">
+                  Max 500 URLs per import
+                </span>
+              )}
+            </div>
+            {urlPreview.length <= 10 ? (
+              <ul className="text-xs space-y-1">
+                {urlPreview.map((url, index) => (
+                  <li key={index} className="truncate text-muted-foreground">
+                    {url}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                <p>First 5 URLs:</p>
+                <ul className="space-y-1 mb-2">
+                  {urlPreview.slice(0, 5).map((url, index) => (
+                    <li key={index} className="truncate">
+                      {url}
+                    </li>
+                  ))}
+                </ul>
+                <p>... and {urlPreview.length - 5} more</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="mt-4 w-full"
+          disabled={isLoading || urlPreview.length === 0}
+        >
+          {isLoading
+            ? "Processing..."
+            : urlPreview.length > 500
+              ? `Import first 500 URLs`
+              : `Import ${urlPreview.length} URL${urlPreview.length !== 1 ? "s" : ""}`}
         </Button>
       </Form>
 
