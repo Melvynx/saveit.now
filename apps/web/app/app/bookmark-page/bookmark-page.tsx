@@ -1,4 +1,5 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
+import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { Button } from "@workspace/ui/components/button";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
@@ -89,7 +90,7 @@ export function BookmarkPage() {
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
-        <BookmarkContentView bookmark={bookmark} />
+        <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
         <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
           <DeleteButton bookmarkId={bookmark.id} />

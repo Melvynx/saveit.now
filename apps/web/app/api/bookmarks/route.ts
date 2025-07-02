@@ -1,7 +1,5 @@
-import {
-  BookmarkCreationError,
-  createBookmark,
-} from "@/lib/database/create-bookmark";
+import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
+import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { advancedSearch } from "@/lib/search/advanced-search";
 import { NextResponse } from "next/server";
@@ -16,8 +14,8 @@ export const POST = userRoute
         userId: ctx.user.id,
       });
       return { status: "ok", bookmark };
-    } catch (error) {
-      if (error instanceof BookmarkCreationError) {
+    } catch (error: unknown) {
+      if (error instanceof BookmarkValidationError) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
