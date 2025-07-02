@@ -208,7 +208,6 @@ const useZodForm = <Z extends ZodSchema>({
 }: UseZodFormProps<Z>) =>
   useForm({
     ...formProps,
-    // @ts-expect-error - zodResolver is not typed
     resolver: zodResolver(schema),
   });
 
