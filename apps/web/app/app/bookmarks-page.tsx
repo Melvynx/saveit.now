@@ -9,13 +9,13 @@ import { toast } from "sonner";
 import {
   BookmarkCard,
   BookmarkCardInput,
-  BookmarkCardLoadMore,
   BookmarkCardPricing,
 } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
 import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
+import { VirtualizedBookmarksGrid } from "./virtualized-bookmarks-grid";
 
 export function BookmarksPage() {
   const {
@@ -49,56 +49,18 @@ export function BookmarksPage() {
 
       <BookmarkHeader />
       <SearchInput />
-      <div
-        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
-        style={{
-          // @ts-expect-error
-          "--card-height": "calc(var(--spacing) * 64)",
-        }}
-      >
-        {isPending ? (
-          <>
-            {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
-              />
-            ))}
-          </>
-        ) : (
-          <>
-            {!query && <BookmarkCardInput />}
-
-            {bookmarks.map((bookmark, i) => {
-              if (query && i === 0) {
-                return (
-                  <div className="relative" key={bookmark.id}>
-                    <Badge
-                      variant="outline"
-                      className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
-                    >
-                      <Sparkles className="size-4 text-primary" />
-                      Best match
-                    </Badge>
-                    <BookmarkCard bookmark={bookmark} key={bookmark.id} />
-                  </div>
-                );
-              }
-
-              return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
-            })}
-            {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
-            {query && <MoreResultsButton />}
-            {bookmarks.length > 10 && (
-              <BookmarkCardLoadMore
-                loadNextPage={() => fetchNextPage()}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-              />
-            )}
-          </>
-        )}
-      </div>
+      
+      <VirtualizedBookmarksGrid
+        bookmarks={bookmarks}
+        query={query}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        isPending={isPending}
+      />
+      
+      {/* Keep these for query results */}
+      {query && <MoreResultsButton />}
     </div>
   );
 }
