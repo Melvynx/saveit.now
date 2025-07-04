@@ -177,9 +177,15 @@ export const processBookmarkJob = inngest.createFunction(
       }
     });
 
+    // Check if it's a YouTube video URL (not channel or other pages)
+    const isYouTubeVideo = (url: string): boolean => {
+      const videoRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+      return videoRegex.test(url);
+    };
+
     if (
-      bookmark.url.includes("youtube.com") ||
-      bookmark.url.includes("youtu.be")
+      (bookmark.url.includes("youtube.com") || bookmark.url.includes("youtu.be")) &&
+      isYouTubeVideo(bookmark.url)
     ) {
       await processYouTubeBookmark(
         {

@@ -52,7 +52,7 @@ export function BookmarksPage() {
       <div
         className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
         style={{
-          // @ts-expect-error
+          // @ts-expect-error CSS Variable not typed
           "--card-height": "calc(var(--spacing) * 64)",
         }}
       >
