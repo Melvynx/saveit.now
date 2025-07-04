@@ -3,29 +3,38 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Plus, Search } from "lucide-react";
 import { useRef, useState, useCallback } from "react";
 import { BookmarkType } from "../hooks/use-type-filter";
-import { parseAtMention, removeAtMention } from "../utils/type-filter-utils";
+import { Tag } from "../hooks/use-tags";
+import { parseMention, removeMention, MentionType } from "../utils/type-filter-utils";
 
-interface TypeFilterInputProps {
+interface MentionFilterInputProps {
   query: string;
   onQueryChange: (query: string) => void;
   isUrl: boolean;
   onShowTypeList: (show: boolean) => void;
+  onShowTagList: (show: boolean) => void;
   onTypeFilterChange: (filter: string) => void;
+  onTagFilterChange: (filter: string) => void;
   onAddType: (type: BookmarkType) => void;
+  onAddTag: (tagName: string) => void;
   filteredTypes: BookmarkType[];
+  filteredTags: Tag[];
   onEnterPress: () => void;
 }
 
-export const TypeFilterInput = ({
+export const MentionFilterInput = ({
   query,
   onQueryChange,
   isUrl,
   onShowTypeList,
+  onShowTagList,
   onTypeFilterChange,
+  onTagFilterChange,
   onAddType,
+  onAddTag,
   filteredTypes,
+  filteredTags,
   onEnterPress
-}: TypeFilterInputProps) => {
+}: MentionFilterInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [cursorPosition, setCursorPosition] = useState(0);
 
@@ -36,45 +45,76 @@ export const TypeFilterInput = ({
     setCursorPosition(cursor);
     onQueryChange(value);
 
-    const atMention = parseAtMention(value, cursor);
-    if (atMention) {
-      onShowTypeList(true);
-      onTypeFilterChange(atMention.mention);
+    const mention = parseMention(value, cursor);
+    if (mention) {
+      if (mention.type === "type") {
+        onShowTypeList(true);
+        onShowTagList(false);
+        onTypeFilterChange(mention.mention);
+        onTagFilterChange("");
+      } else if (mention.type === "tag") {
+        onShowTagList(true);
+        onShowTypeList(false);
+        onTagFilterChange(mention.mention);
+        onTypeFilterChange("");
+      }
     } else {
       onShowTypeList(false);
+      onShowTagList(false);
       onTypeFilterChange("");
+      onTagFilterChange("");
     }
-  }, [onQueryChange, onShowTypeList, onTypeFilterChange]);
+  }, [onQueryChange, onShowTypeList, onShowTagList, onTypeFilterChange, onTagFilterChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     const cursor = inputRef.current?.selectionStart || 0;
-    const atMention = parseAtMention(query, cursor);
+    const mention = parseMention(query, cursor);
 
     if (e.key === "Enter") {
-      if (atMention && filteredTypes.length > 0) {
+      if (mention) {
         e.preventDefault();
-        const selectedType = filteredTypes[0];
-        if (selectedType) {
-          onAddType(selectedType);
         
-          const newQuery = removeAtMention(query, atMention.startIndex, atMention.endIndex);
-          onQueryChange(newQuery);
-          
-          setTimeout(() => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-              inputRef.current.setSelectionRange(atMention.startIndex, atMention.startIndex);
-            }
-          }, 0);
+        if (mention.type === "type" && filteredTypes.length > 0) {
+          const selectedType = filteredTypes[0];
+          if (selectedType) {
+            onAddType(selectedType);
+            
+            const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
+            onQueryChange(newQuery);
+            
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+                inputRef.current.setSelectionRange(mention.startIndex, mention.startIndex);
+              }
+            }, 0);
+          }
+        } else if (mention.type === "tag" && filteredTags.length > 0) {
+          const selectedTag = filteredTags[0];
+          if (selectedTag) {
+            onAddTag(selectedTag.name);
+            
+            const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
+            onQueryChange(newQuery);
+            
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+                inputRef.current.setSelectionRange(mention.startIndex, mention.startIndex);
+              }
+            }, 0);
+          }
         }
       } else if (isUrl) {
         onEnterPress();
       }
-    } else if (e.key === "Escape" && atMention) {
+    } else if (e.key === "Escape" && mention) {
       onShowTypeList(false);
+      onShowTagList(false);
       onTypeFilterChange("");
+      onTagFilterChange("");
     }
-  }, [query, filteredTypes, onAddType, onQueryChange, isUrl, onEnterPress, onShowTypeList, onTypeFilterChange]);
+  }, [query, filteredTypes, filteredTags, onAddType, onAddTag, onQueryChange, isUrl, onEnterPress, onShowTypeList, onShowTagList, onTypeFilterChange, onTagFilterChange]);
 
   return (
     <div
@@ -94,7 +134,7 @@ export const TypeFilterInput = ({
         className="lg:h-16 lg:text-2xl flex-1 focus:outline-none"
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        placeholder="Search bookmarks or type @ for filters"
+        placeholder="Search bookmarks or type @ for types, # for tags"
         onSelect={(e) => {
           const target = e.target as HTMLInputElement;
           setCursorPosition(target.selectionStart || 0);

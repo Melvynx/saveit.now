@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(gh:*)",
+      "Edit",
+      "Bash(ls:*)",
+      "Bash(git:*)",
+      "Bash(find:*)",
+      "mcp__context7"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["context7"]
+}
