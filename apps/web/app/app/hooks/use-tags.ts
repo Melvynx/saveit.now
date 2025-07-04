@@ -2,12 +2,17 @@ import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
+import { z } from "zod";
 
-export type Tag = {
-  id: string;
-  name: string;
-  userId: string;
-};
+const TagSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  userId: z.string(),
+});
+
+export type Tag = z.infer<typeof TagSchema>;
+
+const TagsResponseSchema = z.array(TagSchema);
 
 export const useTags = () => {
   const [selectedTags, setSelectedTags] = useQueryState("tags", {
@@ -27,8 +32,10 @@ export const useTags = () => {
   } = useQuery({
     queryKey: ["tags"],
     queryFn: async (): Promise<Tag[]> => {
-      const result = await upfetch("/api/tags");
-      return result as Tag[];
+      const result = await upfetch("/api/tags", {
+        schema: TagsResponseSchema,
+      });
+      return result;
     },
   });
 

@@ -4,35 +4,25 @@ import { toast } from "sonner";
 import { FilterList } from "./components/filter-list";
 import { SelectedFiltersBadges } from "./components/selected-filters-badges";
 import { MentionFilterInput } from "./components/type-filter-input";
-import { useTags } from "./hooks/use-tags";
-import { useTypeFilter } from "./hooks/use-type-filter";
+import { SearchInputProvider, useSearchInput } from "./contexts/search-input-context";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
 
-export const SearchInput = () => {
+const SearchInputContent = () => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
 
   const {
-    selectedTypes,
-    showTypeList,
     setShowTypeList,
-    setTypeFilter,
-    filteredTypes,
-    addType,
-    removeType,
-  } = useTypeFilter();
-
-  const {
-    selectedTags,
-    showTagList,
     setShowTagList,
+    setTypeFilter,
     setTagFilter,
-    filteredTags,
+    addType,
     addTag,
-    removeTag,
-  } = useTags();
+    filteredTypes,
+    filteredTags,
+  } = useSearchInput();
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
 
@@ -79,21 +69,17 @@ export const SearchInput = () => {
         ) : null}
       </div>
 
-      <SelectedFiltersBadges
-        selectedTypes={selectedTypes}
-        selectedTags={selectedTags}
-        onRemoveType={removeType}
-        onRemoveTag={removeTag}
-      />
+      <SelectedFiltersBadges />
 
-      <FilterList
-        filteredTypes={filteredTypes}
-        filteredTags={filteredTags}
-        onSelectType={addType}
-        onSelectTag={addTag}
-        showTypes={showTypeList}
-        showTags={showTagList}
-      />
+      <FilterList />
     </div>
+  );
+};
+
+export const SearchInput = () => {
+  return (
+    <SearchInputProvider>
+      <SearchInputContent />
+    </SearchInputProvider>
   );
 };

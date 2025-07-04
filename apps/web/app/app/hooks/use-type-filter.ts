@@ -1,11 +1,8 @@
 import { useQueryState } from "nuqs";
 import { useState, useCallback } from "react";
+import { BookmarkType } from "@workspace/database";
 
-export type BookmarkType = "VIDEO" | "BLOG" | "PAGE" | "POST" | "IMAGE" | "YOUTUBE" | "TWEET";
-
-export const BOOKMARK_TYPES: BookmarkType[] = [
-  "VIDEO", "BLOG", "PAGE", "POST", "IMAGE", "YOUTUBE", "TWEET"
-];
+export const BOOKMARK_TYPES: BookmarkType[] = Object.values(BookmarkType);
 
 export const useTypeFilter = () => {
   const [selectedTypes, setSelectedTypes] = useQueryState("types", {

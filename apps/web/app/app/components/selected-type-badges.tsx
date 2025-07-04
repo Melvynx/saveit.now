@@ -1,7 +1,7 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { X } from "lucide-react";
-import { BookmarkType } from "../hooks/use-type-filter";
+import { BookmarkType } from "@workspace/database";
 import { getTypeColor, getTypeDisplayName } from "../utils/type-filter-utils";
 
 interface SelectedTypeBadgesProps {

@@ -1,4 +1,4 @@
-import { BookmarkType } from "../hooks/use-type-filter";
+import { BookmarkType } from "@workspace/database";
 
 export type MentionType = "type" | "tag";
 
