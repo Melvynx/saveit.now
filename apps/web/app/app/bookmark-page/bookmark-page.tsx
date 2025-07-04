@@ -90,7 +90,9 @@ export function BookmarkPage() {
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>
-        <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
+        <div className="px-6 py-4">
+          <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
+        </div>
         <footer className="flex items-center gap-2 border-t-2 p-6">
           <div className="flex-1"></div>
           <DeleteButton bookmarkId={bookmark.id} />

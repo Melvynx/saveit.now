@@ -6,7 +6,6 @@ import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Trash } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useRefreshBookmarks } from "../use-bookmarks";
