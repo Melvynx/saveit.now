@@ -12,7 +12,7 @@ export const AUTH_LIMITS: Record<"pro" | "free", AuthLimits> = {
   },
   pro: {
     bookmarks: 50000,
-    monthlyBookmarks: 1000,
+    monthlyBookmarks: 3000,
     canExport: 1,
   },
 };
