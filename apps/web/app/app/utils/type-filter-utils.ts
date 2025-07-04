@@ -1,6 +1,16 @@
 import { BookmarkType } from "../hooks/use-type-filter";
 
-export const parseAtMention = (input: string, cursorPosition: number) => {
+export type MentionType = "type" | "tag";
+
+export interface ParsedMention {
+  mention: string;
+  startIndex: number;
+  endIndex: number;
+  type: MentionType;
+  symbol: "@" | "#";
+}
+
+export const parseAtMention = (input: string, cursorPosition: number): ParsedMention | null => {
   const beforeCursor = input.substring(0, cursorPosition);
   const atIndex = beforeCursor.lastIndexOf("@");
 
@@ -15,10 +25,51 @@ export const parseAtMention = (input: string, cursorPosition: number) => {
     mention: afterAt,
     startIndex: atIndex,
     endIndex: cursorPosition,
+    type: "type",
+    symbol: "@",
   };
 };
 
+export const parseHashMention = (input: string, cursorPosition: number): ParsedMention | null => {
+  const beforeCursor = input.substring(0, cursorPosition);
+  const hashIndex = beforeCursor.lastIndexOf("#");
+
+  if (hashIndex === -1) return null;
+
+  const afterHash = beforeCursor.substring(hashIndex + 1);
+  const spaceIndex = afterHash.indexOf(" ");
+
+  if (spaceIndex !== -1) return null;
+
+  return {
+    mention: afterHash,
+    startIndex: hashIndex,
+    endIndex: cursorPosition,
+    type: "tag",
+    symbol: "#",
+  };
+};
+
+export const parseMention = (input: string, cursorPosition: number): ParsedMention | null => {
+  // Check for # first, then @
+  const hashMention = parseHashMention(input, cursorPosition);
+  if (hashMention) return hashMention;
+  
+  const atMention = parseAtMention(input, cursorPosition);
+  if (atMention) return atMention;
+  
+  return null;
+};
+
 export const removeAtMention = (
+  input: string,
+  startIndex: number,
+  endIndex: number,
+): string => {
+  return input.substring(0, startIndex) + input.substring(endIndex);
+};
+
+export const removeMention = (
   input: string,
   startIndex: number,
   endIndex: number,

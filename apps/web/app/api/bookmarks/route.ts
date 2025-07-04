@@ -28,7 +28,7 @@ export const GET = userRoute
   .query(
     z.object({
       query: z.string().optional(),
-      tags: z.array(z.string()).optional(),
+      tags: z.string().optional(),
       types: z.string().optional(),
       cursor: z.string().optional(),
       limit: z.coerce.number().min(1).max(50).optional(),
@@ -37,11 +37,12 @@ export const GET = userRoute
   )
   .handler(async (req, { ctx, query }) => {
     const types = query.types ? query.types.split(",").filter(Boolean) as BookmarkType[] : [];
+    const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
     
     const searchResults = await advancedSearch({
       userId: ctx.user.id,
       query: query.query,
-      tags: query.tags || [],
+      tags,
       types,
       limit: query.limit || 20,
       cursor: query.cursor,

@@ -1,12 +1,13 @@
 import { Button } from "@workspace/ui/components/button";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
+import { FilterList } from "./components/filter-list";
+import { SelectedFiltersBadges } from "./components/selected-filters-badges";
+import { MentionFilterInput } from "./components/type-filter-input";
+import { useTags } from "./hooks/use-tags";
+import { useTypeFilter } from "./hooks/use-type-filter";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
-import { useTypeFilter } from "./hooks/use-type-filter";
-import { TypeFilterInput } from "./components/type-filter-input";
-import { SelectedTypeBadges } from "./components/selected-type-badges";
-import { TypeList } from "./components/type-list";
 
 export const SearchInput = () => {
   const [query, setQuery] = useQueryState("query", {
@@ -17,12 +18,21 @@ export const SearchInput = () => {
     selectedTypes,
     showTypeList,
     setShowTypeList,
-    typeFilter,
     setTypeFilter,
     filteredTypes,
     addType,
-    removeType
+    removeType,
   } = useTypeFilter();
+
+  const {
+    selectedTags,
+    showTagList,
+    setShowTagList,
+    setTagFilter,
+    filteredTags,
+    addTag,
+    removeTag,
+  } = useTags();
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
 
@@ -42,14 +52,18 @@ export const SearchInput = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <TypeFilterInput
+        <MentionFilterInput
           query={query}
           onQueryChange={setQuery}
           isUrl={isUrl}
           onShowTypeList={setShowTypeList}
+          onShowTagList={setShowTagList}
           onTypeFilterChange={setTypeFilter}
+          onTagFilterChange={setTagFilter}
           onAddType={addType}
+          onAddTag={addTag}
           filteredTypes={filteredTypes}
+          filteredTags={filteredTags}
           onEnterPress={handleEnterPress}
         />
         {isUrl ? (
@@ -64,16 +78,21 @@ export const SearchInput = () => {
           </Button>
         ) : null}
       </div>
-      
-      <SelectedTypeBadges
+
+      <SelectedFiltersBadges
         selectedTypes={selectedTypes}
+        selectedTags={selectedTags}
         onRemoveType={removeType}
+        onRemoveTag={removeTag}
       />
-      
-      <TypeList
+
+      <FilterList
         filteredTypes={filteredTypes}
+        filteredTags={filteredTags}
         onSelectType={addType}
-        show={showTypeList}
+        onSelectTag={addTag}
+        showTypes={showTypeList}
+        showTags={showTagList}
       />
     </div>
   );

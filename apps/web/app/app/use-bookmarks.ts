@@ -23,6 +23,8 @@ export const useBookmarks = () => {
   const searchParams = useSearchParams();
   const query = searchParams.get("query") ?? "";
   const types = searchParams.get("types")?.split(",").filter(Boolean) ?? [];
+  const tags = searchParams.get("tags")?.split(",").filter(Boolean) ?? [];
+  console.log({ tags });
   const matchingDistance = parseFloat(
     searchParams.get("matchingDistance") ?? "0.1",
   );
@@ -32,7 +34,7 @@ export const useBookmarks = () => {
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
 
   const data = useInfiniteQuery({
-    queryKey: ["bookmarks", searchQuery, types, matchingDistance],
+    queryKey: ["bookmarks", searchQuery, types, tags, matchingDistance],
     refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
@@ -47,6 +49,7 @@ export const useBookmarks = () => {
         params: {
           query: searchQuery,
           types: types.join(","),
+          tags: tags.join(","),
           limit: 20,
           cursor: pageParam || undefined,
           matchingDistance,
@@ -75,6 +78,7 @@ export const useBookmarks = () => {
     bookmarks,
     query,
     types,
+    tags,
     matchingDistance,
   };
 };
