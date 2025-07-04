@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
+import React from "react";
 import { reBookmarkAction } from "./bookmarks.action";
 
 export const BackButton = () => {
@@ -123,7 +124,13 @@ export const CopyLinkButton = ({
   );
 };
 
-export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
+export const ReBookmarkButton = ({ 
+  bookmarkId, 
+  children 
+}: { 
+  bookmarkId: string;
+  children?: React.ReactNode;
+}) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const posthog = usePostHog();
@@ -140,9 +147,9 @@ export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
   return (
     <LoadingButton
       loading={action.isPending}
-      size="icon"
+      size={children ? "sm" : "icon"}
       variant="outline"
-      className="size-8"
+      className={children ? "" : "size-8"}
       onClick={() => {
         posthog.capture("bookmark+rebookmark", {
           bookmark_id: bookmarkId,
@@ -150,7 +157,11 @@ export const ReBookmarkButton = ({ bookmarkId }: { bookmarkId: string }) => {
         action.execute({ bookmarkId });
       }}
     >
-      <RefreshCcw className="text-muted-foreground size-4" />
+      {children ? (
+        children
+      ) : (
+        <RefreshCcw className="text-muted-foreground size-4" />
+      )}
     </LoadingButton>
   );
 };
