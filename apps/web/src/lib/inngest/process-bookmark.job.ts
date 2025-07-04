@@ -16,7 +16,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event }) => {
+    onFailure: async ({ event, publish }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -39,6 +39,15 @@ export const processBookmarkJob = inngest.createFunction(
       } catch {
         // ignore
       }
+
+      await publish({
+        channel: `bookmark:${bookmarkId}`,
+        topic: "finish",
+        data: {
+          id: BOOKMARK_STEP_ID_TO_ID["finish"],
+          order: 9,
+        },
+      });
     },
   },
   { event: "bookmark/process" },
