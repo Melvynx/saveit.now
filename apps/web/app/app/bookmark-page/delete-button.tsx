@@ -8,6 +8,7 @@ import { Trash } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useNavigate, useSearchParams } from "react-router";
 import { useRefreshBookmarks } from "../use-bookmarks";
 import { deleteBookmarkAction } from "./bookmarks.action";
 
@@ -16,6 +17,8 @@ export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
 export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
   const action = useDeleteBookmark();
   const posthog = usePostHog();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleDelete = () => {
     dialogManager.add({
@@ -28,6 +31,7 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
             bookmark_id: bookmarkId,
           });
           action.execute({ bookmarkId });
+          navigate(`/app?${searchParams.toString()}`);
         },
       },
     });
