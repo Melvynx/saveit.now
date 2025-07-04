@@ -10,7 +10,7 @@ type UserPlan = {
   isLoading: boolean;
 };
 
-export const useUserPlan = create<UserPlan>((set) => ({
+export const useUserPlan = create<UserPlan>(() => ({
   name: "free",
   limits: {
     bookmarks: 20,

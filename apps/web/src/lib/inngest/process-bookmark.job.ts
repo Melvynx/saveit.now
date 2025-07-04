@@ -1,6 +1,7 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
+import { logger } from "../logger";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
 import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
@@ -83,7 +84,8 @@ export const processBookmarkJob = inngest.createFunction(
           url: bookmark.url,
           skipExistenceCheck: true, // Skip existence check since bookmark already exists
         });
-      } catch {
+      } catch (error) {
+        logger.error("Bookmark limits exceeded", { error });
         throw new NonRetriableError("Bookmark limits exceeded");
       }
     });
