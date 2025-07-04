@@ -1,5 +1,5 @@
 import { Badge } from "@workspace/ui/components/badge";
-import { BookmarkType } from "../hooks/use-type-filter";
+import { BookmarkType } from "@workspace/database";
 import { getTypeColor, getTypeDisplayName } from "../utils/type-filter-utils";
 
 interface TypeListProps {

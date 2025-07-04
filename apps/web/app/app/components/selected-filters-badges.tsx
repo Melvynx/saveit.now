@@ -1,22 +1,11 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { X } from "lucide-react";
-import { BookmarkType } from "../hooks/use-type-filter";
 import { getTypeColor, getTypeDisplayName } from "../utils/type-filter-utils";
+import { useSearchInput } from "../contexts/search-input-context";
 
-interface SelectedFiltersBadgesProps {
-  selectedTypes: BookmarkType[];
-  selectedTags: string[];
-  onRemoveType: (type: BookmarkType) => void;
-  onRemoveTag: (tag: string) => void;
-}
-
-export const SelectedFiltersBadges = ({ 
-  selectedTypes, 
-  selectedTags, 
-  onRemoveType, 
-  onRemoveTag 
-}: SelectedFiltersBadgesProps) => {
+export const SelectedFiltersBadges = () => {
+  const { selectedTypes, selectedTags, removeType, removeTag } = useSearchInput();
   const hasFilters = selectedTypes.length > 0 || selectedTags.length > 0;
   
   if (!hasFilters) return null;
@@ -35,7 +24,7 @@ export const SelectedFiltersBadges = ({
             variant="ghost"
             size="sm"
             className="size-4 hover:bg-transparent"
-            onClick={() => onRemoveType(type)}
+            onClick={() => removeType(type)}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -54,7 +43,7 @@ export const SelectedFiltersBadges = ({
             variant="ghost"
             size="sm"
             className="size-4 hover:bg-transparent"
-            onClick={() => onRemoveTag(tag)}
+            onClick={() => removeTag(tag)}
           >
             <X className="h-3 w-3" />
           </Button>

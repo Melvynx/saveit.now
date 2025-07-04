@@ -2,7 +2,7 @@ import { inputVariants } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Plus, Search } from "lucide-react";
 import { useRef, useState, useCallback } from "react";
-import { BookmarkType } from "../hooks/use-type-filter";
+import { BookmarkType } from "@workspace/database";
 import { Tag } from "../hooks/use-tags";
 import { parseMention, removeMention, MentionType } from "../utils/type-filter-utils";
 

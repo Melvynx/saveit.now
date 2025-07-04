@@ -36,7 +36,14 @@ export const GET = userRoute
     }),
   )
   .handler(async (req, { ctx, query }) => {
-    const types = query.types ? query.types.split(",").filter(Boolean) as BookmarkType[] : [];
+    // Validate and filter bookmark types
+    const validBookmarkTypes = Object.values(BookmarkType);
+    const types = query.types 
+      ? query.types.split(",").filter(Boolean).filter((type): type is BookmarkType => 
+          validBookmarkTypes.includes(type as BookmarkType)
+        )
+      : [];
+    
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
     
     const searchResults = await advancedSearch({
