@@ -1,8 +1,9 @@
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
-import { getUserLimits } from "../auth-session";
+import { getAuthLimits } from "../auth-limits";
 import { ApplicationError, BookmarkErrorType } from "../errors";
 import { inngest } from "../inngest/client";
+import { logger } from "../logger";
 import { getPostHogClient } from "../posthog";
 
 export class BookmarkValidationError extends ApplicationError {
@@ -19,10 +20,16 @@ export interface BookmarkValidationOptions {
 }
 
 export const validateBookmarkLimits = async (
-  options: BookmarkValidationOptions
+  options: BookmarkValidationOptions,
 ) => {
   const { userId, url, skipExistenceCheck = false } = options;
-  const user = await getUserLimits();
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      referenceId: userId,
+    },
+  });
+  const plan = subscription?.plan ?? "free";
+  const limits = getAuthLimits(subscription);
   const posthogClient = getPostHogClient();
 
   // Check total bookmarks limit
@@ -32,7 +39,8 @@ export const validateBookmarkLimits = async (
     },
   });
 
-  if (user.plan === "free" && totalBookmarks >= 19) {
+  if (plan === "free" && totalBookmarks >= 19) {
+    logger.info("Sending email to user", { userId });
     inngest.send({
       name: "marketing/email-on-limit-reached",
       data: {
@@ -41,18 +49,19 @@ export const validateBookmarkLimits = async (
     });
   }
 
-  if (totalBookmarks >= user.limits.bookmarks) {
+  if (totalBookmarks >= limits.bookmarks) {
+    logger.info("Bookmark limit reached", { userId });
     posthogClient.capture({
       distinctId: userId,
       event: "bookmark_limit_reached",
       properties: {
         bookmarks: totalBookmarks,
-        limit: user.limits.bookmarks,
+        limit: limits.bookmarks,
       },
     });
     throw new BookmarkValidationError(
       "You have reached the maximum number of bookmarks",
-      BookmarkErrorType.MAX_BOOKMARKS
+      BookmarkErrorType.MAX_BOOKMARKS,
     );
   }
 
@@ -67,18 +76,19 @@ export const validateBookmarkLimits = async (
     },
   });
 
-  if (monthlyBookmarks >= user.limits.monthlyBookmarks) {
+  if (monthlyBookmarks >= limits.monthlyBookmarks) {
+    logger.info("Monthly bookmark limit reached", { userId });
     posthogClient.capture({
       distinctId: userId,
       event: "monthly_bookmark_limit_reached",
       properties: {
         bookmarks: monthlyBookmarks,
-        limit: user.limits.monthlyBookmarks,
+        limit: limits.monthlyBookmarks,
       },
     });
     throw new BookmarkValidationError(
       "You have reached the maximum number of bookmarks for this month",
-      BookmarkErrorType.MAX_BOOKMARKS
+      BookmarkErrorType.MAX_BOOKMARKS,
     );
   }
 
@@ -92,6 +102,7 @@ export const validateBookmarkLimits = async (
     });
 
     if (alreadyExists) {
+      logger.info("Bookmark already exists", { userId });
       posthogClient.capture({
         distinctId: userId,
         event: "bookmark_already_exists",
@@ -101,7 +112,7 @@ export const validateBookmarkLimits = async (
       });
       throw new BookmarkValidationError(
         "Bookmark already exists",
-        BookmarkErrorType.BOOKMARK_ALREADY_EXISTS
+        BookmarkErrorType.BOOKMARK_ALREADY_EXISTS,
       );
     }
   }
@@ -109,6 +120,7 @@ export const validateBookmarkLimits = async (
   return {
     totalBookmarks,
     monthlyBookmarks,
-    limits: user.limits,
+    limits,
+    plan,
   };
 };
