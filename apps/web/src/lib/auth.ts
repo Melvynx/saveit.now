@@ -8,13 +8,36 @@ import { admin, emailOTP, magicLink } from "better-auth/plugins";
 import { AUTH_LIMITS } from "./auth-limits";
 import { inngest } from "./inngest/client";
 import { resend } from "./resend";
+import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
 
 export const auth = betterAuth({
+  baseURL: getServerUrl(),
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
   user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailVerification: async ({ user, newEmail, url, token }, request) => {
+        await resend.emails.send({
+          from: "noreply@codeline.app",
+          to: user.email, // verification email must be sent to the current user email to approve the change
+          subject: "Approve email change",
+          text: `Hello,
+
+You requested to change your email address from ${user.email} to ${newEmail}.
+
+Click the link below to approve this change:
+${url}
+
+If you didn't request this change, please ignore this email.
+
+Best regards,
+The SaveIt.now Team`,
+        });
+      },
+    },
     deleteUser: {
       enabled: true,
       beforeDelete: async (user) => {
