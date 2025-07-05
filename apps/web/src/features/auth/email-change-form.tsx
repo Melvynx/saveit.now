@@ -5,7 +5,6 @@ import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -19,7 +18,7 @@ interface EmailChangeFormProps {
 }
 
 export function EmailChangeForm({ currentEmail, onEmailChange }: EmailChangeFormProps) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(currentEmail);
   const [errors, setErrors] = useState<string[]>([]);
 
   const handleSubmit = async (formData: FormData) => {
@@ -42,7 +41,7 @@ export function EmailChangeForm({ currentEmail, onEmailChange }: EmailChangeForm
 
     try {
       await onEmailChange(formData);
-      setEmail(""); // Clear form on success
+      // Keep the current email in the form - don't clear it
     } catch (error) {
       // Error handling is done in the server action with serverToast
       console.error("Error changing email:", error);
@@ -54,17 +53,13 @@ export function EmailChangeForm({ currentEmail, onEmailChange }: EmailChangeForm
       <Card>
         <CardHeader>
           <CardTitle>Email</CardTitle>
-          <CardDescription>
-            Current email: {currentEmail}<br />
-            Change your email address. You will receive a verification email at your current address.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <Input
               type="email"
               name="email"
-              placeholder="New email address"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
