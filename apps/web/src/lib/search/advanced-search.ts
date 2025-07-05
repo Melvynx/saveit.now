@@ -232,25 +232,17 @@ export async function advancedSearch({
 }: SearchOptions): Promise<SearchResponse> {
   // Si aucune requête de recherche et pas de tags, retourner simplement par ordre de création
   if ((!query || query.trim() === "") && (!tags || tags.length === 0) && (!types || types.length === 0)) {
-    // Récupérer le bookmark de référence pour la pagination si cursor est fourni
-    let cursorRef;
-    if (cursor) {
-      cursorRef = await prisma.bookmark.findUnique({
-        where: { id: cursor },
-        select: { createdAt: true },
-      });
-    }
+    // Use cursor for database-level pagination with ULID ordering (most efficient)
+    const cursorCondition = cursor ? {
+      id: {
+        lt: cursor, // ULID is lexicographically sortable by timestamp
+      },
+    } : {};
 
     const recentBookmarks = await prisma.bookmark.findMany({
       where: {
         userId,
-        ...(cursorRef
-          ? {
-              createdAt: {
-                lt: cursorRef.createdAt,
-              },
-            }
-          : {}),
+        ...cursorCondition,
         ...(types && types.length > 0 ? { type: { in: types } } : {}),
       },
       orderBy: [
@@ -258,7 +250,7 @@ export async function advancedSearch({
           starred: "desc", // Starred bookmarks first
         },
         {
-          createdAt: "desc", // Then by creation date
+          id: "desc", // Then by ULID (naturally sorted by creation time)
         },
       ],
       take: limit + 1,
@@ -266,7 +258,7 @@ export async function advancedSearch({
 
     const hasMore = recentBookmarks.length > limit;
     const bookmarks = hasMore ? recentBookmarks.slice(0, -1) : recentBookmarks;
-    const nextCursor = hasMore
+    const nextCursor = hasMore && bookmarks.length > 0
       ? bookmarks[bookmarks.length - 1]?.id
       : undefined;
 
@@ -308,21 +300,31 @@ export async function advancedSearch({
 
   // Handle types-only filtering (no query or tags)
   if (types && types.length > 0 && (!query || query.trim() === "") && (!tags || tags.length === 0)) {
+    // Use cursor for database-level pagination with ULID ordering
+    const cursorCondition = cursor ? {
+      id: {
+        lt: cursor,
+      },
+    } : {};
+
     const typeFilteredBookmarks = await prisma.bookmark.findMany({
       where: {
         userId,
         type: { in: types },
+        ...cursorCondition,
       },
       orderBy: [
         { starred: "desc" },
-        { createdAt: "desc" },
+        { id: "desc" }, // Use ULID ordering
       ],
       take: limit + 1,
     });
 
     const hasMore = typeFilteredBookmarks.length > limit;
     const bookmarks = hasMore ? typeFilteredBookmarks.slice(0, -1) : typeFilteredBookmarks;
-    const nextCursor = hasMore ? bookmarks[bookmarks.length - 1]?.id : undefined;
+    const nextCursor = hasMore && bookmarks.length > 0
+      ? bookmarks[bookmarks.length - 1]?.id
+      : undefined;
 
     const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
     const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
@@ -435,18 +437,35 @@ export async function advancedSearch({
     }
   }
 
-  // Trier par score décroissant et appliquer la pagination
-  allResults.sort((a, b) => b.score - a.score);
+  // Stable sorting: score DESC, id DESC (ULID provides natural timestamp ordering)
+  allResults.sort((a, b) => {
+    // Primary sort: score descending
+    if (a.score !== b.score) {
+      return b.score - a.score;
+    }
+    
+    // Secondary sort: id descending (ULID sorting for stable pagination)
+    return b.id.localeCompare(a.id);
+  });
 
+  // For search results, we need to use array-based pagination since results are scored
+  // Find the cursor position in the sorted results
   let startIndex = 0;
   if (cursor) {
-    startIndex = allResults.findIndex((result) => result.id === cursor) + 1;
+    const cursorIndex = allResults.findIndex((result) => result.id === cursor);
+    if (cursorIndex >= 0) {
+      startIndex = cursorIndex + 1;
+    }
+    // If cursor not found, start from beginning (defensive programming)
   }
-
+  
+  // Apply limit and determine if there are more results
   const paginatedResults = allResults.slice(startIndex, startIndex + limit + 1);
   const hasMore = paginatedResults.length > limit;
   const bookmarks = hasMore ? paginatedResults.slice(0, -1) : paginatedResults;
-  const nextCursor = hasMore ? bookmarks[bookmarks.length - 1]?.id : undefined;
+  const nextCursor = hasMore && bookmarks.length > 0 
+    ? bookmarks[bookmarks.length - 1]?.id 
+    : undefined;
 
   return {
     bookmarks,
