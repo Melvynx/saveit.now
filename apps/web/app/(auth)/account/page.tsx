@@ -16,6 +16,8 @@ import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
+import { EmailChangeForm } from "@/features/auth/email-change-form";
 
 export default async function AuthPage() {
   const user = await getUser();
@@ -57,6 +59,38 @@ export default async function AuthPage() {
           </CardFooter>
         </Card>
       </form>
+      <EmailChangeForm
+        currentEmail={user?.email || ""}
+        onEmailChange={async (formData) => {
+          "use server";
+          const newEmail = formData.get("email") as string;
+          
+          try {
+            const validatedData = EmailChangeSchema.parse({ newEmail });
+            
+            await auth.api.changeEmail({
+              headers: await headers(),
+              body: {
+                newEmail: validatedData.newEmail,
+                callbackURL: "/account",
+              },
+            });
+
+            await serverToast("Check your current email for verification link");
+          } catch (error) {
+            if (error instanceof Error && 'issues' in error) {
+              // Zod validation error
+              const zodError = error as any;
+              const firstError = zodError.issues?.[0]?.message;
+              await serverToast(firstError || "Please enter a valid email address");
+            } else {
+              await serverToast("Failed to change email. Please try again.");
+            }
+          }
+
+          revalidatePath("/account");
+        }}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Danger</CardTitle>
