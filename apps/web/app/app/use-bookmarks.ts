@@ -22,6 +22,9 @@ const URL_SCHEMA = z.string().url();
 export const useBookmarks = () => {
   const searchParams = useSearchParams();
   const query = searchParams.get("query") ?? "";
+  const types = searchParams.get("types")?.split(",").filter(Boolean) ?? [];
+  const tags = searchParams.get("tags")?.split(",").filter(Boolean) ?? [];
+  console.log({ tags });
   const matchingDistance = parseFloat(
     searchParams.get("matchingDistance") ?? "0.1",
   );
@@ -31,7 +34,7 @@ export const useBookmarks = () => {
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
 
   const data = useInfiniteQuery({
-    queryKey: ["bookmarks", searchQuery, matchingDistance],
+    queryKey: ["bookmarks", searchQuery, types, tags, matchingDistance],
     refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
@@ -45,6 +48,8 @@ export const useBookmarks = () => {
       const result = await upfetch("/api/bookmarks", {
         params: {
           query: searchQuery,
+          types: types.join(","),
+          tags: tags.join(","),
           limit: 20,
           cursor: pageParam || undefined,
           matchingDistance,
@@ -72,6 +77,8 @@ export const useBookmarks = () => {
     ...data,
     bookmarks,
     query,
+    types,
+    tags,
     matchingDistance,
   };
 };
