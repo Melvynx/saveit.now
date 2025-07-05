@@ -24,20 +24,17 @@ export const auth = betterAuth({
           from: "noreply@codeline.app",
           to: user.email, // verification email must be sent to the current user email to approve the change
           subject: "Approve email change",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #333; text-align: center;">Email Change Request</h2>
-              <p>Hello,</p>
-              <p>You requested to change your email address from <strong>${user.email}</strong> to <strong>${newEmail}</strong>.</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${url}" style="background-color: #007cba; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Approve Email Change</a>
-              </div>
-              <p style="color: #666; font-size: 14px;">If you didn't request this change, please ignore this email.</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-              <p style="color: #999; font-size: 12px; text-align: center;">Best regards,<br>The SaveIt.now Team</p>
-            </div>
-          `,
-          text: `Hello,\n\nYou requested to change your email address from ${user.email} to ${newEmail}.\n\nClick the link below to approve this change:\n${url}\n\nIf you didn't request this change, please ignore this email.\n\nBest regards,\nThe SaveIt.now Team`,
+          text: `Hello,
+
+You requested to change your email address from ${user.email} to ${newEmail}.
+
+Click the link below to approve this change:
+${url}
+
+If you didn't request this change, please ignore this email.
+
+Best regards,
+The SaveIt.now Team`,
         });
       },
     },
