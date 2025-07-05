@@ -2,22 +2,13 @@ import { inputVariants } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Plus, Search } from "lucide-react";
 import { useRef, useState, useCallback } from "react";
-import { BookmarkType } from "@workspace/database";
-import { Tag } from "../hooks/use-tags";
-import { parseMention, removeMention, MentionType } from "../utils/type-filter-utils";
+import { parseMention, removeMention } from "../utils/type-filter-utils";
+import { useSearchInput } from "../contexts/search-input-context";
 
 interface MentionFilterInputProps {
   query: string;
   onQueryChange: (query: string) => void;
   isUrl: boolean;
-  onShowTypeList: (show: boolean) => void;
-  onShowTagList: (show: boolean) => void;
-  onTypeFilterChange: (filter: string) => void;
-  onTagFilterChange: (filter: string) => void;
-  onAddType: (type: BookmarkType) => void;
-  onAddTag: (tagName: string) => void;
-  filteredTypes: BookmarkType[];
-  filteredTags: Tag[];
   onEnterPress: () => void;
 }
 
@@ -25,16 +16,18 @@ export const MentionFilterInput = ({
   query,
   onQueryChange,
   isUrl,
-  onShowTypeList,
-  onShowTagList,
-  onTypeFilterChange,
-  onTagFilterChange,
-  onAddType,
-  onAddTag,
-  filteredTypes,
-  filteredTags,
   onEnterPress
 }: MentionFilterInputProps) => {
+  const {
+    setShowTypeList,
+    setShowTagList,
+    setTypeFilter,
+    setTagFilter,
+    addType,
+    addTag,
+    filteredTypes,
+    filteredTags,
+  } = useSearchInput();
   const inputRef = useRef<HTMLInputElement>(null);
   const [cursorPosition, setCursorPosition] = useState(0);
 
@@ -48,23 +41,23 @@ export const MentionFilterInput = ({
     const mention = parseMention(value, cursor);
     if (mention) {
       if (mention.type === "type") {
-        onShowTypeList(true);
-        onShowTagList(false);
-        onTypeFilterChange(mention.mention);
-        onTagFilterChange("");
+        setShowTypeList(true);
+        setShowTagList(false);
+        setTypeFilter(mention.mention);
+        setTagFilter("");
       } else if (mention.type === "tag") {
-        onShowTagList(true);
-        onShowTypeList(false);
-        onTagFilterChange(mention.mention);
-        onTypeFilterChange("");
+        setShowTagList(true);
+        setShowTypeList(false);
+        setTagFilter(mention.mention);
+        setTypeFilter("");
       }
     } else {
-      onShowTypeList(false);
-      onShowTagList(false);
-      onTypeFilterChange("");
-      onTagFilterChange("");
+      setShowTypeList(false);
+      setShowTagList(false);
+      setTypeFilter("");
+      setTagFilter("");
     }
-  }, [onQueryChange, onShowTypeList, onShowTagList, onTypeFilterChange, onTagFilterChange]);
+  }, [onQueryChange, setShowTypeList, setShowTagList, setTypeFilter, setTagFilter]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     const cursor = inputRef.current?.selectionStart || 0;
@@ -77,7 +70,7 @@ export const MentionFilterInput = ({
         if (mention.type === "type" && filteredTypes.length > 0) {
           const selectedType = filteredTypes[0];
           if (selectedType) {
-            onAddType(selectedType);
+            addType(selectedType);
             
             const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
             onQueryChange(newQuery);
@@ -92,7 +85,7 @@ export const MentionFilterInput = ({
         } else if (mention.type === "tag" && filteredTags.length > 0) {
           const selectedTag = filteredTags[0];
           if (selectedTag) {
-            onAddTag(selectedTag.name);
+            addTag(selectedTag.name);
             
             const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
             onQueryChange(newQuery);
@@ -109,12 +102,12 @@ export const MentionFilterInput = ({
         onEnterPress();
       }
     } else if (e.key === "Escape" && mention) {
-      onShowTypeList(false);
-      onShowTagList(false);
-      onTypeFilterChange("");
-      onTagFilterChange("");
+      setShowTypeList(false);
+      setShowTagList(false);
+      setTypeFilter("");
+      setTagFilter("");
     }
-  }, [query, filteredTypes, filteredTags, onAddType, onAddTag, onQueryChange, isUrl, onEnterPress, onShowTypeList, onShowTagList, onTypeFilterChange, onTagFilterChange]);
+  }, [query, filteredTypes, filteredTags, addType, addTag, onQueryChange, isUrl, onEnterPress, setShowTypeList, setShowTagList, setTypeFilter, setTagFilter]);
 
   return (
     <div
