@@ -13,16 +13,7 @@ const SearchInputContent = () => {
     defaultValue: "",
   });
 
-  const {
-    setShowTypeList,
-    setShowTagList,
-    setTypeFilter,
-    setTagFilter,
-    addType,
-    addTag,
-    filteredTypes,
-    filteredTags,
-  } = useSearchInput();
+  // No need to destructure context values here since components access them directly
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
 
@@ -46,14 +37,6 @@ const SearchInputContent = () => {
           query={query}
           onQueryChange={setQuery}
           isUrl={isUrl}
-          onShowTypeList={setShowTypeList}
-          onShowTagList={setShowTagList}
-          onTypeFilterChange={setTypeFilter}
-          onTagFilterChange={setTagFilter}
-          onAddType={addType}
-          onAddTag={addTag}
-          filteredTypes={filteredTypes}
-          filteredTags={filteredTags}
           onEnterPress={handleEnterPress}
         />
         {isUrl ? (
