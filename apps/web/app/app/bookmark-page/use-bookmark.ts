@@ -15,6 +15,7 @@ const BookmarkSchema = z.object({
   type: z.nativeEnum(BookmarkType),
   metadata: z.any().optional().nullable(),
   starred: z.boolean().optional(),
+  read: z.boolean().optional(),
   tags: z.array(
     z.object({
       tag: z.object({
@@ -49,8 +50,6 @@ export const useBookmark = (bookmarkId?: string | null) => {
     },
     enabled: !!bookmarkId,
   });
-
-  console.log("query", query);
 
   return query;
 };

@@ -17,6 +17,7 @@ import {
   ShareButton,
 } from "./bookmark-actions-button";
 import { DeleteButton } from "./delete-button";
+import { ReadButton } from "./read-button";
 import { StarButton } from "./star-button";
 import { useBookmark } from "./use-bookmark";
 
@@ -80,6 +81,12 @@ export function BookmarkPage() {
             bookmarkId={bookmark.id}
             starred={bookmark.starred || false}
           />
+          {bookmark.type === "ARTICLE" && (
+            <ReadButton
+              bookmarkId={bookmark.id}
+              read={bookmark.read || false}
+            />
+          )}
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />
         </header>

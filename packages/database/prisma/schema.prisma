@@ -123,6 +123,7 @@ model BookmarkTag {
 enum BookmarkType {
   VIDEO // YouTube, Loom, mp4…
   BLOG // Article markdown
+  ARTICLE // Clean article content
   PAGE // Page web générique
   POST // Tweet, LinkedIn, Bluesky…
   IMAGE // PNG, JPG, etc.
@@ -172,6 +173,7 @@ model Bookmark {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   starred      Boolean        @default(false)
+  read         Boolean        @default(false)
 
   // Tags
   tags BookmarkTag[]
