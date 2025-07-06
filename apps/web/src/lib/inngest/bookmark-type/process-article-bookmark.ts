@@ -37,6 +37,7 @@ export async function processArticleBookmark(
     const $ = cheerio.load(context.content);
     $("script, style, link, meta, noscript, iframe, svg").remove();
 
+    // Extract article content from semantic HTML elements first
     const articleHtml =
       $("article").html() || $("main").html() || $("body").html() || "";
 
@@ -47,7 +48,7 @@ export async function processArticleBookmark(
       bulletListMarker: "-", // cohérent avec GitHub
     });
 
-    const markdown = turndown.turndown($("body").html() || "");
+    const markdown = turndown.turndown(articleHtml);
 
     return markdown.trim();
   });
@@ -280,10 +281,6 @@ ${screenshotDescription}
       // Vérifier si l'image OG est utilisable
       if (ogImageUrl) {
         result.ogImageUrl = ogImageUrl;
-      } else if (ogImageUrl) {
-        console.log(
-          `OG Image for ${context.url} is unusable (too dark or small)`,
-        );
       }
     }
 

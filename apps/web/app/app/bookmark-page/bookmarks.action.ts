@@ -1,6 +1,7 @@
 "use server";
 
 import { deleteBookmark } from "@/lib/database/delete-bookmark";
+import { SafeActionError } from "@/lib/errors";
 import { inngest } from "@/lib/inngest/client";
 import { userAction } from "@/lib/safe-action";
 import { prisma } from "@workspace/database";
@@ -28,7 +29,7 @@ export const updateBookmarkTagsAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     const currentTags = bookmark.tags.map((t) => t.tag.name);
@@ -109,7 +110,7 @@ export const reBookmarkAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     await inngest.send({
@@ -141,7 +142,7 @@ export const toggleStarBookmarkAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     const updatedBookmark = await prisma.bookmark.update({
@@ -170,11 +171,11 @@ export const toggleReadBookmarkAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     if (bookmark.type !== "ARTICLE") {
-      throw new Error("Bookmark is not an article");
+      throw new SafeActionError("Bookmark is not an article");
     }
 
     const updatedBookmark = await prisma.bookmark.update({

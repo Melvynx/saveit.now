@@ -4,10 +4,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
+import { Bookmark } from "@workspace/database";
 import { BookOpen } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { toggleReadBookmarkAction } from "./bookmarks.action";
+
+interface BookmarksPage {
+  bookmarks: Bookmark[];
+  hasMore: boolean;
+}
+
+interface BookmarksQueryData {
+  pages: BookmarksPage[];
+  pageParams: string[];
+}
+
+interface BookmarkQueryData {
+  bookmark: Bookmark;
+}
 
 interface ReadButtonProps {
   bookmarkId: string;
@@ -41,14 +56,14 @@ export const ReadButton = ({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: any) => {
+    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: BookmarksQueryData | undefined) => {
       if (!oldData?.pages) return oldData;
 
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
-          bookmarks: page.bookmarks.map((bookmark: any) =>
+          bookmarks: page.bookmarks.map((bookmark) =>
             bookmark.id === bookmarkId
               ? { ...bookmark, read: !read }
               : bookmark,
@@ -57,7 +72,7 @@ export const ReadButton = ({
       };
     });
 
-    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: any) => {
+    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: BookmarkQueryData | undefined) => {
       if (!oldData?.bookmark) return oldData;
       return {
         ...oldData,
