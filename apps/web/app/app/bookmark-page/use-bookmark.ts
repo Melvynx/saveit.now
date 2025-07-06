@@ -51,8 +51,6 @@ export const useBookmark = (bookmarkId?: string | null) => {
     enabled: !!bookmarkId,
   });
 
-  console.log("query", query);
-
   return query;
 };
 
