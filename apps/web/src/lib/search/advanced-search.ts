@@ -233,13 +233,19 @@ export async function advancedSearch({
   matchingDistance = 0.1,
 }: SearchOptions): Promise<SearchResponse> {
   // Si aucune requête de recherche et pas de tags, retourner simplement par ordre de création
-  if ((!query || query.trim() === "") && (!tags || tags.length === 0) && (!types || types.length === 0)) {
+  if (
+    (!query || query.trim() === "") &&
+    (!tags || tags.length === 0) &&
+    (!types || types.length === 0)
+  ) {
     // Use cursor for database-level pagination with ULID ordering (most efficient)
-    const cursorCondition = cursor ? {
-      id: {
-        lt: cursor, // ULID is lexicographically sortable by timestamp
-      },
-    } : {};
+    const cursorCondition = cursor
+      ? {
+          id: {
+            lt: cursor, // ULID is lexicographically sortable by timestamp
+          },
+        }
+      : {};
 
     const recentBookmarks = await prisma.bookmark.findMany({
       where: {
@@ -260,9 +266,10 @@ export async function advancedSearch({
 
     const hasMore = recentBookmarks.length > limit;
     const bookmarks = hasMore ? recentBookmarks.slice(0, -1) : recentBookmarks;
-    const nextCursor = hasMore && bookmarks.length > 0
-      ? bookmarks[bookmarks.length - 1]?.id
-      : undefined;
+    const nextCursor =
+      hasMore && bookmarks.length > 0
+        ? bookmarks[bookmarks.length - 1]?.id
+        : undefined;
 
     // Récupérer les counts d'ouverture pour les bookmarks récents
     const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
@@ -302,13 +309,20 @@ export async function advancedSearch({
   const resultMap = new Map<string, SearchResult>();
 
   // Handle types-only filtering (no query or tags)
-  if (types && types.length > 0 && (!query || query.trim() === "") && (!tags || tags.length === 0)) {
+  if (
+    types &&
+    types.length > 0 &&
+    (!query || query.trim() === "") &&
+    (!tags || tags.length === 0)
+  ) {
     // Use cursor for database-level pagination with ULID ordering
-    const cursorCondition = cursor ? {
-      id: {
-        lt: cursor,
-      },
-    } : {};
+    const cursorCondition = cursor
+      ? {
+          id: {
+            lt: cursor,
+          },
+        }
+      : {};
 
     const typeFilteredBookmarks = await prisma.bookmark.findMany({
       where: {
@@ -324,10 +338,13 @@ export async function advancedSearch({
     });
 
     const hasMore = typeFilteredBookmarks.length > limit;
-    const bookmarks = hasMore ? typeFilteredBookmarks.slice(0, -1) : typeFilteredBookmarks;
-    const nextCursor = hasMore && bookmarks.length > 0
-      ? bookmarks[bookmarks.length - 1]?.id
-      : undefined;
+    const bookmarks = hasMore
+      ? typeFilteredBookmarks.slice(0, -1)
+      : typeFilteredBookmarks;
+    const nextCursor =
+      hasMore && bookmarks.length > 0
+        ? bookmarks[bookmarks.length - 1]?.id
+        : undefined;
 
     const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
     const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
@@ -446,7 +463,7 @@ export async function advancedSearch({
     if (a.score !== b.score) {
       return b.score - a.score;
     }
-    
+
     // Secondary sort: id descending (ULID sorting for stable pagination)
     return b.id.localeCompare(a.id);
   });
@@ -461,14 +478,15 @@ export async function advancedSearch({
     }
     // If cursor not found, start from beginning (defensive programming)
   }
-  
+
   // Apply limit and determine if there are more results
   const paginatedResults = allResults.slice(startIndex, startIndex + limit + 1);
   const hasMore = paginatedResults.length > limit;
   const bookmarks = hasMore ? paginatedResults.slice(0, -1) : paginatedResults;
-  const nextCursor = hasMore && bookmarks.length > 0 
-    ? bookmarks[bookmarks.length - 1]?.id 
-    : undefined;
+  const nextCursor =
+    hasMore && bookmarks.length > 0
+      ? bookmarks[bookmarks.length - 1]?.id
+      : undefined;
 
   return {
     bookmarks,
@@ -590,6 +608,7 @@ async function searchByVector({
       createdAt: Date;
       metadata?: Prisma.JsonValue;
       starred?: boolean;
+      read?: boolean;
     }[]
   >(
     `
