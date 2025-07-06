@@ -1,6 +1,7 @@
 "use server";
 
 import { createBookmark } from "@/lib/database/create-bookmark";
+import { SafeActionError } from "@/lib/errors";
 import { userAction } from "@/lib/safe-action";
 import { prisma } from "@workspace/database";
 import { z } from "zod";
@@ -37,7 +38,7 @@ export const updateBookmarkNoteAction = userAction
     console.log("bookmark", bookmark);
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     const updatedBookmark = await prisma.bookmark.update({

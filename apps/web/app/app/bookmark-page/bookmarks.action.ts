@@ -1,6 +1,7 @@
 "use server";
 
 import { deleteBookmark } from "@/lib/database/delete-bookmark";
+import { SafeActionError } from "@/lib/errors";
 import { inngest } from "@/lib/inngest/client";
 import { userAction } from "@/lib/safe-action";
 import { prisma } from "@workspace/database";
@@ -28,7 +29,7 @@ export const updateBookmarkTagsAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     const currentTags = bookmark.tags.map((t) => t.tag.name);
@@ -109,7 +110,7 @@ export const reBookmarkAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     await inngest.send({
@@ -141,7 +142,7 @@ export const toggleStarBookmarkAction = userAction
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found or unauthorized");
+      throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
     const updatedBookmark = await prisma.bookmark.update({
@@ -158,5 +159,38 @@ export const toggleStarBookmarkAction = userAction
     return {
       bookmarkId: updatedBookmark.id,
       starred: updatedBookmark.starred,
+    };
+  });
+
+export const toggleReadBookmarkAction = userAction
+  .schema(z.object({ bookmarkId: z.string() }))
+  .action(async ({ parsedInput: input, ctx: { user } }) => {
+    const bookmark = await prisma.bookmark.findUnique({
+      where: { id: input.bookmarkId, userId: user.id },
+      select: { read: true, type: true },
+    });
+
+    if (!bookmark) {
+      throw new SafeActionError("Bookmark not found or unauthorized");
+    }
+
+    if (bookmark.type !== "BLOG") {
+      throw new SafeActionError("Bookmark is not a blog/article");
+    }
+
+    const updatedBookmark = await prisma.bookmark.update({
+      where: { id: input.bookmarkId },
+      data: {
+        read: !bookmark.read,
+      },
+      select: {
+        id: true,
+        read: true,
+      },
+    });
+
+    return {
+      bookmarkId: updatedBookmark.id,
+      read: updatedBookmark.read,
     };
   });

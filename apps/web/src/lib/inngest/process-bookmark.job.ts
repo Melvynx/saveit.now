@@ -2,6 +2,7 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
 import { logger } from "../logger";
+import { processBlogArticle } from "./bookmark-type/process-blog-article";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
@@ -211,6 +212,42 @@ export const processBookmarkJob = inngest.createFunction(
         publish,
       );
       return;
+    }
+
+    // Check if it's an article/blog post
+    if (
+      urlContent.type === BookmarkType.PAGE &&
+      typeof urlContent.content === "string"
+    ) {
+      const content = urlContent.content.toLowerCase();
+      const isArticle = 
+        content.includes("<article") ||
+        content.includes('property="og:type" content="article"') ||
+        content.includes('class="post') ||
+        content.includes('class="article') ||
+        content.includes('class="entry') ||
+        content.includes('class="blog') ||
+        content.includes('<main') ||
+        content.includes('[role="main"]');
+        
+      if (isArticle) {
+        await processBlogArticle(
+          {
+            bookmarkId,
+            content: urlContent.content,
+            url: bookmark.url,
+            userId: bookmark.userId,
+            bookmark: {
+              ...bookmark,
+              createdAt: new Date(bookmark.createdAt),
+              updatedAt: new Date(bookmark.updatedAt),
+            },
+          },
+          step,
+          publish,
+        );
+        return;
+      }
     }
 
     await processPageBookmark(

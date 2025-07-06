@@ -172,6 +172,7 @@ model Bookmark {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   starred      Boolean        @default(false)
+  read         Boolean        @default(false)
 
   // Tags
   tags BookmarkTag[]

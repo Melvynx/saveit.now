@@ -1,0 +1,102 @@
+"use client";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@workspace/ui/components/button";
+import { InlineTooltip } from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
+import { BookOpen } from "lucide-react";
+import { useAction } from "next-safe-action/hooks";
+import { toast } from "sonner";
+import { toggleReadBookmarkAction } from "./bookmarks.action";
+
+interface ReadButtonProps {
+  bookmarkId: string;
+  read: boolean;
+  variant?: "default" | "secondary" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
+  showTooltip?: boolean;
+}
+
+export const ReadButton = ({
+  bookmarkId,
+  read,
+  variant = "outline",
+  size = "icon",
+  className = "",
+  showTooltip = true,
+}: ReadButtonProps) => {
+  const queryClient = useQueryClient();
+
+  const toggleReadAction = useAction(toggleReadBookmarkAction, {
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
+      toast.error(
+        error.error.serverError?.message || "Failed to update read state",
+      );
+    },
+  });
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Optimistic update for bookmarks list
+    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: any) => {
+      if (!oldData?.pages) return oldData;
+
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          bookmarks: page.bookmarks.map((bookmark: any) =>
+            bookmark.id === bookmarkId
+              ? { ...bookmark, read: !read }
+              : bookmark,
+          ),
+        })),
+      };
+    });
+
+    // Optimistic update for individual bookmark
+    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: any) => {
+      if (!oldData?.bookmark) return oldData;
+      return {
+        ...oldData,
+        bookmark: {
+          ...oldData.bookmark,
+          read: !read,
+        },
+      };
+    });
+
+    toggleReadAction.execute({ bookmarkId });
+  };
+
+  const button = (
+    <Button
+      variant={variant}
+      size={size}
+      className={cn(size === "icon" && "size-8", className)}
+      onClick={handleClick}
+      disabled={toggleReadAction.isExecuting}
+    >
+      <BookOpen
+        className={cn(
+          "size-4",
+          read ? "fill-primary text-primary" : "text-muted-foreground",
+        )}
+      />
+    </Button>
+  );
+
+  if (!showTooltip) {
+    return button;
+  }
+
+  return (
+    <InlineTooltip title={read ? "Mark as unread" : "Mark as read"}>
+      {button}
+    </InlineTooltip>
+  );
+};

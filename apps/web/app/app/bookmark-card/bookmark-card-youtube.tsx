@@ -31,6 +31,8 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
               url={bookmark.url}
               bookmarkId={bookmark.id}
               starred={bookmark.starred || false}
+              read={bookmark.read || false}
+              isBlog={bookmark.type === "BLOG"}
             />
           </>
         )}
