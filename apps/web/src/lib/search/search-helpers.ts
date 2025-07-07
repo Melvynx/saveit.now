@@ -171,9 +171,9 @@ export function bookmarkToSearchResult(
     ogDescription: string | null;
     faviconUrl: string | null;
     createdAt: Date;
-    metadata: Prisma.JsonValue;
-    starred: boolean | null;
-    read: boolean | null;
+    metadata?: Prisma.JsonValue;
+    starred?: boolean;
+    read?: boolean;
   },
   score: number = 0,
   matchType: "tag" | "vector" | "combined" = "tag",
