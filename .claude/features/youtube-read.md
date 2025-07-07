@@ -7,6 +7,7 @@ For now, we have the "read" value only for ARTICLE type. After thinking, I also 
 
 $READ = only read content
 $UNREAD = only unread content
+$STAR = only stared content
 
 This filter will work like the TAGS and like the TYPE of the content.
 

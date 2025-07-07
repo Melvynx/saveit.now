@@ -80,7 +80,7 @@ export default async function AuthPage() {
           } catch (error) {
             if (error instanceof Error && 'issues' in error) {
               // Zod validation error
-              const zodError = error as any;
+              const zodError = error as { issues?: Array<{ message: string }> };
               const firstError = zodError.issues?.[0]?.message;
               await serverToast(firstError || "Please enter a valid email address");
             } else {

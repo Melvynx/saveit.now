@@ -19,7 +19,7 @@ export const auth = betterAuth({
   user: {
     changeEmail: {
       enabled: true,
-      sendChangeEmailVerification: async ({ user, newEmail, url, token }, request) => {
+      sendChangeEmailVerification: async ({ user, newEmail, url }) => {
         await resend.emails.send({
           from: "noreply@codeline.app",
           to: user.email, // verification email must be sent to the current user email to approve the change
