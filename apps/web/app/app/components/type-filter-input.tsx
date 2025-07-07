@@ -1,7 +1,7 @@
 import { inputVariants } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Plus, Search } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useSearchInput } from "../contexts/search-input-context";
 import { parseMention, removeMention } from "../utils/type-filter-utils";
 
