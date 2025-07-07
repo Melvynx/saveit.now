@@ -83,3 +83,12 @@ When working with analytics:
 - Minimize feature flag usage across multiple locations
 - Gate flag-dependent code with validation
 - Maintain consistent naming conventions for events and properties
+
+## Deployment and Logs
+
+- To get the latest deployment logs, use `flyctl logs` command for the specific app
+- Vercel CLI deployment commands:
+  - `vercel` - Deploy the current project
+  - `vercel --prod` - Deploy to production
+  - `vercel logs` - View latest deployment logs
+  - `vercel inspect` - Get detailed deployment information and verify everything is working correctly
