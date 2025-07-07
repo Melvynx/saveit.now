@@ -4,6 +4,7 @@ import { BookmarkType } from "@workspace/database";
 import { createContext, useContext, ReactNode } from "react";
 import { useTypeFilter } from "../hooks/use-type-filter";
 import { useTags, Tag } from "../hooks/use-tags";
+import { useSpecialFilter, SpecialFilter } from "../hooks/use-special-filter";
 
 interface SearchInputContextType {
   // Type filtering
@@ -23,6 +24,15 @@ interface SearchInputContextType {
   filteredTags: Tag[];
   addTag: (tagName: string) => void;
   removeTag: (tagName: string) => void;
+  
+  // Special filtering
+  selectedSpecialFilters: SpecialFilter[];
+  showSpecialList: boolean;
+  setShowSpecialList: (show: boolean) => void;
+  setSpecialFilter: (filter: string) => void;
+  filteredSpecialFilters: SpecialFilter[];
+  addSpecialFilter: (filter: SpecialFilter) => void;
+  removeSpecialFilter: (filter: SpecialFilter) => void;
 }
 
 const SearchInputContext = createContext<SearchInputContextType | null>(null);
@@ -42,6 +52,7 @@ interface SearchInputProviderProps {
 export const SearchInputProvider = ({ children }: SearchInputProviderProps) => {
   const typeFilter = useTypeFilter();
   const tagFilter = useTags();
+  const specialFilter = useSpecialFilter();
 
   const value: SearchInputContextType = {
     // Type filtering
@@ -61,6 +72,15 @@ export const SearchInputProvider = ({ children }: SearchInputProviderProps) => {
     filteredTags: tagFilter.filteredTags,
     addTag: tagFilter.addTag,
     removeTag: tagFilter.removeTag,
+    
+    // Special filtering
+    selectedSpecialFilters: specialFilter.selectedSpecialFilters,
+    showSpecialList: specialFilter.showSpecialList,
+    setShowSpecialList: specialFilter.setShowSpecialList,
+    setSpecialFilter: specialFilter.setSpecialFilter,
+    filteredSpecialFilters: specialFilter.filteredSpecialFilters,
+    addSpecialFilter: specialFilter.addSpecialFilter,
+    removeSpecialFilter: specialFilter.removeSpecialFilter,
   };
 
   return (

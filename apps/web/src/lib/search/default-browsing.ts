@@ -4,6 +4,7 @@ import {
   SearchResponse,
   bookmarkToSearchResult,
   getBookmarkOpenCounts,
+  buildSpecialFilterConditions,
 } from "./search-helpers";
 
 /**
@@ -13,9 +14,10 @@ import {
 export async function getDefaultBookmarks({
   userId,
   types = [],
+  specialFilters = [],
   limit = 20,
   cursor,
-}: Pick<SearchOptions, "userId" | "types" | "limit" | "cursor">): Promise<SearchResponse> {
+}: Pick<SearchOptions, "userId" | "types" | "specialFilters" | "limit" | "cursor">): Promise<SearchResponse> {
   // Use cursor for database-level pagination with ULID ordering (most efficient)
   const cursorCondition = cursor
     ? {
@@ -25,11 +27,14 @@ export async function getDefaultBookmarks({
       }
     : {};
 
+  const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
+
   const recentBookmarks = await prisma.bookmark.findMany({
     where: {
       userId,
       ...cursorCondition,
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
+      ...specialFilterConditions,
     },
     orderBy: [
       {
@@ -73,11 +78,12 @@ export async function getDefaultBookmarks({
 export async function getBookmarksByType({
   userId,
   types,
+  specialFilters = [],
   limit = 20,
   cursor,
-}: Pick<SearchOptions, "userId" | "types" | "limit" | "cursor">): Promise<SearchResponse> {
+}: Pick<SearchOptions, "userId" | "types" | "specialFilters" | "limit" | "cursor">): Promise<SearchResponse> {
   if (!types || types.length === 0) {
-    return getDefaultBookmarks({ userId, limit, cursor });
+    return getDefaultBookmarks({ userId, specialFilters, limit, cursor });
   }
 
   // Use cursor for database-level pagination with ULID ordering
@@ -89,11 +95,14 @@ export async function getBookmarksByType({
       }
     : {};
 
+  const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
+
   const typeFilteredBookmarks = await prisma.bookmark.findMany({
     where: {
       userId,
       type: { in: types },
       ...cursorCondition,
+      ...specialFilterConditions,
     },
     orderBy: [
       { id: "desc" }, // Use ULID ordering - NEWEST FIRST

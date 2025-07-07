@@ -37,7 +37,7 @@ export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
           bookmarkId={bookmark.id}
           starred={bookmark.starred || false}
           read={bookmark.read || false}
-          isArticle={bookmark.type === "ARTICLE"}
+          bookmarkType={bookmark.type}
         />
       </BookmarkCardHeader>
 

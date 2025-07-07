@@ -30,6 +30,7 @@ export const GET = userRoute
       query: z.string().optional(),
       tags: z.string().optional(),
       types: z.string().optional(),
+      special: z.string().optional(),
       cursor: z.string().optional(),
       limit: z.coerce.number().min(1).max(50).optional(),
       matchingDistance: z.coerce.number().min(0.1).max(2).optional(),
@@ -46,11 +47,20 @@ export const GET = userRoute
     
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
     
+    // Validate and filter special filters
+    const validSpecialFilters = ["READ", "UNREAD", "STAR"];
+    const specialFilters = query.special
+      ? query.special.split(",").filter(Boolean).filter((filter): filter is "READ" | "UNREAD" | "STAR" => 
+          validSpecialFilters.includes(filter)
+        )
+      : [];
+    
     const searchResults = await advancedSearch({
       userId: ctx.user.id,
       query: query.query,
       tags,
       types,
+      specialFilters,
       limit: query.limit || 20,
       cursor: query.cursor,
       matchingDistance: query.matchingDistance || 0.1,
