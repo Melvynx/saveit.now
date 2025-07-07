@@ -118,6 +118,7 @@ export const getTypeDisplayName = (type: BookmarkType): string => {
     YOUTUBE: "YouTube",
     TWEET: "Tweet",
     ARTICLE: "Article",
+    PDF: "PDF",
   };
   return displayNames[type] || type;
 };
@@ -136,6 +137,7 @@ export const getTypeColor = (type: BookmarkType): string => {
       "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30",
     ARTICLE:
       "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30",
+    PDF: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
   };
   return (
     colors[type] ||

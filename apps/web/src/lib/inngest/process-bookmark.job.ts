@@ -7,6 +7,7 @@ import { processStandardWebpage as processPageBookmark } from "./bookmark-type/p
 import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
+import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 
@@ -162,6 +163,11 @@ export const processBookmarkJob = inngest.createFunction(
           // We don't need to fetch the content for direct video files
         }
 
+        if (headers["content-type"]?.startsWith("application/pdf")) {
+          content = await response.arrayBuffer();
+          type = BookmarkType.PDF;
+        }
+
         const result = {
           ok: response.ok,
           status: response.status,
@@ -231,6 +237,20 @@ export const processBookmarkJob = inngest.createFunction(
           bookmarkId,
           url: bookmark.url,
           userId: bookmark.userId,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
+
+    if (urlContent.type === BookmarkType.PDF) {
+      await processPDFBookmark(
+        {
+          bookmarkId,
+          url: bookmark.url,
+          userId: bookmark.userId,
+          content: null, // Will be downloaded in the PDF processor
         },
         step,
         publish,

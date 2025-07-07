@@ -4,6 +4,9 @@ compatibility_date = "2023-03-14"
 compatibility_flags = [ "nodejs_compat" ]
 
 browser = { binding = "MYBROWSER" }
+# Browser rendering for PDF screenshots
+[[browser]]
+binding = "BROWSER"
 [[kv_namespaces]]
 binding = "SAVEIT_KV"
 id = "6d76cf4b513d4bc29ee4457383d18491"

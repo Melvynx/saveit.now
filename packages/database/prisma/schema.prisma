@@ -129,6 +129,7 @@ enum BookmarkType {
   IMAGE // PNG, JPG, etc.
   YOUTUBE // YouTube
   TWEET // Twitter
+  PDF // PDF documents
 }
 
 enum BookmarkStatus {

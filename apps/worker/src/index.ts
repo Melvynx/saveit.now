@@ -8,6 +8,7 @@ import { YoutubeTranscript } from "@danielxceron/youtube-transcript";
 
 interface Env {
   MYBROWSER: Fetcher;
+  BROWSER: Fetcher;
   SAVEIT_KV: KVNamespace;
 }
 
@@ -27,6 +28,8 @@ export default {
     // Gestion des routes en fonction du pathname
     if (pathname.includes("/youtube")) {
       return handleYouTube?.(request, env, ctx);
+    } else if (pathname.includes("/pdf")) {
+      return handlePDF?.(request, env, ctx);
     } else {
       // Par défaut ou /screenshot
       return handleScreenshot?.(request, env, ctx);
@@ -178,6 +181,73 @@ const handleYouTube: ExportedHandler<Env>["fetch"] = async (
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
+    );
+  }
+};
+
+// Gestion des PDFs
+const handlePDF: ExportedHandler<Env>["fetch"] = async (
+  request,
+  env,
+): Promise<any> => {
+  const { searchParams } = new URL(request.url);
+  const url = searchParams.get("url");
+
+  if (!url) {
+    return new Response(JSON.stringify({ error: "Missing url parameter" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    // Validate URL
+    new URL(url);
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid URL format" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const browser = await puppeteer.launch(env.BROWSER);
+    const page = await browser.newPage();
+    
+    await page.setViewport({
+      width: 1280,
+      height: 720,
+    });
+
+    // Embed PDF in HTML data URI
+    const htmlContent = `<embed src="${encodeURI(url)}" type="application/pdf" style="width:100%;height:100%">`;
+    await page.goto(`data:text/html,${htmlContent}`, { 
+      waitUntil: 'networkidle0',
+      timeout: 15000 
+    });
+
+    const jpeg = await page.screenshot({ 
+      type: 'jpeg', 
+      quality: 80 
+    });
+
+    await page.close();
+    await browser.close();
+
+    return new Response(jpeg, {
+      headers: {
+        'Content-Type': 'image/jpeg',
+      },
+    });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Failed to generate PDF screenshot" 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
     );
   }
 };
