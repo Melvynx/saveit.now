@@ -1,10 +1,12 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
+import { hasMarkdownContent } from "@/lib/bookmark-content";
 import { Button } from "@workspace/ui/components/button";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, BookOpen } from "lucide-react";
+import Link from "next/link";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -82,10 +84,26 @@ export function BookmarkPage() {
             starred={bookmark.starred || false}
           />
           {bookmark.type === "ARTICLE" && (
-            <ReadButton
-              bookmarkId={bookmark.id}
-              read={bookmark.read || false}
-            />
+            <>
+              <ReadButton
+                bookmarkId={bookmark.id}
+                read={bookmark.read || false}
+              />
+              {hasMarkdownContent(bookmark.metadata) && (
+                <InlineTooltip title="Read Article">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="size-8"
+                    asChild
+                  >
+                    <Link href={`/p/${bookmark.id}/read`} target="_blank">
+                      <BookOpen className="text-muted-foreground size-4" />
+                    </Link>
+                  </Button>
+                </InlineTooltip>
+              )}
+            </>
           )}
           <ReBookmarkButton bookmarkId={bookmark.id} />
           <BackButton />

@@ -1,0 +1,130 @@
+import { prisma } from "@workspace/database";
+import {
+  SearchOptions,
+  SearchResponse,
+  bookmarkToSearchResult,
+  getBookmarkOpenCounts,
+} from "./search-helpers";
+
+/**
+ * Handles default browsing when no search query is provided
+ * Shows bookmarks in chronological order (newest first) without star/frequency boost
+ */
+export async function getDefaultBookmarks({
+  userId,
+  types = [],
+  limit = 20,
+  cursor,
+}: Pick<SearchOptions, "userId" | "types" | "limit" | "cursor">): Promise<SearchResponse> {
+  // Use cursor for database-level pagination with ULID ordering (most efficient)
+  const cursorCondition = cursor
+    ? {
+        id: {
+          lt: cursor, // ULID is lexicographically sortable by timestamp
+        },
+      }
+    : {};
+
+  const recentBookmarks = await prisma.bookmark.findMany({
+    where: {
+      userId,
+      ...cursorCondition,
+      ...(types && types.length > 0 ? { type: { in: types } } : {}),
+    },
+    orderBy: [
+      {
+        id: "desc", // Sort by ULID (naturally sorted by creation time) - NEWEST FIRST
+      },
+    ],
+    take: limit + 1,
+  });
+
+  const hasMore = recentBookmarks.length > limit;
+  const bookmarks = hasMore ? recentBookmarks.slice(0, -1) : recentBookmarks;
+  const nextCursor =
+    hasMore && bookmarks.length > 0
+      ? bookmarks[bookmarks.length - 1]?.id
+      : undefined;
+
+  // Get open counts for display purposes (not for sorting)
+  const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
+  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+
+  return {
+    bookmarks: bookmarks.map((bookmark) => {
+      const openCount = openCounts.get(bookmark.id) || 0;
+      return bookmarkToSearchResult(
+        bookmark,
+        0, // No score for default browsing
+        "tag",
+        undefined,
+        openCount,
+      );
+    }),
+    nextCursor,
+    hasMore,
+  };
+}
+
+/**
+ * Handles type-only filtering (no query or tags)
+ * Shows bookmarks filtered by type in chronological order
+ */
+export async function getBookmarksByType({
+  userId,
+  types,
+  limit = 20,
+  cursor,
+}: Pick<SearchOptions, "userId" | "types" | "limit" | "cursor">): Promise<SearchResponse> {
+  if (!types || types.length === 0) {
+    return getDefaultBookmarks({ userId, limit, cursor });
+  }
+
+  // Use cursor for database-level pagination with ULID ordering
+  const cursorCondition = cursor
+    ? {
+        id: {
+          lt: cursor,
+        },
+      }
+    : {};
+
+  const typeFilteredBookmarks = await prisma.bookmark.findMany({
+    where: {
+      userId,
+      type: { in: types },
+      ...cursorCondition,
+    },
+    orderBy: [
+      { id: "desc" }, // Use ULID ordering - NEWEST FIRST
+    ],
+    take: limit + 1,
+  });
+
+  const hasMore = typeFilteredBookmarks.length > limit;
+  const bookmarks = hasMore
+    ? typeFilteredBookmarks.slice(0, -1)
+    : typeFilteredBookmarks;
+  const nextCursor =
+    hasMore && bookmarks.length > 0
+      ? bookmarks[bookmarks.length - 1]?.id
+      : undefined;
+
+  const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
+  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+
+  return {
+    bookmarks: bookmarks.map((bookmark) => {
+      const openCount = openCounts.get(bookmark.id) || 0;
+      return bookmarkToSearchResult(
+        bookmark,
+        0, // No score for type filtering
+        "tag",
+        undefined,
+        openCount,
+      );
+    }),
+    nextCursor,
+    hasMore,
+  };
+}
