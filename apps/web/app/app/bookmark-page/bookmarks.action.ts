@@ -174,8 +174,8 @@ export const toggleReadBookmarkAction = userAction
       throw new SafeActionError("Bookmark not found or unauthorized");
     }
 
-    if (bookmark.type !== "ARTICLE") {
-      throw new SafeActionError("Bookmark is not an article");
+    if (bookmark.type !== "ARTICLE" && bookmark.type !== "YOUTUBE") {
+      throw new SafeActionError("Bookmark does not support read functionality");
     }
 
     const updatedBookmark = await prisma.bookmark.update({

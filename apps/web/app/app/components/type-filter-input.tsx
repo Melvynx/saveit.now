@@ -12,6 +12,16 @@ interface MentionFilterInputProps {
   onEnterPress: () => void;
 }
 
+// Helper function to handle cursor focus after mention selection
+const focusCursor = (inputRef: React.RefObject<HTMLInputElement | null>, startIndex: number) => {
+  setTimeout(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.setSelectionRange(startIndex, startIndex);
+    }
+  }, 0);
+};
+
 export const MentionFilterInput = ({
   query,
   onQueryChange,
@@ -19,14 +29,14 @@ export const MentionFilterInput = ({
   onEnterPress,
 }: MentionFilterInputProps) => {
   const {
-    setShowTypeList,
-    setShowTagList,
-    setTypeFilter,
-    setTagFilter,
+    showLists,
+    hideLists,
     addType,
     addTag,
+    addSpecialFilter,
     filteredTypes,
     filteredTags,
+    filteredSpecialFilters,
   } = useSearchInput();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,31 +49,56 @@ export const MentionFilterInput = ({
 
       const mention = parseMention(value, cursor);
       if (mention) {
-        if (mention.type === "type") {
-          setShowTypeList(true);
-          setShowTagList(false);
-          setTypeFilter(mention.mention);
-          setTagFilter("");
-        } else if (mention.type === "tag") {
-          setShowTagList(true);
-          setShowTypeList(false);
-          setTagFilter(mention.mention);
-          setTypeFilter("");
-        }
+        showLists(mention.type, mention.mention);
       } else {
-        setShowTypeList(false);
-        setShowTagList(false);
-        setTypeFilter("");
-        setTagFilter("");
+        hideLists();
       }
     },
-    [
-      onQueryChange,
-      setShowTypeList,
-      setShowTagList,
-      setTypeFilter,
-      setTagFilter,
-    ],
+    [onQueryChange, showLists, hideLists],
+  );
+
+  // Helper function to handle mention selection
+  const handleMentionSelection = useCallback(
+    (mention: ReturnType<typeof parseMention>) => {
+      if (!mention) return false;
+
+      const actions = {
+        type: () => {
+          const firstType = filteredTypes[0];
+          if (firstType) {
+            addType(firstType);
+            return true;
+          }
+          return false;
+        },
+        tag: () => {
+          const firstTag = filteredTags[0];
+          if (firstTag) {
+            addTag(firstTag.name);
+            return true;
+          }
+          return false;
+        },
+        special: () => {
+          const firstFilter = filteredSpecialFilters[0];
+          if (firstFilter) {
+            addSpecialFilter(firstFilter);
+            return true;
+          }
+          return false;
+        },
+      };
+
+      const action = actions[mention.type];
+      if (action?.()) {
+        const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
+        onQueryChange(newQuery);
+        focusCursor(inputRef, mention.startIndex);
+        return true;
+      }
+      return false;
+    },
+    [query, filteredTypes, filteredTags, filteredSpecialFilters, addType, addTag, addSpecialFilter, onQueryChange],
   );
 
   const handleKeyDown = useCallback(
@@ -74,76 +109,15 @@ export const MentionFilterInput = ({
       if (e.key === "Enter") {
         if (mention) {
           e.preventDefault();
-
-          if (mention.type === "type" && filteredTypes.length > 0) {
-            const selectedType = filteredTypes[0];
-            if (selectedType) {
-              addType(selectedType);
-
-              const newQuery = removeMention(
-                query,
-                mention.startIndex,
-                mention.endIndex,
-              );
-              onQueryChange(newQuery);
-
-              setTimeout(() => {
-                if (inputRef.current) {
-                  inputRef.current.focus();
-                  inputRef.current.setSelectionRange(
-                    mention.startIndex,
-                    mention.startIndex,
-                  );
-                }
-              }, 0);
-            }
-          } else if (mention.type === "tag" && filteredTags.length > 0) {
-            const selectedTag = filteredTags[0];
-            if (selectedTag) {
-              addTag(selectedTag.name);
-
-              const newQuery = removeMention(
-                query,
-                mention.startIndex,
-                mention.endIndex,
-              );
-              onQueryChange(newQuery);
-
-              setTimeout(() => {
-                if (inputRef.current) {
-                  inputRef.current.focus();
-                  inputRef.current.setSelectionRange(
-                    mention.startIndex,
-                    mention.startIndex,
-                  );
-                }
-              }, 0);
-            }
-          }
+          handleMentionSelection(mention);
         } else if (isUrl) {
           onEnterPress();
         }
       } else if (e.key === "Escape" && mention) {
-        setShowTypeList(false);
-        setShowTagList(false);
-        setTypeFilter("");
-        setTagFilter("");
+        hideLists();
       }
     },
-    [
-      query,
-      filteredTypes,
-      filteredTags,
-      addType,
-      addTag,
-      onQueryChange,
-      isUrl,
-      onEnterPress,
-      setShowTypeList,
-      setShowTagList,
-      setTypeFilter,
-      setTagFilter,
-    ],
+    [query, handleMentionSelection, isUrl, onEnterPress, hideLists],
   );
 
   return (
@@ -164,7 +138,7 @@ export const MentionFilterInput = ({
         className="lg:h-16 lg:text-2xl flex-1 focus:outline-none"
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        placeholder="Search bookmarks or type @ for types, # for tags"
+        placeholder="Search bookmarks or type @ for types, # for tags, $ for filters"
       />
     </div>
   );

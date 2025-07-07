@@ -117,26 +117,28 @@ export async function performMultiLevelSearch({
   query,
   tags = [],
   types,
+  specialFilters = [],
   matchingDistance = 0.1,
 }: {
   userId: string;
   query: string;
   tags?: string[];
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
   matchingDistance?: number;
 }): Promise<SearchResult[]> {
   const combiner = new SearchResultCombiner();
 
   // Level 1: Search by tags if provided
   if (tags && tags.length > 0) {
-    const tagResults = await searchByTags({ userId, tags, types });
+    const tagResults = await searchByTags({ userId, tags, types, specialFilters });
     combiner.addTagResults(tagResults);
   }
 
   // Level 2: Check if query is a domain search
   if (isDomainQuery(query)) {
     const domain = extractDomain(query);
-    const domainResults = await searchByDomain({ userId, domain, types });
+    const domainResults = await searchByDomain({ userId, domain, types, specialFilters });
     combiner.addDomainResults(domainResults);
   }
 
@@ -146,6 +148,7 @@ export async function performMultiLevelSearch({
     query,
     tags,
     types,
+    specialFilters,
     matchingDistance,
   });
   combiner.addVectorResults(vectorResults);

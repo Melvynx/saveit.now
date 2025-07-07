@@ -12,7 +12,7 @@ interface BookmarkCardActionsProps {
   url: string;
   starred: boolean;
   read?: boolean;
-  isArticle?: boolean;
+  bookmarkType?: string | null;
   className?: string;
   children?: React.ReactNode;
 }
@@ -22,7 +22,7 @@ export const BookmarkCardActions = ({
   url,
   starred,
   read = false,
-  isArticle = false,
+  bookmarkType,
   className = "",
   children,
 }: BookmarkCardActionsProps) => {
@@ -57,7 +57,7 @@ export const BookmarkCardActions = ({
         className="size-8 hover:bg-accent"
         showTooltip={false}
       />
-      {isArticle && (
+      {(bookmarkType === "ARTICLE" || bookmarkType === "YOUTUBE") && (
         <ReadButton
           bookmarkId={bookmarkId}
           read={read}

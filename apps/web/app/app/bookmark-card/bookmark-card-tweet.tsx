@@ -28,7 +28,7 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
         bookmarkId={bookmark.id}
         starred={bookmark.starred || false}
         read={bookmark.read || false}
-        isArticle={bookmark.type === "ARTICLE"}
+        bookmarkType={bookmark.type}
         className="z-50"
       >
         <Button asChild variant="secondary" className="hover:bg-accent">

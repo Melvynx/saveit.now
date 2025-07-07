@@ -2,27 +2,47 @@
 
 import { BookmarkType } from "@workspace/database";
 import { createContext, useContext, ReactNode } from "react";
-import { useTypeFilter } from "../hooks/use-type-filter";
-import { useTags, Tag } from "../hooks/use-tags";
+import { useUnifiedFilters, SpecialFilter, MentionType } from "../hooks/use-unified-filters";
+import { Tag } from "../hooks/use-tags";
 
 interface SearchInputContextType {
-  // Type filtering
+  // Selected filters
   selectedTypes: BookmarkType[];
+  selectedTags: string[];
+  selectedSpecialFilters: SpecialFilter[];
+
+  // UI state
   showTypeList: boolean;
-  setShowTypeList: (show: boolean) => void;
-  setTypeFilter: (filter: string) => void;
+  showTagList: boolean;
+  showSpecialList: boolean;
+
+  // Filter values
+  typeFilter: string;
+  tagFilter: string;
+  specialFilter: string;
+
+  // Filtered options
   filteredTypes: BookmarkType[];
+  filteredTags: Tag[];
+  filteredSpecialFilters: SpecialFilter[];
+
+  // Actions
+  showLists: (type: MentionType, filter: string) => void;
+  hideLists: () => void;
   addType: (type: BookmarkType) => void;
   removeType: (type: BookmarkType) => void;
-  
-  // Tag filtering
-  selectedTags: string[];
-  showTagList: boolean;
-  setShowTagList: (show: boolean) => void;
-  setTagFilter: (filter: string) => void;
-  filteredTags: Tag[];
   addTag: (tagName: string) => void;
   removeTag: (tagName: string) => void;
+  addSpecialFilter: (filter: SpecialFilter) => void;
+  removeSpecialFilter: (filter: SpecialFilter) => void;
+
+  // Legacy setters for backward compatibility
+  setShowTypeList: (show: boolean) => void;
+  setShowTagList: (show: boolean) => void;
+  setShowSpecialList: (show: boolean) => void;
+  setTypeFilter: (filter: string) => void;
+  setTagFilter: (filter: string) => void;
+  setSpecialFilter: (filter: string) => void;
 }
 
 const SearchInputContext = createContext<SearchInputContextType | null>(null);
@@ -40,27 +60,11 @@ interface SearchInputProviderProps {
 }
 
 export const SearchInputProvider = ({ children }: SearchInputProviderProps) => {
-  const typeFilter = useTypeFilter();
-  const tagFilter = useTags();
+  const filters = useUnifiedFilters();
 
   const value: SearchInputContextType = {
-    // Type filtering
-    selectedTypes: typeFilter.selectedTypes,
-    showTypeList: typeFilter.showTypeList,
-    setShowTypeList: typeFilter.setShowTypeList,
-    setTypeFilter: typeFilter.setTypeFilter,
-    filteredTypes: typeFilter.filteredTypes,
-    addType: typeFilter.addType,
-    removeType: typeFilter.removeType,
-    
-    // Tag filtering
-    selectedTags: tagFilter.selectedTags,
-    showTagList: tagFilter.showTagList,
-    setShowTagList: tagFilter.setShowTagList,
-    setTagFilter: tagFilter.setTagFilter,
-    filteredTags: tagFilter.filteredTags,
-    addTag: tagFilter.addTag,
-    removeTag: tagFilter.removeTag,
+    // Direct mapping from unified filters
+    ...filters,
   };
 
   return (

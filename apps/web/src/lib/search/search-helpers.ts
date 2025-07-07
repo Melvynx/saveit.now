@@ -45,6 +45,7 @@ export type SearchOptions = {
   query?: string;
   tags?: string[];
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
   limit?: number;
   cursor?: string;
   matchingDistance?: number;
@@ -55,6 +56,7 @@ export type SearchByVectorOptions = {
   embedding: number[];
   tags: string[];
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
   matchingDistance: number;
 };
 
@@ -62,12 +64,14 @@ export type SearchByTagsOptions = {
   userId: string;
   tags: string[];
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
 };
 
 export type SearchByDomainOptions = {
   userId: string;
   domain: string;
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
 };
 
 /**
@@ -147,12 +151,45 @@ export function applyOpenFrequencyBoost(score: number, openCount: number): numbe
 /**
  * Determines if the current request is a search query or default browsing
  */
-export function isSearchQuery(query?: string, tags?: string[], types?: BookmarkType[]): boolean {
+export function isSearchQuery(query?: string, tags?: string[], types?: BookmarkType[], specialFilters?: ("READ" | "UNREAD" | "STAR")[]): boolean {
   const hasQuery = query && query.trim() !== "";
   const hasTags = tags && tags.length > 0;
   const hasTypes = types && types.length > 0;
+  const hasSpecialFilters = specialFilters && specialFilters.length > 0;
   
-  return !!(hasQuery || hasTags || hasTypes);
+  return !!(hasQuery || hasTags || hasTypes || hasSpecialFilters);
+}
+
+/**
+ * Builds Prisma where conditions for special filters
+ */
+export function buildSpecialFilterConditions(specialFilters?: ("READ" | "UNREAD" | "STAR")[]) {
+  if (!specialFilters || specialFilters.length === 0) {
+    return {};
+  }
+
+  const conditions: any[] = [];
+
+  if (specialFilters.includes("READ")) {
+    conditions.push({ read: true });
+  }
+  
+  if (specialFilters.includes("UNREAD")) {
+    conditions.push({ read: false });
+  }
+  
+  if (specialFilters.includes("STAR")) {
+    conditions.push({ starred: true });
+  }
+
+  // If we have multiple filters, they should be OR'd together
+  if (conditions.length === 1) {
+    return conditions[0];
+  } else if (conditions.length > 1) {
+    return { OR: conditions };
+  }
+  
+  return {};
 }
 
 /**

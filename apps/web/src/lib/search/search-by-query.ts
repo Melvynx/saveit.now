@@ -11,6 +11,7 @@ import {
   getBookmarkOpenCounts,
   applyOpenFrequencyBoost,
   bookmarkToSearchResult,
+  buildSpecialFilterConditions,
 } from "./search-helpers";
 
 /**
@@ -20,7 +21,10 @@ export async function searchByDomain({
   userId,
   domain,
   types,
+  specialFilters = [],
 }: SearchByDomainOptions): Promise<SearchResult[]> {
+  const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
+
   const bookmarks = await prisma.bookmark.findMany({
     where: {
       userId,
@@ -29,6 +33,7 @@ export async function searchByDomain({
         mode: "insensitive",
       },
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
+      ...specialFilterConditions,
     },
     include: {
       tags: {
@@ -76,8 +81,11 @@ export async function searchByTags({
   userId,
   tags,
   types,
+  specialFilters = [],
 }: SearchByTagsOptions): Promise<SearchResult[]> {
   if (!tags || tags.length === 0) return [];
+
+  const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
 
   const bookmarks = await prisma.bookmark.findMany({
     where: {
@@ -92,6 +100,7 @@ export async function searchByTags({
         },
       },
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
+      ...specialFilterConditions,
     },
     include: {
       tags: {
@@ -136,10 +145,12 @@ export async function searchByVector({
   embedding,
   tags,
   types,
+  specialFilters = [],
   matchingDistance,
 }: SearchByVectorOptions): Promise<SearchResult[]> {
   let tagsCondition = "";
   let typesCondition = "";
+  let specialFiltersCondition = "";
   let params: unknown[] = [];
 
   if (tags.length > 0) {
@@ -156,6 +167,26 @@ export async function searchByVector({
     const typesParamStart = 4 + tags.length;
     typesCondition = `AND b.type IN (${types.map((_, i) => `$${typesParamStart + i}`).join(",")})`;
     params = [...params, ...types];
+  }
+
+  if (specialFilters && specialFilters.length > 0) {
+    const conditions: string[] = [];
+    
+    if (specialFilters.includes("READ")) {
+      conditions.push("b.read = true");
+    }
+    
+    if (specialFilters.includes("UNREAD")) {
+      conditions.push("b.read = false");
+    }
+    
+    if (specialFilters.includes("STAR")) {
+      conditions.push("b.starred = true");
+    }
+
+    if (conditions.length > 0) {
+      specialFiltersCondition = `AND (${conditions.join(" OR ")})`;
+    }
   }
 
   const bookmarks = await prisma.$queryRawUnsafe<
@@ -203,6 +234,7 @@ export async function searchByVector({
       WHERE "userId" = $2
       ${tagsCondition}
       ${typesCondition}
+      ${specialFiltersCondition}
     ),
     min_distance AS (
       SELECT MIN(distance) as min_dist
@@ -263,12 +295,14 @@ export async function searchByText({
   query,
   tags = [],
   types,
+  specialFilters = [],
   matchingDistance,
 }: {
   userId: string;
   query: string;
   tags?: string[];
   types?: BookmarkType[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
   matchingDistance: number;
 }): Promise<SearchResult[]> {
   try {
@@ -282,6 +316,7 @@ export async function searchByText({
       embedding,
       tags,
       types,
+      specialFilters,
       matchingDistance,
     });
   } catch (error) {
