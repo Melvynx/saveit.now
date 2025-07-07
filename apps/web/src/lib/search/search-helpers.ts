@@ -159,7 +159,22 @@ export function isSearchQuery(query?: string, tags?: string[], types?: BookmarkT
  * Converts a bookmark from database to SearchResult format
  */
 export function bookmarkToSearchResult(
-  bookmark: any,
+  bookmark: {
+    id: string;
+    url: string;
+    title: string | null;
+    summary: string | null;
+    preview: string | null;
+    type: BookmarkType | null;
+    status: BookmarkStatus;
+    ogImageUrl: string | null;
+    ogDescription: string | null;
+    faviconUrl: string | null;
+    createdAt: Date;
+    metadata: Prisma.JsonValue;
+    starred: boolean | null;
+    read: boolean | null;
+  },
   score: number = 0,
   matchType: "tag" | "vector" | "combined" = "tag",
   matchedTags?: string[],

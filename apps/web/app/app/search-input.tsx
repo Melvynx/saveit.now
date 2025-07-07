@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { FilterList } from "./components/filter-list";
 import { SelectedFiltersBadges } from "./components/selected-filters-badges";
 import { MentionFilterInput } from "./components/type-filter-input";
-import { SearchInputProvider, useSearchInput } from "./contexts/search-input-context";
+import { SearchInputProvider } from "./contexts/search-input-context";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
 
