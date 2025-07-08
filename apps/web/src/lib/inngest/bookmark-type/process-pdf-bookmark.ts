@@ -11,6 +11,8 @@ import {
   updateBookmark,
 } from "../process-bookmark.utils";
 import {
+  PDF_SUMMARY_PROMPT,
+  PDF_TITLE_PROMPT,
   TAGS_PROMPT,
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
@@ -27,30 +29,33 @@ export async function processPDFBookmark(
   publish: InngestPublish,
 ): Promise<void> {
   // Upload PDF to S3 for persistent storage and get file size
-  const { uploadedPdfUrl, fileSize } = await step.run("upload-pdf-to-s3", async () => {
-    // Download PDF content
-    const response = await fetch(context.url);
-    if (!response.ok) {
-      throw new Error(`Failed to download PDF: ${response.statusText}`);
-    }
-    const pdfContent = await response.arrayBuffer();
+  const { uploadedPdfUrl, fileSize } = await step.run(
+    "upload-pdf-to-s3",
+    async () => {
+      // Download PDF content
+      const response = await fetch(context.url);
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.statusText}`);
+      }
+      const pdfContent = await response.arrayBuffer();
 
-    // Upload to S3
-    const fileName = `pdf-${context.bookmarkId}-${Date.now()}`;
-    const buffer = Buffer.from(pdfContent);
+      // Upload to S3
+      const fileName = `pdf-${context.bookmarkId}-${Date.now()}`;
+      const buffer = Buffer.from(pdfContent);
 
-    const uploadResult = await uploadBufferToS3({
-      buffer,
-      fileName,
-      contentType: "application/pdf",
-      prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
-    });
+      const uploadResult = await uploadBufferToS3({
+        buffer,
+        fileName,
+        contentType: "application/pdf",
+        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
+      });
 
-    return {
-      uploadedPdfUrl: uploadResult,
-      fileSize: pdfContent.byteLength,
-    };
-  });
+      return {
+        uploadedPdfUrl: uploadResult,
+        fileSize: pdfContent.byteLength,
+      };
+    },
+  );
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
@@ -66,19 +71,22 @@ export async function processPDFBookmark(
     // Download PDF content for analysis
     const response = await fetch(context.url);
     if (!response.ok) {
-      throw new Error(`Failed to download PDF for analysis: ${response.statusText}`);
+      throw new Error(
+        `Failed to download PDF for analysis: ${response.statusText}`,
+      );
     }
     const pdfContent = await response.arrayBuffer();
 
     const analysis = await generateText({
       model: OPENAI_MODELS.cheap,
+      system: PDF_SUMMARY_PROMPT,
       messages: [
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Analyze this PDF document in detail. Extract key information, summarize the main topics, identify important sections, and provide a comprehensive overview of the document's content and purpose.",
+              text: "Here is the PDF file",
             },
             {
               type: "file",
@@ -108,10 +116,7 @@ export async function processPDFBookmark(
       return "PDF Document";
     }
 
-    return await getAISummary(
-      "Generate a clear, concise title for this PDF document based on its content:",
-      pdfAnalysis,
-    );
+    return await getAISummary(PDF_TITLE_PROMPT, pdfAnalysis);
   });
 
   // Generate summary
@@ -131,16 +136,6 @@ export async function processPDFBookmark(
   // Generate detailed summary for vector search
   const detailedSummary = await step.run("get-detailed-summary", async () => {
     return await getAISummary(VECTOR_SUMMARY_PROMPT, pdfAnalysis);
-  });
-
-  // Generate embeddings for search
-  const embeddings = await step.run("get-embeddings", async () => {
-    const { embeddings } = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [title, summary, detailedSummary].filter(Boolean),
-    });
-
-    return embeddings;
   });
 
   await publish({
@@ -236,7 +231,13 @@ export async function processPDFBookmark(
 
   // Update embeddings
   await step.run("update-embeddings", async () => {
-    const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] = embeddings;
+    const { embeddings } = await embedMany({
+      model: OPENAI_MODELS.embedding,
+      values: [title, summary, detailedSummary].filter(Boolean),
+    });
+
+    const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] =
+      embeddings;
 
     await prisma.$executeRaw`
       UPDATE "Bookmark"
