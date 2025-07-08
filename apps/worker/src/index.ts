@@ -211,24 +211,107 @@ const handlePDF: ExportedHandler<Env>["fetch"] = async (
   }
 
   try {
-    const browser = await puppeteer.launch(env.BROWSER);
+    const browser = await puppeteer.launch(env.MYBROWSER as any);
     const page = await browser.newPage();
-    
+
     await page.setViewport({
       width: 1280,
       height: 720,
     });
 
-    // Embed PDF in HTML data URI
-    const htmlContent = `<embed src="${encodeURI(url)}" type="application/pdf" style="width:100%;height:100%">`;
-    await page.goto(`data:text/html,${htmlContent}`, { 
-      waitUntil: 'networkidle0',
-      timeout: 15000 
-    });
+    // Use PDF.js to render PDF without browser UI
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; background: white; }
+            #pdfContainer { 
+              width: 100vw; 
+              height: 100vh; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center; 
+            }
+            canvas { 
+              max-width: 100%; 
+              max-height: 100%; 
+              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+          </style>
+        </head>
+        <body>
+          <div id="pdfContainer">
+            <canvas id="pdfCanvas"></canvas>
+          </div>
+          <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+          <script>
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            
+            async function renderPDF() {
+              try {
+                // Check if PDF.js is loaded
+                if (typeof pdfjsLib === 'undefined') {
+                  throw new Error('PDF.js library not loaded');
+                }
+                
+                const pdf = await pdfjsLib.getDocument('${encodeURI(url)}').promise;
+                const page = await pdf.getPage(1);
+                
+                const canvas = document.getElementById('pdfCanvas');
+                const context = canvas.getContext('2d');
+                
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({
+                  canvasContext: context,
+                  viewport: viewport
+                }).promise;
+                
+                window.pdfLoaded = true;
+              } catch (error) {
+                console.error('Error rendering PDF:', error);
+                window.pdfError = true;
+              }
+            }
+            
+            // Wait for PDF.js to load before rendering
+            if (typeof pdfjsLib !== 'undefined') {
+              renderPDF();
+            } else {
+              window.addEventListener('load', renderPDF);
+            }
+          </script>
+        </body>
+      </html>
+    `;
 
-    const jpeg = await page.screenshot({ 
-      type: 'jpeg', 
-      quality: 80 
+    try {
+      await page.goto(`data:text/html,${encodeURIComponent(htmlContent)}`, {
+        waitUntil: "networkidle0",
+        timeout: 15000,
+      });
+      
+      // Wait for PDF to load
+      await page.waitForFunction(
+        () => window.pdfLoaded === true || window.pdfError === true,
+        { timeout: 15000 }
+      );
+      
+      const hasError = await page.evaluate(() => window.pdfError);
+      if (hasError) {
+        throw new Error("PDF rendering failed");
+      }
+      
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+    }
+
+    const jpeg = await page.screenshot({
+      type: "jpeg",
+      quality: 80,
     });
 
     await page.close();
@@ -236,18 +319,21 @@ const handlePDF: ExportedHandler<Env>["fetch"] = async (
 
     return new Response(jpeg, {
       headers: {
-        'Content-Type': 'image/jpeg',
+        "Content-Type": "image/jpeg",
       },
     });
   } catch (error) {
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Failed to generate PDF screenshot" 
+      JSON.stringify({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate PDF screenshot",
       }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };
