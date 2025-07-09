@@ -1,25 +1,25 @@
+import { logger } from "../logger";
+import { getBookmarksByType, getDefaultBookmarks } from "./default-browsing";
 import {
-  SearchOptions,
-  SearchResponse,
-  isSearchQuery,
-} from "./search-helpers";
-import { getDefaultBookmarks, getBookmarksByType } from "./default-browsing";
-import { performMultiLevelSearch, applySearchPagination } from "./search-combiners";
+  applySearchPagination,
+  performMultiLevelSearch,
+} from "./search-combiners";
+import { SearchOptions, SearchResponse, isSearchQuery } from "./search-helpers";
 
 // Re-export types for backward compatibility
 export type {
-  SearchResultChunk,
-  SearchResult,
-  SearchResponse,
-  SearchOptions,
-  SearchByVectorOptions,
-  SearchByTagsOptions,
   SearchByDomainOptions,
+  SearchByTagsOptions,
+  SearchByVectorOptions,
+  SearchOptions,
+  SearchResponse,
+  SearchResult,
+  SearchResultChunk,
 } from "./search-helpers";
 
 /**
  * Performs advanced multi-level search in bookmarks
- * 
+ *
  * This function intelligently routes between different search strategies:
  * - Default browsing: Shows newest bookmarks first (no star/frequency boost)
  * - Search queries: Uses full search with star/frequency boost for relevance
@@ -35,13 +35,21 @@ export async function advancedSearch({
   matchingDistance = 0.1,
 }: SearchOptions): Promise<SearchResponse> {
   // Determine if this is a search query or default browsing
-  const isSearch = isSearchQuery(query, tags, types, specialFilters);
-  
+  const isSearch = isSearchQuery(query);
+
+  logger.info("isSearch", isSearch, { query, tags, types, specialFilters });
+
   if (!isSearch) {
     // Default browsing - show newest bookmarks first
-    return await getDefaultBookmarks({ userId, types, specialFilters, limit, cursor });
+    return await getDefaultBookmarks({
+      userId,
+      types,
+      specialFilters,
+      limit,
+      cursor,
+    });
   }
-  
+
   // Handle type-only filtering (no query or tags) - but allow special filters
   if (
     types &&
@@ -49,9 +57,15 @@ export async function advancedSearch({
     (!query || query.trim() === "") &&
     (!tags || tags.length === 0)
   ) {
-    return await getBookmarksByType({ userId, types, specialFilters, limit, cursor });
+    return await getBookmarksByType({
+      userId,
+      types,
+      specialFilters,
+      limit,
+      cursor,
+    });
   }
-  
+
   // Perform search with query
   const searchResults = await performMultiLevelSearch({
     userId,
@@ -61,10 +75,9 @@ export async function advancedSearch({
     specialFilters,
     matchingDistance,
   });
-  
+
   // Apply pagination to search results
   const paginatedResults = applySearchPagination(searchResults, cursor, limit);
-  
+
   return paginatedResults;
 }
-

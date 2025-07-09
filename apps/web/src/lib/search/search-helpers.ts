@@ -140,7 +140,10 @@ export async function getBookmarkOpenCounts(
 /**
  * Applies boost based on open frequency (for search results only)
  */
-export function applyOpenFrequencyBoost(score: number, openCount: number): number {
+export function applyOpenFrequencyBoost(
+  score: number,
+  openCount: number,
+): number {
   if (openCount === 0) return score;
 
   // Logarithmic boost to prevent heavily opened bookmarks from dominating
@@ -151,33 +154,48 @@ export function applyOpenFrequencyBoost(score: number, openCount: number): numbe
 /**
  * Determines if the current request is a search query or default browsing
  */
-export function isSearchQuery(query?: string, tags?: string[], types?: BookmarkType[], specialFilters?: ("READ" | "UNREAD" | "STAR")[]): boolean {
+export function isSearchQuery(query?: string): boolean {
   const hasQuery = query && query.trim() !== "";
-  const hasTags = tags && tags.length > 0;
-  const hasTypes = types && types.length > 0;
-  const hasSpecialFilters = specialFilters && specialFilters.length > 0;
-  
-  return !!(hasQuery || hasTags || hasTypes || hasSpecialFilters);
+
+  return Boolean(hasQuery);
 }
+
+const READABLE_BOOKMARK = [
+  "ARTICLE",
+  "BLOG",
+  "YOUTUBE",
+] satisfies BookmarkType[];
 
 /**
  * Builds Prisma where conditions for special filters
  */
-export function buildSpecialFilterConditions(specialFilters?: ("READ" | "UNREAD" | "STAR")[]) {
+export function buildSpecialFilterConditions(
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[],
+) {
   if (!specialFilters || specialFilters.length === 0) {
     return {};
   }
 
-  const conditions: any[] = [];
+  const conditions: Prisma.BookmarkWhereInput[] = [];
 
   if (specialFilters.includes("READ")) {
-    conditions.push({ read: true });
+    conditions.push({
+      read: true,
+      type: {
+        in: READABLE_BOOKMARK,
+      },
+    });
   }
-  
+
   if (specialFilters.includes("UNREAD")) {
-    conditions.push({ read: false });
+    conditions.push({
+      read: false,
+      type: {
+        in: READABLE_BOOKMARK,
+      },
+    });
   }
-  
+
   if (specialFilters.includes("STAR")) {
     conditions.push({ starred: true });
   }
@@ -188,7 +206,7 @@ export function buildSpecialFilterConditions(specialFilters?: ("READ" | "UNREAD"
   } else if (conditions.length > 1) {
     return { OR: conditions };
   }
-  
+
   return {};
 }
 
@@ -267,7 +285,7 @@ export function paginateResults(
   hasMore: boolean;
 } {
   let startIndex = 0;
-  
+
   if (cursor) {
     const cursorIndex = results.findIndex((result) => result.id === cursor);
     if (cursorIndex >= 0) {
