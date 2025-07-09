@@ -96,6 +96,11 @@ export async function handleImageStep(
     return await getAISummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
   });
 
+  // Generate vector summary for search
+  const vectorSummary = await step.run("get-vector-summary", async () => {
+    return await getAISummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
+  });
+
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
@@ -146,6 +151,7 @@ export async function handleImageStep(
       type: BookmarkType.IMAGE,
       title: title,
       summary: summary || "",
+      vectorSummary: vectorSummary || "",
       preview: saveImage,
       tags: tags ?? [],
       metadata: metadata,
@@ -155,16 +161,16 @@ export async function handleImageStep(
   await step.run("update-embedding", async () => {
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
-      values: [title, summary],
+      values: [title, vectorSummary],
     });
-    const [titleEmbedding, summaryEmbedding] = embedding.embeddings;
+    const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "summaryEmbedding" = ${summaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
   });

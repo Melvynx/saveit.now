@@ -123,7 +123,7 @@ export async function updateBookmark(params: {
   bookmarkId: string;
   type: BookmarkType;
   title?: string;
-  detailedSummary?: string;
+  vectorSummary?: string;
   summary?: string;
   preview?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,7 +140,7 @@ export async function updateBookmark(params: {
     data: {
       type: params.type,
       title: params.title,
-      detailedSummary: params.detailedSummary || "",
+      vectorSummary: params.vectorSummary || "",
       faviconUrl: params.faviconUrl,
       ogImageUrl: params.ogImageUrl,
       ogDescription: params.ogDescription,
