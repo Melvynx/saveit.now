@@ -27,7 +27,7 @@ const initialUIState: FilterUIState = {
   specialFilter: "",
 };
 
-export const useUnifiedFilters = () => {
+export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
   // URL state with batching
   const [urlState, setUrlState] = useQueryStates({
     types: {
@@ -90,12 +90,20 @@ export const useUnifiedFilters = () => {
     setUrlState({ types: urlState.types.filter(t => t !== type) });
   }, [urlState.types, setUrlState]);
 
-  const addSpecialFilter = useCallback((filter: SpecialFilter) => {
+  const addSpecialFilter = useCallback((filter: SpecialFilter, inputQuery?: string) => {
     if (!urlState.special.includes(filter)) {
       setUrlState({ special: [...urlState.special, filter] });
     }
+    
+    // Clear any special filter mentions from input if callback is provided
+    if (onInputChange && inputQuery) {
+      // Remove any $FILTER mentions from the input
+      const cleanedQuery = inputQuery.replace(/\$[A-Z]*\s*/g, '').trim();
+      onInputChange(cleanedQuery);
+    }
+    
     hideLists();
-  }, [urlState.special, setUrlState, hideLists]);
+  }, [urlState.special, setUrlState, hideLists, onInputChange]);
 
   const removeSpecialFilter = useCallback((filter: SpecialFilter) => {
     setUrlState({ special: urlState.special.filter(f => f !== filter) });

@@ -82,7 +82,7 @@ export const MentionFilterInput = ({
         special: () => {
           const firstFilter = filteredSpecialFilters[0];
           if (firstFilter) {
-            addSpecialFilter(firstFilter);
+            addSpecialFilter(firstFilter, query);
             return true;
           }
           return false;

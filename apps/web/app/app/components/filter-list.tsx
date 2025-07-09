@@ -2,7 +2,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { getTypeColor, getTypeDisplayName, getSpecialFilterColor, getSpecialFilterDisplayName } from "../utils/type-filter-utils";
 import { useSearchInput } from "../contexts/search-input-context";
 
-export const FilterList = () => {
+export const FilterList = ({ query }: { query?: string }) => {
   const { 
     filteredTypes, 
     filteredTags, 
@@ -51,9 +51,9 @@ export const FilterList = () => {
           key={`special-${filter}`}
           variant="outline"
           className={`${getSpecialFilterColor(filter)} cursor-pointer transition-colors`}
-          onClick={() => addSpecialFilter(filter)}
+          onClick={() => addSpecialFilter(filter, query)}
         >
-          ${getSpecialFilterDisplayName(filter)}
+          {getSpecialFilterDisplayName(filter)}
         </Badge>
       ))}
     </div>

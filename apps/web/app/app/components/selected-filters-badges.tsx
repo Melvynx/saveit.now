@@ -57,7 +57,7 @@ export const SelectedFiltersBadges = () => {
           variant="outline"
           className={`${getSpecialFilterColor(filter)} flex items-center gap-1 px-2 py-1`}
         >
-          ${getSpecialFilterDisplayName(filter)}
+          {getSpecialFilterDisplayName(filter)}
           <Button
             variant="ghost"
             size="sm"
