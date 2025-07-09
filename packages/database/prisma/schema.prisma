@@ -152,13 +152,12 @@ model Bookmark {
   titleEmbedding Unsupported("vector(1536)")?
 
   summary          String?
-  summaryEmbedding Unsupported("vector(1536)")?
 
   note    String?
   preview String? // URL ou markdown ou résumé → chaîne UTF‑8
 
-  detailedSummary          String?
-  detailedSummaryEmbedding Unsupported("vector(1536)")?
+  vectorSummary          String?
+  vectorSummaryEmbedding Unsupported("vector(1536)")?
 
   imageDescription String?
 
