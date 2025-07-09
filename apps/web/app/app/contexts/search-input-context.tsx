@@ -33,7 +33,7 @@ interface SearchInputContextType {
   removeType: (type: BookmarkType) => void;
   addTag: (tagName: string) => void;
   removeTag: (tagName: string) => void;
-  addSpecialFilter: (filter: SpecialFilter) => void;
+  addSpecialFilter: (filter: SpecialFilter, inputQuery?: string) => void;
   removeSpecialFilter: (filter: SpecialFilter) => void;
 
   // Legacy setters for backward compatibility
@@ -57,10 +57,11 @@ export const useSearchInput = () => {
 
 interface SearchInputProviderProps {
   children: ReactNode;
+  onInputChange?: (query: string) => void;
 }
 
-export const SearchInputProvider = ({ children }: SearchInputProviderProps) => {
-  const filters = useUnifiedFilters();
+export const SearchInputProvider = ({ children, onInputChange }: SearchInputProviderProps) => {
+  const filters = useUnifiedFilters(onInputChange);
 
   const value: SearchInputContextType = {
     // Direct mapping from unified filters

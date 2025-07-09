@@ -39,22 +39,29 @@ export const GET = userRoute
   .handler(async (req, { ctx, query }) => {
     // Validate and filter bookmark types
     const validBookmarkTypes = Object.values(BookmarkType);
-    const types = query.types 
-      ? query.types.split(",").filter(Boolean).filter((type): type is BookmarkType => 
-          validBookmarkTypes.includes(type as BookmarkType)
-        )
+    const types = query.types
+      ? query.types
+          .split(",")
+          .filter(Boolean)
+          .filter((type): type is BookmarkType =>
+            validBookmarkTypes.includes(type as BookmarkType),
+          )
       : [];
-    
+
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
-    
+
     // Validate and filter special filters
     const validSpecialFilters = ["READ", "UNREAD", "STAR"];
+
     const specialFilters = query.special
-      ? query.special.split(",").filter(Boolean).filter((filter): filter is "READ" | "UNREAD" | "STAR" => 
-          validSpecialFilters.includes(filter)
-        )
+      ? query.special
+          .split(",")
+          .filter(Boolean)
+          .filter((filter): filter is "READ" | "UNREAD" | "STAR" =>
+            validSpecialFilters.includes(filter),
+          )
       : [];
-    
+
     const searchResults = await advancedSearch({
       userId: ctx.user.id,
       query: query.query,

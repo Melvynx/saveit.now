@@ -1,12 +1,12 @@
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { X } from "lucide-react";
-import { getTypeColor, getTypeDisplayName } from "../utils/type-filter-utils";
+import { getTypeColor, getTypeDisplayName, getSpecialFilterColor, getSpecialFilterDisplayName } from "../utils/type-filter-utils";
 import { useSearchInput } from "../contexts/search-input-context";
 
 export const SelectedFiltersBadges = () => {
-  const { selectedTypes, selectedTags, removeType, removeTag } = useSearchInput();
-  const hasFilters = selectedTypes.length > 0 || selectedTags.length > 0;
+  const { selectedTypes, selectedTags, selectedSpecialFilters, removeType, removeTag, removeSpecialFilter } = useSearchInput();
+  const hasFilters = selectedTypes.length > 0 || selectedTags.length > 0 || selectedSpecialFilters.length > 0;
   
   if (!hasFilters) return null;
 
@@ -44,6 +44,25 @@ export const SelectedFiltersBadges = () => {
             size="sm"
             className="size-4 hover:bg-transparent"
             onClick={() => removeTag(tag)}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </Badge>
+      ))}
+      
+      {/* Special filter badges with colors */}
+      {selectedSpecialFilters.map((filter) => (
+        <Badge
+          key={`special-${filter}`}
+          variant="outline"
+          className={`${getSpecialFilterColor(filter)} flex items-center gap-1 px-2 py-1`}
+        >
+          {getSpecialFilterDisplayName(filter)}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="size-4 hover:bg-transparent"
+            onClick={() => removeSpecialFilter(filter)}
           >
             <X className="h-3 w-3" />
           </Button>

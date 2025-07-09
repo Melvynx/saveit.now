@@ -3,8 +3,8 @@ import {
   SearchOptions,
   SearchResponse,
   bookmarkToSearchResult,
-  getBookmarkOpenCounts,
   buildSpecialFilterConditions,
+  getBookmarkOpenCounts,
 } from "./search-helpers";
 
 /**
@@ -17,7 +17,10 @@ export async function getDefaultBookmarks({
   specialFilters = [],
   limit = 20,
   cursor,
-}: Pick<SearchOptions, "userId" | "types" | "specialFilters" | "limit" | "cursor">): Promise<SearchResponse> {
+}: Pick<
+  SearchOptions,
+  "userId" | "types" | "specialFilters" | "limit" | "cursor"
+>): Promise<SearchResponse> {
   // Use cursor for database-level pagination with ULID ordering (most efficient)
   const cursorCondition = cursor
     ? {
@@ -27,7 +30,11 @@ export async function getDefaultBookmarks({
       }
     : {};
 
+  console.log("specialFilters", specialFilters);
+
   const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
+
+  console.log("specialFilterConditions", specialFilterConditions);
 
   const recentBookmarks = await prisma.bookmark.findMany({
     where: {
@@ -81,7 +88,10 @@ export async function getBookmarksByType({
   specialFilters = [],
   limit = 20,
   cursor,
-}: Pick<SearchOptions, "userId" | "types" | "specialFilters" | "limit" | "cursor">): Promise<SearchResponse> {
+}: Pick<
+  SearchOptions,
+  "userId" | "types" | "specialFilters" | "limit" | "cursor"
+>): Promise<SearchResponse> {
   if (!types || types.length === 0) {
     return getDefaultBookmarks({ userId, specialFilters, limit, cursor });
   }

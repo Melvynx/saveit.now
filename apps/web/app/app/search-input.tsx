@@ -8,10 +8,7 @@ import { SearchInputProvider } from "./contexts/search-input-context";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
 
-const SearchInputContent = () => {
-  const [query, setQuery] = useQueryState("query", {
-    defaultValue: "",
-  });
+const SearchInputContent = ({ query, setQuery }: { query: string; setQuery: (query: string) => void }) => {
 
   // No need to destructure context values here since components access them directly
 
@@ -54,15 +51,19 @@ const SearchInputContent = () => {
 
       <SelectedFiltersBadges />
 
-      <FilterList />
+      <FilterList query={query} />
     </div>
   );
 };
 
 export const SearchInput = () => {
+  const [query, setQuery] = useQueryState("query", {
+    defaultValue: "",
+  });
+
   return (
-    <SearchInputProvider>
-      <SearchInputContent />
+    <SearchInputProvider onInputChange={setQuery}>
+      <SearchInputContent query={query} setQuery={setQuery} />
     </SearchInputProvider>
   );
 };
