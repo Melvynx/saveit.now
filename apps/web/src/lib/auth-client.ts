@@ -5,6 +5,7 @@ import {
   magicLinkClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { getServerUrl } from "./server-url";
 
 export const authClient = createAuthClient({
   plugins: [
@@ -13,6 +14,7 @@ export const authClient = createAuthClient({
     adminClient(),
     emailOTPClient(),
   ],
+  baseURL: getServerUrl(),
 });
 
 export const { signIn, signUp, useSession } = authClient;
