@@ -5,6 +5,7 @@ import { Bookmark } from "@workspace/database";
 import { BookmarkCardError } from "./bookmark-card-error";
 import { BookmarkCardImage } from "./bookmark-card-image";
 import { BookmarkCardPage } from "./bookmark-card-page";
+import { BookmarkCardPDF } from "./bookmark-card-pdf";
 import { BookmarkCardPending } from "./bookmark-card-pending";
 import { BookmarkCardTweet } from "./bookmark-card-tweet";
 import { BookmarkCardYouTube } from "./bookmark-card-youtube";
@@ -36,6 +37,9 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
     case "TWEET":
       return <BookmarkCardTweet bookmark={bookmark} />;
 
+    case "PDF":
+      return <BookmarkCardPDF bookmark={bookmark} />;
+
     case "PAGE":
     case "BLOG":
     case "ARTICLE":
@@ -51,6 +55,7 @@ export { BookmarkCardImage } from "./bookmark-card-image";
 export { BookmarkCardInput } from "./bookmark-card-input";
 export { BookmarkCardLoadMore } from "./bookmark-card-load-more";
 export { BookmarkCardPage } from "./bookmark-card-page";
+export { BookmarkCardPDF } from "./bookmark-card-pdf";
 export { BookmarkCardPending } from "./bookmark-card-pending";
 export { BookmarkCardPricing } from "./bookmark-card-pricing";
 export { BookmarkCardYouTube } from "./bookmark-card-youtube";

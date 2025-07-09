@@ -220,3 +220,34 @@ It should be 2-3 sentences maximum.
 </output>
 
 `;
+
+export const PDF_SUMMARY_PROMPT = `<context>
+You are an expert in PDF analysis. Your description will be used for further IA to generate a summary.
+</context>
+
+<goal>
+The summary should explain the purpose of the PDF, what is inside, what is for, what is about, and include a maximum of keywords.
+</goal>
+
+<input>
+The user will give you the current PDF file and the screenshot description of the PDF.
+</input>
+
+<output>
+PLAIN TEXT without any formatting.
+</output>
+`;
+
+export const PDF_TITLE_PROMPT = `<context>
+You are generating a title for a PDF. This title will be show in a "bookmark" page. The user just save this pdf, and we will create the best short, straight title for this application.
+</context>
+
+<goal>
+The title should be 4-5 words maximum.
+It should describe the PDF in a way that is easy to understand.
+</goal>
+
+<output>
+Return only the title, 4-5 words maximum, no quotes, no explanation. No formatting.
+</output>
+`;

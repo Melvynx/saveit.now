@@ -33,6 +33,34 @@ export async function uploadFileToS3(params: {
 }
 
 /**
+ * Upload a buffer directly to S3
+ */
+export async function uploadBufferToS3(params: {
+  buffer: Buffer;
+  prefix: string;
+  fileName: string;
+  contentType: string;
+}): Promise<string | null> {
+  try {
+    const fileExtension = mime.extension(params.contentType) || "bin";
+    const uniqueFileName = `${params.prefix}/${params.fileName}.${fileExtension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: uniqueFileName,
+      Body: params.buffer,
+      ContentType: params.contentType,
+    });
+
+    await s3.send(command);
+    return `${env.R2_URL}/${uniqueFileName}`;
+  } catch (error) {
+    console.error(`Error uploading buffer to S3:`, error);
+    return null;
+  }
+}
+
+/**
  * Upload a file from a URL directly to S3
  */
 export async function uploadFileFromURLToS3(params: {
