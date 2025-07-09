@@ -1,11 +1,10 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
-import { z } from "zod";
+import { ApifyClient } from "apify-client";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { env } from "../../env";
 import { OPENAI_MODELS } from "../../openai";
 import { getServerUrl } from "../../server-url";
-import { upfetch } from "../../up-fetch";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -19,12 +18,125 @@ import {
   YOUTUBE_VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
 
+// Initialize the ApifyClient with API token
+const client = new ApifyClient({
+  token: env.APIFY_API_TOKEN,
+});
+
 function getVideoId(url: string): string {
   const regex =
     /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
   if (!match) throw new Error("Invalid YouTube URL");
   return match[1] || "";
+}
+
+async function scrapeYouTubeWithApify(url: string): Promise<{
+  title: string;
+  thumbnail: string;
+  transcript?: string;
+}> {
+  const input = {
+    customMapFunction: "(object) => { return {...object} }",
+    duration: "all",
+    features: "all",
+    getTrending: false,
+    includeShorts: false,
+    maxItems: 1,
+    sort: "r",
+    startUrls: [url],
+    uploadDate: "all",
+  };
+  const run = await client.actor("1p1aa7gcSydPkAE0d").call(input);
+
+  const { items } = await client.dataset(run.defaultDatasetId).listItems();
+
+  console.log({ items });
+
+  const data = items[0];
+
+  if (!data) {
+    throw new Error("No data returned from Apify YouTube scraper");
+  }
+
+  const videoData = data;
+
+  // Extract transcript from captions if available
+  let transcript = "";
+  if (videoData.captions?.captionTracks?.length > 0) {
+    const captionTrack = videoData.captions.captionTracks[0];
+    if (captionTrack.baseUrl) {
+      transcript = await fetchTranscriptFromUrl(captionTrack.baseUrl);
+    }
+  }
+
+  return {
+    title: videoData.title || "Untitled Video",
+    thumbnail:
+      videoData.thumbnailUrl ||
+      `https://i.ytimg.com/vi/${getVideoId(url)}/maxresdefault.jpg`,
+    transcript: transcript || undefined,
+  };
+}
+
+async function fetchTranscriptFromUrl(baseUrl: string): Promise<string> {
+  try {
+    const response = await fetch(baseUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch transcript: ${response.statusText}`);
+    }
+
+    const xmlText = await response.text();
+    return parseTranscriptXml(xmlText);
+  } catch (error) {
+    console.error("Error fetching transcript:", error);
+    return "";
+  }
+}
+
+function parseTranscriptXml(xml: string): string {
+  const results: Array<{ text: string; time: string }> = [];
+
+  try {
+    const textMatches = xml.match(
+      /<text[^>]*start="([^"]*)"[^>]*>([^<]*)<\/text>/g,
+    );
+
+    if (textMatches) {
+      for (const match of textMatches) {
+        const startMatch = match.match(/start="([^"]*)"/);
+        const textMatch = match.match(/>([^<]*)</);
+
+        if (startMatch && textMatch && startMatch[1] && textMatch[1]) {
+          const startTime = parseFloat(startMatch[1]);
+          const text = textMatch[1];
+
+          const minutes = Math.floor(startTime / 60);
+          const seconds = Math.floor(startTime % 60);
+          const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+          const decodedText = text
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+
+          results.push({
+            time: timeString,
+            text: decodedText.trim(),
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error parsing transcript XML:", error);
+  }
+
+  return results
+    .filter((segment) => segment.time && segment.text)
+    .map((segment) => `[${segment.time}] ${segment.text}`)
+    .join("\n");
 }
 
 export async function processYouTubeBookmark(
@@ -48,18 +160,9 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Get video info including title, thumbnails, and other metadata
+  // Get video info including title, thumbnails, and other metadata using Apify
   const videoInfo = await step.run("get-video-info", async () => {
-    const data = await upfetch(
-      `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
-      {
-        schema: z.object({
-          title: z.string(),
-          thumbnail: z.string(),
-          transcript: z.string().optional(),
-        }),
-      },
-    );
+    const data = await scrapeYouTubeWithApify(context.url);
     return data;
   });
 

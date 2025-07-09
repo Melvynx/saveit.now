@@ -37,6 +37,7 @@
     "@workspace/database": "workspace:*",
     "@workspace/ui": "workspace:*",
     "ai": "^4.3.16",
+    "apify-client": "^2.12.6",
     "better-auth": "^1.2.8",
     "canvas-confetti": "^1.9.3",
     "cheerio": "^1.0.0",

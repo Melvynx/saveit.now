@@ -15,6 +15,7 @@ export const env = createEnv({
     AWS_ENDPOINT: z.string().min(1),
     R2_URL: z.string().min(1),
     SCREENSHOT_WORKER_URL: z.string().min(1),
+    APIFY_API_TOKEN: z.string().min(1),
     NODE_ENV: z.enum(["development", "production"]),
     RESEND_EMAIL_FROM: z
       .string()
