@@ -1,9 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { getCookieCache } from "better-auth/cookies";
 
-const COOKIE_NAME = `save-it.session_token`;
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname.slice(1);
 
   try {
@@ -16,9 +15,9 @@ export function middleware(request: NextRequest) {
   } catch {}
 
   if (request.nextUrl.pathname === "/") {
-    const cookieReq = request.cookies.get(COOKIE_NAME);
+    const session = await getCookieCache(request);
 
-    if (cookieReq) {
+    if (session) {
       const url = new URL(request.url);
       url.pathname = "/app";
       return NextResponse.redirect(url.toString());
