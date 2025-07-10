@@ -20,44 +20,49 @@ export const BOOKMARK_STEPS = [
     order: 3,
   },
   {
+    id: "check-duplicates",
+    name: "Check for duplicates",
+    order: 4,
+  },
+  {
     id: "summary-page",
     name: "Summary the page",
-    order: 4,
+    order: 5,
   },
   {
     id: "find-tags",
     name: "Find relevant tags",
-    order: 5,
+    order: 6,
   },
   {
     id: "screenshot",
     name: "Taking screenshot",
-    order: 6,
+    order: 7,
   },
   {
     id: "saving",
     name: "Saving",
-    order: 7,
+    order: 8,
   },
   {
     id: "finish",
     name: "Finish",
-    order: 8,
+    order: 9,
   },
   {
     id: "transcript-video",
     name: "Transcript video",
-    order: 9,
+    order: 10,
   },
   {
     id: "describe-screenshot",
     name: "Describe screenshot",
-    order: 10,
+    order: 11,
   },
   {
     id: "get-tweet",
     name: "Get tweet",
-    order: 11,
+    order: 12,
   },
 ] as const;
 

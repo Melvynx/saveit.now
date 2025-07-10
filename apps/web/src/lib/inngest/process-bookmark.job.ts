@@ -10,6 +10,7 @@ import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark
 import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
+import { findSimilarBookmark, copyBookmarkData } from "./process-bookmark.utils";
 
 export const processBookmarkJob = inngest.createFunction(
   {
@@ -183,6 +184,68 @@ export const processBookmarkJob = inngest.createFunction(
         );
       }
     });
+
+    // Check for duplicate bookmarks after basic content extraction
+    const duplicateCheckResult = await step.run("check-duplicates", async () => {
+      await publish({
+        channel: `bookmark:${bookmarkId}`,
+        topic: "status",
+        data: {
+          id: BOOKMARK_STEP_ID_TO_ID["check-duplicates"],
+          order: 4,
+        },
+      });
+
+      const similarBookmark = await findSimilarBookmark(bookmark.url, bookmarkId);
+      
+      if (similarBookmark) {
+        // Extract basic metadata for conditional duplicate check
+        let currentTitle = "";
+        let currentOgDescription = "";
+        
+        if (urlContent.type === BookmarkType.PAGE && typeof urlContent.content === "string") {
+          // Extract title and description from content for comparison
+          const cheerio = await import("cheerio");
+          const $ = cheerio.load(urlContent.content);
+          
+          currentTitle = $("meta[property='og:title']").attr("content") ||
+                        $("meta[name='twitter:title']").attr("content") ||
+                        $("title").text() ||
+                        "";
+          
+          currentOgDescription = $("meta[property='og:description']").attr("content") || "";
+        }
+        
+        // Try to copy bookmark data
+        const dataCopied = await copyBookmarkData(
+          bookmarkId,
+          similarBookmark,
+          currentTitle.trim(),
+          currentOgDescription.trim(),
+        );
+        
+        if (dataCopied) {
+          // Data was successfully copied, finish the job
+          await publish({
+            channel: `bookmark:${bookmarkId}`,
+            topic: "finish",
+            data: {
+              id: BOOKMARK_STEP_ID_TO_ID["finish"],
+              order: 9,
+            },
+          });
+          
+          return { reused: true };
+        }
+      }
+      
+      return { reused: false };
+    });
+
+    // If data was reused, stop processing
+    if (duplicateCheckResult.reused) {
+      return;
+    }
 
     // Check if it's a YouTube video URL (not channel or other pages)
     const isYouTubeVideo = (url: string): boolean => {
