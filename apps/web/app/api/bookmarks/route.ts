@@ -2,12 +2,20 @@ import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { advancedSearch } from "@/lib/search/advanced-search";
+import { cleanUrl } from "@/lib/url-cleaner";
 import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const POST = userRoute
-  .body(z.object({ url: z.string().url() }))
+  .body(
+    z.object({
+      url: z
+        .string()
+        .url()
+        .transform((url) => cleanUrl(url)),
+    }),
+  )
   .handler(async (req, { body, ctx }) => {
     try {
       const bookmark = await createBookmark({

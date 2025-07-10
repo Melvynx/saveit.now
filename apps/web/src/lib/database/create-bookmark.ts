@@ -1,20 +1,24 @@
 import { prisma } from "@workspace/database";
 import { inngest } from "../inngest/client";
 import { getPostHogClient } from "../posthog";
+import { cleanUrl } from "../url-cleaner";
 import { validateBookmarkLimits } from "./bookmark-validation";
 
 export const createBookmark = async (body: { url: string; userId: string }) => {
   const posthogClient = getPostHogClient();
-  
+
+  // Clean the URL to remove tracking parameters
+  const cleanedUrl = cleanUrl(body.url);
+
   // Validate bookmark limits and constraints
   await validateBookmarkLimits({
     userId: body.userId,
-    url: body.url,
+    url: cleanedUrl,
   });
 
   const bookmark = await prisma.bookmark.create({
     data: {
-      url: body.url,
+      url: cleanedUrl,
       userId: body.userId,
     },
   });
@@ -31,7 +35,8 @@ export const createBookmark = async (body: { url: string; userId: string }) => {
     distinctId: body.userId,
     event: "bookmark+created",
     properties: {
-      url: body.url,
+      url: cleanedUrl,
+      originalUrl: body.url,
     },
   });
 

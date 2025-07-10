@@ -1,10 +1,18 @@
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
+import { cleanUrl } from "@/lib/url-cleaner";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const GET = userRoute
-  .query(z.object({ url: z.string().url() }))
+  .query(
+    z.object({
+      url: z
+        .string()
+        .url()
+        .transform((url) => cleanUrl(url)),
+    }),
+  )
   .handler(async (req, { query, ctx }) => {
     await createBookmark({
       url: query.url,

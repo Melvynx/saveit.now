@@ -1,9 +1,10 @@
 "use server";
 
-import { createBookmark } from "@/lib/database/create-bookmark";
 import { getUserLimits } from "@/lib/auth-session";
+import { createBookmark } from "@/lib/database/create-bookmark";
 import { ApplicationError } from "@/lib/errors";
 import { userAction } from "@/lib/safe-action";
+import { cleanUrl } from "@/lib/url-cleaner";
 import { prisma } from "@workspace/database";
 import { z } from "zod";
 import { URL_REGEX } from "./url-regex";
@@ -36,7 +37,7 @@ export const importBookmarksAction = userAction
     if (availableSlots <= 0) {
       throw new ApplicationError(
         "You have reached your bookmark limit. Please upgrade your plan or delete some bookmarks.",
-        "BOOKMARK_LIMIT_REACHED"
+        "BOOKMARK_LIMIT_REACHED",
       );
     }
 
@@ -50,8 +51,11 @@ export const importBookmarksAction = userAction
 
     for (const url of urlsToProcess) {
       try {
+        // Clean URL before creating bookmark
+        const cleanedUrl = cleanUrl(url);
+
         const bookmark = await createBookmark({
-          url,
+          url: cleanedUrl,
           userId: user.id,
         });
 
@@ -62,9 +66,10 @@ export const importBookmarksAction = userAction
         });
         successCount++;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         console.error(`Failed to create bookmark for ${url}:`, error);
-        
+
         results.push({
           url,
           success: false,
@@ -83,7 +88,7 @@ export const importBookmarksAction = userAction
       processedUrls: urlsToProcess.length,
       skippedUrls: skippedUrls.length,
       createdBookmarks: successCount,
-      failedBookmarks: results.filter(r => !r.success).length,
+      failedBookmarks: results.filter((r) => !r.success).length,
       availableSlots,
       results,
       hasMoreUrls: skippedUrls.length > 0,
