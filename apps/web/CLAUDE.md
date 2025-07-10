@@ -14,3 +14,7 @@ When working with analytics:
 - Minimize feature flag usage across multiple locations
 - Gate flag-dependent code with validation
 - Maintain consistent naming conventions for events and properties
+
+## Development Workflow
+
+- Always run `pnpm ts` in the `apps/web` directory when modifying NextJS application code
