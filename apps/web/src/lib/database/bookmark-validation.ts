@@ -5,6 +5,7 @@ import { ApplicationError, BookmarkErrorType } from "../errors";
 import { inngest } from "../inngest/client";
 import { logger } from "../logger";
 import { getPostHogClient } from "../posthog";
+import { removeTrackingParameters } from "../url-utils";
 
 export class BookmarkValidationError extends ApplicationError {
   constructor(message: string, type: string) {
@@ -23,6 +24,9 @@ export const validateBookmarkLimits = async (
   options: BookmarkValidationOptions,
 ) => {
   const { userId, url, skipExistenceCheck = false } = options;
+  
+  // Clean URL for consistent comparison
+  const cleanUrl = removeTrackingParameters(url);
   const subscription = await prisma.subscription.findFirst({
     where: {
       referenceId: userId,
@@ -96,7 +100,7 @@ export const validateBookmarkLimits = async (
   if (!skipExistenceCheck) {
     const alreadyExists = await prisma.bookmark.findFirst({
       where: {
-        url,
+        url: cleanUrl,
         userId,
       },
     });
@@ -107,7 +111,7 @@ export const validateBookmarkLimits = async (
         distinctId: userId,
         event: "bookmark_already_exists",
         properties: {
-          url,
+          url: cleanUrl,
         },
       });
       throw new BookmarkValidationError(
