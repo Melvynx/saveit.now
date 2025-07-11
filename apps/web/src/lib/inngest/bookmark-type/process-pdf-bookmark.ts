@@ -215,7 +215,7 @@ export async function processPDFBookmark(
       type: BookmarkType.PDF,
       title,
       summary,
-      detailedSummary,
+      vectorSummary: detailedSummary,
       imageDescription: pdfAnalysis,
       ogImageUrl: screenshotUrl,
       metadata: {
@@ -233,18 +233,17 @@ export async function processPDFBookmark(
   await step.run("update-embeddings", async () => {
     const { embeddings } = await embedMany({
       model: OPENAI_MODELS.embedding,
-      values: [title, summary, detailedSummary].filter(Boolean),
+      values: [title, detailedSummary].filter(Boolean),
     });
 
-    const [titleEmbedding, summaryEmbedding, detailedSummaryEmbedding] =
+    const [titleEmbedding, vectorSummaryEmbedding] =
       embeddings;
 
     await prisma.$executeRaw`
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "summaryEmbedding" = ${summaryEmbedding}::vector,
-        "detailedSummaryEmbedding" = ${detailedSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
   });

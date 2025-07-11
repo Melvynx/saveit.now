@@ -164,6 +164,7 @@ export async function processYouTubeBookmark(
       type: BookmarkType.YOUTUBE,
       title: videoInfo.title,
       summary: summary || "",
+      vectorSummary: vectorSummary || "",
       preview: images.ogImageUrl,
       faviconUrl: `${getServerUrl()}/favicon/youtube.svg`,
       tags: tags,
@@ -193,9 +194,9 @@ export async function processYouTubeBookmark(
 
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
-      values: [videoInfo.title, summary, vectorSummary],
+      values: [videoInfo.title, vectorSummary],
     });
-    const [titleEmbedding, summaryEmbedding, vectorSummaryEmbedding] =
+    const [titleEmbedding, vectorSummaryEmbedding] =
       embedding.embeddings;
 
     // Update embeddings in database
@@ -203,8 +204,7 @@ export async function processYouTubeBookmark(
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "summaryEmbedding" = ${summaryEmbedding}::vector,
-        "detailedSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
   });

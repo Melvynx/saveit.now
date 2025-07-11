@@ -306,7 +306,7 @@ ${screenshotDescription}
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PAGE,
       title: pageMetadata.title,
-      detailedSummary: vectorSummary,
+      vectorSummary: vectorSummary,
       summary: summary || "",
       preview: screenshotDescription ? screenshot : images.ogImageUrl,
       faviconUrl: images.faviconUrl,
@@ -333,9 +333,9 @@ ${screenshotDescription}
 
     const embedding = await embedMany({
       model: OPENAI_MODELS.embedding,
-      values: [vectorSummary || "", summary || "", pageMetadata.title || ""],
+      values: [vectorSummary || "", pageMetadata.title || ""],
     });
-    const [detailedSummaryEmbedding, summaryEmbedding, titleEmbedding] =
+    const [vectorSummaryEmbedding, titleEmbedding] =
       embedding.embeddings;
 
     // Update embeddings in database
@@ -343,8 +343,7 @@ ${screenshotDescription}
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "summaryEmbedding" = ${summaryEmbedding}::vector,
-        "detailedSummaryEmbedding" = ${detailedSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
   });

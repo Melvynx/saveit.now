@@ -228,7 +228,7 @@ ${tweetImageDescription}
       bookmarkId: context.bookmarkId,
       type: BookmarkType.TWEET,
       title: data.title,
-      detailedSummary: vectorSummary,
+      vectorSummary: vectorSummary,
       summary: summary || "",
       preview: undefined,
       faviconUrl: images.faviconUrl,
@@ -255,13 +255,13 @@ ${tweetImageDescription}
       model: OPENAI_MODELS.embedding,
       values: [vectorSummary || ""],
     });
-    const [detailedSummaryEmbedding] = embedding.embeddings;
+    const [vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`
       UPDATE "Bookmark"
       SET 
-        "detailedSummaryEmbedding" = ${detailedSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}
     `;
   });

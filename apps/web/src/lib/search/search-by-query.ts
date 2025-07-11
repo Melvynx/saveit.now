@@ -228,7 +228,7 @@ export async function searchByVector({
         read,
         LEAST(
           COALESCE("titleEmbedding" <=> $1::vector, 1),
-          COALESCE("detailedSummaryEmbedding" <=> $1::vector, 1)
+          COALESCE("vectorSummaryEmbedding" <=> $1::vector, 1)
         ) as distance
       FROM "Bookmark" b
       WHERE "userId" = $2
