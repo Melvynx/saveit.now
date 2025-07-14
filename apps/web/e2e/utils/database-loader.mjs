@@ -39,9 +39,6 @@ export async function getOTPCodeFromDatabase(email) {
       createdAt: "desc",
     },
   });
-  const allVerifications = await prisma.verification.findMany();
-
-  console.log("All verifications:", allVerifications);
 
   if (!verification) {
     throw new Error(`No verification record found for email: ${email}`);
@@ -128,7 +125,7 @@ export async function cleanupTestData() {
     },
   });
 
-  console.log("Test data cleanup completed");
+  // Test data cleanup completed
 }
 
 export async function createTestUser(email, name, password) {

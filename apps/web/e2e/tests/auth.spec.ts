@@ -49,7 +49,6 @@ test.describe("Authentication Flow - Simple Tests", () => {
     await page.waitForLoadState("networkidle");
 
     const currentURL = page.url();
-    console.log(`Landing page URL: ${currentURL}`);
 
     // Should not be redirected to signin immediately
     expect(currentURL).not.toMatch(/\/signin/);
@@ -69,9 +68,6 @@ test.describe("Authentication Flow - Simple Tests", () => {
       .catch(() => false);
 
     const hasSignInOption = hasSignInLink || hasSignInText || hasSignInButton;
-    console.log(
-      `Sign-in options found - Link: ${hasSignInLink}, Text: ${hasSignInText}, Button: ${hasSignInButton}`,
-    );
 
     expect(hasSignInOption).toBe(true);
   });
@@ -80,8 +76,6 @@ test.describe("Authentication Flow - Simple Tests", () => {
     await page.goto("/signin");
 
     const testEmail = getUserEmail();
-
-    console.log({ testEmail });
 
     // Fill in a test email
     await page.fill('input[placeholder="john@doe.com"]', testEmail);

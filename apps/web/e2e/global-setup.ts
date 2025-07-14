@@ -4,14 +4,11 @@ import { TEST_EMAIL, TEST_NAME } from "./utils/test-data";
 import crypto from "crypto";
 
 async function globalSetup() {
-  console.log("Starting E2E test setup...");
-
   try {
-    // First, clean up any existing test data
+    // Clean up any existing test data
     await cleanupTestData();
 
     // Create main test user directly in database since email/password signup is not enabled
-    console.log("Creating main test user...");
     const prisma = getPrismaClient();
     
     // Check if user already exists
@@ -32,19 +29,11 @@ async function globalSetup() {
           updatedAt: new Date(),
         },
       });
-      console.log(`Created test user: ${TEST_EMAIL}`);
-    } else {
-      console.log(`Test user already exists: ${TEST_EMAIL}`);
     }
 
     // Seed test data
-    console.log("Seeding test bookmarks...");
     await seedTestBookmarks(testUser.id, 5);
-
-    console.log("Seeding test tags...");
     await seedTestTags(testUser.id, 3);
-
-    console.log("E2E test setup completed successfully!");
   } catch (error) {
     console.error("E2E test setup failed:", error);
     // Clean up on failure
