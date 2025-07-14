@@ -4,7 +4,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Loader } from "@workspace/ui/components/loader";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   BookmarkCard,
@@ -36,6 +36,11 @@ export function BookmarksPage() {
   if (!session.data?.session) {
     toast.error("You need to be logged in to access this page");
     router.push("/signin");
+  }
+
+  // @ts-expect-error - onboarding is not typed
+  if (session.data?.user.onboarding === false) {
+    redirect("/start");
   }
 
   return (

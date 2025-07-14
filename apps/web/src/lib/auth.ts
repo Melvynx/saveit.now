@@ -83,20 +83,29 @@ Melvyn`,
         });
       },
     },
+    additionalFields: {
+      onboarding: {
+        type: "boolean",
+        defaultValue: false,
+        required: true,
+      },
+    },
   },
   databaseHooks: {
     user: {
       create: {
         after: async (user) => {
-          // Create welcome bookmark for new users
           try {
             await createBookmark({
               url: "https://saveit.now",
               userId: user.id,
             });
           } catch (error) {
-            // Log error but don't fail user creation
-            console.error("Failed to create welcome bookmark for user:", user.id, error);
+            console.error(
+              "Failed to create welcome bookmark for user:",
+              user.id,
+              error,
+            );
           }
 
           inngest.send({
@@ -125,11 +134,9 @@ Melvyn`,
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        // Implement email sending here
-        // Example with Resend, Nodemailer, etc.
         await resend.emails.send({
           to: email,
-          subject: "Your verification code",
+          subject: `SaveIt.now - ${otp} is your verification code`,
           html: `Your OTP code is: <strong>${otp}</strong>`,
           from: "noreply@codeline.app",
         });

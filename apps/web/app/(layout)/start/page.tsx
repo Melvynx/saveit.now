@@ -1,6 +1,9 @@
 "use client";
 
 import { MaxWidthContainer } from "@/features/page/page";
+import { APP_LINKS } from "@/lib/app-links";
+import { useSession } from "@/lib/auth-client";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -10,20 +13,29 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { ArrowRight, Upload } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { toast } from "sonner";
 import { ImportForm } from "../imports/import-form";
+import { finishOnboardingAction } from "./start.action";
 
 export default function StartPage() {
-  const [, setHasImported] = useState(false);
-
+  const session = useSession();
+  const finishMutation = useMutation({
+    mutationFn: finishOnboardingAction,
+    onSuccess: () => {
+      session.refetch();
+      toast.success("Onboarding finished");
+    },
+    onError: () => {
+      toast.error("Failed to finish onboarding");
+    },
+  });
   const handleImportSuccess = (data: {
     createdBookmarks: number;
     totalUrls: number;
   }) => {
-    setHasImported(true);
+    finishMutation.mutate({});
     toast.success(
       `Great! You've imported ${data.createdBookmarks} bookmarks. Let's explore your dashboard!`,
     );
@@ -44,46 +56,35 @@ export default function StartPage() {
 
       {/* Onboarding Steps */}
       {/* Step 1: Import */}
-      <Card className="relative">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="size-5" />
-              Import Your Bookmarks
-            </CardTitle>
-          </div>
-          <CardDescription>
-            Bring your existing bookmarks from browsers, bookmark managers, or
-            any text files containing URLs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ImportForm
-            onSuccess={handleImportSuccess}
-            className="border-0 p-0"
-          />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-4">
+        <Typography variant="h2">Import</Typography>
+
+        <ImportForm onSuccess={handleImportSuccess} className="border-0 p-0" />
+      </div>
 
       {/* Alternative Options */}
       <Card className="bg-muted/50">
         <CardHeader>
-          <CardTitle className="text-center">
-            Don't have bookmarks to import?
-          </CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle>Don't have bookmarks to import?</CardTitle>
+          <CardDescription>
             No worries! You can start fresh and add bookmarks as you browse.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
+        <CardContent className="flex flex-col sm:flex-row gap-4">
           <Button asChild variant="outline">
-            <Link href="/app">
+            <Link
+              href={APP_LINKS.app}
+              onClick={() => finishMutation.mutate({})}
+            >
               Start with Empty Dashboard
               <ArrowRight className="size-4 ml-2" />
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/app/extensions">
+            <Link
+              href={APP_LINKS.extensions}
+              onClick={() => finishMutation.mutate({})}
+            >
               Install Browser Extension
               <ArrowRight className="size-4 ml-2" />
             </Link>

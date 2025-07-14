@@ -47,7 +47,7 @@ export const BookmarkHeader = () => {
       {plan.name === "free" && (
         <Link
           href={APP_LINKS.upgrade}
-          className={buttonVariants({ size: "sm", variant: "secondary" })}
+          className={buttonVariants({ size: "sm", variant: "outline" })}
         >
           Upgrade
         </Link>

@@ -14,25 +14,25 @@ import { useState } from "react";
 import useMeasure from "react-use-measure";
 import { useCountdown } from "../hooks/use-countdown";
 
-export type OtpFormProps = {
+export type OtpFormProps<T> = {
   sendOtp: (email: string) => Promise<void>;
-  verifyOtp: (email: string, otp: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string) => Promise<T>;
   defaultEmail?: string;
   resendCooldown?: number;
-  onSuccess?: () => void;
+  onSuccess?: (result: T) => void;
   onError?: (error: string) => void;
 };
 
 type Step = "email" | "otp";
 
-export function OtpForm({
+export function OtpForm<T>({
   sendOtp,
   verifyOtp,
   defaultEmail = "",
   resendCooldown = 60,
   onSuccess,
   onError,
-}: OtpFormProps) {
+}: OtpFormProps<T>) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState(defaultEmail);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,8 +57,8 @@ export function OtpForm({
   const handleVerifyOtp = async (otp: string) => {
     setIsLoading(true);
     try {
-      await verifyOtp(email, otp);
-      onSuccess?.();
+      const result = await verifyOtp(email, otp);
+      onSuccess?.(result);
     } catch (error) {
       onError?.(error instanceof Error ? error.message : "Invalid OTP");
       // Reset the OTP input on error
@@ -93,7 +93,13 @@ export function OtpForm({
           {step === "email" ? (
             <motion.div
               key="email-step"
-              variants={variants}
+              variants={{
+                ...variants,
+                initial: {
+                  x: "0%",
+                  opacity: 1,
+                },
+              }}
               initial="initial"
               animate="active"
               exit="exit"

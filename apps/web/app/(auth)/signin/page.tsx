@@ -113,6 +113,8 @@ export default function SignInPage() {
             verifyOtp={async (email, otp) => {
               const result = await authClient.signIn.emailOtp({ email, otp });
               if (result.error) throw new Error(result.error.message);
+
+              return result.data.user;
             }}
             onSuccess={() => {
               router.push("/app");
