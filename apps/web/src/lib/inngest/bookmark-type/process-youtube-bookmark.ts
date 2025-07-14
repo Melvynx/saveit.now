@@ -144,7 +144,6 @@ export async function processYouTubeBookmark(
 
   // Generate tags for the video
   const tags = await step.run("get-tags", async () => {
-    console.log({ userId: context.userId, summary });
     return await getAITags(TAGS_PROMPT, summary, context.userId);
   });
 
@@ -196,8 +195,7 @@ export async function processYouTubeBookmark(
       model: OPENAI_MODELS.embedding,
       values: [videoInfo.title, vectorSummary],
     });
-    const [titleEmbedding, vectorSummaryEmbedding] =
-      embedding.embeddings;
+    const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`

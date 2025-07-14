@@ -1,0 +1,32 @@
+name: Neon Branch Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  cleanup-neon-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Delete Neon branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ${{ github.event.pull_request.head.ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+        continue-on-error: true  # Don't fail the workflow if branch doesn't exist
+        
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🗑️ Neon database branch `${{ github.event.pull_request.head.ref }}` has been deleted to free up resources.'
+            });
+        continue-on-error: true

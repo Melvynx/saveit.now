@@ -1,0 +1,159 @@
+name: E2E Playwright Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - ".github/workflows/playwright.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+
+# Cancel previous runs on the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Turborepo cache
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  test:
+    name: Playwright Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    # Common environment variables for all steps
+    env:
+      # Core
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+      BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
+      NODE_ENV: "production"
+      # AWS S3 / Cloudflare R2
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      AWS_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
+      R2_URL: ${{ secrets.R2_URL }}
+      # Screenshot Worker
+      SCREENSHOT_WORKER_URL: ${{ secrets.SCREENSHOT_WORKER_URL }}
+      # Email
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_EMAIL_FROM: "Melvyn from SaveIt.now <help@re.saveit.now>"
+      HELP_EMAIL: ${{ secrets.HELP_EMAIL }}
+      # Stripe
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRO_MONTHLY_PRICE_ID: ${{ secrets.STRIPE_PRO_MONTHLY_PRICE_ID }}
+      STRIPE_PRO_YEARLY_PRICE_ID: ${{ secrets.STRIPE_PRO_YEARLY_PRICE_ID }}
+      STRIPE_COUPON_ID: ${{ secrets.STRIPE_COUPON_ID }}
+      # AI Services
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+      # Analytics
+      NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+      NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+      # OAuth
+      GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      # External APIs
+      APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      # Playwright specific
+      PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
+      HEADLESS: "true"
+      CI: "true"
+      PORT: 3000
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: saveit_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prod=false
+
+      - name: Install Prisma CLI globally
+        run: npm install -g prisma
+
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+        working-directory: packages/database
+
+      - name: Run database migrations
+        run: pnpm prisma migrate dev --skip-generate
+        working-directory: packages/database
+
+      - name: Build web application
+        run: pnpm build
+        working-directory: apps/web
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        working-directory: apps/web
+
+      - name: Start Inngest dev server
+        run: |
+          # Start Inngest dev server with production URL for this branch
+          pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest &
+          echo "Inngest dev server started with production endpoint"
+
+      - name: Start application
+        run: pnpm start &
+        working-directory: apps/web
+
+      - name: Wait for application to be ready
+        run: pnpm dlx wait-on@latest http://localhost:3000 --timeout 60000
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e:ci
+        working-directory: apps/web
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: apps/web/test-results/
+          retention-days: 30
