@@ -3,15 +3,15 @@ name: E2E Playwright Tests
 on:
   pull_request:
     branches: [main]
-    paths: 
-      - 'apps/web/**'
-      - 'packages/**'
-      - '.github/workflows/playwright.yml'
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - ".github/workflows/playwright.yml"
   push:
     branches: [main]
     paths:
-      - 'apps/web/**'  
-      - 'packages/**'
+      - "apps/web/**"
+      - "packages/**"
 
 # Cancel previous runs on the same PR/branch
 concurrency:
@@ -28,7 +28,7 @@ jobs:
     name: Playwright Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    
+
     # Common environment variables for all steps
     env:
       # Core
@@ -76,7 +76,7 @@ jobs:
       HEADLESS: "true"
       CI: "true"
       PORT: 3000
-    
+
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -105,10 +105,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --prod=false
+        run: pnpm install
 
       - name: Generate Prisma client
         run: pnpm db:generate
