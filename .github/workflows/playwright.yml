@@ -135,11 +135,8 @@ jobs:
         run: pnpm start &
         working-directory: apps/web
 
-      - name: Install wait-on
-        run: npm install -g wait-on
-
       - name: Wait for application to be ready
-        run: wait-on http://localhost:3000 --timeout 60000
+        run: pnpm dlx wait-on@latest http://localhost:3000 --timeout 60000
 
       - name: Run Playwright tests
         run: pnpm test:e2e:ci
