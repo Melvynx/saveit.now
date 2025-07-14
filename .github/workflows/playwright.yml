@@ -26,7 +26,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: pgvector/pgvector:pg15
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -71,34 +71,42 @@ jobs:
         run: pnpm build
         working-directory: apps/web
         env:
-          # Required environment variables for build
+          # Core
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
           BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
-          BETTER_AUTH_URL: "http://localhost:3000"
-          NEXTAUTH_URL: "http://localhost:3000"
-          NODE_ENV: "test"
-          # Stripe (test keys)
-          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY_TEST }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
-          # AWS S3 (test bucket)
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME_TEST }}
+          NODE_ENV: "production"
+          # AWS S3 / Cloudflare R2
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          AWS_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
+          R2_URL: ${{ secrets.R2_URL }}
+          # Screenshot Worker
+          SCREENSHOT_WORKER_URL: ${{ secrets.SCREENSHOT_WORKER_URL }}
           # Email
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # Analytics
-          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
-          # AI
+          RESEND_EMAIL_FROM: "Melvyn from SaveIt.now <help@re.saveit.now>"
+          HELP_EMAIL: ${{ secrets.HELP_EMAIL }}
+          # Stripe
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRO_MONTHLY_PRICE_ID: ${{ secrets.STRIPE_PRO_MONTHLY_PRICE_ID }}
+          STRIPE_PRO_YEARLY_PRICE_ID: ${{ secrets.STRIPE_PRO_YEARLY_PRICE_ID }}
+          STRIPE_COUPON_ID: ${{ secrets.STRIPE_COUPON_ID }}
+          # AI Services
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # Analytics
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
           # OAuth
           GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          # External APIs
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
@@ -108,37 +116,49 @@ jobs:
         run: pnpm start &
         working-directory: apps/web
         env:
+          # Core
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
           BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
-          BETTER_AUTH_URL: "http://localhost:3000"
-          NEXTAUTH_URL: "http://localhost:3000"
-          NODE_ENV: "test"
+          NODE_ENV: "production"
           PORT: 3000
-          # Stripe (test keys)
-          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY_TEST }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
-          # AWS S3 (test bucket)
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME_TEST }}
+          # AWS S3 / Cloudflare R2
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          AWS_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
+          R2_URL: ${{ secrets.R2_URL }}
+          # Screenshot Worker
+          SCREENSHOT_WORKER_URL: ${{ secrets.SCREENSHOT_WORKER_URL }}
           # Email
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # Analytics
-          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
-          # AI
+          RESEND_EMAIL_FROM: "Melvyn from SaveIt.now <help@re.saveit.now>"
+          HELP_EMAIL: ${{ secrets.HELP_EMAIL }}
+          # Stripe
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRO_MONTHLY_PRICE_ID: ${{ secrets.STRIPE_PRO_MONTHLY_PRICE_ID }}
+          STRIPE_PRO_YEARLY_PRICE_ID: ${{ secrets.STRIPE_PRO_YEARLY_PRICE_ID }}
+          STRIPE_COUPON_ID: ${{ secrets.STRIPE_COUPON_ID }}
+          # AI Services
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # Analytics
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
           # OAuth
           GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          # External APIs
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+
+      - name: Install wait-on
+        run: npm install -g wait-on
 
       - name: Wait for application to be ready
-        run: npx wait-on http://localhost:3000 --timeout 60000
+        run: wait-on http://localhost:3000 --timeout 60000
 
       - name: Run Playwright tests
         run: pnpm test:e2e:ci
@@ -146,8 +166,6 @@ jobs:
         env:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
           BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
-          BETTER_AUTH_URL: "http://localhost:3000"
-          NEXTAUTH_URL: "http://localhost:3000"
           PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
           HEADLESS: "true"
           CI: "true"
