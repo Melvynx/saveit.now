@@ -134,20 +134,25 @@ export async function signInWithOAuth(page: Page, provider: "github" | "google")
 }
 
 /**
- * Fill OTP code (for when we implement OTP bypass or use test OTP)
+ * Fill OTP code and verify authentication success
  */
 export async function fillOTPCode(page: Page, code: string) {
-  // Wait for OTP input to be visible
-  await expect(page.locator('[data-testid="otp-input"]').first()).toBeVisible();
+  console.log(`Filling OTP code: ${code}`);
+  
+  // Wait for OTP input slots to be visible
+  await expect(page.locator('input[data-slot="0"]')).toBeVisible();
   
   // Fill each OTP slot
   for (let i = 0; i < code.length; i++) {
     const digit = code[i];
     if (digit) {
       await page.fill(`input[data-slot="${i}"]`, digit);
+      // Small delay between inputs to simulate real user behavior
+      await page.waitForTimeout(100);
     }
   }
   
   // The form should auto-submit when all 6 digits are entered
+  console.log("OTP filled, waiting for authentication success...");
   await waitForAuthSuccess(page);
 }

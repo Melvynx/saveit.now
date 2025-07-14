@@ -15,7 +15,7 @@
     "ts": "tsc --noEmit",
     "better-auth:generate": "pnpm dlx @better-auth/cli@latest generate --output ../../packages/database/prisma/schema.prisma",
     "test:e2e": "HEADLESS=false playwright test --ui",
-    "test:e2e:ci": "HEADLESS=true playwright test"
+    "test:e2e:ci": "HEADLESS=true playwright test --reporter=list"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.18",
@@ -94,6 +94,7 @@
     "@types/turndown": "^5.0.5",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
+    "dotenv": "^17.2.0",
     "import-in-the-middle": "^1.13.2",
     "require-in-the-middle": "^7.5.2",
     "tailwindcss": "^4.0.8",

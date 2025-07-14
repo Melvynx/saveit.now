@@ -1,11 +1,11 @@
 import { faker } from "@faker-js/faker";
 
-export const TEST_EMAIL = `playwright-test-main-${faker.internet.email().toLowerCase()}`;
+export const TEST_EMAIL = `playwright-test-main-${faker.internet.username().toLowerCase()}@playwright.dev`;
 export const TEST_PASSWORD = "TestPassword123!";
 export const TEST_NAME = faker.person.fullName();
 
 export function getUserEmail(): string {
-  return `playwright-test-${faker.internet.email().toLowerCase()}`;
+  return `playwright-test-${faker.internet.username().toLowerCase()}@playwright.dev`;
 }
 
 export function generateTestBookmarkData() {

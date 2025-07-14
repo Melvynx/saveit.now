@@ -1,6 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import { config } from "dotenv";
 
-const SERVER_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000";
+// Load environment variables from .env file in apps/web folder for Turborepo
+config({ path: ".env" });
+
+const SERVER_URL =
+  process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000";
 const HEADLESS = process.env.HEADLESS === "true";
 
 /**
@@ -13,9 +18,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1, // Single worker to avoid database conflicts
-  reporter: "html",
-  globalSetup: require.resolve("./e2e/global-setup.ts"),
-  globalTeardown: require.resolve("./e2e/global-teardown.ts"),
+  reporter: process.env.CI ? "list" : "list",
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: SERVER_URL,
     trace: "on-first-retry",
@@ -35,10 +40,6 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: "pnpm build && pnpm start",
-    url: SERVER_URL,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // Note: Start your development server manually with `pnpm dev`
+  // webServer configuration removed to avoid conflicts
 });

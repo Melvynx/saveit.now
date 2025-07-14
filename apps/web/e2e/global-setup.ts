@@ -1,6 +1,7 @@
-import { authClient } from "../src/lib/auth-client";
-import { cleanupTestData, seedTestBookmarks, seedTestTags, prisma } from "./utils/database";
-import { TEST_EMAIL, TEST_PASSWORD, TEST_NAME } from "./utils/test-data";
+import { cleanupTestData, seedTestBookmarks, seedTestTags } from "./utils/database";
+import { getPrismaClient } from "./utils/database-loader.mjs";
+import { TEST_EMAIL, TEST_NAME } from "./utils/test-data";
+import crypto from "crypto";
 
 async function globalSetup() {
   console.log("Starting E2E test setup...");
@@ -9,27 +10,31 @@ async function globalSetup() {
     // First, clean up any existing test data
     await cleanupTestData();
 
-    // Create main test user using Better Auth
+    // Create main test user directly in database since email/password signup is not enabled
     console.log("Creating main test user...");
-    const signUpResult = await authClient.signUp.email({
-      email: TEST_EMAIL,
-      password: TEST_PASSWORD,
-      name: TEST_NAME,
-    });
-
-    if (signUpResult.error) {
-      throw new Error(`Failed to create test user: ${signUpResult.error.message}`);
-    }
-
-    console.log(`Created test user: ${TEST_EMAIL}`);
-
-    // Get the created user from database
-    const testUser = await prisma.user.findUnique({
+    const prisma = getPrismaClient();
+    
+    // Check if user already exists
+    let testUser = await prisma.user.findUnique({
       where: { email: TEST_EMAIL },
     });
-
+    
     if (!testUser) {
-      throw new Error("Test user not found after creation");
+      // Create user directly in database
+      testUser = await prisma.user.create({
+        data: {
+          id: crypto.randomBytes(12).toString('hex'),
+          email: TEST_EMAIL,
+          name: TEST_NAME,
+          emailVerified: true,
+          onboarding: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      console.log(`Created test user: ${TEST_EMAIL}`);
+    } else {
+      console.log(`Test user already exists: ${TEST_EMAIL}`);
     }
 
     // Seed test data
