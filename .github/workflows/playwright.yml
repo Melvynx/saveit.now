@@ -13,6 +13,11 @@ on:
       - 'apps/web/**'  
       - 'packages/**'
 
+# Cancel previous runs on the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   # Turborepo cache
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
