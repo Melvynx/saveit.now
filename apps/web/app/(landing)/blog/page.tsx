@@ -7,41 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@work
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { getAllPosts, getFeaturedPosts } from "@/lib/mdx/posts-manager";
 
-// Mock blog posts data - in a real implementation, this would come from your CMS or MDX files
-const blogPosts = [
-  {
-    id: "1",
-    title: "The Future of Bookmark Management with AI",
-    description: "Discover how artificial intelligence is revolutionizing the way we save, organize, and retrieve our digital bookmarks.",
-    date: "2024-01-15",
-    readTime: "5 min read",
-    category: "AI & Innovation",
-    featured: true,
-  },
-  {
-    id: "2", 
-    title: "5 Productivity Tips for Content Creators",
-    description: "Learn how to organize your research and resources more effectively with advanced bookmark management techniques.",
-    date: "2024-01-10",
-    readTime: "7 min read",
-    category: "Productivity",
-    featured: false,
-  },
-  {
-    id: "3",
-    title: "Building Your Digital Knowledge Base",
-    description: "Transform scattered bookmarks into a powerful knowledge management system that grows with you.",
-    date: "2024-01-05",
-    readTime: "6 min read", 
-    category: "Knowledge Management",
-    featured: false,
-  },
-];
-
-export default function BlogPage() {
-  const featuredPost = blogPosts.find(post => post.featured);
-  const regularPosts = blogPosts.filter(post => !post.featured);
+export default async function BlogPage() {
+  const [allPosts, featuredPosts] = await Promise.all([
+    getAllPosts(),
+    getFeaturedPosts(),
+  ]);
+  
+  const featuredPost = featuredPosts[0];
+  const regularPosts = allPosts.filter(post => !post.frontmatter.featured);
 
   return (
     <div>
@@ -69,15 +44,15 @@ export default function BlogPage() {
               <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
                 <CardHeader className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{featuredPost.category}</Badge>
+                    <Badge variant="secondary">{featuredPost.frontmatter.category}</Badge>
                     <Badge className="bg-primary/10 text-primary border-primary/20">Featured</Badge>
                   </div>
-                  <CardTitle className="text-2xl">{featuredPost.title}</CardTitle>
-                  <CardDescription className="text-lg">{featuredPost.description}</CardDescription>
+                  <CardTitle className="text-2xl">{featuredPost.frontmatter.title}</CardTitle>
+                  <CardDescription className="text-lg">{featuredPost.frontmatter.description}</CardDescription>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="size-4" />
-                      {new Date(featuredPost.date).toLocaleDateString("en-US", {
+                      {new Date(featuredPost.frontmatter.date).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long", 
                         day: "numeric"
@@ -85,13 +60,13 @@ export default function BlogPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="size-4" />
-                      {featuredPost.readTime}
+                      {featuredPost.readingTime.text}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <Button asChild>
-                    <Link href={`/blog/${featuredPost.id}`}>
+                    <Link href={`/blog/${featuredPost.slug}`}>
                       Read Article
                       <ArrowRight className="size-4 ml-2" />
                     </Link>
@@ -106,29 +81,29 @@ export default function BlogPage() {
             <Typography variant="h2" className="text-center">Recent Articles</Typography>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {regularPosts.map((post) => (
-                <Card key={post.id} className="h-fit hover:shadow-lg transition-shadow">
+                <Card key={post.slug} className="h-fit hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline">{post.category}</Badge>
+                      <Badge variant="outline">{post.frontmatter.category}</Badge>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="size-3" />
-                        {post.readTime}
+                        {post.readingTime.text}
                       </div>
                     </div>
-                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                    <CardDescription className="line-clamp-3">{post.description}</CardDescription>
+                    <CardTitle className="line-clamp-2">{post.frontmatter.title}</CardTitle>
+                    <CardDescription className="line-clamp-3">{post.frontmatter.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar className="size-4" />
-                      {new Date(post.date).toLocaleDateString("en-US", {
+                      {new Date(post.frontmatter.date).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
                         day: "numeric"
                       })}
                     </div>
                     <Button variant="outline" asChild className="w-full">
-                      <Link href={`/blog/${post.id}`}>
+                      <Link href={`/blog/${post.slug}`}>
                         Read More
                         <ArrowRight className="size-4 ml-2" />
                       </Link>
@@ -140,12 +115,14 @@ export default function BlogPage() {
           </div>
 
           {/* Coming Soon */}
-          <div className="text-center space-y-4 py-8">
-            <Typography variant="h3" className="text-muted-foreground">More articles coming soon</Typography>
-            <Typography variant="muted" className="max-w-md mx-auto">
-              We're working on more helpful content about productivity, bookmark management, and digital organization.
-            </Typography>
-          </div>
+          {allPosts.length === 0 && (
+            <div className="text-center space-y-4 py-8">
+              <Typography variant="h3" className="text-muted-foreground">Articles coming soon</Typography>
+              <Typography variant="muted" className="max-w-md mx-auto">
+                We're working on helpful content about productivity, bookmark management, and digital organization.
+              </Typography>
+            </div>
+          )}
         </div>
       </MaxWidthContainer>
       <Footer />

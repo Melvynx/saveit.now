@@ -5,80 +5,25 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { ArrowRight, Book, Code, Download, Globe, Puzzle, Zap } from "lucide-react";
+import { ArrowRight, Book, Code, Download, Globe, Puzzle, Zap, FileText, Settings, Shield } from "lucide-react";
 import Link from "next/link";
+import { getGroupedDocs } from "@/lib/mdx/docs-manager";
 
-// Mock documentation sections - in a real implementation, this would come from your docs content
-const docSections = [
-  {
-    id: "getting-started",
-    title: "Getting Started",
-    description: "Learn the basics of SaveIt and set up your account for maximum productivity.",
-    icon: Zap,
-    docs: [
-      { title: "Quick Start Guide", description: "Get up and running in 5 minutes" },
-      { title: "Account Setup", description: "Configure your profile and preferences" },
-      { title: "First Bookmarks", description: "Save your first links and organize them" },
-    ]
-  },
-  {
-    id: "browser-extensions",
-    title: "Browser Extensions", 
-    description: "Install and use our browser extensions for Chrome, Firefox, and more.",
-    icon: Puzzle,
-    docs: [
-      { title: "Chrome Extension", description: "Install and configure for Chrome" },
-      { title: "Firefox Extension", description: "Install and configure for Firefox" },
-      { title: "Extension Features", description: "Advanced features and shortcuts" },
-    ]
-  },
-  {
-    id: "api",
-    title: "API Reference",
-    description: "Integrate SaveIt with your applications using our REST API.",
-    icon: Code,
-    docs: [
-      { title: "Authentication", description: "API keys and authentication methods" },
-      { title: "Bookmarks API", description: "Create, read, update, and delete bookmarks" },
-      { title: "Search API", description: "Search your bookmarks programmatically" },
-    ]
-  },
-  {
-    id: "features",
-    title: "Features Guide",
-    description: "Deep dive into SaveIt's powerful features and capabilities.",
-    icon: Book,
-    docs: [
-      { title: "AI-Powered Search", description: "Smart search and content discovery" },
-      { title: "Tags & Organization", description: "Organize bookmarks with tags and folders" },
-      { title: "Collaboration", description: "Share bookmarks with your team" },
-    ]
-  },
-  {
-    id: "integrations",
-    title: "Integrations",
-    description: "Connect SaveIt with your favorite tools and workflows.",
-    icon: Globe,
-    docs: [
-      { title: "Zapier Integration", description: "Automate with 1000+ apps" },
-      { title: "Notion Integration", description: "Sync bookmarks to Notion" },
-      { title: "Slack Integration", description: "Share bookmarks in Slack" },
-    ]
-  },
-  {
-    id: "export-import",
-    title: "Import & Export",
-    description: "Move your bookmarks to and from other bookmark managers.",
-    icon: Download,
-    docs: [
-      { title: "Import from Chrome", description: "Import your Chrome bookmarks" },
-      { title: "Import from Firefox", description: "Import your Firefox bookmarks" },
-      { title: "Export Options", description: "Export your data in various formats" },
-    ]
-  },
-];
+// Icon mapping for categories
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  "Getting Started": Zap,
+  "Browser Extensions": Puzzle,
+  "API Reference": Code,
+  "Features": Book,
+  "Integrations": Globe,
+  "Import & Export": Download,
+  "Settings": Settings,
+  "Security": Shield,
+  "General": FileText,
+};
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const groupedDocs = await getGroupedDocs();
   return (
     <div>
       <Header />
@@ -158,47 +103,55 @@ export default function DocsPage() {
           {/* Documentation Sections */}
           <div className="space-y-12">
             <Typography variant="h2" className="text-center">Browse Documentation</Typography>
-            <div className="grid gap-8 lg:grid-cols-2">
-              {docSections.map((section) => {
-                const IconComponent = section.icon;
-                return (
-                  <Card key={section.id} className="h-fit">
-                    <CardHeader>
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <IconComponent className="size-5 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle>{section.title}</CardTitle>
-                          <CardDescription>{section.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {section.docs.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                          <div>
-                            <div className="font-medium text-sm">{doc.title}</div>
-                            <div className="text-xs text-muted-foreground">{doc.description}</div>
+            {groupedDocs.length === 0 ? (
+              <div className="text-center space-y-4 py-8">
+                <Typography variant="h3" className="text-muted-foreground">Documentation coming soon</Typography>
+                <Typography variant="muted" className="max-w-md mx-auto">
+                  We're working on comprehensive documentation to help you get the most out of SaveIt.
+                </Typography>
+              </div>
+            ) : (
+              <div className="grid gap-8 lg:grid-cols-2">
+                {groupedDocs.map((group) => {
+                  const IconComponent = categoryIcons[group.category] || FileText;
+                  return (
+                    <Card key={group.category} className="h-fit">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <IconComponent className="size-5 text-primary" />
                           </div>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/docs/${section.id}/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                              <ArrowRight className="size-4" />
-                            </Link>
-                          </Button>
+                          <div>
+                            <CardTitle>{group.category}</CardTitle>
+                            <CardDescription>{group.docs.length} articles</CardDescription>
+                          </div>
                         </div>
-                      ))}
-                      <Button variant="outline" asChild className="w-full mt-4">
-                        <Link href={`/docs/${section.id}`}>
-                          View All {section.title}
-                          <ArrowRight className="size-4 ml-2" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {group.docs.slice(0, 3).map((doc) => (
+                          <div key={doc.slug} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                            <div>
+                              <div className="font-medium text-sm">{doc.frontmatter.title}</div>
+                              <div className="text-xs text-muted-foreground line-clamp-1">{doc.frontmatter.description}</div>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link href={`/docs/${doc.slug}`}>
+                                <ArrowRight className="size-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        ))}
+                        {group.docs.length > 3 && (
+                          <div className="text-center text-sm text-muted-foreground pt-2">
+                            +{group.docs.length - 3} more articles
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Help Section */}
