@@ -67,6 +67,10 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # External APIs
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      # Inngest
+      INNGEST_EVENT_URL: "http://localhost:8288"
+      INNGEST_SIGNING_KEY: "test-key-for-ci-only"
+      INNGEST_DEV: "1"
       # Playwright specific
       PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
       HEADLESS: "true"
@@ -87,6 +91,18 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+          
+      inngest:
+        image: inngest/inngest:latest
+        env:
+          INNGEST_DEV: "1"
+        ports:
+          - 8288:8288
+        options: >-
+          --health-cmd "curl -f http://localhost:8288/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout
@@ -128,6 +144,9 @@ jobs:
 
       - name: Install wait-on
         run: npm install -g wait-on
+
+      - name: Wait for Inngest to be ready
+        run: wait-on http://localhost:8288/health --timeout 30000
 
       - name: Wait for application to be ready
         run: wait-on http://localhost:3000 --timeout 60000
