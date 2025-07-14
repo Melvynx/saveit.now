@@ -1,48 +1,46 @@
-import { Button } from "@workspace/ui/components/button";
-import { Typography } from "@workspace/ui/components/typography";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import type { Doc } from "@/lib/mdx/docs-manager";
+import { getGroupedDocs } from "@/lib/mdx/docs-manager";
+import { Typography } from "@workspace/ui/components/typography";
+import Link from "next/link";
 
 interface DocsSidebarProps {
   currentDoc: Doc;
-  categoryDocs: Doc[];
 }
 
-export function DocsSidebar({ currentDoc, categoryDocs }: DocsSidebarProps) {
+export async function DocsSidebar({ currentDoc }: DocsSidebarProps) {
+  const groupedDocs = await getGroupedDocs();
   return (
     <aside className="hidden lg:block w-64 shrink-0">
       <div className="sticky top-24">
-        <div className="mb-6">
-          <Button variant="ghost" asChild className="gap-2 mb-4">
-            <Link href="/docs">
-              <ArrowLeft className="size-4" />
-              All Docs
-            </Link>
-          </Button>
-          <Typography variant="h3" className="mb-4">
-            {currentDoc.frontmatter.category}
-          </Typography>
-        </div>
-        
-        <nav className="space-y-2">
-          {categoryDocs.map((catDoc) => (
-            <Link
-              key={catDoc.slug}
-              href={`/docs/${catDoc.slug}`}
-              className={`block p-3 rounded-lg transition-colors ${
-                catDoc.slug === currentDoc.slug
-                  ? "bg-primary/10 text-primary border-l-2 border-primary"
-                  : "hover:bg-muted/50"
-              }`}
-            >
-              <div className="font-medium text-sm">{catDoc.frontmatter.title}</div>
-              {catDoc.slug === currentDoc.slug && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  {catDoc.readingTime.text}
-                </div>
-              )}
-            </Link>
+        <nav className="space-y-8">
+          {groupedDocs.map((group) => (
+            <div key={group.category}>
+              <Typography variant="small" className="mb-4">
+                {group.category}
+              </Typography>
+              <div className="space-y-2">
+                {group.docs.map((doc) => (
+                  <Link
+                    key={doc.slug}
+                    href={`/docs/${doc.slug}`}
+                    className={`block p-3 rounded-lg transition-colors ${
+                      doc.slug === currentDoc.slug
+                        ? "bg-primary/10 text-primary border-l-2 border-primary"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="font-medium text-sm">
+                      {doc.frontmatter.title}
+                    </div>
+                    {doc.slug === currentDoc.slug && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {doc.readingTime.text}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       </div>

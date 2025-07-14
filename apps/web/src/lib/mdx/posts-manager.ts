@@ -1,8 +1,8 @@
 import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
-import { z } from "zod";
+import path from "path";
 import readingTime from "reading-time";
+import { z } from "zod";
 
 const PostFrontmatterSchema = z.object({
   title: z.string(),
@@ -12,8 +12,7 @@ const PostFrontmatterSchema = z.object({
   featured: z.boolean().default(false),
   category: z.string(),
   tags: z.array(z.string()).optional(),
-  image: z.string().optional(),
-  imageAlt: z.string().optional(),
+  banner: z.string(),
   author: z.string().default("SaveIt Team"),
 });
 
@@ -31,7 +30,24 @@ export interface Post {
   };
 }
 
-const postsDirectory = path.join(process.cwd(), "content", "posts");
+function findMonorepoRoot(): string {
+  let dir = path.resolve(process.cwd());
+  console.log("[findMonorepoRoot] startDir:", dir);
+  while (dir !== path.parse(dir).root) {
+    console.log("[findMonorepoRoot] checking:", dir);
+    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+      console.log("[findMonorepoRoot] found monorepo root:", dir);
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  throw new Error("Monorepo root not found");
+}
+
+const monorepoRoot = findMonorepoRoot();
+console.log("[posts-manager] monorepoRoot:", monorepoRoot);
+const postsDirectory = path.join(monorepoRoot, "content", "posts");
+console.log("[posts-manager] postsDirectory:", postsDirectory);
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
@@ -40,6 +56,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     const fileContents = fs.readFileSync(fullPath, "utf8");
 
     const { data, content } = matter(fileContents);
+    console.log(data);
     const frontmatter = PostFrontmatterSchema.parse(data);
 
     // Only return published posts
@@ -70,18 +87,21 @@ export async function getAllPosts(): Promise<Post[]> {
     }
 
     const files = fs.readdirSync(postsDirectory);
+    console.log(files, process.cwd());
     const posts = await Promise.all(
       files
         .filter((file) => file.endsWith(".mdx"))
         .map(async (file) => {
           const slug = file.replace(/\.mdx$/, "");
           return getPostBySlug(slug);
-        })
+        }),
     );
 
     return posts
       .filter((post): post is Post => post !== null)
-      .sort((a, b) => b.frontmatter.date.getTime() - a.frontmatter.date.getTime());
+      .sort(
+        (a, b) => b.frontmatter.date.getTime() - a.frontmatter.date.getTime(),
+      );
   } catch (error) {
     console.error("Error getting all posts:", error);
     return [];
@@ -90,6 +110,7 @@ export async function getAllPosts(): Promise<Post[]> {
 
 export async function getFeaturedPosts(): Promise<Post[]> {
   const posts = await getAllPosts();
+  console.log(posts.map((post) => post.frontmatter.title));
   return posts.filter((post) => post.frontmatter.featured);
 }
 

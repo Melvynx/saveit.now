@@ -1,8 +1,8 @@
 import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
-import { z } from "zod";
+import path from "path";
 import readingTime from "reading-time";
+import { z } from "zod";
 
 const DocFrontmatterSchema = z.object({
   title: z.string(),
@@ -29,7 +29,19 @@ export interface Doc {
   };
 }
 
-const docsDirectory = path.join(process.cwd(), "content", "docs");
+function findMonorepoRoot(): string {
+  let dir = path.resolve(process.cwd());
+  while (dir !== path.parse(dir).root) {
+    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  throw new Error("Monorepo root not found");
+}
+
+const monorepoRoot = findMonorepoRoot();
+const docsDirectory = path.join(monorepoRoot, "content", "docs");
 
 export async function getDocBySlug(slug: string): Promise<Doc | null> {
   try {
@@ -74,14 +86,17 @@ export async function getAllDocs(): Promise<Doc[]> {
         .map(async (file) => {
           const slug = file.replace(/\.mdx$/, "");
           return getDocBySlug(slug);
-        })
+        }),
     );
 
     return docs
       .filter((doc): doc is Doc => doc !== null)
       .sort((a, b) => {
         // Sort by order if available, otherwise by title
-        if (a.frontmatter.order !== undefined && b.frontmatter.order !== undefined) {
+        if (
+          a.frontmatter.order !== undefined &&
+          b.frontmatter.order !== undefined
+        ) {
           return a.frontmatter.order - b.frontmatter.order;
         }
         return a.frontmatter.title.localeCompare(b.frontmatter.title);
@@ -110,14 +125,17 @@ export interface DocGroup {
 
 export async function getGroupedDocs(): Promise<DocGroup[]> {
   const docs = await getAllDocs();
-  const grouped = docs.reduce((acc, doc) => {
-    const category = doc.frontmatter.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(doc);
-    return acc;
-  }, {} as Record<string, Doc[]>);
+  const grouped = docs.reduce(
+    (acc, doc) => {
+      const category = doc.frontmatter.category;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(doc);
+      return acc;
+    },
+    {} as Record<string, Doc[]>,
+  );
 
   return Object.entries(grouped)
     .map(([category, docs]) => ({ category, docs }))
