@@ -108,14 +108,17 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --prod=false
+
+      - name: Install Prisma CLI globally
+        run: npm install -g prisma
 
       - name: Generate Prisma client
-        run: pnpm db:generate
+        run: pnpm prisma generate
         working-directory: packages/database
 
       - name: Run database migrations
-        run: pnpm db:migrate
+        run: pnpm prisma migrate dev --skip-generate
         working-directory: packages/database
 
       - name: Build web application
