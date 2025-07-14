@@ -11,6 +11,7 @@ import { getDocBySlug, getAllDocs, getGroupedDocs } from "@/lib/mdx/docs-manager
 import { MDXRemote } from "next-mdx-remote-client/rsc";
 import { notFound } from "next/navigation";
 import { rehypePlugins, remarkPlugins } from "@/lib/mdx/mdx-config";
+import { DocsSidebar } from "@/components/docs/docs-sidebar";
 
 interface DocPageProps {
   params: Promise<{
@@ -44,43 +45,7 @@ export default async function DocPage(props: DocPageProps) {
       <Header />
       <MaxWidthContainer className="py-16">
         <div className="flex gap-12">
-          {/* Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24">
-              <div className="mb-6">
-                <Button variant="ghost" asChild className="gap-2 mb-4">
-                  <Link href="/docs">
-                    <ArrowLeft className="size-4" />
-                    All Docs
-                  </Link>
-                </Button>
-                <Typography variant="h3" className="mb-4">
-                  {doc.frontmatter.category}
-                </Typography>
-              </div>
-              
-              <nav className="space-y-2">
-                {categoryDocs.map((catDoc) => (
-                  <Link
-                    key={catDoc.slug}
-                    href={`/docs/${catDoc.slug}`}
-                    className={`block p-3 rounded-lg transition-colors ${
-                      catDoc.slug === doc.slug
-                        ? "bg-primary/10 text-primary border-l-2 border-primary"
-                        : "hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{catDoc.frontmatter.title}</div>
-                    {catDoc.slug === doc.slug && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {catDoc.readingTime.text}
-                      </div>
-                    )}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-          </aside>
+          <DocsSidebar currentDoc={doc} categoryDocs={categoryDocs} />
 
           {/* Main Content */}
           <article className="flex-1 max-w-4xl">

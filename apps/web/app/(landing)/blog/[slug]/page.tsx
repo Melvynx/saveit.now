@@ -108,19 +108,6 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
               />
             </div>
 
-            {/* Article Footer */}
-            <footer className="pt-8 border-t">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Typography variant="muted">
-                    Thanks for reading! Have questions? 
-                  </Typography>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link href="/contact">Contact Us</Link>
-                </Button>
-              </div>
-            </footer>
           </article>
         </div>
       </MaxWidthContainer>

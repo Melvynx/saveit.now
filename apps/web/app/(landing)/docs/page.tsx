@@ -5,22 +5,9 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { ArrowRight, Book, Code, Download, Globe, Puzzle, Zap, FileText, Settings, Shield } from "lucide-react";
+import { ArrowRight, Book, Code, Puzzle, Zap } from "lucide-react";
 import Link from "next/link";
 import { getGroupedDocs } from "@/lib/mdx/docs-manager";
-
-// Icon mapping for categories
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  "Getting Started": Zap,
-  "Browser Extensions": Puzzle,
-  "API Reference": Code,
-  "Features": Book,
-  "Integrations": Globe,
-  "Import & Export": Download,
-  "Settings": Settings,
-  "Security": Shield,
-  "General": FileText,
-};
 
 export default async function DocsPage() {
   const groupedDocs = await getGroupedDocs();
@@ -112,19 +99,12 @@ export default async function DocsPage() {
               </div>
             ) : (
               <div className="grid gap-8 lg:grid-cols-2">
-                {groupedDocs.map((group) => {
-                  const IconComponent = categoryIcons[group.category] || FileText;
-                  return (
+                {groupedDocs.map((group) => (
                     <Card key={group.category} className="h-fit">
                       <CardHeader>
-                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <IconComponent className="size-5 text-primary" />
-                          </div>
-                          <div>
-                            <CardTitle>{group.category}</CardTitle>
-                            <CardDescription>{group.docs.length} articles</CardDescription>
-                          </div>
+                        <div>
+                          <CardTitle>{group.category}</CardTitle>
+                          <CardDescription>{group.docs.length} articles</CardDescription>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3">
@@ -148,8 +128,7 @@ export default async function DocsPage() {
                         )}
                       </CardContent>
                     </Card>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>
