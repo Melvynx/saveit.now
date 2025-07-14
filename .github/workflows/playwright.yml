@@ -1,0 +1,169 @@
+name: E2E Playwright Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths: 
+      - 'apps/web/**'
+      - 'packages/**'
+      - '.github/workflows/playwright.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'  
+      - 'packages/**'
+
+env:
+  # Turborepo cache
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  test:
+    name: Playwright Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: saveit_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+        working-directory: packages/database
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+        working-directory: packages/database
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+
+      - name: Build web application
+        run: pnpm build
+        working-directory: apps/web
+        env:
+          # Required environment variables for build
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+          BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXTAUTH_URL: "http://localhost:3000"
+          NODE_ENV: "test"
+          # Stripe (test keys)
+          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY_TEST }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          # AWS S3 (test bucket)
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME_TEST }}
+          # Email
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # Analytics
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          # AI
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # OAuth
+          GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+        working-directory: apps/web
+
+      - name: Start application
+        run: pnpm start &
+        working-directory: apps/web
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+          BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXTAUTH_URL: "http://localhost:3000"
+          NODE_ENV: "test"
+          PORT: 3000
+          # Stripe (test keys)
+          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY_TEST }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          # AWS S3 (test bucket)
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME_TEST }}
+          # Email
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # Analytics
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          # AI
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # OAuth
+          GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+      - name: Wait for application to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e:ci
+        working-directory: apps/web
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+          BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXTAUTH_URL: "http://localhost:3000"
+          PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
+          HEADLESS: "true"
+          CI: "true"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: apps/web/test-results/
+          retention-days: 30
