@@ -67,10 +67,6 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # External APIs
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
-      # Inngest
-      INNGEST_EVENT_URL: "http://localhost:8288"
-      INNGEST_SIGNING_KEY: "test-key-for-ci-only"
-      INNGEST_DEV: "1"
       # Playwright specific
       PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
       HEADLESS: "true"
@@ -129,14 +125,11 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
         working-directory: apps/web
 
-      - name: Install and start Inngest dev server
+      - name: Start Inngest dev server
         run: |
-          # Install Inngest CLI
-          curl -sSL https://github.com/inngest/inngest/releases/latest/download/inngest_linux_amd64.tar.gz | tar -xz
-          sudo mv inngest /usr/local/bin/inngest
-          # Start Inngest dev server in background
-          inngest dev --host 0.0.0.0 --port 8288 &
-          echo "Inngest dev server started on port 8288"
+          # Start Inngest dev server with production URL for this branch
+          pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest &
+          echo "Inngest dev server started with production endpoint"
 
       - name: Start application
         run: pnpm start &
@@ -144,9 +137,6 @@ jobs:
 
       - name: Install wait-on
         run: npm install -g wait-on
-
-      - name: Wait for Inngest to be ready
-        run: wait-on http://localhost:8288/health --timeout 30000
 
       - name: Wait for application to be ready
         run: wait-on http://localhost:3000 --timeout 60000
