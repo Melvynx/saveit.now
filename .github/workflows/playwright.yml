@@ -91,18 +91,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-          
-      inngest:
-        image: inngest/inngest:latest
-        env:
-          INNGEST_DEV: "1"
-        ports:
-          - 8288:8288
-        options: >-
-          --health-cmd "curl -f http://localhost:8288/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout
@@ -137,6 +125,15 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
         working-directory: apps/web
+
+      - name: Install and start Inngest dev server
+        run: |
+          # Install Inngest CLI
+          curl -sSL https://github.com/inngest/inngest/releases/latest/download/inngest_linux_amd64.tar.gz | tar -xz
+          sudo mv inngest /usr/local/bin/inngest
+          # Start Inngest dev server in background
+          inngest dev --host 0.0.0.0 --port 8288 &
+          echo "Inngest dev server started on port 8288"
 
       - name: Start application
         run: pnpm start &
