@@ -1,17 +1,21 @@
+import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
+import {
+  getAllDocs,
+  getDocBySlug,
+  getGroupedDocs,
+} from "@/lib/mdx/docs-manager";
+import { rehypePlugins, remarkPlugins } from "@/lib/mdx/mdx-config";
 import { Badge } from "@workspace/ui/components/badge";
-import { Typography } from "@workspace/ui/components/typography";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
+import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ArrowRight, Book, Clock, FileText } from "lucide-react";
-import Link from "next/link";
-import { getDocBySlug, getAllDocs, getGroupedDocs } from "@/lib/mdx/docs-manager";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { rehypePlugins, remarkPlugins } from "@/lib/mdx/mdx-config";
-import { DocsSidebar } from "@/components/docs/docs-sidebar";
 
 interface DocPageProps {
   params: Promise<{
@@ -36,16 +40,16 @@ export default async function DocPage(props: DocPageProps) {
   }
 
   // Find docs in the same category for sidebar
-  const categoryDocs = groupedDocs.find(
-    (group) => group.category === doc.frontmatter.category
-  )?.docs || [];
+  const categoryDocs =
+    groupedDocs.find((group) => group.category === doc.frontmatter.category)
+      ?.docs || [];
 
   return (
     <div>
       <Header />
       <MaxWidthContainer className="py-16">
         <div className="flex gap-12">
-          <DocsSidebar currentDoc={doc} categoryDocs={categoryDocs} />
+          <DocsSidebar currentDoc={doc} />
 
           {/* Main Content */}
           <article className="flex-1 max-w-4xl">
@@ -69,11 +73,11 @@ export default async function DocPage(props: DocPageProps) {
                   <Badge variant="outline">{doc.frontmatter.subcategory}</Badge>
                 )}
               </div>
-              
+
               <Typography variant="h1" className="text-4xl md:text-5xl">
                 {doc.frontmatter.title}
               </Typography>
-              
+
               <Typography variant="lead" className="text-muted-foreground">
                 {doc.frontmatter.description}
               </Typography>
@@ -112,19 +116,24 @@ export default async function DocPage(props: DocPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Previous Doc */}
                 {(() => {
-                  const currentIndex = categoryDocs.findIndex(d => d.slug === doc.slug);
-                  const prevDoc = currentIndex > 0 ? categoryDocs[currentIndex - 1] : null;
-                  
+                  const currentIndex = categoryDocs.findIndex(
+                    (d) => d.slug === doc.slug,
+                  );
+                  const prevDoc =
+                    currentIndex > 0 ? categoryDocs[currentIndex - 1] : null;
+
                   return prevDoc ? (
                     <Card className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        <Link 
+                        <Link
                           href={`/docs/${prevDoc.slug}`}
                           className="flex items-center gap-3"
                         >
                           <ArrowLeft className="size-5 text-muted-foreground" />
                           <div>
-                            <div className="text-xs text-muted-foreground">Previous</div>
+                            <div className="text-xs text-muted-foreground">
+                              Previous
+                            </div>
                             <div className="font-medium">
                               {prevDoc.frontmatter.title}
                             </div>
@@ -137,18 +146,25 @@ export default async function DocPage(props: DocPageProps) {
 
                 {/* Next Doc */}
                 {(() => {
-                  const currentIndex = categoryDocs.findIndex(d => d.slug === doc.slug);
-                  const nextDoc = currentIndex < categoryDocs.length - 1 ? categoryDocs[currentIndex + 1] : null;
-                  
+                  const currentIndex = categoryDocs.findIndex(
+                    (d) => d.slug === doc.slug,
+                  );
+                  const nextDoc =
+                    currentIndex < categoryDocs.length - 1
+                      ? categoryDocs[currentIndex + 1]
+                      : null;
+
                   return nextDoc ? (
                     <Card className="hover:shadow-md transition-shadow md:ml-auto">
                       <CardContent className="p-4">
-                        <Link 
+                        <Link
                           href={`/docs/${nextDoc.slug}`}
                           className="flex items-center gap-3 text-right"
                         >
                           <div className="flex-1">
-                            <div className="text-xs text-muted-foreground">Next</div>
+                            <div className="text-xs text-muted-foreground">
+                              Next
+                            </div>
                             <div className="font-medium">
                               {nextDoc.frontmatter.title}
                             </div>
