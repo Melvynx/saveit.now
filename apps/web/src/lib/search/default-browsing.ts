@@ -30,11 +30,7 @@ export async function getDefaultBookmarks({
       }
     : {};
 
-  console.log("specialFilters", specialFilters);
-
   const specialFilterConditions = buildSpecialFilterConditions(specialFilters);
-
-  console.log("specialFilterConditions", specialFilterConditions);
 
   const recentBookmarks = await prisma.bookmark.findMany({
     where: {

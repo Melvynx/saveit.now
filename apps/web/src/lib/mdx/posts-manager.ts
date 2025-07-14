@@ -32,11 +32,8 @@ export interface Post {
 
 function findMonorepoRoot(): string {
   let dir = path.resolve(process.cwd());
-  console.log("[findMonorepoRoot] startDir:", dir);
   while (dir !== path.parse(dir).root) {
-    console.log("[findMonorepoRoot] checking:", dir);
     if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-      console.log("[findMonorepoRoot] found monorepo root:", dir);
       return dir;
     }
     dir = path.dirname(dir);
@@ -45,9 +42,7 @@ function findMonorepoRoot(): string {
 }
 
 const monorepoRoot = findMonorepoRoot();
-console.log("[posts-manager] monorepoRoot:", monorepoRoot);
 const postsDirectory = path.join(monorepoRoot, "content", "posts");
-console.log("[posts-manager] postsDirectory:", postsDirectory);
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
@@ -56,7 +51,6 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     const fileContents = fs.readFileSync(fullPath, "utf8");
 
     const { data, content } = matter(fileContents);
-    console.log(data);
     const frontmatter = PostFrontmatterSchema.parse(data);
 
     // Only return published posts
@@ -87,7 +81,7 @@ export async function getAllPosts(): Promise<Post[]> {
     }
 
     const files = fs.readdirSync(postsDirectory);
-    console.log(files, process.cwd());
+
     const posts = await Promise.all(
       files
         .filter((file) => file.endsWith(".mdx"))
@@ -110,7 +104,6 @@ export async function getAllPosts(): Promise<Post[]> {
 
 export async function getFeaturedPosts(): Promise<Post[]> {
   const posts = await getAllPosts();
-  console.log(posts.map((post) => post.frontmatter.title));
   return posts.filter((post) => post.frontmatter.featured);
 }
 
