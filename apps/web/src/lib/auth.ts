@@ -6,6 +6,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { admin, emailOTP, magicLink } from "better-auth/plugins";
 import { AUTH_LIMITS } from "./auth-limits";
+import { createBookmark } from "./database/create-bookmark";
 import { inngest } from "./inngest/client";
 import { resend } from "./resend";
 import { getServerUrl } from "./server-url";
@@ -87,6 +88,17 @@ Melvyn`,
     user: {
       create: {
         after: async (user) => {
+          // Create welcome bookmark for new users
+          try {
+            await createBookmark({
+              url: "https://saveit.now",
+              userId: user.id,
+            });
+          } catch (error) {
+            // Log error but don't fail user creation
+            console.error("Failed to create welcome bookmark for user:", user.id, error);
+          }
+
           inngest.send({
             name: "user/new-subscriber",
             data: {
