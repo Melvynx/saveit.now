@@ -97,7 +97,7 @@ Melvyn`,
         after: async (user) => {
           try {
             await createBookmark({
-              url: process.env.CI ? "https://example.com" : "https://saveit.now",
+              url: "https://saveit.now",
               userId: user.id,
             });
           } catch (error) {
@@ -106,28 +106,14 @@ Melvyn`,
               user.id,
               error,
             );
-            if (process.env.CI) {
-              console.log("CI Debug - User creation hook error details:", {
-                userId: user.id,
-                error: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-                url: process.env.CI ? "http://localhost:3000" : "https://saveit.now",
-              });
-            }
           }
 
-          const inngestEvent = {
+          inngest.send({
             name: "user/new-subscriber",
             data: {
               userId: user.id,
             },
-          };
-          
-          if (process.env.CI) {
-            console.log("CI Debug - Sending Inngest event:", inngestEvent);
-          }
-          
-          inngest.send(inngestEvent);
+          });
         },
       },
     },
