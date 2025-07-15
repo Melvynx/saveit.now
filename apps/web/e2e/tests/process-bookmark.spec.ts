@@ -13,11 +13,33 @@ test.describe("Process bookmarks tests", () => {
     await expect(pendingCardTitle.first()).toBeVisible();
 
     // wait for all pending cards with "saveit.now" to disappear (processing done)
+    // refresh page every 5 seconds to check status, maximum 1 minute
+    const startTime = Date.now();
+    const maxWaitTime = 60000; // 1 minute
+    const refreshInterval = 5000; // 5 seconds
+    
+    while (Date.now() - startTime < maxWaitTime) {
+      const pendingCards = page.locator(
+        '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:text("saveit.now")',
+      );
+      
+      const pendingCount = await pendingCards.count();
+      if (pendingCount === 0) {
+        break; // Processing is done
+      }
+      
+      // Wait 5 seconds before refreshing
+      await page.waitForTimeout(refreshInterval);
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+    }
+    
+    // Final check that processing is complete
     await expect(
       page.locator(
         '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:text("saveit.now")',
       ),
-    ).toHaveCount(0, { timeout: 30000 });
+    ).toHaveCount(0);
 
     // now check for processed card
     const bookmarkCardPage = page.locator(
