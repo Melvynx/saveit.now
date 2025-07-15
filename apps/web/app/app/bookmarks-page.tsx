@@ -5,8 +5,6 @@ import { Loader } from "@workspace/ui/components/loader";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
 import { redirect, useRouter } from "next/navigation";
-import { useRef } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
   BookmarkCard,
@@ -15,7 +13,6 @@ import {
   BookmarkCardPricing,
 } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
-import { MentionFilterInputRef } from "./components/type-filter-input";
 import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
@@ -31,12 +28,6 @@ export function BookmarksPage() {
   } = useBookmarks();
   const session = useSession();
   const router = useRouter();
-  const searchInputRef = useRef<MentionFilterInputRef>(null);
-
-  useHotkeys("mod+k", (event) => {
-    event.preventDefault();
-    searchInputRef.current?.focus();
-  });
 
   if (session.isPending) {
     return <Loader />;
@@ -62,7 +53,7 @@ export function BookmarksPage() {
       <AlertExtensions />
 
       <BookmarkHeader />
-      <SearchInput ref={searchInputRef} />
+      <SearchInput />
       <div
         className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
         style={{
