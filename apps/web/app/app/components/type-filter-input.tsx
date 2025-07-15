@@ -1,7 +1,7 @@
 import { inputVariants } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Plus, Search } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 import { useSearchInput } from "../contexts/search-input-context";
 import { parseMention, removeMention } from "../utils/type-filter-utils";
 
@@ -10,6 +10,10 @@ interface MentionFilterInputProps {
   onQueryChange: (query: string) => void;
   isUrl: boolean;
   onEnterPress: () => void;
+}
+
+export interface MentionFilterInputRef {
+  focus: () => void;
 }
 
 // Helper function to handle cursor focus after mention selection
@@ -22,23 +26,28 @@ const focusCursor = (inputRef: React.RefObject<HTMLInputElement | null>, startIn
   }, 0);
 };
 
-export const MentionFilterInput = ({
-  query,
-  onQueryChange,
-  isUrl,
-  onEnterPress,
-}: MentionFilterInputProps) => {
-  const {
-    showLists,
-    hideLists,
-    addType,
-    addTag,
-    addSpecialFilter,
-    filteredTypes,
-    filteredTags,
-    filteredSpecialFilters,
-  } = useSearchInput();
-  const inputRef = useRef<HTMLInputElement>(null);
+export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilterInputProps>(
+  ({ query, onQueryChange, isUrl, onEnterPress }, ref) => {
+    const {
+      showLists,
+      hideLists,
+      addType,
+      addTag,
+      addSpecialFilter,
+      filteredTypes,
+      filteredTags,
+      filteredSpecialFilters,
+    } = useSearchInput();
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      },
+    }));
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,4 +151,7 @@ export const MentionFilterInput = ({
       />
     </div>
   );
-};
+  },
+);
+
+MentionFilterInput.displayName = "MentionFilterInput";

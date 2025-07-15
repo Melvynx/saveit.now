@@ -1,15 +1,18 @@
 import { Button } from "@workspace/ui/components/button";
 import { useQueryState } from "nuqs";
+import { forwardRef } from "react";
 import { toast } from "sonner";
 import { FilterList } from "./components/filter-list";
 import { SelectedFiltersBadges } from "./components/selected-filters-badges";
-import { MentionFilterInput } from "./components/type-filter-input";
+import { MentionFilterInput, MentionFilterInputRef } from "./components/type-filter-input";
 import { SearchInputProvider } from "./contexts/search-input-context";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
 
-const SearchInputContent = ({ query, setQuery }: { query: string; setQuery: (query: string) => void }) => {
-
+const SearchInputContent = forwardRef<
+  MentionFilterInputRef,
+  { query: string; setQuery: (query: string) => void }
+>(({ query, setQuery }, ref) => {
   // No need to destructure context values here since components access them directly
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
@@ -31,6 +34,7 @@ const SearchInputContent = ({ query, setQuery }: { query: string; setQuery: (que
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <MentionFilterInput
+          ref={ref}
           query={query}
           onQueryChange={setQuery}
           isUrl={isUrl}
@@ -54,16 +58,20 @@ const SearchInputContent = ({ query, setQuery }: { query: string; setQuery: (que
       <FilterList query={query} />
     </div>
   );
-};
+});
 
-export const SearchInput = () => {
+SearchInputContent.displayName = "SearchInputContent";
+
+export const SearchInput = forwardRef<MentionFilterInputRef>((props, ref) => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
 
   return (
     <SearchInputProvider onInputChange={setQuery}>
-      <SearchInputContent query={query} setQuery={setQuery} />
+      <SearchInputContent ref={ref} query={query} setQuery={setQuery} />
     </SearchInputProvider>
   );
-};
+});
+
+SearchInput.displayName = "SearchInput";
