@@ -32,7 +32,7 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
   const pageMetadata = useBookmarkMetadata(bookmark.id);
 
   return (
-    <BookmarkCardContainer bookmark={bookmark}>
+    <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-pending">
       <BookmarkCardHeader>
         <div
           className={cn(

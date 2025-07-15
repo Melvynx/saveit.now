@@ -17,6 +17,7 @@ export const BackButton = () => {
       {({ router }) => (
         <Button
           size="icon"
+          data-testid="back-button"
           variant="outline"
           className="size-8"
           onClick={() => router.back()}
@@ -41,6 +42,7 @@ export const ShareButton = ({
       size="icon"
       variant="outline"
       className="size-8"
+      data-testid="share-button"
       onClick={() => {
         posthog.capture("bookmark+share", {
           bookmarkId,
@@ -88,6 +90,7 @@ export const CopyLinkButton = ({
       size="icon"
       variant="outline"
       className="size-8"
+      data-testid="copy-link-button"
       onClick={() => {
         console.log("copying link", url);
         posthog.capture("bookmark+copy_link", {
@@ -124,10 +127,10 @@ export const CopyLinkButton = ({
   );
 };
 
-export const ReBookmarkButton = ({ 
-  bookmarkId, 
-  children 
-}: { 
+export const ReBookmarkButton = ({
+  bookmarkId,
+  children,
+}: {
   bookmarkId: string;
   children?: React.ReactNode;
 }) => {
@@ -146,6 +149,7 @@ export const ReBookmarkButton = ({
 
   return (
     <LoadingButton
+      data-testid="rebookmark-button"
       loading={action.isPending}
       size={children ? "sm" : "icon"}
       variant="outline"

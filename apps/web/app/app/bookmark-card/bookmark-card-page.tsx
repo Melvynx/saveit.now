@@ -25,7 +25,7 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
   const isVerticalImage = metadata?.width < metadata?.height;
 
   return (
-    <BookmarkCardContainer bookmark={bookmark}>
+    <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-page">
       <BookmarkCardHeader>
         <LinkWithQuery
           to={`/app/b/${bookmark.id}`}

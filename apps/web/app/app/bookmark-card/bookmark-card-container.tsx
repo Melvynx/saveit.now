@@ -21,6 +21,7 @@ interface BookmarkCardContainerProps {
   className?: string;
   onMouseEnter?: () => void;
   ref?: React.RefObject<HTMLDivElement | null>;
+  testId?: string;
 }
 
 export const BookmarkCardContainer = ({
@@ -29,6 +30,7 @@ export const BookmarkCardContainer = ({
   className = "",
   onMouseEnter,
   ref,
+  testId,
 }: BookmarkCardContainerProps) => {
   const prefetch = usePrefetchBookmark();
   const { copyToClipboard, isCopied } = useCopyToClipboard(5000);
@@ -50,6 +52,7 @@ export const BookmarkCardContainer = ({
           ref={ref}
           className={`group w-full gap-4 overflow-hidden p-0 h-[var(--card-height)] ${className}`}
           onMouseEnter={handleMouseEnter}
+          data-testid={testId}
         >
           {children}
         </Card>
