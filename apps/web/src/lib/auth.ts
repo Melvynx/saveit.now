@@ -109,8 +109,8 @@ Melvyn`,
             if (process.env.CI) {
               console.log("CI Debug - User creation hook error details:", {
                 userId: user.id,
-                error: error.message,
-                stack: error.stack,
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
                 url: process.env.CI ? "http://localhost:3000" : "https://saveit.now",
               });
             }
