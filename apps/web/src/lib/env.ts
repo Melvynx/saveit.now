@@ -22,6 +22,7 @@ export const env = createEnv({
     HELP_EMAIL: z.string().min(1),
     STRIPE_COUPON_ID: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
+    CI: z.coerce.boolean().optional().default(false),
   },
   client: {},
   experimental__runtimeEnv: {},

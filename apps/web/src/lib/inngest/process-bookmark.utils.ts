@@ -18,18 +18,17 @@ export async function getAITags(
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
-    model:
-      env.NODE_ENV === "test"
-        ? new MockLanguageModelV1({
-            defaultObjectGenerationMode: "json",
-            doGenerate: async () => ({
-              rawCall: { rawPrompt: null, rawSettings: {} },
-              finishReason: "stop",
-              usage: { promptTokens: 10, completionTokens: 20 },
-              text: `{"tags":["tag1","tag2"]}`,
-            }),
-          })
-        : OPENAI_MODELS.cheap,
+    model: env.CI
+      ? new MockLanguageModelV1({
+          defaultObjectGenerationMode: "json",
+          doGenerate: async () => ({
+            rawCall: { rawPrompt: null, rawSettings: {} },
+            finishReason: "stop",
+            usage: { promptTokens: 10, completionTokens: 20 },
+            text: `{"tags":["tag1","tag2"]}`,
+          }),
+        })
+      : OPENAI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),
