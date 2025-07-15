@@ -97,7 +97,7 @@ Melvyn`,
         after: async (user) => {
           try {
             await createBookmark({
-              url: process.env.CI ? "http://localhost:3000" : "https://saveit.now",
+              url: process.env.CI ? "https://example.com" : "https://saveit.now",
               userId: user.id,
             });
           } catch (error) {
