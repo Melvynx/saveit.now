@@ -1,6 +1,6 @@
+import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getCookieCache } from "better-auth/cookies";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname.slice(1);
@@ -12,10 +12,14 @@ export async function middleware(request: NextRequest) {
         new URL(`/api/b?url=${encodeURIComponent(pathname)}`, request.url),
       );
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
 
   if (request.nextUrl.pathname === "/") {
-    const session = await getCookieCache(request);
+    const session = getSessionCookie(request, {
+      cookiePrefix: "save-it",
+    });
 
     if (session) {
       const url = new URL(request.url);
