@@ -67,6 +67,9 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # External APIs
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      # Inngest
+      INNGEST_EVENT_KEY: "test"
+      INNGEST_SIGNING_KEY: "test-signing-key"
       # Playwright specific
       PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
       HEADLESS: "true"
@@ -129,7 +132,7 @@ jobs:
         run: |
           # Start Inngest dev server with production URL for this branch, redirect logs to file
           mkdir -p logs
-          pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest > logs/inngest.log 2>&1 &
+          INNGEST_SIGNING_KEY=test-signing-key pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest > logs/inngest.log 2>&1 &
           echo "Inngest dev server started with production endpoint, logs saved to logs/inngest.log"
 
       - name: Start application
