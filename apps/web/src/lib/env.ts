@@ -15,7 +15,7 @@ export const env = createEnv({
     AWS_ENDPOINT: z.string().min(1),
     R2_URL: z.string().min(1),
     SCREENSHOT_WORKER_URL: z.string().min(1),
-    NODE_ENV: z.enum(["development", "production"]),
+    NODE_ENV: z.enum(["development", "production", "test"]),
     RESEND_EMAIL_FROM: z
       .string()
       .default("Melvyn from SaveIt.now <help@re.saveit.now>"),

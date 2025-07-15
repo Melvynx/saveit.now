@@ -1,5 +1,7 @@
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
+import { MockLanguageModelV1 } from "ai/test";
+import { env } from "process";
 import { z } from "zod";
 import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
@@ -16,7 +18,18 @@ export async function getAITags(
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
-    model: OPENAI_MODELS.cheap,
+    model:
+      env.NODE_ENV === "test"
+        ? new MockLanguageModelV1({
+            defaultObjectGenerationMode: "json",
+            doGenerate: async () => ({
+              rawCall: { rawPrompt: null, rawSettings: {} },
+              finishReason: "stop",
+              usage: { promptTokens: 10, completionTokens: 20 },
+              text: `{"tags":["tag1","tag2"]}`,
+            }),
+          })
+        : OPENAI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),

@@ -68,6 +68,10 @@ export async function uploadFileFromURLToS3(params: {
   prefix: string;
   fileName: string;
 }): Promise<string | null> {
+  if (env.NODE_ENV === "test") {
+    return "https://placehold.co/500x500";
+  }
+
   try {
     const response = await fetch(params.url);
     if (!response.ok) {
