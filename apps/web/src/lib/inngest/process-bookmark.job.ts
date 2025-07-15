@@ -1,13 +1,14 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
+import { env } from "../env";
 import { logger } from "../logger";
+import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
-import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
+import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
-import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 
@@ -54,6 +55,13 @@ export const processBookmarkJob = inngest.createFunction(
   },
   { event: "bookmark/process" },
   async ({ event, step, runId, publish }) => {
+    logger.info("Process bookmark", {
+      runId,
+      event,
+      env: env.NODE_ENV,
+      workerUrl: env.SCREENSHOT_WORKER_URL,
+    });
+
     const bookmarkId = event.data.bookmarkId;
 
     if (!bookmarkId) {
