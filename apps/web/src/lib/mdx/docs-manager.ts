@@ -29,19 +29,40 @@ export interface Doc {
   };
 }
 
-function findMonorepoRoot(): string {
-  let dir = path.resolve(process.cwd());
-  while (dir !== path.parse(dir).root) {
-    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-      return dir;
+function getDocsDirectory(): string {
+  // Try multiple possible locations for the docs directory
+  const possiblePaths: string[] = [
+    // Production: relative to app directory
+    path.resolve(process.cwd(), "content/docs"),
+    // Development: from monorepo root
+    (() => {
+      let dir = path.resolve(process.cwd());
+      while (dir !== path.parse(dir).root) {
+        const workspaceFile = path.join(dir, "pnpm-workspace.yaml");
+        if (fs.existsSync(workspaceFile)) {
+          return path.join(dir, "content", "docs");
+        }
+        dir = path.dirname(dir);
+      }
+      return null;
+    })(),
+    // Fallback: relative paths
+    path.resolve(process.cwd(), "../../content/docs"),
+    path.resolve(process.cwd(), "../../../content/docs"),
+  ].filter((path): path is string => path !== null);
+
+  // Return the first path that exists
+  for (const docPath of possiblePaths) {
+    if (fs.existsSync(docPath)) {
+      return docPath;
     }
-    dir = path.dirname(dir);
   }
-  throw new Error("Monorepo root not found");
+
+  // If no path exists, use the first one (will create directory if needed)
+  return possiblePaths[0] || path.resolve(process.cwd(), "content/docs");
 }
 
-const monorepoRoot = findMonorepoRoot();
-const docsDirectory = path.join(monorepoRoot, "content", "docs");
+const docsDirectory = getDocsDirectory();
 
 export async function getDocBySlug(slug: string): Promise<Doc | null> {
   try {

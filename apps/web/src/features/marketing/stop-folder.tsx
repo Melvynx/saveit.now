@@ -20,17 +20,17 @@ export const StopFolder = () => {
           </Typography>
           <div className="h-42 relative w-full">
             <img
-              src="/landing/folder.png"
+              src="/images/landing/folder.png"
               alt="Folder"
               className="size-32 -rotate-12 absolute top-10 left-10"
             />
             <img
-              src="/landing/mess.png"
+              src="/images/landing/mess.png"
               alt="Folder"
               className="size-32 rotate-3 absolute top-10 left-1/2 -translate-x-1/2"
             />
             <img
-              src="/landing/tags.png"
+              src="/images/landing/tags.png"
               alt="Folder"
               className="size-32 rotate-12 absolute top-10 right-10"
             />

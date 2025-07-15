@@ -15,16 +15,21 @@ import {
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ImportForm } from "../imports/import-form";
 import { finishOnboardingAction } from "./start.action";
 
 export default function StartPage() {
   const session = useSession();
+  const router = useRouter();
   const finishMutation = useMutation({
     mutationFn: finishOnboardingAction,
     onSuccess: () => {
       session.refetch();
+      setTimeout(() => {
+        router.push(APP_LINKS.app);
+      }, 500);
       toast.success("Onboarding finished");
     },
     onError: () => {

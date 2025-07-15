@@ -2,6 +2,11 @@ import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  logging: process.env.CI ? {
+    fetches: {
+      fullUrl: true,
+    },
+  } : undefined,
   transpilePackages: ["@workspace/ui"],
   experimental: {
     authInterrupts: true,

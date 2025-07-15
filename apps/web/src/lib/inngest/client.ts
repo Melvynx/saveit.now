@@ -5,4 +5,5 @@ import { Inngest } from "inngest";
 export const inngest = new Inngest({
   id: "saveit.now",
   middleware: [realtimeMiddleware()],
+  eventKey: process.env.INNGEST_EVENT_KEY,
 });

@@ -1,11 +1,11 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
-import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { hasMarkdownContent } from "@/lib/bookmark-content";
+import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { Button } from "@workspace/ui/components/button";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
-import { ExternalLink, BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useParams } from "react-router";
@@ -71,7 +71,12 @@ export function BookmarkPage() {
         <header className="flex items-center gap-2 px-6 pt-6">
           <div className="flex-1"></div>
           <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
-            <Button size="icon" variant="outline" className="size-8">
+            <Button
+              size="icon"
+              variant="outline"
+              className="size-8"
+              data-testid="external-link-button"
+            >
               <ExternalLink className="text-muted-foreground size-4" />
             </Button>
           </ExternalLinkTracker>

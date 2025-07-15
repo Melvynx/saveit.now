@@ -34,7 +34,9 @@
         "RESEND_EMAIL_FROM",
         "STRIPE_COUPON_ID",
         "VERCEL_ENV",
-        "NODE_ENV"
+        "NODE_ENV",
+        "CI",
+        "HEADLESS"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

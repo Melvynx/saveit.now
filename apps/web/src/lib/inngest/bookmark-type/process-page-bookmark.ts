@@ -335,8 +335,7 @@ ${screenshotDescription}
       model: OPENAI_MODELS.embedding,
       values: [vectorSummary || "", pageMetadata.title || ""],
     });
-    const [vectorSummaryEmbedding, titleEmbedding] =
-      embedding.embeddings;
+    const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`

@@ -80,6 +80,7 @@ export const StarButton = ({
       className={cn(size === "icon" && "size-8", className)}
       onClick={handleClick}
       disabled={toggleStarAction.isExecuting}
+      data-testid="star-button"
     >
       <Star
         className={cn(

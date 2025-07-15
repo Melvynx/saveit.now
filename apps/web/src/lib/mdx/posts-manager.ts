@@ -30,19 +30,40 @@ export interface Post {
   };
 }
 
-function findMonorepoRoot(): string {
-  let dir = path.resolve(process.cwd());
-  while (dir !== path.parse(dir).root) {
-    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-      return dir;
+function getPostsDirectory(): string {
+  // Try multiple possible locations for the posts directory
+  const possiblePaths: string[] = [
+    // Production: relative to app directory
+    path.resolve(process.cwd(), "content/posts"),
+    // Development: from monorepo root
+    (() => {
+      let dir = path.resolve(process.cwd());
+      while (dir !== path.parse(dir).root) {
+        const workspaceFile = path.join(dir, "pnpm-workspace.yaml");
+        if (fs.existsSync(workspaceFile)) {
+          return path.join(dir, "content", "posts");
+        }
+        dir = path.dirname(dir);
+      }
+      return null;
+    })(),
+    // Fallback: relative paths
+    path.resolve(process.cwd(), "../../content/posts"),
+    path.resolve(process.cwd(), "../../../content/posts"),
+  ].filter((path): path is string => path !== null);
+
+  // Return the first path that exists
+  for (const postPath of possiblePaths) {
+    if (fs.existsSync(postPath)) {
+      return postPath;
     }
-    dir = path.dirname(dir);
   }
-  throw new Error("Monorepo root not found");
+
+  // If no path exists, use the first one (will create directory if needed)
+  return possiblePaths[0] || path.resolve(process.cwd(), "content/posts");
 }
 
-const monorepoRoot = findMonorepoRoot();
-const postsDirectory = path.join(monorepoRoot, "content", "posts");
+const postsDirectory = getPostsDirectory();
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
