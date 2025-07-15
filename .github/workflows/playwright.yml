@@ -127,12 +127,16 @@ jobs:
 
       - name: Start Inngest dev server
         run: |
-          # Start Inngest dev server with production URL for this branch
-          pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest &
-          echo "Inngest dev server started with production endpoint"
+          # Start Inngest dev server with production URL for this branch, redirect logs to file
+          mkdir -p logs
+          pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest > logs/inngest.log 2>&1 &
+          echo "Inngest dev server started with production endpoint, logs saved to logs/inngest.log"
 
       - name: Start application
-        run: pnpm start &
+        run: |
+          # Start application and capture logs
+          mkdir -p logs
+          pnpm start > logs/server.log 2>&1 &
         working-directory: apps/web
 
       - name: Wait for application to be ready
@@ -156,4 +160,14 @@ jobs:
         with:
           name: test-results
           path: apps/web/test-results/
+          retention-days: 30
+
+      - name: Upload server and Inngest logs
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: debug-logs
+          path: |
+            logs/
+            apps/web/logs/
           retention-days: 30
