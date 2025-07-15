@@ -6,33 +6,36 @@ test.describe("Process bookmarks tests", () => {
   test("should process bookmark", async ({ page }) => {
     await signInWithEmail({ email: getUserEmail(), page });
 
-    // after creating an account, check at least one pending card with "SaveIt.now" is visible
-    const pendingCardTitle = page.locator(
-      '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
-    );
-    await expect(pendingCardTitle.first()).toBeVisible();
+    // after creating an account, check that a pending card with "SaveIt.now" is visible
+    await expect(
+      page
+        .locator(
+          '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
+        )
+        .first(),
+    ).toBeVisible();
 
     // wait for all pending cards with "SaveIt.now" to disappear (processing done)
     // hard refresh page every 30 seconds to check status, maximum 3 minutes
     const startTime = Date.now();
     const maxWaitTime = 180000; // 3 minutes
     const refreshInterval = 30000; // 30 seconds
-    
+
     while (Date.now() - startTime < maxWaitTime) {
       const pendingCards = page.locator(
         '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
       );
-      
+
       const pendingCount = await pendingCards.count();
       if (pendingCount === 0) {
         break; // Processing is done
       }
-      
+
       // Wait 30 seconds before hard refreshing
       await page.waitForTimeout(refreshInterval);
-      await page.reload({ waitUntil: 'networkidle' });
+      await page.reload({ waitUntil: "networkidle" });
     }
-    
+
     // Final check that processing is complete
     await expect(
       page.locator(
