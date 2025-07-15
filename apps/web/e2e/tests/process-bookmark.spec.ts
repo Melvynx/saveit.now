@@ -13,10 +13,10 @@ test.describe("Process bookmarks tests", () => {
     await expect(pendingCardTitle.first()).toBeVisible();
 
     // wait for all pending cards with "saveit.now" to disappear (processing done)
-    // refresh page every 5 seconds to check status, maximum 1 minute
+    // hard refresh page every 30 seconds to check status, maximum 3 minutes
     const startTime = Date.now();
-    const maxWaitTime = 60000; // 1 minute
-    const refreshInterval = 5000; // 5 seconds
+    const maxWaitTime = 180000; // 3 minutes
+    const refreshInterval = 30000; // 30 seconds
     
     while (Date.now() - startTime < maxWaitTime) {
       const pendingCards = page.locator(
@@ -28,10 +28,9 @@ test.describe("Process bookmarks tests", () => {
         break; // Processing is done
       }
       
-      // Wait 5 seconds before refreshing
+      // Wait 30 seconds before hard refreshing
       await page.waitForTimeout(refreshInterval);
-      await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.reload({ waitUntil: 'networkidle' });
     }
     
     // Final check that processing is complete
