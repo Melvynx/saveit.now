@@ -29,7 +29,7 @@ export const OPENAI_MODELS: {
       }),
       embedding: new MockEmbeddingModelV1({
         doEmbed: async (options) => ({
-          embeddings: options.values.map(() => [1, 2, 3]),
+          embeddings: options.values.map(() => Array.from({length: 1536}, (_, i) => Math.random() * 0.01 + i * 0.0001)),
         }),
       }),
     }
