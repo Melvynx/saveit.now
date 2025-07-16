@@ -22,17 +22,17 @@ describe("Search Input Functionality", () => {
   let mockUseHotkeys: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSetQuery = vi.fn();
-    mockUseHotkeys = vi.fn();
+    mockSetQuery = vi.fn().mockResolvedValue(new URLSearchParams());
+    mockUseHotkeys = vi.fn().mockReturnValue({ current: null });
     
     // Mock useQueryState to return query and setQuery
     vi.mocked(useQueryState).mockReturnValue([
       "", // query
-      mockSetQuery, // setQuery
+      mockSetQuery as any, // setQuery
     ]);
 
     // Mock useHotkeys
-    vi.mocked(useHotkeys).mockImplementation(mockUseHotkeys);
+    vi.mocked(useHotkeys).mockImplementation(mockUseHotkeys as any);
 
     // Mock toast
     vi.mocked(toast.success).mockClear();

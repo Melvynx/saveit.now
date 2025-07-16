@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { RenderOptions } from "@testing-library/react";
+import type { RenderOptions, RenderResult } from "@testing-library/react";
 import { render } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import { userEvent, type UserEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { SearchInputProvider } from "../app/app/contexts/search-input-context";
 
@@ -11,7 +11,7 @@ export const setup = (
     withSearchProvider?: boolean;
     onInputChange?: (query: string) => void;
   },
-) => {
+): RenderResult & { user: UserEvent; queryClient: QueryClient } => {
   const { withSearchProvider = true, onInputChange = () => {}, ...renderOptions } = options || {};
 
   // Create a new QueryClient for each test
@@ -53,6 +53,6 @@ export const setup = (
 export const setupWithoutProviders = (
   jsx: ReactElement,
   options?: Omit<RenderOptions, "queries">,
-) => {
+): RenderResult & { user: UserEvent; queryClient: QueryClient } => {
   return setup(jsx, { ...options, withSearchProvider: false });
 };
