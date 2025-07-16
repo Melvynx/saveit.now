@@ -56,7 +56,7 @@ export async function saveBookmark(
   url: string,
   transcript?: string,
   metadata?: any,
-): Promise<{ success: boolean; error?: string; errorType?: string }> {
+): Promise<{ success: boolean; error?: string; errorType?: string; bookmarkId?: string }> {
   try {
     console.log("Saving bookmark for URL:", url);
 
@@ -130,14 +130,72 @@ export async function saveBookmark(
       };
     }
 
-    console.log("Bookmark saved successfully");
-    return { success: true };
+    const responseData = await response.json();
+    console.log("Bookmark saved successfully", responseData);
+    return { success: true, bookmarkId: responseData.bookmark?.id };
   } catch (error) {
     console.error("Error saving bookmark:", error);
     return {
       success: false,
       error: "Network error occurred. Please try again.",
       errorType: "NETWORK_ERROR",
+    };
+  }
+}
+
+export async function uploadScreenshot(
+  bookmarkId: string,
+  screenshotBlob: Blob,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("Uploading screenshot for bookmark:", bookmarkId);
+
+    const session = await getSession();
+    if (!session) {
+      console.error("No session available, cannot upload screenshot");
+      return {
+        success: false,
+        error: "You must be logged in to upload a screenshot",
+      };
+    }
+
+    const formData = new FormData();
+    formData.append("screenshot", screenshotBlob, "screenshot.png");
+
+    const response = await fetch(
+      `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`,
+      {
+        method: "POST",
+        credentials: "include",
+        mode: "cors",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to upload screenshot";
+      try {
+        const errorData = await response.json();
+        console.error("Screenshot upload error:", errorData);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch (e) {
+        console.error("Failed to parse screenshot upload error response:", e);
+      }
+
+      console.error("Screenshot upload error response:", response.status, errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+
+    console.log("Screenshot uploaded successfully");
+    return { success: true };
+  } catch (error) {
+    console.error("Error uploading screenshot:", error);
+    return {
+      success: false,
+      error: "Network error occurred while uploading screenshot",
     };
   }
 }

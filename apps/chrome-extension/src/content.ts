@@ -2,6 +2,7 @@
 
 // Import type uniquement, plus d'import de fonctions
 import type { Session } from "./auth-client";
+import { uploadScreenshot } from "./auth-client";
 import {
   extractYouTubeTranscript,
   isYouTubeVideoPage,
@@ -22,6 +23,7 @@ enum SaveType {
 enum SaverState {
   HIDDEN = "hidden",
   LOADING = "loading",
+  CAPTURING_SCREENSHOT = "capturing-screenshot",
   SUCCESS = "success",
   ERROR = "error",
   AUTH_REQUIRED = "auth-required",
@@ -104,6 +106,11 @@ function createSaverUI() {
         <div id="saveit-loading-message" class="saveit-message">Saving...</div>
       </div>
       
+      <div id="saveit-capturing-screenshot" class="saveit-state">
+        <svg class="saveit-loader" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-icon lucide-camera"><path d="m14.5 4-2-2h-5l-2 2"/><rect width="18" height="12" x="3" y="4" rx="2"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="saveit-message">Capturing screenshot...</div>
+      </div>
+      
       <div id="saveit-success" class="saveit-state">
         <svg class="saveit-checkmark" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
         <div id="saveit-success-message" class="saveit-message">Page saved!</div>
@@ -177,6 +184,11 @@ function setState(state: SaverState) {
         loadingMsg.textContent = `Saving ${getSaveTypeText(currentSaveType)}...`;
       }
       break;
+    case SaverState.CAPTURING_SCREENSHOT:
+      container.classList.remove("hidden");
+      const capturingEl = document.getElementById("saveit-capturing-screenshot");
+      if (capturingEl) capturingEl.style.display = "flex";
+      break;
     case SaverState.SUCCESS:
       container.classList.remove("hidden");
       const successEl = document.getElementById("saveit-success");
@@ -240,6 +252,33 @@ function setLoadingMessage(message: string) {
   const loadingMessageEl = document.getElementById("saveit-loading-message");
   if (loadingMessageEl) {
     loadingMessageEl.textContent = message;
+  }
+}
+
+// Capturer une capture d'écran de la page actuelle
+async function captureScreenshot(): Promise<Blob | null> {
+  try {
+    // Demander au background script de capturer la capture d'écran
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "CAPTURE_SCREENSHOT" }, (response) => {
+        if (response && response.success && response.screenshotDataUrl) {
+          // Convertir le data URL en Blob
+          fetch(response.screenshotDataUrl)
+            .then(res => res.blob())
+            .then(blob => resolve(blob))
+            .catch(error => {
+              console.error("Error converting screenshot to blob:", error);
+              resolve(null);
+            });
+        } else {
+          console.error("Failed to capture screenshot:", response?.error);
+          resolve(null);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error capturing screenshot:", error);
+    return null;
   }
 }
 
@@ -321,6 +360,28 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
     );
 
     if (result.success) {
+      // Étape 2: Capturer et envoyer la capture d'écran
+      if (result.bookmarkId) {
+        try {
+          setState(SaverState.CAPTURING_SCREENSHOT);
+          
+          const screenshot = await captureScreenshot();
+          if (screenshot) {
+            const uploadResult = await uploadScreenshot(result.bookmarkId, screenshot);
+            if (!uploadResult.success) {
+              console.warn("Screenshot upload failed:", uploadResult.error);
+              // Continue to success even if screenshot upload fails
+            }
+          } else {
+            console.warn("Screenshot capture failed, but bookmark was saved");
+            // Continue to success even if screenshot capture fails
+          }
+        } catch (error) {
+          console.error("Error during screenshot capture/upload:", error);
+          // Continue to success even if screenshot process fails
+        }
+      }
+      
       setState(SaverState.SUCCESS);
     } else {
       // Gérer les différents types d'erreurs basé sur errorType

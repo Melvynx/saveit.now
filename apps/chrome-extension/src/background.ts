@@ -145,6 +145,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true; // Indicates async response
   }
+
+  if (message.type === "CAPTURE_SCREENSHOT") {
+    // Handle screenshot capture request from content script
+    if (sender.tab?.id) {
+      chrome.tabs.captureVisibleTab(
+        sender.tab.windowId,
+        { format: "png" },
+        (screenshotDataUrl) => {
+          if (chrome.runtime.lastError) {
+            console.error("Screenshot capture error:", chrome.runtime.lastError.message);
+            sendResponse({
+              success: false,
+              error: chrome.runtime.lastError.message,
+            });
+          } else {
+            console.log("Screenshot captured successfully");
+            sendResponse({
+              success: true,
+              screenshotDataUrl,
+            });
+          }
+        }
+      );
+    } else {
+      sendResponse({
+        success: false,
+        error: "No active tab found",
+      });
+    }
+    return true; // Indicates async response
+  }
 });
 
 // Listen for auth events
