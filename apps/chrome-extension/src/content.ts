@@ -2,6 +2,7 @@
 
 // Import type uniquement, plus d'import de fonctions
 import type { Session } from "./auth-client";
+import { isYouTubeVideoPage, extractYouTubeTranscript, waitForYouTubePlayer } from "./youtube-transcript";
 
 const BASE_URL = "https://saveit.now";
 
@@ -40,6 +41,8 @@ async function getSessionFromBackground(): Promise<Session | null> {
 async function saveBookmarkViaBackground(
   url: string,
   itemType: SaveType = SaveType.PAGE,
+  transcript?: string,
+  metadata?: any,
 ): Promise<{
   success: boolean;
   error?: string;
@@ -52,6 +55,8 @@ async function saveBookmarkViaBackground(
         type: "SAVE_BOOKMARK",
         url,
         itemType,
+        transcript,
+        metadata,
       },
       (response) => {
         console.log("Content: Save response from background", response);
@@ -241,8 +246,44 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
       return;
     }
 
+    let transcript: string | undefined;
+    let metadata: any | undefined;
+
+    // Extract transcript for YouTube videos
+    if (isYouTubeVideoPage()) {
+      console.log('YouTube video detected, attempting transcript extraction...');
+      
+      try {
+        // Wait for YouTube player to be ready
+        const playerReady = await waitForYouTubePlayer(5000);
+        
+        if (playerReady) {
+          const transcriptResult = await extractYouTubeTranscript(url);
+          
+          if (transcriptResult) {
+            transcript = transcriptResult.transcript;
+            metadata = {
+              youtubeTranscript: {
+                source: transcriptResult.source,
+                videoId: transcriptResult.videoId,
+                extractedAt: transcriptResult.extractedAt,
+              }
+            };
+            console.log('Successfully extracted YouTube transcript from:', transcriptResult.source);
+          } else {
+            console.log('No transcript found for YouTube video');
+          }
+        } else {
+          console.warn('YouTube player not ready, skipping transcript extraction');
+        }
+      } catch (error) {
+        console.error('Error extracting YouTube transcript:', error);
+        // Continue with bookmark saving even if transcript extraction fails
+      }
+    }
+
     // Sauvegarder l'élément via le background
-    const result = await saveBookmarkViaBackground(url, type);
+    const result = await saveBookmarkViaBackground(url, type, transcript, metadata);
 
     if (result.success) {
       setState(SaverState.SUCCESS);

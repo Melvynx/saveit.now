@@ -48,6 +48,8 @@ export async function getSession(): Promise<Session | null> {
 
 export async function saveBookmark(
   url: string,
+  transcript?: string,
+  metadata?: any,
 ): Promise<{ success: boolean; error?: string; errorType?: string }> {
   try {
     console.log("Saving bookmark for URL:", url);
@@ -63,6 +65,17 @@ export async function saveBookmark(
       };
     }
 
+    // Prepare request body
+    const requestBody: any = { url };
+    if (transcript) {
+      requestBody.transcript = transcript;
+    }
+    if (metadata) {
+      requestBody.metadata = metadata;
+    }
+
+    console.log("Saving bookmark with data:", requestBody);
+
     // Envoyer la requête pour sauvegarder le bookmark
     const response = await fetch(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
@@ -72,7 +85,7 @@ export async function saveBookmark(
       },
       credentials: "include",
       mode: "cors",
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(requestBody),
     });
 
     // Gérer la réponse

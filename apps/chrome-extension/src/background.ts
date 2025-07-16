@@ -111,8 +111,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle bookmark save request from content script
     const url = message.url;
     const itemType = message.itemType || "page"; // page, link, image
+    const transcript = message.transcript;
+    const metadata = message.metadata;
 
-    saveBookmark(url)
+    saveBookmark(url, transcript, metadata)
       .then((result) => {
         console.log(`Background: ${itemType} save result`, result);
         sendResponse({ ...result, itemType });
