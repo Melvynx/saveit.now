@@ -160,7 +160,7 @@ export async function uploadScreenshot(
     }
 
     const formData = new FormData();
-    formData.append("screenshot", screenshotBlob, "screenshot.png");
+    formData.append("file", screenshotBlob, "screenshot.png");
 
     const response = await fetch(
       `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`,
