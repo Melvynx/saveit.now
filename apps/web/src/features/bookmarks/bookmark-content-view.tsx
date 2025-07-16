@@ -1,15 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
 import { Badge } from "@workspace/ui/components/badge";
 import { Card } from "@workspace/ui/components/card";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Typography } from "@workspace/ui/components/typography";
 import { Image, LucideIcon, Sparkle, TagIcon } from "lucide-react";
 import { Tweet } from "react-tweet";
+import { useState } from "react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import { ScreenshotUploader } from "./screenshot-uploader";
 
 export const BookmarkContentView = ({
   bookmark,
@@ -18,6 +22,11 @@ export const BookmarkContentView = ({
   bookmark: BookmarkViewType;
   isPublic?: boolean;
 }) => {
+  const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
+
+  const handleUploadSuccess = (newPreviewUrl: string) => {
+    setCurrentPreview(newPreviewUrl);
+  };
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -71,12 +80,21 @@ export const BookmarkContentView = ({
         ) : (
           <>
             <BookmarkSectionTitle icon={Image} text="Screenshot" />
-            <ImageWithPlaceholder
-              src={bookmark.preview ?? ""}
-              fallbackImage={bookmark.ogImageUrl ?? ""}
-              alt="screenshot"
-              className="rounded-md"
-            />
+            <div className="relative group">
+              <ImageWithPlaceholder
+                src={currentPreview ?? ""}
+                fallbackImage={bookmark.ogImageUrl ?? ""}
+                alt="screenshot"
+                className="rounded-md"
+              />
+              {!isPublic && (
+                <ScreenshotUploader
+                  bookmarkId={bookmark.id}
+                  onUploadSuccess={handleUploadSuccess}
+                  className="rounded-md"
+                />
+              )}
+            </div>
           </>
         )}
       </Card>
