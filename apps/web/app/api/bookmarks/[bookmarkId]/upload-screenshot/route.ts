@@ -29,8 +29,8 @@ export const POST = userRoute
       }
 
       // Parse form data
-      console.log(body);
-      const file = body.file;
+      const formData = body instanceof FormData ? body : await req.formData();
+      const file = formData.get('file') as File;
 
       if (!file) {
         return NextResponse.json(
