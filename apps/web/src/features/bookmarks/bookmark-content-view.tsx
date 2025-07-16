@@ -10,6 +10,7 @@ import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import { TranscriptViewer } from "./transcript-viewer";
 
 export const BookmarkContentView = ({
   bookmark,
@@ -18,6 +19,12 @@ export const BookmarkContentView = ({
   bookmark: BookmarkViewType;
   isPublic?: boolean;
 }) => {
+  // Extract transcript data from metadata
+  const metadata = bookmark.metadata as Record<string, any> | null;
+  const transcript = metadata?.transcript as string | undefined;
+  const transcriptSource = metadata?.transcriptSource as string | undefined;
+  const transcriptExtractedAt = metadata?.transcriptExtractedAt as string | undefined;
+
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -60,6 +67,15 @@ export const BookmarkContentView = ({
           </Typography>
         </div>
       </Card>
+      
+      {/* YouTube Transcript Section */}
+      {bookmark.type === "YOUTUBE" && transcript && (
+        <TranscriptViewer
+          transcript={transcript}
+          transcriptSource={transcriptSource}
+          extractedAt={transcriptExtractedAt}
+        />
+      )}
       <Card className="p-4">
         {bookmark.type === "TWEET" ? (
           <>
