@@ -42,6 +42,13 @@ function copyFiles(source, target) {
 // Compile TypeScript files
 async function compileTypeScript() {
   try {
+    // Check if --dev flag is passed
+    const isDev = process.argv.includes('--dev');
+    const baseUrl = isDev ? 'http://localhost:3000' : 'https://saveit.now';
+    
+    console.log(`Building for ${isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+    console.log(`Base URL: ${baseUrl}`);
+
     // Build background and content scripts with IIFE format for Chrome extension compatibility
     await build({
       entryPoints: [
@@ -51,10 +58,14 @@ async function compileTypeScript() {
       bundle: true,
       outdir: targetDir,
       platform: "browser",
-      minify: true,
+      minify: !isDev, // Don't minify in dev mode for better debugging
       format: "iife",
       target: "es2020",
       loader: { ".ts": "ts" },
+      define: {
+        '__BASE_URL__': JSON.stringify(baseUrl),
+        '__IS_DEV__': JSON.stringify(isDev),
+      },
     });
 
     console.log("TypeScript files compiled successfully!");

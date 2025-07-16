@@ -114,6 +114,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const transcript = message.transcript;
     const metadata = message.metadata;
 
+    console.log("Background: SAVE_BOOKMARK request", {
+      url,
+      itemType,
+      hasTranscript: !!transcript,
+      transcriptLength: transcript?.length,
+      metadata,
+    });
+
     saveBookmark(url, transcript, metadata)
       .then((result) => {
         console.log(`Background: ${itemType} save result`, result);

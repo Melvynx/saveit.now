@@ -8,7 +8,7 @@ interface TranscriptEntry {
 
 interface YouTubeTranscriptResult {
   transcript: string;
-  source: 'page' | 'api' | 'captions';
+  source: 'xhr-interception' | 'page' | 'api' | 'captions';
   videoId: string;
   extractedAt: string;
 }
@@ -19,7 +19,7 @@ interface YouTubeTranscriptResult {
 function getYouTubeVideoId(url: string): string | null {
   const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
-  return match ? match[1] : null;
+  return match ? match[1] || null : null;
 }
 
 /**
@@ -29,6 +29,14 @@ export function isYouTubeVideoPage(): boolean {
   return window.location.hostname.includes('youtube.com') && 
          window.location.pathname === '/watch' && 
          window.location.search.includes('v=');
+}
+
+/**
+ * Start global interception immediately (call this when script loads)
+ */
+export function startGlobalInterception() {
+  initializeGlobalInterception();
+  console.log("🚀 Global URL interception started");
 }
 
 /**
@@ -44,7 +52,7 @@ async function extractTranscriptFromPageData(videoId: string): Promise<string | 
       
       // Look for ytInitialPlayerResponse
       const playerResponseMatch = content.match(/var ytInitialPlayerResponse = ({.+?});/);
-      if (playerResponseMatch) {
+      if (playerResponseMatch && playerResponseMatch[1]) {
         try {
           const playerResponse = JSON.parse(playerResponseMatch[1]);
           const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
@@ -73,12 +81,109 @@ async function extractTranscriptFromPageData(videoId: string): Promise<string | 
   }
 }
 
+// Global URL tracking
+let allInterceptedUrls: string[] = [];
+let allFetchUrls: string[] = [];
+let originalXHROpen: ((method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) => void) | null = null;
+let originalXHRSend: ((body?: Document | XMLHttpRequestBodyInit | null) => void) | null = null;
+let originalFetch: ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | null = null;
+
 /**
- * Extract transcript using YouTube's internal API
+ * Initialize global URL interception
+ */
+function initializeGlobalInterception() {
+  if (originalXHROpen) return; // Already initialized
+
+  console.log("🔧 Initializing global URL interception...");
+  
+  // Store original methods
+  originalXHROpen = XMLHttpRequest.prototype.open;
+  originalXHRSend = XMLHttpRequest.prototype.send;
+  originalFetch = window.fetch;
+
+  // Intercept XMLHttpRequest (simplified like working code)
+  XMLHttpRequest.prototype.open = function(method: string, url: string | URL) {
+    (this as any)._url = url;
+    const urlString = url.toString();
+    allInterceptedUrls.push(urlString);
+    console.log(`📡 XHR #${allInterceptedUrls.length}: ${urlString}`);
+    return originalXHROpen!.apply(this, arguments as any);
+  };
+
+  XMLHttpRequest.prototype.send = function(body?: Document | XMLHttpRequestBodyInit | null) {
+    if ((this as any)._url && (this as any)._url.includes("/api/timedtext")) {
+      console.log("🎯 TIMEDTEXT XHR detected:", (this as any)._url);
+    }
+    return originalXHRSend!.apply(this, arguments as any);
+  };
+
+  // Intercept fetch
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const url = input instanceof Request ? input.url : input.toString();
+    allFetchUrls.push(url);
+    console.log(`🌐 FETCH #${allFetchUrls.length}: ${url}`);
+    
+    return originalFetch!.apply(this, arguments as any);
+  };
+
+  console.log("✅ Global URL interception initialized");
+}
+
+/**
+ * Extract transcript using XHR interception method (via injected script)
+ */
+async function extractTranscriptFromXHRInterception(): Promise<string | null> {
+  return new Promise((resolve) => {
+    console.log("🚀 Injecting XHR interception script into page...");
+
+    // Listen for messages from the injected script
+    const messageListener = (event: MessageEvent) => {
+      if (event.source !== window) return;
+      
+      if (event.data.type === 'TRANSCRIPT_EXTRACTED') {
+        console.log("✅ Received transcript from injected script:", event.data.transcript);
+        window.removeEventListener('message', messageListener);
+        resolve(event.data.transcript);
+      }
+      
+      if (event.data.type === 'TRANSCRIPT_URL_INTERCEPTED') {
+        console.log("📡 URL intercepted from page:", event.data.url);
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+
+    // Inject the interception script into the page
+    const script = document.createElement('script');
+    script.src = (chrome as any).runtime.getURL('intercept.js');
+    script.type = 'text/javascript';
+    
+    script.onload = () => {
+      console.log("✅ Intercept script injected successfully");
+    };
+    
+    script.onerror = () => {
+      console.error("❌ Failed to inject intercept script");
+      window.removeEventListener('message', messageListener);
+      resolve(null);
+    };
+
+    document.documentElement.appendChild(script);
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      console.warn("⚠️ Timeout waiting for transcript");
+      window.removeEventListener('message', messageListener);
+      resolve(null);
+    }, 10000);
+  });
+}
+
+/**
+ * Extract transcript using YouTube's internal API (fallback)
  */
 async function extractTranscriptFromAPI(videoId: string): Promise<string | null> {
   try {
-    // Try to get transcript through YouTube's internal API
     const apiUrl = `https://www.youtube.com/api/timedtext?lang=en&v=${videoId}&fmt=json3`;
     
     const response = await fetch(apiUrl, {
@@ -221,6 +326,7 @@ export async function extractYouTubeTranscript(url: string): Promise<YouTubeTran
   
   // Try multiple extraction methods in order of preference
   const methods = [
+    { name: 'xhr-interception', fn: () => extractTranscriptFromXHRInterception() },
     { name: 'page', fn: () => extractTranscriptFromPageData(videoId) },
     { name: 'api', fn: () => extractTranscriptFromAPI(videoId) },
     { name: 'captions', fn: () => extractTranscriptFromCaptions() }
@@ -235,7 +341,7 @@ export async function extractYouTubeTranscript(url: string): Promise<YouTubeTran
         console.log(`Successfully extracted transcript using method: ${method.name}`);
         return {
           transcript,
-          source: method.name as 'page' | 'api' | 'captions',
+          source: method.name as 'xhr-interception' | 'page' | 'api' | 'captions',
           videoId,
           extractedAt: new Date().toISOString()
         };

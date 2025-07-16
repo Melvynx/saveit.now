@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/client";
+import { config } from "./config";
 
-const BASE_URL = "https://saveit.now";
+const BASE_URL = config.BASE_URL;
 
 // Configuration spécifique pour les CORS et cookies
 export const authClient = createAuthClient({
@@ -26,6 +27,11 @@ export interface Session {
 export async function getSession(): Promise<Session | null> {
   try {
     console.log("Fetching session from", BASE_URL);
+    console.log("Auth client config:", {
+      baseURL: BASE_URL,
+      mode: "cors",
+      credentials: "include"
+    });
     const { data, error } = await authClient.getSession();
 
     if (error) {

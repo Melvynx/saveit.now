@@ -22,9 +22,14 @@
     "storage",
     "scripting",
     "cookies",
-    "contextMenus"
+    "contextMenus",
+    "webRequest"
   ],
-  "host_permissions": ["https://saveit.now/*"],
+  "host_permissions": [
+    "https://saveit.now/*",
+    "http://localhost:3000/*",
+    "https://www.youtube.com/*"
+  ],
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
@@ -36,7 +41,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["images/*", "content.css"],
+      "resources": ["images/*", "content.css", "intercept.js"],
       "matches": ["<all_urls>"]
     }
   ]
