@@ -1,15 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 import { Badge } from "@workspace/ui/components/badge";
 import { Card } from "@workspace/ui/components/card";
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Typography } from "@workspace/ui/components/typography";
-import { Image, LucideIcon, Sparkle, TagIcon } from "lucide-react";
-import { Tweet } from "react-tweet";
+import { LucideIcon, Sparkle, TagIcon } from "lucide-react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import { BookmarkPreview } from "./bookmark-preview";
 import { TranscriptViewer } from "./transcript-viewer";
 
 export const BookmarkContentView = ({
@@ -23,7 +22,9 @@ export const BookmarkContentView = ({
   const metadata = bookmark.metadata as Record<string, any> | null;
   const transcript = metadata?.transcript as string | undefined;
   const transcriptSource = metadata?.transcriptSource as string | undefined;
-  const transcriptExtractedAt = metadata?.transcriptExtractedAt as string | undefined;
+  const transcriptExtractedAt = metadata?.transcriptExtractedAt as
+    | string
+    | undefined;
 
   return (
     <main className="flex flex-col gap-4">
@@ -67,7 +68,7 @@ export const BookmarkContentView = ({
           </Typography>
         </div>
       </Card>
-      
+
       {/* YouTube Transcript Section */}
       {bookmark.type === "YOUTUBE" && transcript && (
         <TranscriptViewer
@@ -76,26 +77,7 @@ export const BookmarkContentView = ({
           extractedAt={transcriptExtractedAt}
         />
       )}
-      <Card className="p-4">
-        {bookmark.type === "TWEET" ? (
-          <>
-            <BookmarkSectionTitle icon={Image} text="Post" />
-            <div className="tweet-container">
-              <Tweet id={(bookmark.metadata as { tweetId: string }).tweetId} />
-            </div>
-          </>
-        ) : (
-          <>
-            <BookmarkSectionTitle icon={Image} text="Screenshot" />
-            <ImageWithPlaceholder
-              src={bookmark.preview ?? ""}
-              fallbackImage={bookmark.ogImageUrl ?? ""}
-              alt="screenshot"
-              className="rounded-md"
-            />
-          </>
-        )}
-      </Card>
+      <BookmarkPreview bookmark={bookmark} />
       <Card className="p-4">
         <BookmarkSectionTitle icon={TagIcon} text="Tags" />
         <div className="flex flex-col gap-2">
