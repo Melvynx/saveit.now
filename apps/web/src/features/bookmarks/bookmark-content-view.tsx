@@ -1,15 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
 import { Badge } from "@workspace/ui/components/badge";
 import { Card } from "@workspace/ui/components/card";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Typography } from "@workspace/ui/components/typography";
 import { Image, LucideIcon, Sparkle, TagIcon } from "lucide-react";
 import { Tweet } from "react-tweet";
+import { useState } from "react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import { ScreenshotUploader } from "./screenshot-uploader";
+import { ScreenshotUploadButton } from "./screenshot-upload-button";
 
 export const BookmarkContentView = ({
   bookmark,
@@ -18,6 +23,13 @@ export const BookmarkContentView = ({
   bookmark: BookmarkViewType;
   isPublic?: boolean;
 }) => {
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
+
+  const handleUploadSuccess = (newPreviewUrl: string) => {
+    setCurrentPreview(newPreviewUrl);
+    setIsUploadOpen(false);
+  };
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -68,15 +80,37 @@ export const BookmarkContentView = ({
               <Tweet id={(bookmark.metadata as { tweetId: string }).tweetId} />
             </div>
           </>
+        ) : isUploadOpen && !isPublic ? (
+          <>
+            <BookmarkSectionTitle icon={Image} text="Screenshot" />
+            <ScreenshotUploader
+              bookmarkId={bookmark.id}
+              currentPreviewUrl={currentPreview ?? undefined}
+              onUploadSuccess={handleUploadSuccess}
+              onCancel={() => setIsUploadOpen(false)}
+            />
+          </>
         ) : (
           <>
             <BookmarkSectionTitle icon={Image} text="Screenshot" />
-            <ImageWithPlaceholder
-              src={bookmark.preview ?? ""}
-              fallbackImage={bookmark.ogImageUrl ?? ""}
-              alt="screenshot"
-              className="rounded-md"
-            />
+            <div className="relative group">
+              <ImageWithPlaceholder
+                src={currentPreview ?? ""}
+                fallbackImage={bookmark.ogImageUrl ?? ""}
+                alt="screenshot"
+                className="rounded-md"
+              />
+              {!isPublic && (
+                <ScreenshotUploadButton
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsUploadOpen(true);
+                  }}
+                  className="rounded-md"
+                />
+              )}
+            </div>
           </>
         )}
       </Card>
