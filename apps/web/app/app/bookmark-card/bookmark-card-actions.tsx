@@ -64,7 +64,6 @@ export const BookmarkCardActions = ({
           variant="secondary"
           size="icon"
           className="size-8 hover:bg-accent"
-          showTooltip={false}
         />
       )}
       {children}
