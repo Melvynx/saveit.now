@@ -96,7 +96,6 @@ export const usePrefetchBookmarks = () => {
       },
       initialPageParam: "",
       queryFn: async () => {
-        console.log("prefetching bookmarks", query, matchingDistance);
 
         const result = await upfetch("/api/bookmarks", {
           params: {
@@ -107,7 +106,6 @@ export const usePrefetchBookmarks = () => {
           },
         });
 
-        console.log("prefetching bookmarks", result);
 
         const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
 

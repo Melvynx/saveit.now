@@ -103,7 +103,6 @@ export default function SignInPage() {
         <CardContent className="space-y-6">
           <OtpForm
             sendOtp={async (email) => {
-              console.log("Sending OTP to", email);
               const result = await authClient.emailOtp.sendVerificationOtp({
                 email,
                 type: "sign-in",

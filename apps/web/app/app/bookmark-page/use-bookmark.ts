@@ -35,7 +35,6 @@ export const fetchBookmark = async (bookmarkId: string) => {
       bookmark: BookmarkSchema,
     }),
   });
-  console.log("result", result);
   return result;
 };
 
