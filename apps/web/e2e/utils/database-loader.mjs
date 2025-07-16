@@ -181,3 +181,11 @@ export async function seedTestTags(userId, count = 3) {
 
 // Export prisma as a convenient getter
 export const prisma = getPrismaClient();
+
+export async function setUserOnboardingTrue(testEmail) {
+  const prisma = getPrismaClient();
+  await prisma.user.update({
+    where: { email: testEmail },
+    data: { onboarding: true },
+  });
+}
