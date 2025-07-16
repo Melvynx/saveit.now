@@ -21,10 +21,6 @@ export const BookmarkContentView = ({
   // Extract transcript data from metadata
   const metadata = bookmark.metadata as Record<string, any> | null;
   const transcript = metadata?.transcript as string | undefined;
-  const transcriptSource = metadata?.transcriptSource as string | undefined;
-  const transcriptExtractedAt = metadata?.transcriptExtractedAt as
-    | string
-    | undefined;
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -72,8 +68,6 @@ export const BookmarkContentView = ({
       {bookmark.type === "YOUTUBE" && transcript && (
         <TranscriptViewer
           transcript={transcript}
-          transcriptSource={transcriptSource}
-          extractedAt={transcriptExtractedAt}
         />
       )}
       <BookmarkPreview bookmark={bookmark} isPublic={isPublic} />
