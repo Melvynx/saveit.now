@@ -140,6 +140,22 @@ vi.mock("@/lib/up-fetch", () => ({
 // Mock @workspace packages
 vi.mock("@workspace/database", () => ({
   prisma: mockDeep(),
+  BookmarkType: {
+    VIDEO: "VIDEO",
+    BLOG: "BLOG",
+    PAGE: "PAGE",
+    POST: "POST",
+    IMAGE: "IMAGE",
+    YOUTUBE: "YOUTUBE",
+    TWEET: "TWEET",
+    ARTICLE: "ARTICLE",
+    PDF: "PDF",
+  },
+  BookmarkStatus: {
+    PROCESSING: "PROCESSING",
+    COMPLETED: "COMPLETED",
+    FAILED: "FAILED",
+  },
 }));
 
 // Mock external APIs and services
