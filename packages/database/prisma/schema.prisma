@@ -16,43 +16,41 @@ datasource db {
 }
 
 model User {
-  id            String         @id
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
-  tags          Tag[]
-  bookmarks     Bookmark[]
-  bookmarkOpens BookmarkOpen[]
-  onboarding    Boolean        @default(false)
-
+  id               String    @id
+  name             String
+  email            String
+  emailVerified    Boolean
+  image            String?
+  createdAt        DateTime
+  updatedAt        DateTime
   stripeCustomerId String?
-
-  role          String?
-  banned        Boolean?
-  banReason     String?
-  banExpires    DateTime?
-  subscriptions Subscription[]
+  role             String?
+  banned           Boolean?
+  banReason        String?
+  banExpires       DateTime?
+  onboarding       Boolean   @default(false)
+  sessions         Session[]
+  accounts         Account[]
+  apikeys          Apikey[]
+  tags             Tag[]
+  bookmarks        Bookmark[]
+  bookmarkOpens    BookmarkOpen[]
+  subscriptions    Subscription[]
 
   @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime
+  updatedAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy String?
 
   @@unique([token])
@@ -89,12 +87,37 @@ model Verification {
   @@map("verification")
 }
 
+model Apikey {
+  id                  String    @id
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean?
+  rateLimitEnabled    Boolean?
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
+  permissions         String?
+  metadata            String?
+
+  @@map("apikey")
+}
+
 enum TagType {
   USER
   IA
 }
-
-/// Tag unique **par user** (ex: user A peut avoir “Design”, user B aussi)
 
 model Tag {
   id     String  @id @default(cuid())
@@ -103,7 +126,6 @@ model Tag {
   user   User    @relation(fields: [userId], references: [id])
   type   TagType @default(IA)
 
-  /// pivot
   bookmarks BookmarkTag[]
 
   @@unique([userId, name])
@@ -113,7 +135,6 @@ model BookmarkTag {
   bookmarkId String
   tagId      String
 
-  /// relations
   bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
   tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
@@ -121,22 +142,22 @@ model BookmarkTag {
 }
 
 enum BookmarkType {
-  VIDEO // YouTube, Loom, mp4…
-  BLOG // Article markdown
-  ARTICLE // Clean article content
-  PAGE // Page web générique
-  POST // Tweet, LinkedIn, Bluesky…
-  IMAGE // PNG, JPG, etc.
-  YOUTUBE // YouTube
-  TWEET // Twitter
-  PDF // PDF documents
+  VIDEO
+  BLOG
+  ARTICLE
+  PAGE
+  POST
+  IMAGE
+  YOUTUBE
+  TWEET
+  PDF
 }
 
 enum BookmarkStatus {
-  PENDING // Scraping/IA pas terminé
-  PROCESSING // IA en cours
-  READY // Tout OK, searchable
-  ERROR // Scraping KO
+  PENDING
+  PROCESSING
+  READY
+  ERROR
 }
 
 model Bookmark {
@@ -144,7 +165,6 @@ model Bookmark {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Core
   url  String
   type BookmarkType?
 
@@ -154,7 +174,7 @@ model Bookmark {
   summary          String?
 
   note    String?
-  preview String? // URL ou markdown ou résumé → chaîne UTF‑8
+  preview String?
 
   vectorSummary          String?
   vectorSummaryEmbedding Unsupported("vector(1536)")?
@@ -165,9 +185,8 @@ model Bookmark {
   ogImageUrl    String?
   ogDescription String?
 
-  metadata Json? // open field pour extras
+  metadata Json?
 
-  // Gestion
   status       BookmarkStatus @default(PENDING)
   inngestRunId String?
   createdAt    DateTime       @default(now())
@@ -175,20 +194,17 @@ model Bookmark {
   starred      Boolean        @default(false)
   read         Boolean        @default(false)
 
-  // Tags
   tags BookmarkTag[]
 
-  // Opens tracking
   opens BookmarkOpen[]
 
-  // To delete
   BookmarkChunk BookmarkChunk[]
 }
 
 model BookmarkChunk {
   id         String                       @id @default(nanoid(7))
   bookmarkId String
-  idx        Int // 0‑based order
+  idx        Int
   content    String
   embedding  Unsupported("vector(1536)")?
 
