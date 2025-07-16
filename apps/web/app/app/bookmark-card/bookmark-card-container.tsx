@@ -36,7 +36,7 @@ export const BookmarkCardContainer = ({
   const { copyToClipboard, isCopied } = useCopyToClipboard(5000);
   const deleteBookmark = useDeleteBookmark();
   const { action: deleteBookmarkAction, isConfirm } = useConfirm(
-    () => deleteBookmark.execute({ bookmarkId: bookmark.id }),
+    () => deleteBookmark.mutate(bookmark.id),
     5000,
   );
 

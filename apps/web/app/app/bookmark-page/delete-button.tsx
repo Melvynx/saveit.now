@@ -2,10 +2,10 @@
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
+import { useMutation } from "@tanstack/react-query";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Trash } from "lucide-react";
-import { useAction } from "next-safe-action/hooks";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useNavigate, useSearchParams } from "react-router";
@@ -30,7 +30,7 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
           posthog.capture("bookmark+delete", {
             bookmark_id: bookmarkId,
           });
-          action.execute({ bookmarkId });
+          action.mutate(bookmarkId);
           navigate(`/app?${searchParams.toString()}`);
         },
       },
@@ -44,7 +44,7 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
   return (
     <InlineTooltip title="Delete (⌘D)">
       <LoadingButton
-        loading={action.isExecuting}
+        loading={action.isPending}
         variant="destructive"
         onClick={() => {
           handleDelete();
@@ -61,7 +61,14 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 export const useDeleteBookmark = () => {
   const refreshBookmarks = useRefreshBookmarks();
 
-  const action = useAction(deleteBookmarkAction, {
+  const action = useMutation({
+    mutationFn: async (bookmarkId: string) => {
+      const result = await deleteBookmarkAction({ bookmarkId });
+      if (result?.data) {
+        return result.data;
+      }
+      throw new Error(result?.serverError?.message ?? "Something went wrong");
+    },
     onSuccess: () => {
       refreshBookmarks();
     },

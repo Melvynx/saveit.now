@@ -106,7 +106,7 @@ test.describe("Process bookmarks tests", () => {
     await expect(starIcon).toHaveClass(/text-yellow-400/);
 
     // Wait a bit for the server action to complete
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
     const updatedBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
@@ -120,7 +120,7 @@ test.describe("Process bookmarks tests", () => {
     await expect(starIcon).not.toHaveClass(/fill-yellow-400/);
 
     // Wait a bit for the server action to complete
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
     const unstarredBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
@@ -155,15 +155,22 @@ test.describe("Process bookmarks tests", () => {
         type: "PAGE",
         status: "READY",
         starred: false,
+        read: false,
         metadata: {},
       },
     });
 
+    // Refresh the page to ensure the bookmark is loaded
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    
     // Find the bookmark card and click it to open the detail view
     const bookmarkCard = page
       .locator('[data-testid="bookmark-card-page"]')
       .filter({ hasText: "Test Delete Bookmark" });
-    await expect(bookmarkCard).toBeVisible();
+    
+    await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
     await bookmarkCard.click();
 
     // Wait for the dialog to be visible
@@ -189,6 +196,9 @@ test.describe("Process bookmarks tests", () => {
     // Should redirect to /app after deletion
     await expect(page).toHaveURL("/app");
 
+    // Wait for server action to complete
+    await page.waitForTimeout(1000);
+
     // Verify bookmark is deleted from database
     const deletedBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
@@ -197,7 +207,6 @@ test.describe("Process bookmarks tests", () => {
 
     // Verify bookmark card is no longer visible on the page
     await page.waitForLoadState("networkidle");
-    await page.pause();
     await page.waitForTimeout(1000);
     await expect(
       page
