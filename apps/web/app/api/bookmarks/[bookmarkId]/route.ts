@@ -15,14 +15,5 @@ export const GET = userRoute
       );
     }
 
-    return NextResponse.json(
-      { bookmark },
-      {
-        headers: {
-          ...(bookmark.status === "READY" && {
-            "Cache-Control": "public, max-age=60",
-          }),
-        },
-      },
-    );
+    return NextResponse.json({ bookmark });
   });

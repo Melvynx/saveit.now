@@ -22,6 +22,7 @@ import { finishOnboardingAction } from "./start.action";
 
 export default function StartPage() {
   const session = useSession();
+  console.log("session", session);
   const router = useRouter();
   const finishMutation = useMutation({
     mutationFn: finishOnboardingAction,
