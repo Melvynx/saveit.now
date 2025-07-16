@@ -1,6 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { getOTPCodeFromDatabase } from "./database-loader.mjs";
+import {
+  getOTPCodeFromDatabase,
+  setUserOnboardingTrue,
+} from "./database-loader.mjs";
 import { TEST_EMAIL, TEST_PASSWORD, generateTestUserData } from "./test-data";
 
 export interface AuthTestUserData {
@@ -219,5 +222,9 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
 
   await expect(page).toHaveURL("/start");
 
-  await page.getByRole("link", { name: "Start with Empty Dashboard" }).click();
+  await setUserOnboardingTrue(testEmail);
+
+  await page.goto("/app");
+
+  await expect(page).toHaveURL("/app");
 }

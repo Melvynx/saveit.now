@@ -31,6 +31,7 @@ export function BookmarkPage() {
   const query = useBookmark(bookmarkId);
 
   const bookmark = query.data?.bookmark;
+  console.log("bookmark", bookmark?.starred);
 
   useHotkeys("c", () => {
     // copy
