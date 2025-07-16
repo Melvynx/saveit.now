@@ -14,6 +14,7 @@ export const useRefreshBookmarks = () => {
       predicate: (query) =>
         Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
     });
+    void queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
   };
 
   return refresh;

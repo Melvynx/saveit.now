@@ -105,6 +105,9 @@ test.describe("Process bookmarks tests", () => {
     await expect(starIcon).toHaveClass(/fill-yellow-400/);
     await expect(starIcon).toHaveClass(/text-yellow-400/);
 
+    // Wait a bit for the server action to complete
+    await page.waitForTimeout(500);
+
     const updatedBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
       select: { starred: true },
@@ -115,6 +118,9 @@ test.describe("Process bookmarks tests", () => {
 
     await expect(starIcon).toHaveClass(/text-muted-foreground/);
     await expect(starIcon).not.toHaveClass(/fill-yellow-400/);
+
+    // Wait a bit for the server action to complete
+    await page.waitForTimeout(500);
 
     const unstarredBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
@@ -153,10 +159,6 @@ test.describe("Process bookmarks tests", () => {
       },
     });
 
-    await page.goto("/app");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
-
     // Find the bookmark card and click it to open the detail view
     const bookmarkCard = page
       .locator('[data-testid="bookmark-card-page"]')
@@ -175,8 +177,10 @@ test.describe("Process bookmarks tests", () => {
     await deleteButton.click();
 
     // Wait for confirmation dialog
-    await expect(page.locator('[role="dialog"]').nth(1)).toBeVisible();
-    
+    await expect(
+      page.getByRole("alertdialog", { name: "Delete Bookmark" }),
+    ).toBeVisible();
+
     // Click the confirmation delete button
     const confirmDeleteButton = page.getByRole("button", { name: "Delete" });
     await expect(confirmDeleteButton).toBeVisible();
@@ -193,10 +197,12 @@ test.describe("Process bookmarks tests", () => {
 
     // Verify bookmark card is no longer visible on the page
     await page.waitForLoadState("networkidle");
+    await page.pause();
+    await page.waitForTimeout(1000);
     await expect(
       page
         .locator('[data-testid="bookmark-card-page"]')
-        .filter({ hasText: "Test Delete Bookmark" })
+        .filter({ hasText: "Test Delete Bookmark" }),
     ).not.toBeVisible();
   });
 });

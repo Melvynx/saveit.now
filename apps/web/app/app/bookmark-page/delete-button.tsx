@@ -2,7 +2,6 @@
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
-import { useQueryClient } from "@tanstack/react-query";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Trash } from "lucide-react";
@@ -10,6 +9,7 @@ import { useAction } from "next-safe-action/hooks";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useNavigate, useSearchParams } from "react-router";
+import { useRefreshBookmarks } from "../use-bookmarks";
 import { deleteBookmarkAction } from "./bookmarks.action";
 
 export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
@@ -59,12 +59,11 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 };
 
 export const useDeleteBookmark = () => {
-  const queryClient = useQueryClient();
-  
+  const refreshBookmarks = useRefreshBookmarks();
+
   const action = useAction(deleteBookmarkAction, {
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-      queryClient.invalidateQueries({ queryKey: ["bookmark", data.input.bookmarkId] });
+    onSuccess: () => {
+      refreshBookmarks();
     },
   });
 
