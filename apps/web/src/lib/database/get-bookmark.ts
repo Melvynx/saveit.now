@@ -1,6 +1,22 @@
 import { Prisma, prisma } from "@workspace/database";
 
-const INCLUDE_QUERY = {
+const SELECT_QUERY = {
+  id: true,
+  userId: true,
+  url: true,
+  title: true,
+  faviconUrl: true,
+  summary: true,
+  note: true,
+  preview: true,
+  ogImageUrl: true,
+  type: true,
+  metadata: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  starred: true,
+  read: true,
   tags: {
     select: {
       tag: {
@@ -12,7 +28,7 @@ const INCLUDE_QUERY = {
       },
     },
   },
-};
+} as const;
 
 export const getUserBookmark = async (bookmarkId: string, userId: string) => {
   return await prisma.bookmark.findUnique({
@@ -20,7 +36,7 @@ export const getUserBookmark = async (bookmarkId: string, userId: string) => {
       id: bookmarkId,
       userId: userId,
     },
-    include: INCLUDE_QUERY,
+    select: SELECT_QUERY,
   });
 };
 
@@ -29,10 +45,10 @@ export const getPublicBookmark = async (bookmarkId: string) => {
     where: {
       id: bookmarkId,
     },
-    include: INCLUDE_QUERY,
+    select: SELECT_QUERY,
   });
 };
 
 export type BookmarkViewType = Prisma.BookmarkGetPayload<{
-  include: typeof INCLUDE_QUERY;
+  select: typeof SELECT_QUERY;
 }>;

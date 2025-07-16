@@ -8,9 +8,11 @@ import { z } from "zod";
 export const useRefreshBookmarks = () => {
   const queryClient = useQueryClient();
 
+  // This will invalidate all queries that start with "bookmarks", i.e., all pages
   const refresh = () => {
     queryClient.invalidateQueries({
-      queryKey: ["bookmarks"],
+      predicate: (query) =>
+        Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
     });
   };
 
@@ -34,7 +36,14 @@ export const useBookmarks = () => {
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
 
   const data = useInfiniteQuery({
-    queryKey: ["bookmarks", searchQuery, types, tags, special, matchingDistance],
+    queryKey: [
+      "bookmarks",
+      searchQuery,
+      types,
+      tags,
+      special,
+      matchingDistance,
+    ],
     refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
@@ -96,7 +105,6 @@ export const usePrefetchBookmarks = () => {
       },
       initialPageParam: "",
       queryFn: async () => {
-        console.log("prefetching bookmarks", query, matchingDistance);
 
         const result = await upfetch("/api/bookmarks", {
           params: {
@@ -107,7 +115,6 @@ export const usePrefetchBookmarks = () => {
           },
         });
 
-        console.log("prefetching bookmarks", result);
 
         const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
 

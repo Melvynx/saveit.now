@@ -3,18 +3,26 @@ import { Card } from "@workspace/ui/components/card";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Image } from "lucide-react";
 import { Tweet } from "react-tweet";
+import { useState } from "react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import useMeasure from "react-use-measure";
 import { BookmarkSectionTitle } from "./bookmark-content-view";
+import { ScreenshotUploader } from "./screenshot-uploader";
 
 interface BookmarkPreviewProps {
   bookmark: BookmarkViewType;
+  isPublic?: boolean;
 }
 
-export const BookmarkPreview = ({ bookmark }: BookmarkPreviewProps) => {
+export const BookmarkPreview = ({ bookmark, isPublic = false }: BookmarkPreviewProps) => {
   const metadata = bookmark.metadata as Record<string, unknown> | null;
   const [ref, { width }] = useMeasure();
+  const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
+
+  const handleUploadSuccess = (newPreviewUrl: string) => {
+    setCurrentPreview(newPreviewUrl);
+  };
 
   if (bookmark.type === "TWEET") {
     return (
@@ -47,12 +55,21 @@ export const BookmarkPreview = ({ bookmark }: BookmarkPreviewProps) => {
   return (
     <Card className="p-4">
       <BookmarkSectionTitle icon={Image} text="Screenshot" />
-      <ImageWithPlaceholder
-        src={bookmark.preview ?? ""}
-        fallbackImage={bookmark.ogImageUrl ?? ""}
-        alt="screenshot"
-        className="rounded-md"
-      />
+      <div className="relative group">
+        <ImageWithPlaceholder
+          src={currentPreview ?? ""}
+          fallbackImage={bookmark.ogImageUrl ?? ""}
+          alt="screenshot"
+          className="rounded-md"
+        />
+        {!isPublic && (
+          <ScreenshotUploader
+            bookmarkId={bookmark.id}
+            onUploadSuccess={handleUploadSuccess}
+            className="rounded-md"
+          />
+        )}
+      </div>
     </Card>
   );
 };

@@ -25,7 +25,6 @@ export const BookmarkContentView = ({
   const transcriptExtractedAt = metadata?.transcriptExtractedAt as
     | string
     | undefined;
-
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -77,7 +76,7 @@ export const BookmarkContentView = ({
           extractedAt={transcriptExtractedAt}
         />
       )}
-      <BookmarkPreview bookmark={bookmark} />
+      <BookmarkPreview bookmark={bookmark} isPublic={isPublic} />
       <Card className="p-4">
         <BookmarkSectionTitle icon={TagIcon} text="Tags" />
         <div className="flex flex-col gap-2">

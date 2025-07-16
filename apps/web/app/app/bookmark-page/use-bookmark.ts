@@ -35,7 +35,6 @@ export const fetchBookmark = async (bookmarkId: string) => {
       bookmark: BookmarkSchema,
     }),
   });
-  console.log("result", result);
   return result;
 };
 
@@ -68,6 +67,16 @@ export const usePrefetchBookmark = () => {
   };
 
   return prefetch;
+};
+
+export const useRefreshBookmark = (bookmarkId?: string | null) => {
+  const queryClient = useQueryClient();
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
+  };
+
+  return refresh;
 };
 
 export const useBookmarkMetadata = (bookmarkId?: string | null) => {
