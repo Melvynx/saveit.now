@@ -14,7 +14,7 @@ export type Tag = z.infer<typeof TagSchema>;
 
 const TagsResponseSchema = z.array(TagSchema);
 
-export const useTags = () => {
+export const useTags = (query?: string) => {
   const [selectedTags, setSelectedTags] = useQueryState("tags", {
     defaultValue: [] as string[],
     serialize: (tags) => tags.join(","),
@@ -24,37 +24,56 @@ export const useTags = () => {
   const [showTagList, setShowTagList] = useState(false);
   const [tagFilter, setTagFilter] = useState("");
 
-  // Fetch user's tags
+  // Fetch user's tags with server-side filtering
   const {
     data: userTags = [],
     isLoading,
     error,
+    refetch,
+    isRefetching,
   } = useQuery({
-    queryKey: ["tags"],
+    queryKey: ["tags", query],
     queryFn: async (): Promise<Tag[]> => {
-      const result = await upfetch("/api/tags", {
-        schema: TagsResponseSchema,
-      });
-      return result;
+      try {
+        const searchParams = new URLSearchParams();
+        if (query) {
+          searchParams.append("q", query);
+        }
+        
+        const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+        const result = await upfetch(url, {
+          schema: TagsResponseSchema,
+        });
+        return result;
+      } catch (err) {
+        console.error("Failed to fetch tags:", err);
+        throw new Error("Failed to load tags. Please try again.");
+      }
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
-  // Filter tags based on search and exclude already selected
+  // Filter out already selected tags (client-side)
   const filteredTags = useMemo(() => {
-    return userTags
-      .filter(
-        (tag) =>
-          tag.name.toLowerCase().includes(tagFilter.toLowerCase()) &&
-          !selectedTags.includes(tag.name),
-      )
-      .slice(0, 10); // Limit to 10 for performance
-  }, [userTags, tagFilter, selectedTags]);
+    return userTags.filter(
+      (tag) => !selectedTags.includes(tag.name)
+    );
+  }, [userTags, selectedTags]);
 
   const addTag = useCallback(
-    (tagName: string) => {
+    (tagName: string, inputQuery?: string, onInputChange?: (query: string) => void) => {
       if (!selectedTags.includes(tagName)) {
         setSelectedTags([...selectedTags, tagName]);
       }
+      
+      // Clean the input if callback is provided
+      if (onInputChange && inputQuery) {
+        // Remove any #tagName mentions from the input
+        const cleanedQuery = inputQuery.replace(new RegExp(`#${tagName}\\s*`, 'g'), '').trim();
+        onInputChange(cleanedQuery);
+      }
+      
       setShowTagList(false);
       setTagFilter("");
     },
@@ -72,6 +91,10 @@ export const useTags = () => {
     setSelectedTags([]);
   }, [setSelectedTags]);
 
+  const retryFetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   return {
     selectedTags,
     showTagList,
@@ -82,7 +105,8 @@ export const useTags = () => {
     addTag,
     removeTag,
     clearTags,
-    isLoading,
+    isLoading: isLoading || isRefetching,
     error,
+    retryFetch,
   };
 };

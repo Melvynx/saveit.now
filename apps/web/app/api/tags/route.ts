@@ -8,13 +8,23 @@ const TagSchema = z.object({
 });
 
 export const GET = userRoute.handler(async (req, { ctx }) => {
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get("q");
+
   const tags = await prisma.tag.findMany({
     where: {
       userId: ctx.user.id,
+      ...(query && {
+        name: {
+          contains: query,
+          mode: "insensitive",
+        },
+      }),
     },
     orderBy: {
       name: "asc",
     },
+    take: 10, // Limit results for performance
   });
 
   return NextResponse.json(tags);

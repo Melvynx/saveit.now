@@ -26,12 +26,17 @@ interface SearchInputContextType {
   filteredTags: Tag[];
   filteredSpecialFilters: SpecialFilter[];
 
+  // Error and loading states
+  isLoading: boolean;
+  error: Error | null;
+  retryFetch: () => void;
+
   // Actions
   showLists: (type: MentionType, filter: string) => void;
   hideLists: () => void;
   addType: (type: BookmarkType) => void;
   removeType: (type: BookmarkType) => void;
-  addTag: (tagName: string) => void;
+  addTag: (tagName: string, inputQuery?: string) => void;
   removeTag: (tagName: string) => void;
   addSpecialFilter: (filter: SpecialFilter, inputQuery?: string) => void;
   removeSpecialFilter: (filter: SpecialFilter) => void;

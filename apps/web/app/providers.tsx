@@ -12,6 +12,14 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 60 * 1000,
       refetchOnWindowFocus: false,
+      retry: (failureCount, error) => {
+        if (failureCount >= 3) return false;
+        if (error instanceof Error && error.message.includes("Failed to fetch")) {
+          return true;
+        }
+        return false;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
 });
