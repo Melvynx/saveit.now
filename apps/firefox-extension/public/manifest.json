@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "SaveIt.now",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Organize nothing. Find everything.",
   "author": "@melvynxdev",
   "homepage_url": "https://saveit.now",
@@ -26,7 +26,10 @@
     "storage",
     "contextMenus",
     "cookies",
-    "https://saveit.now/*"
+    "webRequest",
+    "https://saveit.now/*",
+    "http://localhost:3000/*",
+    "https://www.youtube.com/*"
   ],
 
   "icons": {
@@ -38,7 +41,7 @@
 
   "content_security_policy": "script-src 'self'; object-src 'self'",
 
-  "web_accessible_resources": ["images/*", "content.css"],
+  "web_accessible_resources": ["images/*", "content.css", "intercept.js"],
 
   "applications": {
     "gecko": {

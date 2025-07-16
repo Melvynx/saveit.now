@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/client";
+import { config } from "./config";
 
-const BASE_URL = "https://saveit.now";
+const BASE_URL = config.BASE_URL;
 
 // Configuration spécifique pour les CORS et cookies
 export const authClient = createAuthClient({
@@ -48,9 +49,16 @@ export async function getSession(): Promise<Session | null> {
 
 export async function saveBookmark(
   url: string,
+  transcript?: string,
+  metadata?: any,
 ): Promise<{ success: boolean; error?: string; errorType?: string }> {
   try {
     console.log("Saving bookmark for URL:", url);
+    console.log("Auth client config:", {
+      baseURL: BASE_URL,
+      mode: "cors",
+      credentials: "include"
+    });
 
     // Vérifier d'abord si l'utilisateur est connecté
     const session = await getSession();
@@ -72,7 +80,7 @@ export async function saveBookmark(
       },
       credentials: "include",
       mode: "cors",
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, transcript, metadata }),
     });
 
     // Gérer la réponse

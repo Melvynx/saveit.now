@@ -2,8 +2,6 @@
 
 import { YouTubeEmbed } from "@next/third-parties/google";
 import { Bookmark } from "@workspace/database";
-import { Badge } from "@workspace/ui/components/badge";
-import { BookOpenText } from "lucide-react";
 
 import {
   BookmarkCardActions,
@@ -20,8 +18,8 @@ interface BookmarkCardYouTubeProps {
 }
 
 export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
-  const metadata = bookmark.metadata as { 
-    youtubeId: string; 
+  const metadata = bookmark.metadata as {
+    youtubeId: string;
     transcript?: string;
     transcriptSource?: string;
     transcriptAvailable?: boolean;
@@ -52,12 +50,6 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
             <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
             <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
           </div>
-          {hasTranscript && (
-            <Badge variant="secondary" className="ml-2 flex items-center gap-1">
-              <BookOpenText className="size-3" />
-              Transcript
-            </Badge>
-          )}
         </div>
       </BookmarkCardContent>
     </BookmarkCardContainer>

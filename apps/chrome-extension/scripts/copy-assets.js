@@ -49,11 +49,12 @@ async function compileTypeScript() {
     console.log(`Building for ${isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
     console.log(`Base URL: ${baseUrl}`);
 
-    // Build background and content scripts with IIFE format for Chrome extension compatibility
+    // Build background, content, and popup scripts with IIFE format for Chrome extension compatibility
     await build({
       entryPoints: [
         path.join(srcDir, "background.ts"),
         path.join(srcDir, "content.ts"),
+        path.join(srcDir, "popup.ts"),
       ],
       bundle: true,
       outdir: targetDir,
