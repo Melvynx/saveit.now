@@ -14,14 +14,12 @@ import {
 } from "./bookmark-card-base";
 import { LinkWithQuery } from "./link-with-query";
 import { ScreenshotUploader } from "@/features/bookmarks/screenshot-uploader";
-import { ScreenshotUploadButton } from "@/features/bookmarks/screenshot-upload-button";
 
 interface BookmarkCardPageProps {
   bookmark: Bookmark;
 }
 
 export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
   
   const domainName = new URL(bookmark.url).hostname;
@@ -32,23 +30,7 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
 
   const handleUploadSuccess = (newPreviewUrl: string) => {
     setCurrentPreview(newPreviewUrl);
-    setIsUploadOpen(false);
   };
-
-  if (isUploadOpen) {
-    return (
-      <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-page">
-        <div className="p-4">
-          <ScreenshotUploader
-            bookmarkId={bookmark.id}
-            currentPreviewUrl={currentPreview ?? undefined}
-            onUploadSuccess={handleUploadSuccess}
-            onCancel={() => setIsUploadOpen(false)}
-          />
-        </div>
-      </BookmarkCardContainer>
-    );
-  }
 
   return (
     <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-page">
@@ -74,12 +56,9 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
               }
             />
           </LinkWithQuery>
-          <ScreenshotUploadButton
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsUploadOpen(true);
-            }}
+          <ScreenshotUploader
+            bookmarkId={bookmark.id}
+            onUploadSuccess={handleUploadSuccess}
           />
         </div>
         <BookmarkCardActions
