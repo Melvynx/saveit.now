@@ -67,7 +67,7 @@ export const FilterList = ({ query }: { query?: string }) => {
               key={`tag-${tag.id}`}
               variant="outline"
               className="cursor-pointer transition-colors hover:bg-accent"
-              onClick={() => addTag(tag.name)}
+              onClick={() => addTag(tag.name, query)}
             >
               #{tag.name}
             </Badge>

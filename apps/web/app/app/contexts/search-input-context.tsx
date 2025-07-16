@@ -36,7 +36,7 @@ interface SearchInputContextType {
   hideLists: () => void;
   addType: (type: BookmarkType) => void;
   removeType: (type: BookmarkType) => void;
-  addTag: (tagName: string) => void;
+  addTag: (tagName: string, inputQuery?: string) => void;
   removeTag: (tagName: string) => void;
   addSpecialFilter: (filter: SpecialFilter, inputQuery?: string) => void;
   removeSpecialFilter: (filter: SpecialFilter) => void;

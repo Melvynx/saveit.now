@@ -49,8 +49,8 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
   // Local UI state
   const [uiState, setUIState] = useState<FilterUIState>(initialUIState);
 
-  // Tag management (using existing hook)
-  const tagFilter = useTags();
+  // Tag management (using existing hook with query)
+  const tagFilter = useTags(uiState.tagFilter);
 
   // Computed values
   const filteredTypes = BOOKMARK_TYPES.filter(type => 
@@ -117,6 +117,12 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     setUrlState({ special: [] });
   }, [setUrlState]);
 
+  // Wrapper for addTag that handles input cleanup
+  const addTagWithCleanup = useCallback((tagName: string, inputQuery?: string) => {
+    tagFilter.addTag(tagName, inputQuery, onInputChange);
+    hideLists();
+  }, [tagFilter.addTag, onInputChange, hideLists]);
+
   return {
     // Selected filters
     selectedTypes: urlState.types,
@@ -148,7 +154,7 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     hideLists,
     addType,
     removeType,
-    addTag: tagFilter.addTag,
+    addTag: addTagWithCleanup,
     removeTag: tagFilter.removeTag,
     addSpecialFilter,
     removeSpecialFilter,

@@ -92,7 +92,7 @@ export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilte
           tag: () => {
             const firstTag = filteredTags[0];
             if (firstTag) {
-              addTag(firstTag.name);
+              addTag(firstTag.name, query);
               return true;
             }
             return false;
