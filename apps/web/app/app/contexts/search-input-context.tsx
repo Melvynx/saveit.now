@@ -26,6 +26,11 @@ interface SearchInputContextType {
   filteredTags: Tag[];
   filteredSpecialFilters: SpecialFilter[];
 
+  // Error and loading states
+  isLoading: boolean;
+  error: Error | null;
+  retryFetch: () => void;
+
   // Actions
   showLists: (type: MentionType, filter: string) => void;
   hideLists: () => void;

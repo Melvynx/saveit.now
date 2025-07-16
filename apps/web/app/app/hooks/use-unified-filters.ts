@@ -138,6 +138,11 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     filteredTags: tagFilter.filteredTags,
     filteredSpecialFilters,
 
+    // Error and loading states
+    isLoading: tagFilter.isLoading,
+    error: tagFilter.error,
+    retryFetch: tagFilter.retryFetch,
+
     // Actions
     showLists,
     hideLists,

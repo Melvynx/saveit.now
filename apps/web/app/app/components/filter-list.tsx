@@ -1,4 +1,6 @@
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { getTypeColor, getTypeDisplayName, getSpecialFilterColor, getSpecialFilterDisplayName } from "../utils/type-filter-utils";
 import { useSearchInput } from "../contexts/search-input-context";
 
@@ -12,10 +14,13 @@ export const FilterList = ({ query }: { query?: string }) => {
     addSpecialFilter,
     showTypeList, 
     showTagList,
-    showSpecialList
+    showSpecialList,
+    isLoading,
+    error,
+    retryFetch
   } = useSearchInput();
   
-  const hasItems = (showTypeList && filteredTypes.length > 0) || (showTagList && filteredTags.length > 0) || (showSpecialList && filteredSpecialFilters.length > 0);
+  const hasItems = (showTypeList && filteredTypes.length > 0) || (showTagList && (filteredTags.length > 0 || error || isLoading)) || (showSpecialList && filteredSpecialFilters.length > 0);
   
   if (!hasItems) return null;
 
@@ -34,16 +39,41 @@ export const FilterList = ({ query }: { query?: string }) => {
       ))}
       
       {/* Tag badges without colors */}
-      {showTagList && filteredTags.map((tag) => (
-        <Badge
-          key={`tag-${tag.id}`}
-          variant="outline"
-          className="cursor-pointer transition-colors hover:bg-accent"
-          onClick={() => addTag(tag.name)}
-        >
-          #{tag.name}
-        </Badge>
-      ))}
+      {showTagList && (
+        <>
+          {error && (
+            <div className="flex items-center gap-2 p-2 text-sm text-destructive bg-destructive/10 rounded-md">
+              <AlertCircle className="h-4 w-4" />
+              <span>Failed to load tags</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={retryFetch}
+                className="ml-auto h-6 px-2"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Retry
+              </Button>
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span>Loading tags...</span>
+            </div>
+          )}
+          {!error && !isLoading && filteredTags.map((tag) => (
+            <Badge
+              key={`tag-${tag.id}`}
+              variant="outline"
+              className="cursor-pointer transition-colors hover:bg-accent"
+              onClick={() => addTag(tag.name)}
+            >
+              #{tag.name}
+            </Badge>
+          ))}
+        </>
+      )}
       
       {/* Special filter badges with colors */}
       {showSpecialList && filteredSpecialFilters.map((filter) => (

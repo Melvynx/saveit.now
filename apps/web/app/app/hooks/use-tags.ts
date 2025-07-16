@@ -29,14 +29,23 @@ export const useTags = () => {
     data: userTags = [],
     isLoading,
     error,
+    refetch,
+    isRefetching,
   } = useQuery({
     queryKey: ["tags"],
     queryFn: async (): Promise<Tag[]> => {
-      const result = await upfetch("/api/tags", {
-        schema: TagsResponseSchema,
-      });
-      return result;
+      try {
+        const result = await upfetch("/api/tags", {
+          schema: TagsResponseSchema,
+        });
+        return result;
+      } catch (err) {
+        console.error("Failed to fetch tags:", err);
+        throw new Error("Failed to load tags. Please try again.");
+      }
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
   // Filter tags based on search and exclude already selected
@@ -72,6 +81,10 @@ export const useTags = () => {
     setSelectedTags([]);
   }, [setSelectedTags]);
 
+  const retryFetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   return {
     selectedTags,
     showTagList,
@@ -82,7 +95,8 @@ export const useTags = () => {
     addTag,
     removeTag,
     clearTags,
-    isLoading,
+    isLoading: isLoading || isRefetching,
     error,
+    retryFetch,
   };
 };
