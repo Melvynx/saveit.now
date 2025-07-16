@@ -18,3 +18,7 @@ When working with analytics:
 ## Development Workflow
 
 - Always run `pnpm ts` in the `apps/web` directory when modifying NextJS application code
+
+## Commands
+
+- Always ONLY run `pnpm test:ci` or `pnpm test:e2e:ci` in order to run them only in the terminal

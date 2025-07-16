@@ -69,6 +69,16 @@ export const usePrefetchBookmark = () => {
   return prefetch;
 };
 
+export const useRefreshBookmark = (bookmarkId?: string | null) => {
+  const queryClient = useQueryClient();
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
+  };
+
+  return refresh;
+};
+
 export const useBookmarkMetadata = (bookmarkId?: string | null) => {
   const query = useQuery({
     queryKey: ["bookmark", bookmarkId, "page-metadata"],

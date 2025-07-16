@@ -48,6 +48,12 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "dependsOn": ["^test"]
+    },
+    "test:ci": {
+      "dependsOn": ["^test:ci"]
+    },
     "dev": {
       "dependsOn": ["^db:generate"],
       "cache": false,
