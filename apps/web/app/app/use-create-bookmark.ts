@@ -10,16 +10,13 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
   const refreshBookmark = useRefreshBookmarks();
   const router = useRouter();
   const action = useAction(createBookmarkAction, {
-    onSuccess: (data) => {
-      console.log("Data", data);
-
+    onSuccess: () => {
       props.onSuccess?.();
 
       void refreshBookmark();
     },
     onError: (error) => {
       const serverError = error.error.serverError;
-      console.log("Server Error", serverError);
 
       if (serverError?.type === BookmarkErrorType.MAX_BOOKMARKS) {
         toast.error("You have reached the maximum number of bookmarks", {

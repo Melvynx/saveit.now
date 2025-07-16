@@ -92,7 +92,6 @@ export const CopyLinkButton = ({
       className="size-8"
       data-testid="copy-link-button"
       onClick={() => {
-        console.log("copying link", url);
         posthog.capture("bookmark+copy_link", {
           url,
         });
