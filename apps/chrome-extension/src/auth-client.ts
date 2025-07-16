@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/client";
+import { config } from "./config";
 
-const BASE_URL = "https://saveit.now";
+const BASE_URL = config.BASE_URL;
 
 // Configuration spécifique pour les CORS et cookies
 export const authClient = createAuthClient({
@@ -26,6 +27,11 @@ export interface Session {
 export async function getSession(): Promise<Session | null> {
   try {
     console.log("Fetching session from", BASE_URL);
+    console.log("Auth client config:", {
+      baseURL: BASE_URL,
+      mode: "cors",
+      credentials: "include"
+    });
     const { data, error } = await authClient.getSession();
 
     if (error) {
@@ -48,6 +54,8 @@ export async function getSession(): Promise<Session | null> {
 
 export async function saveBookmark(
   url: string,
+  transcript?: string,
+  metadata?: any,
 ): Promise<{ success: boolean; error?: string; errorType?: string }> {
   try {
     console.log("Saving bookmark for URL:", url);
@@ -63,6 +71,17 @@ export async function saveBookmark(
       };
     }
 
+    // Prepare request body
+    const requestBody: any = { url };
+    if (transcript) {
+      requestBody.transcript = transcript;
+    }
+    if (metadata) {
+      requestBody.metadata = metadata;
+    }
+
+    console.log("Saving bookmark with data:", requestBody);
+
     // Envoyer la requête pour sauvegarder le bookmark
     const response = await fetch(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
@@ -72,7 +91,7 @@ export async function saveBookmark(
       },
       credentials: "include",
       mode: "cors",
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(requestBody),
     });
 
     // Gérer la réponse

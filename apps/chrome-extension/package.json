@@ -1,11 +1,14 @@
 {
   "name": "chrome-extension",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "private": true,
   "scripts": {
-    "dev": "tsc --watch && node scripts/copy-assets.js",
+    "dev": "tsc --watch && node scripts/copy-assets.js --dev",
     "build": "rm -rf dist && node scripts/copy-assets.js",
+    "build:dev": "rm -rf dist && node scripts/copy-assets.js --dev",
+    "build:prod": "rm -rf dist && node scripts/copy-assets.js",
     "package": "npm run build && node scripts/package-extension.js",
+    "package:dev": "npm run build:dev && node scripts/package-extension.js",
     "clean": "rm -rf dist package"
   },
   "dependencies": {
