@@ -1,9 +1,11 @@
+"use client";
+
 import { YouTubeEmbed } from "@next/third-parties/google";
 import { Card } from "@workspace/ui/components/card";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Image } from "lucide-react";
-import { Tweet } from "react-tweet";
 import { useState } from "react";
+import { Tweet } from "react-tweet";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import useMeasure from "react-use-measure";
@@ -15,7 +17,10 @@ interface BookmarkPreviewProps {
   isPublic?: boolean;
 }
 
-export const BookmarkPreview = ({ bookmark, isPublic = false }: BookmarkPreviewProps) => {
+export const BookmarkPreview = ({
+  bookmark,
+  isPublic = false,
+}: BookmarkPreviewProps) => {
   const metadata = bookmark.metadata as Record<string, unknown> | null;
   const [ref, { width }] = useMeasure();
   const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
