@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import {
   cleanupTestData,
   seedTestBookmarks,
@@ -23,6 +24,7 @@ async function globalSetup() {
       // Create user directly in database
       testUser = await prisma.user.create({
         data: {
+          id: nanoid(),
           email: TEST_EMAIL,
           name: TEST_NAME,
           emailVerified: true,

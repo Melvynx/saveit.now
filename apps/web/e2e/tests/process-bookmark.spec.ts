@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "e2e/utils/auth-test";
 import { prisma, seedTestBookmarks } from "e2e/utils/database";
 import { getUserEmail, TEST_EMAIL } from "e2e/utils/test-data";
+import { nanoid } from "nanoid";
 
 test.describe("Process bookmarks tests", () => {
   test("should process bookmark", async ({ page }) => {
@@ -67,6 +68,7 @@ test.describe("Process bookmarks tests", () => {
 
     const bookmark = await prisma.bookmark.create({
       data: {
+        id: nanoid(),
         url: "https://example.com/test-star-bookmark",
         title: "Test Star Bookmark",
         summary: "This is a test bookmark for star functionality",
