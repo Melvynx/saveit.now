@@ -14,6 +14,8 @@
     "stripe:webhook": "stripe listen --forward-to http://localhost:3000/api/auth/stripe/webhook",
     "ts": "tsc --noEmit",
     "better-auth:generate": "pnpm dlx @better-auth/cli@latest generate --output ../../packages/database/prisma/schema.prisma",
+    "test": "vitest",
+    "test:ci": "vitest run",
     "test:e2e": "HEADLESS=false playwright test --ui",
     "test:e2e:ci": "HEADLESS=true playwright test --reporter=list"
   },
@@ -86,19 +88,27 @@
     "@faker-js/faker": "^9.9.0",
     "@opentelemetry/winston-transport": "^0.12.0",
     "@playwright/test": "^1.54.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-router": "^5.1.20",
     "@types/turndown": "^5.0.5",
+    "@vitejs/plugin-react": "^4.6.0",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
+    "cross-fetch": "^4.1.0",
     "dotenv": "^17.2.0",
     "import-in-the-middle": "^1.13.2",
+    "jsdom": "^26.1.0",
     "require-in-the-middle": "^7.5.2",
     "tailwindcss": "^4.0.8",
     "tw-animate-css": "^1.2.4",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^1.3.1",
+    "vitest-mock-extended": "^3.1.0"
   }
 }
