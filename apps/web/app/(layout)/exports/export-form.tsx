@@ -18,16 +18,19 @@ import { exportBookmarksAction } from "./exports.action";
 
 type ExportFormProps = {
   className?: string;
+  isMain?: boolean;
 };
 
-export function ExportForm({ className }: ExportFormProps) {
+export function ExportForm(props: ExportFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const posthog = usePostHog();
+
+  const { className, isMain } = props;
 
   const { execute, status } = useAction(exportBookmarksAction, {
     onSuccess: ({ data }) => {
       if (!data) return;
-      
+
       // Create and download CSV file
       const blob = new Blob([data.csvContent], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
@@ -39,9 +42,7 @@ export function ExportForm({ className }: ExportFormProps) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(
-        `Successfully exported ${data.totalBookmarks} bookmarks`,
-      );
+      toast.success(`Successfully exported ${data.totalBookmarks} bookmarks`);
       setIsExporting(false);
     },
     onError: ({ error }) => {

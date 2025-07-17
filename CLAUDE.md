@@ -68,15 +68,6 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 The application requires extensive environment variables (35+ variables) for various integrations. Check turbo.json for the complete list of required environment variables for builds.
 
-## Deployment and Logs
-
-- To get the latest deployment logs, use `flyctl logs` command for the specific app
-- Vercel CLI deployment commands:
-  - `vercel` - Deploy the current project
-  - `vercel --prod` - Deploy to production
-  - `vercel logs` - View latest deployment logs
-  - `vercel inspect` - Get detailed deployment information and verify everything is working correctly
-
 ## Workflow
 
 - Always run `pnpm ts` AND `pnpm lint` in the folder `app/web` to verify typescript working after a task

@@ -5,7 +5,7 @@ import { Loader } from "@workspace/ui/components/loader";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
 import { redirect, useRouter } from "next/navigation";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ import { useBookmarks } from "./use-bookmarks";
 export function BookmarksPage() {
   const {
     bookmarks,
-    isPending,
+    isPending: isBookmarksPending,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -37,20 +37,22 @@ export function BookmarksPage() {
     event.preventDefault();
     searchInputRef.current?.focus();
   });
-
-  if (session.isPending) {
-    return <Loader />;
-  }
-
-  if (!session.data?.session) {
-    toast.error("You need to be logged in to access this page");
-    router.push("/signin");
-  }
-
-  // @ts-expect-error - onboarding is not typed
-  if (session.data?.user.onboarding === false) {
-    redirect("/start");
-  }
+  
+  // Handle authentication after rendering the layout
+  React.useEffect(() => {
+    if (!session.isPending && !session.data?.session) {
+      toast.error("You need to be logged in to access this page");
+      router.push("/signin");
+    }
+    
+    // @ts-expect-error - onboarding is not typed
+    if (!session.isPending && session.data?.user.onboarding === false) {
+      redirect("/start");
+    }
+  }, [session.isPending, session.data, router]);
+  
+  // Determine if we're in a loading state
+  const isLoading = session.isPending || isBookmarksPending;
 
   return (
     <div
@@ -70,7 +72,7 @@ export function BookmarksPage() {
           "--card-height": "calc(var(--spacing) * 64)",
         }}
       >
-        {isPending ? (
+        {isLoading ? (
           <>
             {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
               <Skeleton
