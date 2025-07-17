@@ -112,6 +112,8 @@ interface MessageRequest {
   type?: string;
   url?: string;
   itemType?: string;
+  transcript?: string;
+  metadata?: any;
 }
 
 interface MessageResponse {
@@ -156,8 +158,18 @@ browser.runtime.onMessage.addListener(
       // Handle bookmark save request from content script
       const url = message.url || "";
       const itemType = message.itemType || "page"; // page, link, image
+      const transcript = message.transcript;
+      const metadata = message.metadata;
 
-      saveBookmark(url)
+      console.log("Background: SAVE_BOOKMARK request", {
+        url,
+        itemType,
+        hasTranscript: !!transcript,
+        transcriptLength: transcript?.length,
+        metadata,
+      });
+
+      saveBookmark(url, transcript, metadata)
         .then((result) => {
           console.log(`Background: ${itemType} save result`, result);
           sendResponse({ ...result, itemType });

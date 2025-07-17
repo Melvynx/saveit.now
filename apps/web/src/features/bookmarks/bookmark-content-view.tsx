@@ -1,19 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
-"use client";
-
 import { Badge } from "@workspace/ui/components/badge";
 import { Card } from "@workspace/ui/components/card";
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { Typography } from "@workspace/ui/components/typography";
-import { Image, LucideIcon, Sparkle, TagIcon } from "lucide-react";
-import { Tweet } from "react-tweet";
-import { useState } from "react";
+import { LucideIcon, Sparkle, TagIcon } from "lucide-react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
-import { ScreenshotUploader } from "./screenshot-uploader";
+import { BookmarkPreview } from "./bookmark-preview";
+import { TranscriptViewer } from "./transcript-viewer";
 
 export const BookmarkContentView = ({
   bookmark,
@@ -22,11 +18,9 @@ export const BookmarkContentView = ({
   bookmark: BookmarkViewType;
   isPublic?: boolean;
 }) => {
-  const [currentPreview, setCurrentPreview] = useState(bookmark.preview);
-
-  const handleUploadSuccess = (newPreviewUrl: string) => {
-    setCurrentPreview(newPreviewUrl);
-  };
+  // Extract transcript data from metadata
+  const metadata = bookmark.metadata as Record<string, any> | null;
+  const transcript = metadata?.transcript as string | undefined;
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
@@ -69,35 +63,14 @@ export const BookmarkContentView = ({
           </Typography>
         </div>
       </Card>
-      <Card className="p-4">
-        {bookmark.type === "TWEET" ? (
-          <>
-            <BookmarkSectionTitle icon={Image} text="Post" />
-            <div className="tweet-container">
-              <Tweet id={(bookmark.metadata as { tweetId: string }).tweetId} />
-            </div>
-          </>
-        ) : (
-          <>
-            <BookmarkSectionTitle icon={Image} text="Screenshot" />
-            <div className="relative group">
-              <ImageWithPlaceholder
-                src={currentPreview ?? ""}
-                fallbackImage={bookmark.ogImageUrl ?? ""}
-                alt="screenshot"
-                className="rounded-md"
-              />
-              {!isPublic && (
-                <ScreenshotUploader
-                  bookmarkId={bookmark.id}
-                  onUploadSuccess={handleUploadSuccess}
-                  className="rounded-md"
-                />
-              )}
-            </div>
-          </>
-        )}
-      </Card>
+
+      {/* YouTube Transcript Section */}
+      {bookmark.type === "YOUTUBE" && transcript && (
+        <TranscriptViewer
+          transcript={transcript}
+        />
+      )}
+      <BookmarkPreview bookmark={bookmark} isPublic={isPublic} />
       <Card className="p-4">
         <BookmarkSectionTitle icon={TagIcon} text="Tags" />
         <div className="flex flex-col gap-2">

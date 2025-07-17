@@ -84,7 +84,7 @@
 .saveit-message {
   font-size: 14px;
   color: #4b5563;
-  text-align: center;
+  text-align: left;
 }
 
 @keyframes spin {

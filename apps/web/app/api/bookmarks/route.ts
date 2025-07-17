@@ -7,12 +7,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const POST = userRoute
-  .body(z.object({ url: z.string().url() }))
+  .body(
+    z.object({
+      url: z.string().url(),
+      transcript: z.string().optional(),
+      metadata: z.any().optional(),
+    }),
+  )
   .handler(async (req, { body, ctx }) => {
     try {
       const bookmark = await createBookmark({
         url: body.url,
         userId: ctx.user.id,
+        transcript: body.transcript,
+        metadata: body.metadata,
       });
       return { status: "ok", bookmark };
     } catch (error: unknown) {

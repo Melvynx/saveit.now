@@ -197,3 +197,7 @@
     var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
     var(--box-shadow) !important;
 }
+
+lite-youtube {
+  max-width: unset !important;
+}

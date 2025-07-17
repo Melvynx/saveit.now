@@ -18,8 +18,14 @@ interface BookmarkCardYouTubeProps {
 }
 
 export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
-  const metadata = bookmark.metadata as { youtubeId: string };
+  const metadata = bookmark.metadata as {
+    youtubeId: string;
+    transcript?: string;
+    transcriptSource?: string;
+    transcriptAvailable?: boolean;
+  };
   const domainName = new URL(bookmark.url).hostname;
+  const hasTranscript = metadata?.transcript || metadata?.transcriptAvailable;
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>
@@ -39,8 +45,12 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>
-        <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
-        <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
+            <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
+          </div>
+        </div>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );

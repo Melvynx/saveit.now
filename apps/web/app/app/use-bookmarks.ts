@@ -10,10 +10,14 @@ export const useRefreshBookmarks = () => {
 
   // This will invalidate all queries that start with "bookmarks", i.e., all pages
   const refresh = () => {
-    queryClient.invalidateQueries({
+    console.log("refreshing bookmarks");
+    void queryClient.invalidateQueries({
       predicate: (query) =>
         Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
     });
+    console.log("refreshing bookmarks 2");
+    void queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+    console.log("refreshing bookmarks 3");
   };
 
   return refresh;
@@ -105,7 +109,6 @@ export const usePrefetchBookmarks = () => {
       },
       initialPageParam: "",
       queryFn: async () => {
-        console.log("prefetching bookmarks", query, matchingDistance);
 
         const result = await upfetch("/api/bookmarks", {
           params: {
@@ -116,7 +119,6 @@ export const usePrefetchBookmarks = () => {
           },
         });
 
-        console.log("prefetching bookmarks", result);
 
         const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
 

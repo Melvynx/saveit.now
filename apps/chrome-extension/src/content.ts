@@ -2,8 +2,14 @@
 
 // Import type uniquement, plus d'import de fonctions
 import type { Session } from "./auth-client";
+import {
+  extractYouTubeTranscript,
+  isYouTubeVideoPage,
+  waitForYouTubePlayer,
+} from "./youtube-transcript";
+import { config } from "./config";
 
-const BASE_URL = "https://saveit.now";
+const BASE_URL = config.BASE_URL;
 
 // Types de contenu à sauvegarder
 enum SaveType {
@@ -40,6 +46,8 @@ async function getSessionFromBackground(): Promise<Session | null> {
 async function saveBookmarkViaBackground(
   url: string,
   itemType: SaveType = SaveType.PAGE,
+  transcript?: string,
+  metadata?: any,
 ): Promise<{
   success: boolean;
   error?: string;
@@ -52,6 +60,8 @@ async function saveBookmarkViaBackground(
         type: "SAVE_BOOKMARK",
         url,
         itemType,
+        transcript,
+        metadata,
       },
       (response) => {
         console.log("Content: Save response from background", response);
@@ -123,12 +133,13 @@ function createSaverUI() {
 
   document.body.appendChild(container);
 
-  // Auto-hide après succès
+  // Auto-hide après succès (but not during loading)
   document.addEventListener("click", (e) => {
     if (
       container &&
       !container.contains(e.target as Node) &&
-      currentState !== SaverState.HIDDEN
+      currentState !== SaverState.HIDDEN &&
+      currentState !== SaverState.LOADING
     ) {
       setState(SaverState.HIDDEN);
     }
@@ -224,6 +235,14 @@ function setErrorMessage(message: string) {
   }
 }
 
+// Définir le message de chargement
+function setLoadingMessage(message: string) {
+  const loadingMessageEl = document.getElementById("saveit-loading-message");
+  if (loadingMessageEl) {
+    loadingMessageEl.textContent = message;
+  }
+}
+
 // Sauvegarder le bookmark
 async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
   try {
@@ -241,8 +260,65 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
       return;
     }
 
+    let transcript: string | undefined;
+    let metadata: any | undefined;
+
+    // Extract transcript for YouTube videos
+    if (isYouTubeVideoPage()) {
+      console.log(
+        "YouTube video detected, attempting transcript extraction...",
+      );
+
+      try {
+        // Show loading message for YouTube player wait
+        setLoadingMessage("Waiting for YouTube player...");
+        
+        // Wait for YouTube player to be ready
+        const playerReady = await waitForYouTubePlayer(5000);
+
+        if (playerReady) {
+          // Show loading message for transcript extraction
+          setLoadingMessage("Extracting YouTube transcript...");
+          
+          const transcriptResult = await extractYouTubeTranscript(url);
+
+          if (transcriptResult) {
+            transcript = transcriptResult.transcript;
+            metadata = {
+              youtubeTranscript: {
+                source: transcriptResult.source,
+                videoId: transcriptResult.videoId,
+                extractedAt: transcriptResult.extractedAt,
+              },
+            };
+            console.log(
+              "Successfully extracted YouTube transcript from:",
+              transcriptResult.source,
+            );
+          } else {
+            console.log("No transcript found for YouTube video");
+          }
+        } else {
+          console.warn(
+            "YouTube player not ready, skipping transcript extraction",
+          );
+        }
+      } catch (error) {
+        console.error("Error extracting YouTube transcript:", error);
+        // Continue with bookmark saving even if transcript extraction fails
+      }
+    }
+
+    // Show final saving message
+    setLoadingMessage(`Saving ${getSaveTypeText(currentSaveType)}...`);
+
     // Sauvegarder l'élément via le background
-    const result = await saveBookmarkViaBackground(url, type);
+    const result = await saveBookmarkViaBackground(
+      url,
+      type,
+      transcript,
+      metadata,
+    );
 
     if (result.success) {
       setState(SaverState.SUCCESS);

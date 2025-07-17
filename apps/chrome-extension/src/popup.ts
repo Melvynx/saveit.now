@@ -1,6 +1,7 @@
 import { getSession, saveBookmark } from "./auth-client";
+import { config } from "./config";
 
-const BASE_URL = "https://saveit.now";
+const BASE_URL = config.BASE_URL;
 
 // DOM Elements
 const statusContainer = document.getElementById(

@@ -105,6 +105,9 @@ test.describe("Process bookmarks tests", () => {
     await expect(starIcon).toHaveClass(/fill-yellow-400/);
     await expect(starIcon).toHaveClass(/text-yellow-400/);
 
+    // Wait a bit for the server action to complete
+    await page.waitForTimeout(1000);
+
     const updatedBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
       select: { starred: true },
@@ -116,6 +119,9 @@ test.describe("Process bookmarks tests", () => {
     await expect(starIcon).toHaveClass(/text-muted-foreground/);
     await expect(starIcon).not.toHaveClass(/fill-yellow-400/);
 
+    // Wait a bit for the server action to complete
+    await page.waitForTimeout(1000);
+
     const unstarredBookmark = await prisma.bookmark.findUnique({
       where: { id: bookmark.id },
       select: { starred: true },
@@ -125,5 +131,87 @@ test.describe("Process bookmarks tests", () => {
     await prisma.bookmark.delete({
       where: { id: bookmark.id },
     });
+  });
+
+  test("delete", async ({ page }) => {
+    await signInWithEmail({ email: TEST_EMAIL, page });
+
+    const user = await prisma.user.findUnique({
+      where: { email: TEST_EMAIL },
+    });
+
+    if (!user) throw new Error("Test user not found");
+
+    await seedTestBookmarks(user.id, 3);
+
+    const bookmark = await prisma.bookmark.create({
+      data: {
+        id: nanoid(),
+        url: "https://example.com/test-delete-bookmark",
+        title: "Test Delete Bookmark",
+        summary: "This is a test bookmark for delete functionality",
+        faviconUrl: "https://example.com/favicon.ico",
+        userId: user.id,
+        type: "PAGE",
+        status: "READY",
+        starred: false,
+        read: false,
+        metadata: {},
+      },
+    });
+
+    // Refresh the page to ensure the bookmark is loaded
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    
+    // Find the bookmark card and click it to open the detail view
+    const bookmarkCard = page
+      .locator('[data-testid="bookmark-card-page"]')
+      .filter({ hasText: "Test Delete Bookmark" });
+    
+    await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
+    await bookmarkCard.click();
+
+    // Wait for the dialog to be visible
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+
+    // Find the delete button in the bookmark detail view
+    const deleteButton = page.getByRole("button", { name: /delete/i });
+    await expect(deleteButton).toBeVisible();
+
+    // Click delete button
+    await deleteButton.click();
+
+    // Wait for confirmation dialog
+    await expect(
+      page.getByRole("alertdialog", { name: "Delete Bookmark" }),
+    ).toBeVisible();
+
+    // Click the confirmation delete button
+    const confirmDeleteButton = page.getByRole("button", { name: "Delete" });
+    await expect(confirmDeleteButton).toBeVisible();
+    await confirmDeleteButton.click();
+
+    // Should redirect to /app after deletion
+    await expect(page).toHaveURL("/app");
+
+    // Wait for server action to complete
+    await page.waitForTimeout(1000);
+
+    // Verify bookmark is deleted from database
+    const deletedBookmark = await prisma.bookmark.findUnique({
+      where: { id: bookmark.id },
+    });
+    expect(deletedBookmark).toBeNull();
+
+    // Verify bookmark card is no longer visible on the page
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+    await expect(
+      page
+        .locator('[data-testid="bookmark-card-page"]')
+        .filter({ hasText: "Test Delete Bookmark" }),
+    ).not.toBeVisible();
   });
 });
