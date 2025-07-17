@@ -1,9 +1,12 @@
 "use client";
 
+import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ApiKeyRowProps {
   apiKey: {
@@ -13,53 +16,53 @@ interface ApiKeyRowProps {
     expiresAt?: Date | null;
     lastRequest?: Date | null;
   };
-  onDelete: (keyId: string) => Promise<void>;
 }
 
-export function ApiKeyRow({ apiKey, onDelete }: ApiKeyRowProps) {
+export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this API key? This action cannot be undone.")) {
-      setIsDeleting(true);
-      try {
-        await onDelete(apiKey.id);
-      } finally {
-        setIsDeleting(false);
-      }
-    }
+    dialogManager.add({
+      title: "Delete API Key",
+      description: "Are you sure you want to delete this API key? This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          setIsDeleting(true);
+          try {
+            const { error } = await authClient.apiKey.delete({
+              keyId: apiKey.id,
+            });
+            
+            if (error) {
+              console.error("Failed to delete API key:", error);
+              return;
+            }
+            
+            router.refresh();
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+    });
   };
-
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString();
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div className="flex items-center justify-between py-2 px-1 border-b border-border last:border-b-0">
       <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <Typography variant="h3" className="font-medium">
+        <div className="flex items-center gap-3">
+          <Typography variant="default" className="font-medium">
             {apiKey.name || "Untitled Key"}
           </Typography>
           <Typography variant="small" className="text-muted-foreground">
             Created {formatDate(apiKey.createdAt)}
           </Typography>
-        </div>
-        
-        <div className="flex items-center gap-2 mb-2">
-          <div className="font-mono text-sm bg-muted px-2 py-1 rounded text-muted-foreground">
-            Key hidden for security • Only visible during creation
-          </div>
-        </div>
-
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          {apiKey.expiresAt && (
-            <span>Expires {formatDate(apiKey.expiresAt)}</span>
-          )}
-          {apiKey.lastRequest && (
-            <span>Last used {formatDate(apiKey.lastRequest)}</span>
-          )}
         </div>
       </div>
 

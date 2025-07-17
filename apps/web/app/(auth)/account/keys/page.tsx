@@ -1,5 +1,6 @@
 import { MaxWidthContainer } from "@/features/page/page";
 import { getRequiredUser } from "@/lib/auth-session";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -8,7 +9,6 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { createApiKey, deleteApiKey } from "./actions";
 import { ApiKeyList } from "./api-key-list";
 import { CreateApiKeyForm } from "./create-api-key-form";
 
@@ -24,38 +24,66 @@ export default async function ApiKeysPage() {
         </Typography>
       </div>
 
-      <CreateApiKeyForm onSubmit={createApiKey} />
+      <CreateApiKeyForm />
       
-      <ApiKeyList onDelete={deleteApiKey} />
+      <ApiKeyList />
 
       <Card>
         <CardHeader>
-          <CardTitle>API Usage</CardTitle>
+          <CardTitle>API Documentation</CardTitle>
           <CardDescription>
-            Use your API keys to access the SaveIt.now API endpoints:
+            Learn how to use the SaveIt.now API with your API keys.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Typography variant="h3" className="mb-2">Base URL</Typography>
-            <div className="bg-muted p-3 rounded-md">
-              <code>https://saveit.now/api/v1</code>
+          <div className="grid gap-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Typography variant="default" className="font-medium">
+                  API Overview
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground">
+                  Authentication, rate limits, and response formats
+                </Typography>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/docs/api-overview" target="_blank" rel="noopener noreferrer">
+                  View Docs
+                </a>
+              </Button>
             </div>
-          </div>
-          
-          <div>
-            <Typography variant="h3" className="mb-2">Authentication</Typography>
-            <div className="bg-muted p-3 rounded-md">
-              <code>Authorization: Bearer YOUR_API_KEY</code>
+            
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Typography variant="default" className="font-medium">
+                  Create Bookmark
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground">
+                  POST /api/v1/bookmarks - Add new bookmarks
+                </Typography>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/docs/api-bookmarks-create" target="_blank" rel="noopener noreferrer">
+                  View Docs
+                </a>
+              </Button>
             </div>
-          </div>
-
-          <div>
-            <Typography variant="h3" className="mb-2">Available Endpoints</Typography>
-            <ul className="space-y-2 text-sm">
-              <li><code>POST /bookmarks</code> - Create a new bookmark</li>
-              <li><code>GET /bookmarks</code> - Search and list bookmarks</li>
-            </ul>
+            
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Typography variant="default" className="font-medium">
+                  List Bookmarks
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground">
+                  GET /api/v1/bookmarks - Search and retrieve bookmarks
+                </Typography>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/docs/api-bookmarks-list" target="_blank" rel="noopener noreferrer">
+                  View Docs
+                </a>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

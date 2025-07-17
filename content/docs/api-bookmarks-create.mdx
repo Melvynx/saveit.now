@@ -1,0 +1,126 @@
+---
+title: Create Bookmark
+description: Create a new bookmark using the SaveIt.now API
+order: 2
+category: API
+subcategory: Bookmarks
+tags: [api, bookmarks, create]
+published: true
+---
+
+# Create Bookmark
+
+Create a new bookmark in your SaveIt.now account.
+
+## Endpoint
+
+```
+POST /api/v1/bookmarks
+```
+
+## Request
+
+### Headers
+
+```
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | The URL to bookmark |
+| `title` | string | No | Custom title for the bookmark |
+| `description` | string | No | Custom description for the bookmark |
+| `tags` | string[] | No | Array of tags to categorize the bookmark |
+| `folder` | string | No | Folder to organize the bookmark |
+
+### Example Request
+
+```bash
+curl -X POST https://saveit.now/api/v1/bookmarks \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "url": "https://example.com/article",
+    "title": "Interesting Article",
+    "description": "An article about web development",
+    "tags": ["web", "development", "javascript"],
+    "folder": "Tech Articles"
+  }'
+```
+
+## Response
+
+### Success Response (201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "bm_1234567890",
+    "url": "https://example.com/article",
+    "title": "Interesting Article",
+    "description": "An article about web development",
+    "tags": ["web", "development", "javascript"],
+    "folder": "Tech Articles",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z",
+    "screenshotUrl": "https://screenshots.saveit.now/bm_1234567890.jpg",
+    "isRead": false,
+    "isFavorite": false
+  }
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_URL",
+    "message": "The provided URL is not valid"
+  }
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+
+#### 409 Conflict
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BOOKMARK_EXISTS",
+    "message": "A bookmark with this URL already exists"
+  }
+}
+```
+
+## Notes
+
+- If no title is provided, SaveIt.now will automatically extract the page title
+- Screenshots are generated asynchronously after bookmark creation
+- Duplicate URLs are not allowed - use the update endpoint to modify existing bookmarks
+- The API will validate the URL format and accessibility before creating the bookmark
+
+## Next Steps
+
+- [List Bookmarks API](/docs/api-bookmarks-list)
+- [API Overview](/docs/api-overview)

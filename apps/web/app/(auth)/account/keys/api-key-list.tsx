@@ -33,11 +33,9 @@ interface BetterAuthApiKey {
   metadata: Record<string, any> | null;
 }
 
-interface ApiKeyListProps {
-  onDelete: (keyId: string) => Promise<void>;
-}
+interface ApiKeyListProps {}
 
-export async function ApiKeyList({ onDelete }: ApiKeyListProps) {
+export async function ApiKeyList({}: ApiKeyListProps) {
   let apiKeys: BetterAuthApiKey[] = [];
   
   try {
@@ -74,7 +72,6 @@ export async function ApiKeyList({ onDelete }: ApiKeyListProps) {
               <ApiKeyRow
                 key={apiKey.id}
                 apiKey={apiKey}
-                onDelete={onDelete}
               />
             ))}
           </div>
