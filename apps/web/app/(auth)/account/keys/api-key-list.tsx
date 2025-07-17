@@ -10,13 +10,27 @@ import { Typography } from "@workspace/ui/components/typography";
 import { headers } from "next/headers";
 import { ApiKeyRow } from "./api-key-row";
 
-interface ApiKey {
+interface BetterAuthApiKey {
+  permissions: { [key: string]: string[]; } | null;
   id: string;
-  name: string;
-  key: string;
-  createdAt: string;
-  expiresAt?: string;
-  lastUsed?: string;
+  name: string | null;
+  start: string | null;
+  prefix: string | null;
+  userId: string;
+  refillInterval: number | null;
+  refillAmount: number | null;
+  lastRefillAt: Date | null;
+  enabled: boolean | null;
+  rateLimitEnabled: boolean | null;
+  rateLimitTimeWindow: number | null;
+  rateLimitMax: number | null;
+  requestCount: number | null;
+  remaining: number | null;
+  lastRequest: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  metadata: Record<string, any> | null;
 }
 
 interface ApiKeyListProps {
@@ -24,7 +38,7 @@ interface ApiKeyListProps {
 }
 
 export async function ApiKeyList({ onDelete }: ApiKeyListProps) {
-  let apiKeys: ApiKey[] = [];
+  let apiKeys: BetterAuthApiKey[] = [];
   
   try {
     const response = await auth.api.listApiKeys({
