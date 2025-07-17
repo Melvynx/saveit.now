@@ -1,7 +1,8 @@
 import { cleanupTestData } from "./utils/database";
 import { getPrismaClient } from './utils/database-loader.mjs';
 import { unlink } from "fs/promises";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 async function globalTeardown() {
   try {
@@ -10,6 +11,8 @@ async function globalTeardown() {
 
     // Clean up test config file
     try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
       await unlink(join(__dirname, "test-config.json"));
     } catch (error) {
       // File might not exist, ignore error

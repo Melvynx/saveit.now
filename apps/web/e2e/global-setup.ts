@@ -7,7 +7,8 @@ import {
 import { getPrismaClient } from "./utils/database-loader.mjs";
 import { TEST_EMAIL, TEST_NAME } from "./utils/test-data";
 import { writeFile } from "fs/promises";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 async function globalSetup() {
   try {
@@ -68,6 +69,9 @@ async function globalSetup() {
       userEmail: TEST_EMAIL,
     };
 
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    
     await writeFile(
       join(__dirname, "test-config.json"),
       JSON.stringify(testConfig, null, 2)

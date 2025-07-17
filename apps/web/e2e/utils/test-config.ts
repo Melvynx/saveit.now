@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 interface TestConfig {
   apiKey: string;
@@ -12,6 +13,8 @@ let testConfig: TestConfig | null = null;
 export async function getTestConfig(): Promise<TestConfig> {
   if (!testConfig) {
     try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
       const configPath = join(__dirname, "..", "test-config.json");
       const configData = await readFile(configPath, "utf-8");
       testConfig = JSON.parse(configData);
