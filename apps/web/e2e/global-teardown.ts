@@ -1,10 +1,19 @@
 import { cleanupTestData } from "./utils/database";
 import { getPrismaClient } from './utils/database-loader.mjs';
+import { unlink } from "fs/promises";
+import { join } from "path";
 
 async function globalTeardown() {
   try {
     // Clean up all test data
     await cleanupTestData();
+
+    // Clean up test config file
+    try {
+      await unlink(join(__dirname, "test-config.json"));
+    } catch (error) {
+      // File might not exist, ignore error
+    }
 
     // Close database connections
     const prisma = getPrismaClient();

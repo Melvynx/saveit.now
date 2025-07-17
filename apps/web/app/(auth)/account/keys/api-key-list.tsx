@@ -10,12 +10,21 @@ import { Typography } from "@workspace/ui/components/typography";
 import { headers } from "next/headers";
 import { ApiKeyRow } from "./api-key-row";
 
+interface ApiKey {
+  id: string;
+  name: string;
+  key: string;
+  createdAt: string;
+  expiresAt?: string;
+  lastUsed?: string;
+}
+
 interface ApiKeyListProps {
   onDelete: (keyId: string) => Promise<void>;
 }
 
 export async function ApiKeyList({ onDelete }: ApiKeyListProps) {
-  let apiKeys: unknown[] = [];
+  let apiKeys: ApiKey[] = [];
   
   try {
     const response = await auth.api.listApiKeys({
@@ -47,7 +56,7 @@ export async function ApiKeyList({ onDelete }: ApiKeyListProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {apiKeys.map((apiKey: any) => (
+            {apiKeys.map((apiKey) => (
               <ApiKeyRow
                 key={apiKey.id}
                 apiKey={apiKey}

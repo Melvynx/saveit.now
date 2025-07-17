@@ -3,3 +3,4 @@
 test-results
 playwright-report
 content/
+e2e/test-config.json

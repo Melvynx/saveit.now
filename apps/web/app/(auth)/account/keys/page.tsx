@@ -16,7 +16,7 @@ import { ApiKeyList } from "./api-key-list";
 import { CreateApiKeyForm } from "./create-api-key-form";
 
 export default async function ApiKeysPage() {
-  const user = await getRequiredUser();
+  await getRequiredUser(); // Ensure user is authenticated
 
   const createApiKey = async (formData: FormData) => {
     "use server";

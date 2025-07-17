@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { generateId } from "better-auth";
 import { getPrismaClient } from "../utils/database-loader.mjs";
-import { getUserEmail, generateId } from "../utils/test-data";
+import { getUserEmail } from "../utils/test-data.js";
 
 const prisma = getPrismaClient();
 
@@ -11,7 +12,7 @@ test.describe("Get Bookmark Tests", () => {
   test.beforeAll(async () => {
     testEmail = getUserEmail();
     testUserId = generateId();
-    
+
     await prisma.user.create({
       data: {
         id: testUserId,
@@ -26,7 +27,9 @@ test.describe("Get Bookmark Tests", () => {
   });
 
   test.afterAll(async () => {
-    await prisma.bookmarkTag.deleteMany({ where: { bookmark: { userId: testUserId } } });
+    await prisma.bookmarkTag.deleteMany({
+      where: { bookmark: { userId: testUserId } },
+    });
     await prisma.bookmark.deleteMany({ where: { userId: testUserId } });
     await prisma.tag.deleteMany({ where: { userId: testUserId } });
     await prisma.user.delete({ where: { id: testUserId } });
@@ -63,7 +66,7 @@ test.describe("Get Bookmark Tests", () => {
         },
       },
     });
-    
+
     expect(result).toBeDefined();
     expect(result?.id).toBe(bookmark.id);
     expect(result?.url).toBe("https://get-bookmark-test.com");
@@ -73,7 +76,7 @@ test.describe("Get Bookmark Tests", () => {
   test("should return null for bookmark with wrong user", async () => {
     const otherUserId = generateId();
     const otherUserEmail = getUserEmail();
-    
+
     await prisma.user.create({
       data: {
         id: otherUserId,
@@ -115,7 +118,7 @@ test.describe("Get Bookmark Tests", () => {
         },
       },
     });
-    
+
     expect(result).toBeNull();
 
     // Cleanup
@@ -170,7 +173,7 @@ test.describe("Get Bookmark Tests", () => {
         },
       },
     });
-    
+
     expect(result).toBeDefined();
     expect(result?.tags).toHaveLength(1);
     expect(result?.tags[0].tag.name).toBe("test-tag");
@@ -206,7 +209,7 @@ test.describe("Get Bookmark Tests", () => {
         },
       },
     });
-    
+
     expect(result).toBeDefined();
     expect(result?.id).toBe(bookmark.id);
     expect(result?.url).toBe("https://public-bookmark-test.com");
@@ -286,7 +289,7 @@ test.describe("Get Bookmark Tests", () => {
         },
       },
     });
-    
+
     expect(result).toBeDefined();
     expect(result?.tags).toHaveLength(0);
   });
