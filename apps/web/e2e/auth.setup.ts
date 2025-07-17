@@ -1,4 +1,4 @@
-// Setup authentication for API tests by signing in and saving session state
+// Setup authentication for API tests by signing in and saving session state. This creates an authenticated user session that can be reused by all API tests to avoid having to login for each test.
 import { test as setup, expect } from "@playwright/test";
 import { signInWithEmail } from "./utils/auth-test";
 import { generateTestUserData } from "./utils/test-data";
@@ -22,19 +22,4 @@ setup("authenticate", async ({ page, context }) => {
   
   await page.context().storageState({ path: authFile });
   
-  await page.context().storageState({ 
-    path: authFile.replace('.json', '.user.json'),
-    cookies: await context.cookies(),
-    origins: [
-      {
-        origin: page.url(),
-        localStorage: [
-          {
-            name: "test-user-data",
-            value: JSON.stringify(testUserData)
-          }
-        ]
-      }
-    ]
-  });
 });
