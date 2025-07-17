@@ -61,8 +61,9 @@ test.describe("API Keys Management", () => {
     // Set up dialog handler before clicking delete
     page.on("dialog", dialog => dialog.accept());
 
-    // Click the delete button (Trash icon)
-    await page.click("button:has(svg)");
+    // Click the delete button (Trash icon) - look for the button within the API key row containing the test key
+    const apiKeyRow = page.locator('div').filter({ hasText: 'Test API Key to Delete' });
+    await apiKeyRow.locator('button').click();
 
     // Wait for the page to reload and check that the API key is no longer visible
     await page.waitForLoadState("networkidle");
