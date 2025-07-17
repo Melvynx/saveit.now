@@ -62,7 +62,7 @@ test.describe("API Keys Management", () => {
     page.on("dialog", dialog => dialog.accept());
 
     // Click the delete button (Trash icon)
-    await page.click("button:has([data-lucide='trash-2'])");
+    await page.click("button:has(svg)");
 
     // Wait for success message
     await expect(page.locator("text=API key deleted successfully")).toBeVisible();
