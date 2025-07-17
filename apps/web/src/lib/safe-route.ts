@@ -1,6 +1,7 @@
 import { getUser } from "@/lib/auth-session";
+import { validateApiKey } from "@/lib/auth/api-key-auth";
 import { createZodRoute } from "next-zod-route";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApplicationError, SafeRouteError } from "./errors";
 
 export const routeClient = createZodRoute({
@@ -30,4 +31,18 @@ export const userRoute = routeClient.use(async ({ next }) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   return next({ ctx: { user } });
+});
+
+export const apiRoute = routeClient.use(async ({ next, request }) => {
+  const validation = await validateApiKey(request as NextRequest);
+  
+  if ("error" in validation) {
+    return NextResponse.json(
+      { error: validation.error || "Authentication failed", success: false },
+      { status: validation.status || 401 }
+    );
+  }
+
+  const { user, apiKey } = validation as { user: { id: string }, apiKey: any };
+  return next({ ctx: { user, apiKey } });
 });
