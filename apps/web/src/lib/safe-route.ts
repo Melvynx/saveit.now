@@ -35,14 +35,14 @@ export const userRoute = routeClient.use(async ({ next }) => {
 
 export const apiRoute = routeClient.use(async ({ next, request }) => {
   const validation = await validateApiKey(request as NextRequest);
-  
-  if ("error" in validation) {
+
+  if (!validation.success) {
     return NextResponse.json(
       { error: validation.error || "Authentication failed", success: false },
-      { status: validation.status || 401 }
+      { status: validation.status || 401 },
     );
   }
 
-  const { user, apiKey } = validation as { user: { id: string }, apiKey: any };
+  const { user, apiKey } = validation;
   return next({ ctx: { user, apiKey } });
 });
