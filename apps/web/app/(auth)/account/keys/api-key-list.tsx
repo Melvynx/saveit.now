@@ -10,53 +10,19 @@ import { Typography } from "@workspace/ui/components/typography";
 import { headers } from "next/headers";
 import { ApiKeyRow } from "./api-key-row";
 
-interface BetterAuthApiKey {
-  permissions: { [key: string]: string[]; } | null;
-  id: string;
-  name: string | null;
-  start: string | null;
-  prefix: string | null;
-  userId: string;
-  refillInterval: number | null;
-  refillAmount: number | null;
-  lastRefillAt: Date | null;
-  enabled: boolean | null;
-  rateLimitEnabled: boolean | null;
-  rateLimitTimeWindow: number | null;
-  rateLimitMax: number | null;
-  requestCount: number | null;
-  remaining: number | null;
-  lastRequest: Date | null;
-  expiresAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  metadata: Record<string, any> | null;
-}
-
-interface ApiKeyListProps {}
-
-export async function ApiKeyList({}: ApiKeyListProps) {
-  let apiKeys: BetterAuthApiKey[] = [];
-  
-  try {
-    const response = await auth.api.listApiKeys({
-      headers: await headers(),
-    });
-    
-    apiKeys = response || [];
-  } catch (error) {
-    console.error("Failed to fetch API keys:", error);
-  }
+export async function ApiKeyList() {
+  const apiKeys = await auth.api.listApiKeys({
+    headers: await headers(),
+  });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Your API Keys</CardTitle>
         <CardDescription>
-          {apiKeys.length === 0 
-            ? "You haven't created any API keys yet." 
-            : `You have ${apiKeys.length} API key${apiKeys.length === 1 ? '' : 's'}.`
-          }
+          {apiKeys.length === 0
+            ? "You haven't created any API keys yet."
+            : `You have ${apiKeys.length} API key${apiKeys.length === 1 ? "" : "s"}.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,10 +35,7 @@ export async function ApiKeyList({}: ApiKeyListProps) {
         ) : (
           <div className="space-y-4">
             {apiKeys.map((apiKey) => (
-              <ApiKeyRow
-                key={apiKey.id}
-                apiKey={apiKey}
-              />
+              <ApiKeyRow key={apiKey.id} apiKey={apiKey} />
             ))}
           </div>
         )}

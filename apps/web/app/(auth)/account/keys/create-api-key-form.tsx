@@ -5,7 +5,6 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -14,13 +13,21 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Typography } from "@workspace/ui/components/typography";
-import { Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string }) => {
+const ApiKeySuccessDialog = ({
+  apiKey,
+  name,
+  onClose,
+}: {
+  apiKey: string;
+  name: string;
+  onClose: () => void;
+}) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(apiKey);
@@ -36,10 +43,11 @@ const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string })
       <div className="space-y-2">
         <Typography variant="h3">API Key Created Successfully!</Typography>
         <Typography variant="muted">
-          Your API key has been created. Make sure to copy it now - you won't be able to see it again.
+          Your API key has been created. Make sure to copy it now - you won't be
+          able to see it again.
         </Typography>
       </div>
-      
+
       <div className="space-y-2">
         <Label>Key Name</Label>
         <Input value={name} readOnly />
@@ -48,9 +56,9 @@ const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string })
       <div className="space-y-2">
         <Label>API Key</Label>
         <div className="flex gap-2">
-          <Input 
-            value={apiKey} 
-            readOnly 
+          <Input
+            value={apiKey}
+            readOnly
             className="font-mono text-sm"
             onFocus={(e) => e.target.select()}
           />
@@ -60,15 +68,17 @@ const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string })
             onClick={handleCopy}
             className="shrink-0"
           >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
-      
+
       <div className="flex justify-end pt-4">
-        <Button onClick={() => dialogManager.remove("")}>
-          OK
-        </Button>
+        <Button onClick={onClose}>Close</Button>
       </div>
     </div>
   );
@@ -76,17 +86,24 @@ const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string })
 
 export function CreateApiKeyForm() {
   const router = useRouter();
-  
+
   const showApiKeyDialog = (apiKey: string, name: string) => {
-    dialogManager.add({
-      children: <ApiKeySuccessDialog apiKey={apiKey} name={name} />,
+    const dialogId = dialogManager.add({
+      children: (
+        <ApiKeySuccessDialog
+          apiKey={apiKey}
+          name={name}
+          onClose={() => dialogManager.remove(dialogId)}
+        />
+      ),
     });
   };
 
   const handleCreateKey = () => {
     dialogManager.add({
       title: "Create New API Key",
-      description: "Choose a descriptive name for your API key to help you identify it later.",
+      description:
+        "Choose a descriptive name for your API key to help you identify it later.",
       input: {
         label: "Key Name",
         placeholder: "e.g., My Mobile App, Production Server",
@@ -99,12 +116,12 @@ export function CreateApiKeyForm() {
               name: keyName,
               expiresIn: 60 * 60 * 24 * 365, // 1 year
             });
-            
+
             if (error) {
               console.error("Failed to create API key:", error);
               return;
             }
-            
+
             if (apiKey?.key) {
               showApiKeyDialog(apiKey.key, keyName);
               router.refresh();

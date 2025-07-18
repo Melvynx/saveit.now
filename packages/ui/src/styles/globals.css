@@ -201,3 +201,7 @@
 lite-youtube {
   max-width: unset !important;
 }
+
+.dark.shiki {
+  background-color: var(--shiki-dark-bg) !important;
+}

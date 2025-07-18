@@ -1,6 +1,7 @@
 ---
 title: Create Bookmark
 description: Create a new bookmark using the SaveIt.now API
+method: POST
 order: 2
 category: API
 subcategory: Bookmarks
@@ -12,22 +13,12 @@ published: true
 
 Create a new bookmark in your SaveIt.now account.
 
-## Endpoint
+## API Reference
 
-```
-POST /api/v1/bookmarks
-```
+**Method:** `POST`  
+**Endpoint:** `/api/v1/bookmarks`
 
-## Request
-
-### Headers
-
-```
-Content-Type: application/json
-Authorization: Bearer YOUR_API_KEY
-```
-
-### Body Parameters
+### Request Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -37,7 +28,9 @@ Authorization: Bearer YOUR_API_KEY
 | `tags` | string[] | No | Array of tags to categorize the bookmark |
 | `folder` | string | No | Folder to organize the bookmark |
 
-### Example Request
+## Examples
+
+### Bash (cURL)
 
 ```bash
 curl -X POST https://saveit.now/api/v1/bookmarks \
@@ -52,9 +45,32 @@ curl -X POST https://saveit.now/api/v1/bookmarks \
   }'
 ```
 
-## Response
+### JavaScript
 
-### Success Response (201 Created)
+```javascript
+const response = await fetch('https://saveit.now/api/v1/bookmarks', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    url: 'https://example.com/article',
+    title: 'Interesting Article',
+    description: 'An article about web development',
+    tags: ['web', 'development', 'javascript'],
+    folder: 'Tech Articles'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+
+## Results
+
+### Success Response
 
 ```json
 {
@@ -77,8 +93,7 @@ curl -X POST https://saveit.now/api/v1/bookmarks \
 
 ### Error Responses
 
-#### 400 Bad Request
-
+**400 Bad Request** - Invalid URL format
 ```json
 {
   "success": false,
@@ -89,8 +104,7 @@ curl -X POST https://saveit.now/api/v1/bookmarks \
 }
 ```
 
-#### 401 Unauthorized
-
+**401 Unauthorized** - Invalid or missing API key
 ```json
 {
   "success": false,
@@ -101,8 +115,7 @@ curl -X POST https://saveit.now/api/v1/bookmarks \
 }
 ```
 
-#### 409 Conflict
-
+**409 Conflict** - Bookmark already exists
 ```json
 {
   "success": false,
