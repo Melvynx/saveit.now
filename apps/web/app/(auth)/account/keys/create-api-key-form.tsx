@@ -18,64 +18,68 @@ import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const ApiKeySuccessDialog = ({ apiKey, name }: { apiKey: string; name: string }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Typography variant="h3">API Key Created Successfully!</Typography>
+        <Typography variant="muted">
+          Your API key has been created. Make sure to copy it now - you won't be able to see it again.
+        </Typography>
+      </div>
+      
+      <div className="space-y-2">
+        <Label>Key Name</Label>
+        <Input value={name} readOnly />
+      </div>
+
+      <div className="space-y-2">
+        <Label>API Key</Label>
+        <div className="flex gap-2">
+          <Input 
+            value={apiKey} 
+            readOnly 
+            className="font-mono text-sm"
+            onFocus={(e) => e.target.select()}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            className="shrink-0"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+      
+      <div className="flex justify-end pt-4">
+        <Button onClick={() => dialogManager.remove("")}>
+          OK
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export function CreateApiKeyForm() {
   const router = useRouter();
   
   const showApiKeyDialog = (apiKey: string, name: string) => {
-    const [copied, setCopied] = useState(false);
-    
-    const handleCopy = async () => {
-      try {
-        await navigator.clipboard.writeText(apiKey);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy:", err);
-      }
-    };
-
     dialogManager.add({
-      children: (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Typography variant="h3">API Key Created Successfully!</Typography>
-            <Typography variant="muted">
-              Your API key has been created. Make sure to copy it now - you won't be able to see it again.
-            </Typography>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Key Name</Label>
-            <Input value={name} readOnly />
-          </div>
-
-          <div className="space-y-2">
-            <Label>API Key</Label>
-            <div className="flex gap-2">
-              <Input 
-                value={apiKey} 
-                readOnly 
-                className="font-mono text-sm"
-                onFocus={(e) => e.target.select()}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className="shrink-0"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => dialogManager.remove("")}>
-              OK
-            </Button>
-          </div>
-        </div>
-      ),
+      children: <ApiKeySuccessDialog apiKey={apiKey} name={name} />,
     });
   };
 
