@@ -1,7 +1,6 @@
 "use client";
 
 import { Bookmark } from "@workspace/database";
-import { FileText } from "lucide-react";
 
 import {
   BookmarkCardActions,
@@ -18,13 +17,16 @@ interface BookmarkCardPDFProps {
 
 export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
   const domainName = new URL(bookmark.url).hostname;
-  const metadata = bookmark.metadata as { pdfUrl?: string; screenshotUrl?: string } | null;
+  const metadata = bookmark.metadata as {
+    pdfUrl?: string;
+    screenshotUrl?: string;
+  } | null;
   const pdfUrl = metadata?.pdfUrl || bookmark.url;
   const screenshotUrl = bookmark.ogImageUrl || metadata?.screenshotUrl;
 
   const handleClick = () => {
     // Open the stored PDF file
-    window.open(pdfUrl, '_blank');
+    window.open(pdfUrl, "_blank");
   };
 
   return (
@@ -43,13 +45,6 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
         }}
         onClick={handleClick}
       >
-        {/* PDF Icon Overlay */}
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <div className="bg-white/90 rounded-full p-3">
-            <FileText className="h-8 w-8 text-red-600" />
-          </div>
-        </div>
-
         <BookmarkCardActions
           url={pdfUrl}
           bookmarkId={bookmark.id}
@@ -60,10 +55,10 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>
-        <BookmarkCardTitle className="text-sm">
+        <BookmarkCardTitle>
           {bookmark.title || "PDF Document"}
         </BookmarkCardTitle>
-        <BookmarkCardDescription className="text-xs line-clamp-2">
+        <BookmarkCardDescription>
           {bookmark.summary || `PDF from ${domainName}`}
         </BookmarkCardDescription>
       </BookmarkCardContent>
