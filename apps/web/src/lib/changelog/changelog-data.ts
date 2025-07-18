@@ -13,6 +13,21 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "2025-07-18",
+    type: "improvement",
+    title: "Easy Screenshot Updates",
+    description:
+      "You can now easily update the screenshot of any bookmark with a single click.",
+    changes: [
+      {
+        type: "improvement",
+        text: "Update bookmark screenshots effortlessly",
+      },
+    ],
+    image: "/changelog/add-screenshot.gif",
+  },
+  {
     version: "1.1.0",
     date: "2025-07-18",
     type: "feature",
