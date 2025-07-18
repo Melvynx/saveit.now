@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
-import { CreditCard, Gem, Shield, User, UserX } from "lucide-react";
+import { CreditCard, Gem, Key, Shield, User, UserX } from "lucide-react";
 import Link from "next/link";
 import { LogoutButton } from "../auth/logout";
 
@@ -73,6 +73,12 @@ export const HeaderUser = () => {
               <Link href="/account">
                 <User className="size-4" />
                 Account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/account/keys">
+                <Key className="size-4" />
+                API Keys
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

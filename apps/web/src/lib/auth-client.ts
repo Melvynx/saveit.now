@@ -1,6 +1,7 @@
 import { stripeClient } from "@better-auth/stripe/client";
 import {
   adminClient,
+  apiKeyClient,
   emailOTPClient,
   magicLinkClient,
 } from "better-auth/client/plugins";
@@ -13,6 +14,7 @@ export const authClient = createAuthClient({
     stripeClient({ subscription: true }),
     adminClient(),
     emailOTPClient(),
+    apiKeyClient(),
   ],
   baseURL: getServerUrl(),
 });

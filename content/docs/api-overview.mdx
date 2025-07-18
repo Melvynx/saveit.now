@@ -1,0 +1,98 @@
+---
+title: API Overview
+description: Learn how to use the SaveIt.now API to programmatically manage your bookmarks
+order: 1
+category: API
+tags: [api, rest, authentication]
+published: true
+---
+
+# SaveIt.now API
+
+The SaveIt.now API allows you to programmatically manage your bookmarks and integrate SaveIt.now with your applications and workflows.
+
+## Base URL
+
+All API endpoints are available at:
+
+```
+https://saveit.now/api/v1
+```
+
+## Authentication
+
+The API uses Bearer token authentication. You need to include your API key in the Authorization header:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Getting an API Key
+
+1. Navigate to your [API Keys page](/account/keys)
+2. Click "Create API Key"
+3. Give your key a descriptive name
+4. Copy the generated key (you won't be able to see it again)
+
+### API Key Management
+
+- API keys don't expire automatically but can be set to expire
+- You can revoke API keys at any time
+- Each key shows when it was last used
+- Keys are linked to your account and have the same permissions as your user
+
+## Rate Limiting
+
+The API has rate limits to ensure fair usage:
+
+- **Free accounts**: 100 requests per hour
+- **Pro accounts**: 1000 requests per hour
+- **Enterprise accounts**: 5000 requests per hour
+
+Rate limit headers are included in all responses:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+## Response Format
+
+All API responses are in JSON format. Successful responses include the requested data, while errors include an error message and details.
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "data": {
+    // Response data
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BOOKMARK_NOT_FOUND",
+    "message": "The requested bookmark was not found"
+  }
+}
+```
+
+## Common Error Codes
+
+- `UNAUTHORIZED`: Invalid or missing API key
+- `RATE_LIMIT_EXCEEDED`: Too many requests
+- `BOOKMARK_NOT_FOUND`: Bookmark doesn't exist
+- `INVALID_URL`: URL format is invalid
+- `VALIDATION_ERROR`: Request data validation failed
+
+## Next Steps
+
+- [Create Bookmark API](/docs/api-bookmarks-create)
+- [List Bookmarks API](/docs/api-bookmarks-list)

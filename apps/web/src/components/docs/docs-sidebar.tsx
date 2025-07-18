@@ -29,14 +29,22 @@ export async function DocsSidebar({ currentDoc }: DocsSidebarProps) {
                         : "hover:bg-muted/50"
                     }`}
                   >
-                    <div className="font-medium text-sm">
-                      {doc.frontmatter.title}
+                    <div className="flex items-center gap-2">
+                      {doc.frontmatter.method && (
+                        <span className={`text-xs px-2 py-1 rounded font-mono ${
+                          doc.frontmatter.method === 'GET' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                          doc.frontmatter.method === 'POST' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          doc.frontmatter.method === 'PUT' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                          doc.frontmatter.method === 'DELETE' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                        }`}>
+                          {doc.frontmatter.method}
+                        </span>
+                      )}
+                      <span className="font-medium text-sm">
+                        {doc.frontmatter.title}
+                      </span>
                     </div>
-                    {doc.slug === currentDoc.slug && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {doc.readingTime.text}
-                      </div>
-                    )}
                   </Link>
                 ))}
               </div>

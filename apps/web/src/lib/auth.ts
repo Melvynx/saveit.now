@@ -4,7 +4,7 @@ import { prisma } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { admin, emailOTP, magicLink } from "better-auth/plugins";
+import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
 import { AUTH_LIMITS } from "./auth-limits";
 import { createBookmark } from "./database/create-bookmark";
 import { inngest } from "./inngest/client";
@@ -191,5 +191,6 @@ Melvyn`,
     }),
     nextCookies(),
     admin({}),
+    apiKey(),
   ],
 });

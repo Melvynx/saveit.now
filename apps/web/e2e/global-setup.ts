@@ -6,6 +6,9 @@ import {
 } from "./utils/database";
 import { getPrismaClient } from "./utils/database-loader.mjs";
 import { TEST_EMAIL, TEST_NAME } from "./utils/test-data";
+import { writeFile } from "fs/promises";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 async function globalSetup() {
   try {
@@ -34,6 +37,45 @@ async function globalSetup() {
         },
       });
     }
+
+    // Create API key for testing
+    const apiKeyData = {
+      id: nanoid(),
+      name: "E2E Test API Key",
+      key: `saveit_${nanoid(32)}`,
+      userId: testUser.id,
+      enabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Clean up existing test API key
+    await prisma.apikey.deleteMany({
+      where: { 
+        userId: testUser.id,
+        name: "E2E Test API Key"
+      }
+    });
+
+    // Create new test API key
+    await prisma.apikey.create({
+      data: apiKeyData,
+    });
+
+    // Store API key for tests to use
+    const testConfig = {
+      apiKey: apiKeyData.key,
+      userId: testUser.id,
+      userEmail: TEST_EMAIL,
+    };
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    
+    await writeFile(
+      join(__dirname, "test-config.json"),
+      JSON.stringify(testConfig, null, 2)
+    );
 
     // Seed test data
     await seedTestBookmarks(testUser.id, 5);

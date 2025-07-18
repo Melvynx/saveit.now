@@ -12,6 +12,7 @@ const DocFrontmatterSchema = z.object({
   subcategory: z.string().optional(),
   tags: z.array(z.string()).optional(),
   icon: z.string().optional(),
+  method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional(),
   published: z.boolean().default(true),
 });
 
