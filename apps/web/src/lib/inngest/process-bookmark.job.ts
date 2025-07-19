@@ -18,7 +18,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event, publish }) => {
+    onFailure: async ({ event, publish, runId }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -29,15 +29,27 @@ export const processBookmarkJob = inngest.createFunction(
       const error = event.data.error;
 
       try {
-        await prisma.bookmark.update({
-          where: { id: bookmarkId },
-          data: {
-            status: "ERROR",
-            metadata: {
-              error: error.message,
+        await Promise.all([
+          prisma.bookmark.update({
+            where: { id: bookmarkId },
+            data: {
+              status: "ERROR",
+              metadata: {
+                error: error.message,
+              },
             },
-          },
-        });
+          }),
+          prisma.bookmarkProcessingRun.update({
+            where: { 
+              inngestRunId: runId,
+            },
+            data: {
+              status: "FAILED",
+              completedAt: new Date(),
+              failureReason: error.message,
+            },
+          }),
+        ]);
       } catch {
         // ignore
       }
@@ -75,23 +87,36 @@ export const processBookmarkJob = inngest.createFunction(
       });
     });
 
-    await step.run("update-bookmark-status", async () => {
-      await prisma.bookmark.update({
-        where: { id: bookmarkId },
-        data: { inngestRunId: runId, status: "PROCESSING" },
-      });
-    });
-
     if (!bookmark) {
       throw new Error("Bookmark not found");
     }
+
+    // Extract bookmark properties to avoid null assertions
+    const { userId, url } = bookmark;
+
+    await step.run("update-bookmark-status", async () => {
+      await Promise.all([
+        prisma.bookmark.update({
+          where: { id: bookmarkId },
+          data: { inngestRunId: runId, status: "PROCESSING" },
+        }),
+        prisma.bookmarkProcessingRun.create({
+          data: {
+            inngestRunId: runId,
+            bookmarkId: bookmarkId,
+            userId: userId,
+            status: "STARTED",
+          },
+        }),
+      ]);
+    });
 
     // Validate bookmark limits before processing
     await step.run("validate-bookmark-limits", async () => {
       try {
         await validateBookmarkLimits({
-          userId: bookmark.userId,
-          url: bookmark.url,
+          userId: userId,
+          url: url,
           skipExistenceCheck: true, // Skip existence check since bookmark already exists
         });
       } catch (error) {

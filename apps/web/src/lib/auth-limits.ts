@@ -1,18 +1,18 @@
 export type AuthLimits = {
   bookmarks: number;
-  monthlyBookmarks: number;
+  monthlyBookmarkRuns: number;
   canExport: number;
 };
 
 export const AUTH_LIMITS: Record<"pro" | "free", AuthLimits> = {
   free: {
     bookmarks: 20,
-    monthlyBookmarks: 20,
+    monthlyBookmarkRuns: 20,
     canExport: 0,
   },
   pro: {
     bookmarks: 50000,
-    monthlyBookmarks: 1000,
+    monthlyBookmarkRuns: 1000,
     canExport: 1,
   },
 };
