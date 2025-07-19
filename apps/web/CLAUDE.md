@@ -22,3 +22,10 @@ When working with analytics:
 ## Commands
 
 - Always ONLY run `pnpm test:ci` or `pnpm test:e2e:ci` in order to run them only in the terminal
+
+## Important
+
+- When you create `/api` routes ALWAYS do like @apps/web/app/api/bookmarks/route.ts and use the best @apps/web/src/lib/safe-route.ts files to do it.
+- When you create `Server Function` please always look code in @apps/web/app/(layout)/exports/exports.action.ts and use @apps/web/src/lib/safe-action.ts to do it. Each action should be name `ACTION_NAME.action.ts`
+- For fetch request, always use @apps/web/src/lib/up-fetch.ts
+- For env variables, use @apps/web/src/lib/env.ts to typesafe env

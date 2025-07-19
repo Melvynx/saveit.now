@@ -36,7 +36,9 @@
         "VERCEL_ENV",
         "NODE_ENV",
         "CI",
-        "HEADLESS"
+        "HEADLESS",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

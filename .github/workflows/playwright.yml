@@ -67,6 +67,9 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # External APIs
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      # Redis
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
       # Inngest
       INNGEST_EVENT_KEY: "test"
       INNGEST_SIGNING_KEY: "test-signing-key"

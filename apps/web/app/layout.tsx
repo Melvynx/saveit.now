@@ -1,6 +1,7 @@
 import { ServerToaster } from "@/features/server-sonner/server-toaster";
 import { getUserLimits } from "@/lib/auth-session";
 import { InjectUserPlan } from "@/lib/auth/user-plan";
+import { ChangelogNotificationWrapper } from "@/features/changelog/changelog-notification-wrapper";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Metadata } from "next";
@@ -44,6 +45,7 @@ export default function RootLayout({
         <Providers>{children}</Providers>
         <InjectUserPlanServer />
         <ServerToaster />
+        <ChangelogNotificationWrapper />
       </body>
     </html>
   );
