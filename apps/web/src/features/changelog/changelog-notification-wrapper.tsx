@@ -1,12 +1,12 @@
 "use client";
 
-import { useSession } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { ChangelogNotification } from "./changelog-notification";
 
 export function ChangelogNotificationWrapper() {
-  const session = useSession();
+  const session = authClient.useSession();
   
-  if (!session?.user?.id) return null;
+  if (!session.data?.user?.id) return null;
   
   return <ChangelogNotification />;
 }

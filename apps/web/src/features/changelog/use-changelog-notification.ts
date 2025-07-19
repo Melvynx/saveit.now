@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { changelogEntries } from "@/lib/changelog/changelog-data";
-import { useSession } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 
 export function useChangelogNotification() {
-  const session = useSession();
+  const session = authClient.useSession();
   
   const { data: shouldShow, isLoading } = useQuery({
-    queryKey: ["changelog-notification", session?.user?.id],
+    queryKey: ["changelog-notification", session.data?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return false;
+      if (!session.data?.user?.id) return false;
       
       const latestEntry = changelogEntries[0];
       if (!latestEntry) return false;
@@ -24,12 +24,12 @@ export function useChangelogNotification() {
       const { isDismissed } = await response.json();
       return !isDismissed;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session.data?.user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const dismissNotification = async (version: string) => {
-    if (!session?.user?.id) return;
+    if (!session.data?.user?.id) return;
     
     await fetch("/api/changelog/dismiss", {
       method: "POST",
