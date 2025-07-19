@@ -6,11 +6,14 @@ export default async function UnsubscribePage({
   params,
   searchParams,
 }: {
-  params: { userId: string };
-  searchParams: { confirmed?: string };
+  params: Promise<{ userId: string }>;
+  searchParams: Promise<{ confirmed?: string }>;
 }) {
+  const { userId } = await params;
+  const { confirmed } = await searchParams;
+  
   const user = await prisma.user.findUnique({
-    where: { id: params.userId },
+    where: { id: userId },
     select: { id: true, email: true, unsubscribed: true },
   });
 
@@ -18,7 +21,7 @@ export default async function UnsubscribePage({
     notFound();
   }
 
-  if (searchParams.confirmed === "true") {
+  if (confirmed === "true") {
     if (!user.unsubscribed) {
       await prisma.user.update({
         where: { id: user.id },
