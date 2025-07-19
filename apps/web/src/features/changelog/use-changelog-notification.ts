@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { changelogEntries } from "@/lib/changelog/changelog-data";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
+import { upfetch } from "@/lib/up-fetch";
 
 export function useChangelogNotification() {
-  const session = authClient.useSession();
+  const session = useSession();
+  const queryClient = useQueryClient();
   
   const { data: shouldShow, isLoading } = useQuery({
     queryKey: ["changelog-notification", session.data?.user?.id],
@@ -13,7 +15,7 @@ export function useChangelogNotification() {
       const latestEntry = changelogEntries[0];
       if (!latestEntry) return false;
       
-      const response = await fetch("/api/changelog/check-dismissed", {
+      const response = await upfetch("/api/changelog/check-dismissed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: latestEntry.version }),
@@ -28,14 +30,28 @@ export function useChangelogNotification() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const dismissNotification = async (version: string) => {
+  const dismissMutation = useMutation({
+    mutationFn: async (version: string) => {
+      const response = await upfetch("/api/changelog/dismiss", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to dismiss notification");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["changelog-notification"] });
+    },
+  });
+
+  const dismissNotification = (version: string) => {
     if (!session.data?.user?.id) return;
-    
-    await fetch("/api/changelog/dismiss", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ version }),
-    });
+    dismissMutation.mutate(version);
   };
 
   const latestEntry = changelogEntries[0];
@@ -45,5 +61,6 @@ export function useChangelogNotification() {
     latestEntry,
     dismissNotification,
     isLoading,
+    isDismissing: dismissMutation.isPending,
   };
 }

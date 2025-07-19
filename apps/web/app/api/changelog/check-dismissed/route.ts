@@ -1,24 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUser } from "@/lib/auth-session";
-import { isChangelogDismissed } from "@/lib/redis";
+import { userRoute } from "@/lib/safe-route";
+import { isChangelogDismissed } from "@/lib/changelog/changelog-redis";
+import { z } from "zod";
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { version } = await request.json();
-    if (!version) {
-      return NextResponse.json({ error: "Version is required" }, { status: 400 });
-    }
-
-    const isDismissed = await isChangelogDismissed(user.id, version);
+export const POST = userRoute
+  .body(
+    z.object({
+      version: z.string().min(1),
+    }),
+  )
+  .handler(async (req, { body, ctx }) => {
+    const isDismissed = await isChangelogDismissed(ctx.user.id, body.version);
     
-    return NextResponse.json({ isDismissed });
-  } catch (error) {
-    console.error("Error checking changelog dismissal:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+    return { isDismissed };
+  });

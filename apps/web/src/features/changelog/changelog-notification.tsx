@@ -8,19 +8,16 @@ import { X, Sparkles } from "lucide-react";
 import { useChangelogNotification } from "./use-changelog-notification";
 import { ChangelogDialog } from "./changelog-dialog";
 import Image from "next/image";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function ChangelogNotification() {
   const { shouldShow, latestEntry, dismissNotification, isLoading } = useChangelogNotification();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   if (isLoading || !shouldShow || !latestEntry) return null;
 
-  const handleDismiss = async (e: React.MouseEvent) => {
+  const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
-    await dismissNotification(latestEntry.version);
-    queryClient.invalidateQueries({ queryKey: ["changelog-notification"] });
+    dismissNotification(latestEntry.version);
   };
 
   const handleCardClick = () => {

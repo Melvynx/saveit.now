@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { markChangelogAsDismissed, isChangelogDismissed } from "@/src/lib/redis";
+import { markChangelogAsDismissed, isChangelogDismissed } from "@/src/lib/changelog/changelog-redis";
 
 // Mock Redis
-vi.mock("@/src/lib/redis", () => ({
+vi.mock("@/src/lib/changelog/changelog-redis", () => ({
   markChangelogAsDismissed: vi.fn(),
   isChangelogDismissed: vi.fn(),
 }));
