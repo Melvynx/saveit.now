@@ -147,7 +147,9 @@ export async function updateBookmark(params: {
   ogDescription?: string | null;
   imageDescription?: string | null;
 }) {
-  return await prisma.bookmark.update({
+  const finalStatus = params.status || BookmarkStatus.READY;
+  
+  const bookmarkUpdate = prisma.bookmark.update({
     where: { id: params.bookmarkId },
     data: {
       type: params.type,
@@ -159,7 +161,7 @@ export async function updateBookmark(params: {
       imageDescription: params.imageDescription,
       summary: params.summary || "",
       preview: params.preview,
-      status: params.status || BookmarkStatus.READY,
+      status: finalStatus,
       metadata: params.metadata,
       tags: {
         connectOrCreate: params.tags.map((tag) => ({
@@ -175,5 +177,26 @@ export async function updateBookmark(params: {
         })),
       },
     },
+  });
+
+  // If the bookmark is being marked as ready, also mark the processing run as completed
+  if (finalStatus === BookmarkStatus.READY) {
+    const runUpdate = prisma.bookmarkProcessingRun.updateMany({
+      where: { 
+        bookmarkId: params.bookmarkId,
+        status: "STARTED",
+      },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+    await Promise.all([bookmarkUpdate, runUpdate]);
+  } else {
+    await bookmarkUpdate;
+  }
+
+  return await prisma.bookmark.findUnique({
+    where: { id: params.bookmarkId },
   });
 }
