@@ -126,8 +126,8 @@ export default function SignInPage() {
           </div>
 
           <div className="@sm:flex-row flex-col flex items-center gap-2">
-            <SignInWith className="w-full" type="github" />
-            <SignInWith className="w-full" type="google" />
+            <SignInWith className="w-full" type="github" buttonProps={{}} />
+            <SignInWith className="w-full" type="google" buttonProps={{}} />
           </div>
         </CardContent>
       </Card>
