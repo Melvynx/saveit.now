@@ -15,7 +15,7 @@ export const changelogEntries: ChangelogEntry[] = [
   {
     version: "1.3.1",
     date: "2025-07-19",
-    type: "major",
+    type: "improvement",
     title: "Changelog Notifications",
     description:
       "Never miss an update! Get notified about new features and improvements with our new notification system.",
