@@ -1,7 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
-
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -10,9 +8,10 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
+import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardImageProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {

@@ -1,6 +1,6 @@
 import { BookmarkStatus, BookmarkType } from "@workspace/database";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
-import { CircleDashed, CircleX, Image } from "lucide-react";
+import { CircleDashed, CircleX, File, Image } from "lucide-react";
 import { DEFAULT_FAVICON } from "./bookmark.default";
 
 export type BookmarkFaviconProps = {
@@ -28,6 +28,10 @@ export const BookmarkFavicon = (props: BookmarkFaviconProps) => {
 
   if (props.status === "ERROR") {
     return <CircleX className="size-4" />;
+  }
+
+  if (props.bookmarkType === "PDF") {
+    return <File className="size-4" />;
   }
 
   return (

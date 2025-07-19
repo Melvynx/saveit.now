@@ -1,6 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 
 import {
@@ -12,9 +11,10 @@ import {
   BookmarkCardTitle,
 } from "./bookmark-card-base";
 import { LinkWithQuery } from "./link-with-query";
+import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardPageProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {

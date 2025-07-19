@@ -1,7 +1,6 @@
 "use client";
 
 import { YouTubeEmbed } from "@next/third-parties/google";
-import { Bookmark } from "@workspace/database";
 
 import {
   BookmarkCardActions,
@@ -12,9 +11,10 @@ import {
   BookmarkCardTitle,
   HEADER_HEIGHT,
 } from "./bookmark-card-base";
+import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardYouTubeProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
@@ -25,7 +25,6 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
     transcriptAvailable?: boolean;
   };
   const domainName = new URL(bookmark.url).hostname;
-  const hasTranscript = metadata?.transcript || metadata?.transcriptAvailable;
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>
