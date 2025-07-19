@@ -39,6 +39,7 @@
     "@tanstack/react-query": "^5.76.1",
     "@types/mime-types": "^2.1.4",
     "@types/sharp": "^0.32.0",
+    "@upstash/redis": "^1.35.1",
     "@workspace/database": "workspace:*",
     "@workspace/ui": "workspace:*",
     "ai": "^4.3.16",
