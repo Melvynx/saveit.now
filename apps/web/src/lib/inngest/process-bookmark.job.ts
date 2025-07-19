@@ -18,7 +18,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event, publish }) => {
+    onFailure: async ({ event, publish, runId }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -39,10 +39,9 @@ export const processBookmarkJob = inngest.createFunction(
               },
             },
           }),
-          prisma.bookmarkProcessingRun.updateMany({
+          prisma.bookmarkProcessingRun.update({
             where: { 
-              bookmarkId: bookmarkId,
-              status: "STARTED",
+              inngestRunId: runId,
             },
             data: {
               status: "FAILED",
@@ -92,6 +91,9 @@ export const processBookmarkJob = inngest.createFunction(
       throw new Error("Bookmark not found");
     }
 
+    // Extract bookmark properties to avoid null assertions
+    const { userId, url } = bookmark;
+
     await step.run("update-bookmark-status", async () => {
       await Promise.all([
         prisma.bookmark.update({
@@ -102,7 +104,7 @@ export const processBookmarkJob = inngest.createFunction(
           data: {
             inngestRunId: runId,
             bookmarkId: bookmarkId,
-            userId: bookmark!.userId,
+            userId: userId,
             status: "STARTED",
           },
         }),
@@ -113,8 +115,8 @@ export const processBookmarkJob = inngest.createFunction(
     await step.run("validate-bookmark-limits", async () => {
       try {
         await validateBookmarkLimits({
-          userId: bookmark!.userId,
-          url: bookmark!.url,
+          userId: userId,
+          url: url,
           skipExistenceCheck: true, // Skip existence check since bookmark already exists
         });
       } catch (error) {

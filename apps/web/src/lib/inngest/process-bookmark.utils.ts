@@ -179,21 +179,28 @@ export async function updateBookmark(params: {
     },
   });
 
+  // Execute the bookmark update
+  await bookmarkUpdate;
+
   // If the bookmark is being marked as ready, also mark the processing run as completed
   if (finalStatus === BookmarkStatus.READY) {
-    const runUpdate = prisma.bookmarkProcessingRun.updateMany({
-      where: { 
-        bookmarkId: params.bookmarkId,
-        status: "STARTED",
-      },
-      data: {
-        status: "COMPLETED",
-        completedAt: new Date(),
-      },
+    // Get the bookmark to extract the inngestRunId
+    const currentBookmark = await prisma.bookmark.findUnique({
+      where: { id: params.bookmarkId },
+      select: { inngestRunId: true },
     });
-    await Promise.all([bookmarkUpdate, runUpdate]);
-  } else {
-    await bookmarkUpdate;
+    
+    if (currentBookmark?.inngestRunId) {
+      await prisma.bookmarkProcessingRun.update({
+        where: { 
+          inngestRunId: currentBookmark.inngestRunId,
+        },
+        data: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+        },
+      });
+    }
   }
 
   return await prisma.bookmark.findUnique({
