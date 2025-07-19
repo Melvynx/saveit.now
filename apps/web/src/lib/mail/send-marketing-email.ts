@@ -18,7 +18,7 @@ export class UserUnsubscribedError extends Error {
  */
 const addUnsubscribeLink = (content: string, userId: string): string => {
   const unsubscribeUrl = `${getServerUrl()}/unsubscribe/${userId}`;
-  const unsubscribeText = `\n\n---\n\n🚫 [Unsubscribe from marketing emails](${unsubscribeUrl})`;
+  const unsubscribeText = `\n\n---\n\n[Unsubscribe from marketing emails](${unsubscribeUrl})`;
   
   return content + unsubscribeText;
 };
