@@ -1,30 +1,31 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { changelogEntries } from "@/lib/changelog/changelog-data";
 import { useSession } from "@/lib/auth-client";
+import { changelogEntries } from "@/lib/changelog/changelog-data";
 import { upfetch } from "@/lib/up-fetch";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 
 export function useChangelogNotification() {
   const session = useSession();
   const queryClient = useQueryClient();
-  
+
   const { data: shouldShow, isLoading } = useQuery({
     queryKey: ["changelog-notification", session.data?.user?.id],
     queryFn: async () => {
       if (!session.data?.user?.id) return false;
-      
+
       const latestEntry = changelogEntries[0];
       if (!latestEntry) return false;
-      
+
       const response = await upfetch("/api/changelog/check-dismissed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: latestEntry.version }),
+        schema: z.object({
+          isDismissed: z.boolean(),
+        }),
       });
-      
-      if (!response.ok) return false;
-      
-      const { isDismissed } = await response.json();
-      return !isDismissed;
+
+      return !response.isDismissed;
     },
     enabled: !!session.data?.user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -37,11 +38,11 @@ export function useChangelogNotification() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to dismiss notification");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {

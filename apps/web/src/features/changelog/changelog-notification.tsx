@@ -1,17 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { Card } from "@workspace/ui/components/card";
-import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
-import { X, Sparkles } from "lucide-react";
-import { useChangelogNotification } from "./use-changelog-notification";
-import { ChangelogDialog } from "./changelog-dialog";
+import { Button } from "@workspace/ui/components/button";
+import { Card } from "@workspace/ui/components/card";
+import { Sparkles, X } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { ChangelogDialog } from "./changelog-dialog";
+import { useChangelogNotification } from "./use-changelog-notification";
 
 export function ChangelogNotification() {
-  const { shouldShow, latestEntry, dismissNotification, isLoading } = useChangelogNotification();
+  const { shouldShow, latestEntry, dismissNotification, isLoading } =
+    useChangelogNotification();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  console.log("shouldShow", {
+    shouldShow,
+    latestEntry,
+    isLoading,
+  });
 
   if (isLoading || !shouldShow || !latestEntry) return null;
 
@@ -27,16 +34,16 @@ export function ChangelogNotification() {
   return (
     <>
       <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 slide-in-from-right-4">
-        <Card 
-          className="w-80 p-4 cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-background"
+        <Card
+          className="max-w-xs p-4"
           onClick={handleCardClick}
           data-testid="changelog-notification"
         >
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">
                   What's New
                 </span>
                 <Badge variant="outline" className="text-xs">
@@ -55,7 +62,9 @@ export function ChangelogNotification() {
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-medium leading-tight">{latestEntry.title}</h4>
+              <h4 className="text-sm font-medium leading-tight">
+                {latestEntry.title}
+              </h4>
               <p className="text-xs text-muted-foreground line-clamp-2">
                 {latestEntry.description}
               </p>
