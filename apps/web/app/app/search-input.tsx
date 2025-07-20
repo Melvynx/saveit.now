@@ -11,8 +11,8 @@ import { useCreateBookmarkAction } from "./use-create-bookmark";
 
 const SearchInputContent = forwardRef<
   MentionFilterInputRef,
-  { query: string; setQuery: (query: string) => void }
->(({ query, setQuery }, ref) => {
+  { query: string; setQuery: (query: string) => void; disabled?: boolean }
+>(({ query, setQuery, disabled = false }, ref) => {
   // No need to destructure context values here since components access them directly
 
   const isUrl = URL_SCHEMA.safeParse(query).success;
@@ -39,6 +39,7 @@ const SearchInputContent = forwardRef<
           onQueryChange={setQuery}
           isUrl={isUrl}
           onEnterPress={handleEnterPress}
+          disabled={disabled}
         />
         {isUrl ? (
           <Button
@@ -47,6 +48,7 @@ const SearchInputContent = forwardRef<
             }}
             variant="outline"
             className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl"
+            disabled={disabled}
           >
             Add
           </Button>
@@ -62,14 +64,14 @@ const SearchInputContent = forwardRef<
 
 SearchInputContent.displayName = "SearchInputContent";
 
-export const SearchInput = forwardRef<MentionFilterInputRef>((props, ref) => {
+export const SearchInput = forwardRef<MentionFilterInputRef, { disabled?: boolean }>((props, ref) => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
 
   return (
     <SearchInputProvider onInputChange={setQuery}>
-      <SearchInputContent ref={ref} query={query} setQuery={setQuery} />
+      <SearchInputContent ref={ref} query={query} setQuery={setQuery} disabled={props.disabled} />
     </SearchInputProvider>
   );
 });

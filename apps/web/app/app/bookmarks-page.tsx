@@ -1,7 +1,6 @@
 import { AlertExtensions } from "@/features/extensions/alert-extensions";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@workspace/ui/components/badge";
-import { Loader } from "@workspace/ui/components/loader";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
 import { redirect, useRouter } from "next/navigation";
@@ -20,7 +19,13 @@ import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
 
-export function BookmarksPage() {
+function BookmarkContent({
+  isAuthenticated,
+  isAuthPending,
+}: {
+  isAuthenticated: boolean;
+  isAuthPending: boolean;
+}) {
   const {
     bookmarks,
     isPending,
@@ -29,6 +34,81 @@ export function BookmarksPage() {
     fetchNextPage,
     query,
   } = useBookmarks();
+
+  if (isAuthPending || !isAuthenticated) {
+    return (
+      <div
+        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
+        style={{
+          // @ts-expect-error CSS Variable not typed
+          "--card-height": "calc(var(--spacing) * 64)",
+        }}
+      >
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
+      style={{
+        // @ts-expect-error CSS Variable not typed
+        "--card-height": "calc(var(--spacing) * 64)",
+      }}
+    >
+      {isPending ? (
+        <>
+          {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
+            />
+          ))}
+        </>
+      ) : (
+        <>
+          {!query && <BookmarkCardInput />}
+
+          {bookmarks.map((bookmark, i) => {
+            if (query && i === 0) {
+              return (
+                <div className="relative" key={bookmark.id}>
+                  <Badge
+                    variant="outline"
+                    className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
+                  >
+                    <Sparkles className="size-4 text-primary" />
+                    Best match
+                  </Badge>
+                  <BookmarkCard bookmark={bookmark} key={bookmark.id} />
+                </div>
+              );
+            }
+
+            return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
+          })}
+          {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
+          {query && <MoreResultsButton />}
+          {bookmarks.length > 10 && (
+            <BookmarkCardLoadMore
+              loadNextPage={() => fetchNextPage()}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export function BookmarksPage() {
   const session = useSession();
   const router = useRouter();
   const searchInputRef = useRef<MentionFilterInputRef>(null);
@@ -38,17 +118,18 @@ export function BookmarksPage() {
     searchInputRef.current?.focus();
   });
 
-  if (session.isPending) {
-    return <Loader />;
-  }
+  const isAuthenticated = Boolean(session.data?.session);
+  const isAuthPending = session.isPending;
 
-  if (!session.data?.session) {
+  // Handle auth redirects after initial render
+  if (!isAuthPending && !isAuthenticated) {
     toast.error("You need to be logged in to access this page");
     router.push("/signin");
+    return null;
   }
 
   // @ts-expect-error - onboarding is not typed
-  if (session.data?.user.onboarding === false) {
+  if (!isAuthPending && isAuthenticated && session.data?.user.onboarding === false) {
     redirect("/start");
   }
 
@@ -62,57 +143,12 @@ export function BookmarksPage() {
       <AlertExtensions />
 
       <BookmarkHeader />
-      <SearchInput ref={searchInputRef} />
-      <div
-        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
-        style={{
-          // @ts-expect-error CSS Variable not typed
-          "--card-height": "calc(var(--spacing) * 64)",
-        }}
-      >
-        {isPending ? (
-          <>
-            {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
-              />
-            ))}
-          </>
-        ) : (
-          <>
-            {!query && <BookmarkCardInput />}
-
-            {bookmarks.map((bookmark, i) => {
-              if (query && i === 0) {
-                return (
-                  <div className="relative" key={bookmark.id}>
-                    <Badge
-                      variant="outline"
-                      className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
-                    >
-                      <Sparkles className="size-4 text-primary" />
-                      Best match
-                    </Badge>
-                    <BookmarkCard bookmark={bookmark} key={bookmark.id} />
-                  </div>
-                );
-              }
-
-              return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
-            })}
-            {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
-            {query && <MoreResultsButton />}
-            {bookmarks.length > 10 && (
-              <BookmarkCardLoadMore
-                loadNextPage={() => fetchNextPage()}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-              />
-            )}
-          </>
-        )}
-      </div>
+      <SearchInput ref={searchInputRef} disabled={isAuthPending || !isAuthenticated} />
+      
+      <BookmarkContent 
+        isAuthenticated={isAuthenticated}
+        isAuthPending={isAuthPending}
+      />
     </div>
   );
 }

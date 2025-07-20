@@ -11,6 +11,7 @@ interface MentionFilterInputProps {
   onQueryChange: (query: string) => void;
   isUrl: boolean;
   onEnterPress: () => void;
+  disabled?: boolean;
 }
 
 export interface MentionFilterInputRef {
@@ -28,7 +29,7 @@ const focusCursor = (inputRef: React.RefObject<HTMLInputElement | null>, startIn
 };
 
 export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilterInputProps>(
-  ({ query, onQueryChange, isUrl, onEnterPress }, ref) => {
+  ({ query, onQueryChange, isUrl, onEnterPress, disabled = false }, ref) => {
     const {
       showLists,
       hideLists,
@@ -143,6 +144,7 @@ export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilte
         className={cn(
           inputVariants({}),
           "flex-1 flex items-center gap-2 relative lg:h-16 bg-background focus-within:ring-2 focus-within:ring-ring/50 lg:rounded-lg",
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       >
         {isUrl ? (
@@ -153,10 +155,11 @@ export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilte
         <input
           ref={inputRef}
           value={query}
-          className="lg:h-16 lg:text-2xl flex-1 focus:outline-none"
+          className="lg:h-16 lg:text-2xl flex-1 focus:outline-none disabled:cursor-not-allowed"
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Search bookmarks or type @ for types, # for tags, $ for filters"
+          placeholder={disabled ? "Loading..." : "Search bookmarks or type @ for types, # for tags, $ for filters"}
+          disabled={disabled}
         />
       </div>
     );
