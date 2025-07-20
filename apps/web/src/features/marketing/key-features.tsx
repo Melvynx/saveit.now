@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { Typography } from "@workspace/ui/components/typography";
+import { useIsClient } from "@workspace/ui/hooks/use-is-client";
 import {
   BookmarkCardPDF,
   BookmarkCardPage,
@@ -13,6 +14,10 @@ import { BrowserRouter } from "react-router";
 import { MaxWidthContainer } from "../page/page";
 
 export const KeyFeatures = () => {
+  const isClient = useIsClient();
+
+  if (!isClient) return null;
+
   return (
     <BrowserRouter>
       <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">

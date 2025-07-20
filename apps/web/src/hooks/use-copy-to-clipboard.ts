@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
 const copyToClipboardSafe = (text: string) => {
+  if (typeof window === "undefined") return;
   if (window.navigator.clipboard === undefined) {
     const textArea = document.createElement("textarea");
     textArea.value = text;

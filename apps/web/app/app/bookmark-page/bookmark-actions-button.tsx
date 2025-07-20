@@ -1,3 +1,5 @@
+"use client";
+
 import { WithUseRouter } from "@/components-hooks/with-use-router";
 import { LoadingButton } from "@/features/form/loading-button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -6,9 +8,9 @@ import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, Share, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAction } from "next-safe-action/hooks";
-import { useNavigate } from "react-router";
 import { usePostHog } from "posthog-js/react";
 import React from "react";
+import { useNavigate } from "react-router";
 import { reBookmarkAction } from "./bookmarks.action";
 
 export const BackButton = () => {
