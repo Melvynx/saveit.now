@@ -1,6 +1,6 @@
-import { useQueryStates } from "nuqs";
-import { useState, useCallback } from "react";
 import { BookmarkType } from "@workspace/database";
+import { useQueryStates } from "nuqs";
+import { useCallback, useState } from "react";
 import { useTags } from "./use-tags";
 
 export type SpecialFilter = "READ" | "UNREAD" | "STAR";
@@ -33,17 +33,27 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     types: {
       defaultValue: [] as BookmarkType[],
       serialize: (types) => types.join(","),
-      parse: (str) => str ? str.split(",").filter(type => 
-        BOOKMARK_TYPES.includes(type as BookmarkType)
-      ) as BookmarkType[] : []
+      parse: (str) =>
+        str
+          ? (str
+              .split(",")
+              .filter((type) =>
+                BOOKMARK_TYPES.includes(type as BookmarkType),
+              ) as BookmarkType[])
+          : [],
     },
     special: {
       defaultValue: [] as SpecialFilter[],
       serialize: (filters) => filters.join(","),
-      parse: (str) => str ? str.split(",").filter(filter => 
-        SPECIAL_FILTERS.includes(filter as SpecialFilter)
-      ) as SpecialFilter[] : []
-    }
+      parse: (str) =>
+        str
+          ? (str
+              .split(",")
+              .filter((filter) =>
+                SPECIAL_FILTERS.includes(filter as SpecialFilter),
+              ) as SpecialFilter[])
+          : [],
+    },
   });
 
   // Local UI state
@@ -53,21 +63,23 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
   const tagFilter = useTags(uiState.tagFilter);
 
   // Computed values
-  const filteredTypes = BOOKMARK_TYPES.filter(type => 
-    type.toLowerCase().includes(uiState.typeFilter.toLowerCase()) &&
-    !urlState.types.includes(type)
+  const filteredTypes = BOOKMARK_TYPES.filter(
+    (type) =>
+      type.toLowerCase().includes(uiState.typeFilter.toLowerCase()) &&
+      !urlState.types.includes(type),
   );
 
-  const filteredSpecialFilters = SPECIAL_FILTERS.filter(filter => 
-    filter.toLowerCase().includes(uiState.specialFilter.toLowerCase()) &&
-    !urlState.special.includes(filter)
+  const filteredSpecialFilters = SPECIAL_FILTERS.filter(
+    (filter) =>
+      filter.toLowerCase().includes(uiState.specialFilter.toLowerCase()) &&
+      !urlState.special.includes(filter),
   );
 
   // Actions
   const showLists = useCallback((type: MentionType, filter: string) => {
     setUIState({
       showTypeList: type === "type",
-      showTagList: type === "tag", 
+      showTagList: type === "tag",
       showSpecialList: type === "special",
       typeFilter: type === "type" ? filter : "",
       tagFilter: type === "tag" ? filter : "",
@@ -79,35 +91,47 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     setUIState(initialUIState);
   }, []);
 
-  const addType = useCallback((type: BookmarkType) => {
-    if (!urlState.types.includes(type)) {
-      setUrlState({ types: [...urlState.types, type] });
-    }
-    hideLists();
-  }, [urlState.types, setUrlState, hideLists]);
+  const addType = useCallback(
+    (type: BookmarkType) => {
+      if (!urlState.types.includes(type)) {
+        setUrlState({ types: [...urlState.types, type] });
+      }
+      hideLists();
+    },
+    [urlState.types, setUrlState, hideLists],
+  );
 
-  const removeType = useCallback((type: BookmarkType) => {
-    setUrlState({ types: urlState.types.filter(t => t !== type) });
-  }, [urlState.types, setUrlState]);
+  const removeType = useCallback(
+    (type: BookmarkType) => {
+      setUrlState({ types: urlState.types.filter((t) => t !== type) });
+    },
+    [urlState.types, setUrlState],
+  );
 
-  const addSpecialFilter = useCallback((filter: SpecialFilter, inputQuery?: string) => {
-    if (!urlState.special.includes(filter)) {
-      setUrlState({ special: [...urlState.special, filter] });
-    }
-    
-    // Clear any special filter mentions from input if callback is provided
-    if (onInputChange && inputQuery) {
-      // Remove any $FILTER mentions from the input
-      const cleanedQuery = inputQuery.replace(/\$[A-Z]*\s*/g, '').trim();
-      onInputChange(cleanedQuery);
-    }
-    
-    hideLists();
-  }, [urlState.special, setUrlState, hideLists, onInputChange]);
+  const addSpecialFilter = useCallback(
+    (filter: SpecialFilter, inputQuery?: string) => {
+      if (!urlState.special.includes(filter)) {
+        setUrlState({ special: [...urlState.special, filter] });
+      }
 
-  const removeSpecialFilter = useCallback((filter: SpecialFilter) => {
-    setUrlState({ special: urlState.special.filter(f => f !== filter) });
-  }, [urlState.special, setUrlState]);
+      // Clear any special filter mentions from input if callback is provided
+      if (onInputChange && inputQuery) {
+        // Remove any $FILTER mentions from the input
+        const cleanedQuery = inputQuery.replace(/\$[A-Z]*\s*/g, "").trim();
+        onInputChange(cleanedQuery);
+      }
+
+      hideLists();
+    },
+    [urlState.special, setUrlState, hideLists, onInputChange],
+  );
+
+  const removeSpecialFilter = useCallback(
+    (filter: SpecialFilter) => {
+      setUrlState({ special: urlState.special.filter((f) => f !== filter) });
+    },
+    [urlState.special, setUrlState],
+  );
 
   const clearTypes = useCallback(() => {
     setUrlState({ types: [] });
@@ -118,10 +142,13 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
   }, [setUrlState]);
 
   // Wrapper for addTag that handles input cleanup
-  const addTagWithCleanup = useCallback((tagName: string, inputQuery?: string) => {
-    tagFilter.addTag(tagName, inputQuery, onInputChange);
-    hideLists();
-  }, [tagFilter.addTag, onInputChange, hideLists]);
+  const addTagWithCleanup = useCallback(
+    (tagName: string, inputQuery?: string) => {
+      tagFilter.addTag(tagName, inputQuery, onInputChange);
+      hideLists();
+    },
+    [tagFilter, onInputChange, hideLists],
+  );
 
   return {
     // Selected filters
@@ -162,9 +189,12 @@ export const useUnifiedFilters = (onInputChange?: (query: string) => void) => {
     clearSpecialFilters,
 
     // Legacy setters for backward compatibility
-    setShowTypeList: (show: boolean) => show ? showLists("type", uiState.typeFilter) : hideLists(),
-    setShowTagList: (show: boolean) => show ? showLists("tag", uiState.tagFilter) : hideLists(),
-    setShowSpecialList: (show: boolean) => show ? showLists("special", uiState.specialFilter) : hideLists(),
+    setShowTypeList: (show: boolean) =>
+      show ? showLists("type", uiState.typeFilter) : hideLists(),
+    setShowTagList: (show: boolean) =>
+      show ? showLists("tag", uiState.tagFilter) : hideLists(),
+    setShowSpecialList: (show: boolean) =>
+      show ? showLists("special", uiState.specialFilter) : hideLists(),
     setTypeFilter: (filter: string) => showLists("type", filter),
     setTagFilter: (filter: string) => showLists("tag", filter),
     setSpecialFilter: (filter: string) => showLists("special", filter),

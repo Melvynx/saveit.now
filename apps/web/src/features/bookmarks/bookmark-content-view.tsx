@@ -19,6 +19,7 @@ export const BookmarkContentView = ({
   isPublic?: boolean;
 }) => {
   // Extract transcript data from metadata
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metadata = bookmark.metadata as Record<string, any> | null;
   const transcript = metadata?.transcript as string | undefined;
   return (
@@ -66,9 +67,7 @@ export const BookmarkContentView = ({
 
       {/* YouTube Transcript Section */}
       {bookmark.type === "YOUTUBE" && transcript && (
-        <TranscriptViewer
-          transcript={transcript}
-        />
+        <TranscriptViewer transcript={transcript} />
       )}
       <BookmarkPreview bookmark={bookmark} isPublic={isPublic} />
       <Card className="p-4">
