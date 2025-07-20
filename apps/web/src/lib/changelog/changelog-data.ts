@@ -13,6 +13,21 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.3.1",
+    date: "2025-07-19",
+    type: "improvement",
+    title: "Changelog Notifications",
+    description:
+      "Never miss an update! Get notified about new features and improvements with our new notification system.",
+    changes: [
+      {
+        type: "new",
+        text: "Add changelog notification to easily see the new features",
+      },
+    ],
+    image: "/changelog/changelog.png",
+  },
+  {
     version: "1.2.0",
     date: "2025-07-18",
     type: "improvement",

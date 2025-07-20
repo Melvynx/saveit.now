@@ -4,6 +4,7 @@
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
+import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ const IconMap: Record<OAuthProvider, string> = {
 export const SignInWith = (props: {
   type: OAuthProvider;
   className?: string;
+  buttonProps: ButtonProps;
 }) => {
   const posthog = usePostHog();
   const mutation = useMutation({
@@ -49,6 +51,7 @@ export const SignInWith = (props: {
       onClick={() => {
         mutation.mutate();
       }}
+      {...props.buttonProps}
     >
       <img
         height="16"

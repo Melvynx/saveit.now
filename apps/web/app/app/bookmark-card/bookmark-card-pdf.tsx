@@ -1,7 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
-
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -10,17 +8,15 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
+import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardPDFProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
   const domainName = new URL(bookmark.url).hostname;
-  const metadata = bookmark.metadata as {
-    pdfUrl?: string;
-    screenshotUrl?: string;
-  } | null;
+  const metadata = bookmark.metadata as { pdfUrl?: string; screenshotUrl?: string } | null;
   const pdfUrl = metadata?.pdfUrl || bookmark.url;
   const screenshotUrl = bookmark.ogImageUrl || metadata?.screenshotUrl;
 
@@ -48,8 +44,8 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
         <BookmarkCardActions
           url={pdfUrl}
           bookmarkId={bookmark.id}
-          starred={bookmark.starred || false}
-          read={bookmark.read || false}
+          starred={bookmark.starred}
+          read={bookmark.read}
           bookmarkType={bookmark.type}
         />
       </BookmarkCardHeader>

@@ -1,5 +1,5 @@
 import { env } from "@/lib/env";
-import { sendEmail } from "@/lib/mail/send-email";
+import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { stripeClient } from "@/lib/stripe";
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
@@ -38,10 +38,12 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
   { event: "marketing/email-on-limit-reached" },
   async ({ event, step }) => {
     const userId = event.data.userId;
+    
+    if (!userId) {
+      throw new Error("User ID is required for marketing emails");
+    }
 
     const user = await step.run("get-user", async () => {
-      if (!userId) return null;
-
       return await prisma.user.findUnique({
         where: {
           id: userId,
@@ -78,7 +80,8 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
     });
 
     await step.run("send-limit-reached-discount", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "You reached your limit! Here's a special discount 🎁",
         text: EMAILS.LIMIT_REACHED_DISCOUNT_EMAIL(promoCode),
@@ -92,7 +95,8 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
     await step.sleep("wait-1-day-after-discount", "1d");
 
     await step.run("send-discount-reminder", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Don't forget your $1 discount! 💰",
         text: EMAILS.LIMIT_REACHED_REMINDER_EMAIL(promoCode),
@@ -106,7 +110,8 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
     await step.sleep("wait-1-day-after-reminder", "1d");
 
     await step.run("send-last-chance", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Last chance: $1 deal expires today! ⏰",
         text: EMAILS.LIMIT_REACHED_LAST_CHANCE_EMAIL(promoCode),

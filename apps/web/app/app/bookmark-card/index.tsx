@@ -58,4 +58,5 @@ export { BookmarkCardPage } from "./bookmark-card-page";
 export { BookmarkCardPDF } from "./bookmark-card-pdf";
 export { BookmarkCardPending } from "./bookmark-card-pending";
 export { BookmarkCardPricing } from "./bookmark-card-pricing";
+export { BookmarkCardTweet } from "./bookmark-card-tweet";
 export { BookmarkCardYouTube } from "./bookmark-card-youtube";

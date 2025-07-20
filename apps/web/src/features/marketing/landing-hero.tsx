@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 import { APP_LINKS } from "@/lib/app-links";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import Link from "next/link";
+import { SignInWith } from "../auth/sign-in-with";
 import { MaxWidthContainer } from "../page/page";
 import { BookmarkInputLanding } from "./bookmark-input-landing";
 
@@ -12,14 +14,16 @@ export const LandingHero = () => {
       style={{
         // @ts-expect-error Doesn't care
         "--box-color": "color-mix(in srgb, var(--border) 30%, transparent)",
-        "min-height": "min(800px, 100dvh)",
+        // "min-height": "min(800px, 100dvh)",
       }}
       className="bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30"
     >
-      <MaxWidthContainer className="w-full my-12 lg:my-24 flex flex-col lg:flex-row gap-8 lg:gap-12">
+      <MaxWidthContainer
+        width="lg"
+        className="w-full my-12 lg:my-24 flex flex-col lg:flex-row gap-8 lg:gap-12"
+      >
         <div className="ml-auto flex flex-1 flex-col gap-6">
-          <Badge>Beta</Badge>
-          <Typography variant="h2" className="font-bold">
+          <Typography variant="h1" className="font-bold">
             Organize nothing. Find everything.
           </Typography>
           <Typography variant="lead">
@@ -27,17 +31,6 @@ export const LandingHero = () => {
             post, or tool.
           </Typography>
           <ul className="flex flex-col gap-4">
-            <li className="flex items-start gap-2">
-              <span className="text-lg">⚡</span>
-              <div>
-                <Typography variant="large" className="font-medium">
-                  Instant capture
-                </Typography>
-                <Typography variant="muted">
-                  Paste any URL and it's safely stored—no friction.
-                </Typography>
-              </div>
-            </li>
             <li className="flex items-start gap-2">
               <span className="text-lg">🤖</span>
               <div>
@@ -47,17 +40,6 @@ export const LandingHero = () => {
                 <Typography variant="muted">
                   Get the key takeaways of articles and videos without reopening
                   them.
-                </Typography>
-              </div>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-lg">🏷️</span>
-              <div>
-                <Typography variant="large" className="font-medium">
-                  Auto-tagging
-                </Typography>
-                <Typography variant="muted">
-                  Your library organizes itself—no folders, no mess.
                 </Typography>
               </div>
             </li>
@@ -86,9 +68,57 @@ export const LandingHero = () => {
               </div>
             </li>
           </ul>
-          <Button asChild size="lg">
-            <Link href={APP_LINKS.signin}>Get started</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <SignInWith buttonProps={{ size: "lg" }} type="google" />
+            <Button asChild size="lg" variant="outline" className="flex-1">
+              <Link href={APP_LINKS.signin}>Sign in</Link>
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Typography variant="muted">Work with</Typography>
+            <div className="flex flex-row gap-4">
+              <Typography
+                as={Link}
+                href={APP_LINKS.chrome}
+                variant="small"
+                target="_blank"
+                className="flex items-center gap-2 hover:underline"
+              >
+                <img
+                  alt="chrome-extensions"
+                  src="https://svgl.app/library/chrome.svg"
+                  className="size-4"
+                />
+                <Typography>Chrome</Typography>
+              </Typography>
+              <Typography
+                as={Link}
+                href={APP_LINKS.firefox}
+                variant="small"
+                target="_blank"
+                className="flex items-center gap-2 hover:underline"
+              >
+                <img
+                  alt="chrome-extensions"
+                  src="https://svgl.app/library/firefox.svg"
+                  className="size-4"
+                />
+                <Typography>Firefox</Typography>
+              </Typography>
+              <Typography
+                variant="small"
+                className="flex items-center gap-2 hover:underline cursor-not-allowed"
+              >
+                <img
+                  alt="ios-icon"
+                  src="https://svgl.app/library/apple_dark.svg"
+                  className="size-4 fill-white"
+                />
+                <Typography as="span">iOS</Typography>
+                <Badge variant="outline">Soon</Badge>
+              </Typography>
+            </div>
+          </div>
         </div>
         <div className="flex-1 flex flex-col gap-4">
           <BookmarkInputLanding />

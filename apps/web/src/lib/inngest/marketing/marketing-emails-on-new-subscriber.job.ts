@@ -1,4 +1,4 @@
-import { sendEmail } from "@/lib/mail/send-email";
+import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { prisma } from "@workspace/database";
 import MarkdownEmail from "emails/markdown.emails";
 import { inngest } from "../client";
@@ -30,10 +30,12 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
   { event: "user/new-subscriber" },
   async ({ event, step }) => {
     const userId = event.data.userId;
+    
+    if (!userId) {
+      throw new Error("User ID is required for marketing emails");
+    }
 
     const user = await step.run("get-user", async () => {
-      if (!userId) return null;
-
       return await prisma.user.findUnique({
         where: {
           id: userId,
@@ -50,7 +52,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     }
 
     await step.run("send-welcome-email", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Welcome to SaveIt.now (from Melvyn)",
         text: EMAILS.WELCOME_EMAIL,
@@ -80,7 +83,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
 
     if (!isChromeExtensionInstalled) {
       await step.run("send-chrome-extension-email", async () => {
-        return await sendEmail({
+        return await sendMarketingEmail({
+          userId,
           to: email,
           subject: "Install the SaveIt.now Chrome Extension",
           text: EMAILS.CHROME_EXTENSION_EMAIL,
@@ -95,7 +99,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     }
 
     await step.run("send-email-3", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Master the art of finding your bookmarks",
         text: EMAILS.HOW_USE_CHROME_EXTENSION_EMAIL,
@@ -109,7 +114,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     await step.sleep("wait-24h-after-extension", "24h");
 
     await step.run("how-to-import-bookmarks", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "How to import your bookmarks",
         text: EMAILS.HOW_TO_IMPORT_BOOKMARKS_EMAIL,
@@ -134,7 +140,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
 
     if (bookmarkCount < 10) {
       await step.run("send-how-to-use-bookmarks-email", async () => {
-        return await sendEmail({
+        return await sendMarketingEmail({
+          userId,
           to: email,
           subject: "How to get the most out of your bookmarks",
           text: EMAILS.HOW_TO_USE_BOOKMARKS_EMAIL,
@@ -149,7 +156,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     }
 
     await step.run("send-how-to-search-email", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Master the art of finding your bookmarks",
         text: EMAILS.HOW_TO_SEARCH_BOOKMARKS_EMAIL,
@@ -163,7 +171,8 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
     await step.sleep("wait-24h-before-premium", "24h");
 
     await step.run("send-premium-commitment-email", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "My commitment to SaveIt.now",
         text: EMAILS.PREMIUM_COMMITMENT_EMAIL,

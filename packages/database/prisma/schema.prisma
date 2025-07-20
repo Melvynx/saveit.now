@@ -29,6 +29,7 @@ model User {
   banReason        String?
   banExpires       DateTime?
   onboarding       Boolean   @default(false)
+  unsubscribed     Boolean   @default(false)
   sessions         Session[]
   accounts         Account[]
   apikeys          Apikey[]

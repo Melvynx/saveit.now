@@ -16,6 +16,8 @@ export const env = createEnv({
     R2_URL: z.string().min(1).default("https://ci-placeholder.com"),
     SCREENSHOT_WORKER_URL: z.string().min(1).default("https://ci-placeholder.com"),
     NODE_ENV: z.enum(["development", "production", "test"]),
+    UPSTASH_REDIS_REST_URL: z.string().min(1),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     RESEND_EMAIL_FROM: z
       .string()
       .default("Melvyn from SaveIt.now <help@re.saveit.now>"),

@@ -1,4 +1,4 @@
-import { sendEmail } from "@/lib/mail/send-email";
+import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { prisma } from "@workspace/database";
 import MarkdownEmail from "emails/markdown.emails";
 import { inngest } from "../client";
@@ -30,10 +30,12 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
   { event: "user/subscription" },
   async ({ event, step }) => {
     const userId = event.data.userId;
+    
+    if (!userId) {
+      throw new Error("User ID is required for marketing emails");
+    }
 
     const user = await step.run("get-user", async () => {
-      if (!userId) return null;
-
       return await prisma.user.findUnique({
         where: {
           id: userId,
@@ -48,7 +50,8 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
     }
 
     await step.run("send-subscription-thank-you", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Welcome to SaveIt.pro !",
         text: EMAILS.SUBSCRIPTION_THANK_YOU_EMAIL,
@@ -64,7 +67,8 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
 
     // Email 2: How to use premium effectively
     await step.run("send-how-to-use-premium", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "How to use your premium effectively",
         text: EMAILS.SUBSCRIPTION_HOW_TO_USE_PREMIUM_EMAIL,
@@ -80,7 +84,8 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
 
     // Email 3: Let's talk
     await step.run("send-lets-talk", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Let's talk? 💬",
         text: EMAILS.SUBSCRIPTION_LETS_TALK_EMAIL,
@@ -96,7 +101,8 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
 
     // Email 4: Our commitment
     await step.run("send-our-commitment", async () => {
-      return await sendEmail({
+      return await sendMarketingEmail({
+        userId,
         to: email,
         subject: "Our commitment to you",
         text: EMAILS.SUBSCRIPTION_OUR_COMMITMENT_EMAIL,

@@ -1,7 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
-
 import { Button } from "@workspace/ui/components/button";
 import { Tweet } from "react-tweet";
 import {
@@ -9,9 +7,10 @@ import {
   BookmarkCardContainer,
 } from "./bookmark-card-base";
 import { LinkWithQuery } from "./link-with-query";
+import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardTweetProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {

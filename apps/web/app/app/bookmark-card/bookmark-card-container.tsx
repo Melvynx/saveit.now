@@ -50,7 +50,7 @@ export const BookmarkCardContainer = ({
       <ContextMenuTrigger>
         <Card
           ref={ref}
-          className={`group w-full gap-4 overflow-hidden p-0 h-[var(--card-height)] ${className}`}
+          className={`group w-full gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)] ${className}`}
           onMouseEnter={handleMouseEnter}
           data-testid={testId}
         >
