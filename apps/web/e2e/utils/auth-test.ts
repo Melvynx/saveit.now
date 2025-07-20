@@ -220,6 +220,8 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
 
   await page.getByRole("textbox").fill(otpCode);
 
+  await page.waitForTimeout(1000);
+
   const currentUrl = page.url();
   if (currentUrl.includes("/start")) {
     await setUserOnboardingTrue(testEmail);
