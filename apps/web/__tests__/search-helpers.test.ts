@@ -133,7 +133,7 @@ describe("search-helpers", () => {
       expect(result).toEqual({
         read: true,
         type: {
-          in: ["ARTICLE", "BLOG", "YOUTUBE"],
+          in: ["ARTICLE", "YOUTUBE"],
         },
       });
     });
@@ -143,7 +143,7 @@ describe("search-helpers", () => {
       expect(result).toEqual({
         read: false,
         type: {
-          in: ["ARTICLE", "BLOG", "YOUTUBE"],
+          in: ["ARTICLE", "YOUTUBE"],
         },
       });
     });
@@ -162,7 +162,7 @@ describe("search-helpers", () => {
           {
             read: true,
             type: {
-              in: ["ARTICLE", "BLOG", "YOUTUBE"],
+              in: ["ARTICLE", "YOUTUBE"],
             },
           },
           {

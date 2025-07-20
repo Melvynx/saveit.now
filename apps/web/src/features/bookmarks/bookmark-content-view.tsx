@@ -28,7 +28,7 @@ export const BookmarkContentView = ({
           <div className="flex size-8 items-center justify-center rounded border shrink-0">
             <BookmarkFavicon
               faviconUrl={bookmark.faviconUrl ?? undefined}
-              bookmarkType={bookmark.type ?? "BLOG"}
+              bookmarkType={bookmark.type ?? "PAGE"}
             />
           </div>
           <div className="flex flex-col gap-1">

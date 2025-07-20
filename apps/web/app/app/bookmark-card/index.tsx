@@ -41,7 +41,6 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
       return <BookmarkCardPDF bookmark={bookmark} />;
 
     case "PAGE":
-    case "BLOG":
     case "ARTICLE":
     default:
       return <BookmarkCardPage bookmark={bookmark} />;
