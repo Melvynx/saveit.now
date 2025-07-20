@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@workspace/database";
 import { NextRequest } from "next/server";
+import { logger } from "../logger";
 
 type ResponseType =
   | {
@@ -44,6 +46,18 @@ export async function validateApiKey(
   try {
     const result = await auth.api.verifyApiKey({
       body: { key: token },
+    });
+    const xxx = await prisma.apikey.findFirst({
+      where: {
+        key: token,
+        enabled: true,
+      },
+    });
+
+    logger.info("result", {
+      result,
+      token,
+      xxx,
     });
 
     if (!result.valid) {
