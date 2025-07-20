@@ -42,6 +42,10 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
 
     case "PAGE":
     case "ARTICLE":
+    // Deprecated types (fallback to PAGE card for backward compatibility)
+    case "VIDEO":
+    case "BLOG":
+    case "POST":
     default:
       return <BookmarkCardPage bookmark={bookmark} />;
   }

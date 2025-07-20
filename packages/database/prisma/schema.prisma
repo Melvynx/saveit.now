@@ -143,11 +143,11 @@ model BookmarkTag {
 }
 
 enum BookmarkType {
-  VIDEO
-  BLOG
+  VIDEO      // @deprecated - will be processed as PAGE
+  BLOG       // @deprecated - will be processed as PAGE
   ARTICLE
   PAGE
-  POST
+  POST       // @deprecated - will be processed as PAGE
   IMAGE
   YOUTUBE
   TWEET

@@ -110,17 +110,23 @@ export const removeMention = (
 
 export const getTypeDisplayName = (type: BookmarkType): string => {
   const displayNames: Record<BookmarkType, string> = {
+    // Active types
     PAGE: "Page",
     IMAGE: "Image",
     YOUTUBE: "YouTube",
     TWEET: "Tweet",
     ARTICLE: "Article",
     PDF: "PDF",
+    // Deprecated types (fallback to Page for backward compatibility)
+    VIDEO: "Page",
+    BLOG: "Page", 
+    POST: "Page",
   };
   return displayNames[type] || type;
 };
 export const getTypeColor = (type: BookmarkType): string => {
   const colors: Record<BookmarkType, string> = {
+    // Active types
     PAGE: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
     IMAGE:
       "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30",
@@ -131,6 +137,10 @@ export const getTypeColor = (type: BookmarkType): string => {
     ARTICLE:
       "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30",
     PDF: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
+    // Deprecated types (fallback to gray for backward compatibility)
+    VIDEO: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
+    BLOG: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
+    POST: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
   };
   return (
     colors[type] ||

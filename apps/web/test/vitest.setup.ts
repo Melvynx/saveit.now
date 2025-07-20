@@ -141,12 +141,17 @@ vi.mock("@/lib/up-fetch", () => ({
 vi.mock("@workspace/database", () => ({
   prisma: mockDeep(),
   BookmarkType: {
+    // Active types
     PAGE: "PAGE",
     IMAGE: "IMAGE",
     YOUTUBE: "YOUTUBE",
     TWEET: "TWEET",
     ARTICLE: "ARTICLE",
     PDF: "PDF",
+    // Deprecated types (for backward compatibility during migration)
+    VIDEO: "VIDEO",
+    BLOG: "BLOG",
+    POST: "POST",
   },
   BookmarkStatus: {
     PROCESSING: "PROCESSING",
