@@ -1,14 +1,14 @@
 import { APP_LINKS } from "@/lib/app-links";
 import { BookmarkErrorType } from "@/lib/errors";
 import { useAction } from "next-safe-action/hooks";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createBookmarkAction } from "./bookmarks.action";
 import { useRefreshBookmarks } from "./use-bookmarks";
 
 export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
   const refreshBookmark = useRefreshBookmarks();
-  const navigate = useNavigate();
+  const router = useRouter();
   const action = useAction(createBookmarkAction, {
     onSuccess: () => {
       props.onSuccess?.();
@@ -23,7 +23,7 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
           action: {
             label: "Upgrade",
             onClick: () => {
-              navigate(APP_LINKS.upgrade);
+              router.push(APP_LINKS.upgrade);
             },
           },
         });
