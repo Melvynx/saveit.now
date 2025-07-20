@@ -18,7 +18,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event, publish, runId }) => {
+    onFailure: async ({ event, publish }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -28,31 +28,33 @@ export const processBookmarkJob = inngest.createFunction(
 
       const error = event.data.error;
 
-      try {
-        await Promise.all([
-          prisma.bookmark.update({
-            where: { id: bookmarkId },
-            data: {
-              status: "ERROR",
-              metadata: {
-                error: error.message,
-              },
-            },
-          }),
-          prisma.bookmarkProcessingRun.update({
-            where: { 
-              inngestRunId: runId,
-            },
-            data: {
-              status: "FAILED",
-              completedAt: new Date(),
-              failureReason: error.message,
-            },
-          }),
-        ]);
-      } catch {
-        // ignore
+      const bookmark = await prisma.bookmark.update({
+        where: { id: bookmarkId },
+        data: {
+          status: "ERROR",
+          metadata: {
+            error: error.message,
+          },
+        },
+        select: {
+          inngestRunId: true,
+        },
+      });
+
+      if (!bookmark.inngestRunId) {
+        return;
       }
+
+      await prisma.bookmarkProcessingRun.updateManyAndReturn({
+        where: {
+          inngestRunId: bookmark.inngestRunId,
+        },
+        data: {
+          status: "FAILED",
+          failureReason: error.message,
+          completedAt: new Date(),
+        },
+      });
 
       await publish({
         channel: `bookmark:${bookmarkId}`,
