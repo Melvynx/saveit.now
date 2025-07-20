@@ -9,19 +9,19 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    AWS_ACCESS_KEY_ID: z.string().min(1),
-    AWS_SECRET_ACCESS_KEY: z.string().min(1),
-    AWS_S3_BUCKET_NAME: z.string().min(1),
-    AWS_ENDPOINT: z.string().min(1),
-    R2_URL: z.string().min(1),
-    SCREENSHOT_WORKER_URL: z.string().min(1),
+    AWS_ACCESS_KEY_ID: z.string().min(1).default("ci-placeholder"),
+    AWS_SECRET_ACCESS_KEY: z.string().min(1).default("ci-placeholder"),
+    AWS_S3_BUCKET_NAME: z.string().min(1).default("ci-placeholder"),
+    AWS_ENDPOINT: z.string().min(1).default("https://ci-placeholder.com"),
+    R2_URL: z.string().min(1).default("https://ci-placeholder.com"),
+    SCREENSHOT_WORKER_URL: z.string().min(1).default("https://ci-placeholder.com"),
     NODE_ENV: z.enum(["development", "production", "test"]),
     RESEND_EMAIL_FROM: z
       .string()
       .default("Melvyn from SaveIt.now <help@re.saveit.now>"),
-    HELP_EMAIL: z.string().min(1),
-    STRIPE_COUPON_ID: z.string().min(1),
-    RESEND_API_KEY: z.string().min(1),
+    HELP_EMAIL: z.string().min(1).default("help@saveit.now"),
+    STRIPE_COUPON_ID: z.string().min(1).default("ci-placeholder"),
+    RESEND_API_KEY: z.string().min(1).default("re_placeholder_for_ci"),
     CI: z.coerce.boolean().optional().default(false),
   },
   client: {},

@@ -1,0 +1,19 @@
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +16
+++++++++++++++++
+Progress: resolved 16, reused 7, downloaded 9, added 16, done
+.../node_modules/inngest-cli postinstall$ node postinstall.js
+.../node_modules/inngest-cli postinstall: Done
+[2m[04:35:21.106][0m [96mINF[0m starting executor grpc server [2msvc=[0mexecutor [2maddr=[0m:50053
+[2m[04:35:21.112][0m [96mINF[0m service starting [2mcaller=[0mdevserver [2mservice=[0mdevserver
+[2m[04:35:21.112][0m [96mINF[0m service starting [2mcaller=[0mexecutor [2mservice=[0mexecutor
+[2m[04:35:21.112][0m [96mINF[0m starting event stream [2mbackend=[0mredis
+[2m[04:35:21.112][0m [96mINF[0m service starting [2mcaller=[0mrunner [2mservice=[0mrunner
+[2m[04:35:21.112][0m [96mINF[0m subscribing to function queue
+[2m[04:35:21.112][0m [96mINF[0m service starting [2mcaller=[0mapi [2mservice=[0mapi
+[2m[04:35:21.112][0m [96mINF[0m starting server [2mcaller=[0mapi [2maddr=[0m0.0.0.0:8288
+[2m[04:35:21.112][0m [96mINF[0m subscribing to events [2mtopic=[0mevents
+[2m[04:35:21.112][0m [96mINF[0m service starting [2mcaller=[0mconnect-gateway [2mservice=[0mconnect-gateway
+[2m[04:35:21.112][0m [96mINF[0m starting grpc server [2mcaller=[0mconnect-gateway [2maddr=[0m:50052
+[2m[04:35:21.263][0m [96mINF[0m publishing event [2mcaller=[0mapi [2mevent_name=[0mcli/ci.command.executed [2minternal_id=[0m01K0GFE5V65YWTWK8KYWWCPWXN [2mexternal_id=[0m01K0GFE5V65YWTWK8KYWWCPWXN [2mevent=[0m"{Name:cli/ci.command.executed Data:map[account_id: cli_version:1.9.1-e9021e047 cmd:inngest dev context:map[] device_id:b9c3d6e9-a1aa-4288-8df1-7cfee3e81a9e os:linux] User:map[] ID:01K0GFE5V65YWTWK8KYWWCPWXN Timestamp:1752899721061 Version:2022-12-16}"
+[2m[04:35:21.364][0m [96mINF[0m received event [2mevent=[0mcli/ci.command.executed [2mevent_id=[0m01K0GFE5V65YWTWK8KYWWCPWXN [2minternal_id=[0m01K0GFE5V65YWTWK8KYWWCPWXN
