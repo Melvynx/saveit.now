@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 const freeFeatures = [
   `${AUTH_LIMITS.free?.bookmarks ?? 20} bookmarks`,
-  `${AUTH_LIMITS.free?.monthlyBookmarks ?? 20} bookmarks per month`,
+  `${AUTH_LIMITS.free?.monthlyBookmarkRuns ?? 20} bookmark processing runs per month`,
   "Basic exports",
   "Community support",
 ];

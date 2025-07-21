@@ -28,8 +28,6 @@ export const POST = userRoute
         );
       }
 
-      // Parse form data
-      console.log(body);
       const file = body.file;
 
       if (!file) {

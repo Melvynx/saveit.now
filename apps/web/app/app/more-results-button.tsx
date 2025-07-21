@@ -11,12 +11,12 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { Plus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router";
 import { usePrefetchBookmarks } from "./use-bookmarks";
 
 export function MoreResultsButton() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const currentMatchingDistance = parseFloat(
     searchParams.get("matchingDistance") ?? "0.1",
   );
@@ -31,7 +31,7 @@ export function MoreResultsButton() {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("matchingDistance", params.n.toFixed(1));
       if (params.prefetchOnly) return;
-      router.push(`?${newParams.toString()}`);
+      navigate(`?${newParams.toString()}`);
     },
   });
 

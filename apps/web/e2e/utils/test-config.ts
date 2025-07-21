@@ -11,6 +11,7 @@ interface TestConfig {
 let testConfig: TestConfig | null = null;
 
 export async function getTestConfig(): Promise<TestConfig> {
+  console.log("testConfig", testConfig);
   if (!testConfig) {
     try {
       const __filename = fileURLToPath(import.meta.url);
@@ -22,14 +23,14 @@ export async function getTestConfig(): Promise<TestConfig> {
       throw new Error("Test config not found. Make sure global setup has run.");
     }
   }
-  
+
   if (!testConfig) {
     throw new Error("Test config is invalid.");
   }
-  
+
   return testConfig;
 }
 
 export function getTestApiKey(): Promise<string> {
-  return getTestConfig().then(config => config.apiKey);
+  return getTestConfig().then((config) => config.apiKey);
 }

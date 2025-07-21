@@ -3,7 +3,7 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -130,7 +130,7 @@ export function BookmarksPage() {
 
   // @ts-expect-error - onboarding is not typed
   if (!isAuthPending && isAuthenticated && session.data?.user.onboarding === false) {
-    redirect("/start");
+    router.push("/start");
   }
 
   return (
