@@ -3,8 +3,8 @@ import { useSession } from "@/lib/auth-client";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
@@ -37,44 +37,15 @@ export function BookmarksPage() {
     searchInputRef.current?.focus();
   });
 
-  if (session.isPending) {
-    return (
-      <div
-        className="flex w-screen flex-col gap-4 px-4 py-4 lg:px-12 mx-auto"
-        style={{
-          maxWidth: 3000,
-        }}
-      >
-        <AlertExtensions />
-        <BookmarkHeader />
-        <SearchInput ref={searchInputRef} />
-        <div
-          className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
-          style={{
-            // @ts-expect-error CSS Variable not typed
-            "--card-height": "calc(var(--spacing) * 64)",
-          }}
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!session.data?.session) {
+  if (!session.isPending && !session.data?.user) {
+    console.log("redirecting to signin", session);
     toast.error("You need to be logged in to access this page");
-    router.push("/signin");
-    return null;
+    // router.push("/signin");
   }
 
   // @ts-expect-error - onboarding is not typed
   if (session.data?.user.onboarding === false) {
-    redirect("/start");
+    router.push("/start");
   }
 
   return (

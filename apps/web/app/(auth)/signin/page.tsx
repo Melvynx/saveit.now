@@ -3,7 +3,7 @@
 import { OtpForm } from "@/components/better-auth-otp";
 import { SignInWith } from "@/features/auth/sign-in-with";
 import { MaxWidthContainer } from "@/features/page/page";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 export default function SignInPage() {
   const router = useRouter();
+  const session = useSession();
 
   return (
     <MaxWidthContainer
@@ -117,6 +118,7 @@ export default function SignInPage() {
             }}
             onSuccess={() => {
               router.push("/app");
+              session.refetch();
             }}
             onError={(error) => toast.error(error)}
           />
