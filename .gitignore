@@ -41,3 +41,8 @@ npm-debug.log*
 apps/web.next
 
 apps/web/e2e/test-config.json
+
+# Log files
+*.log
+logs/
+apps/web/logs/
