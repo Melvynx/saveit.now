@@ -73,39 +73,95 @@ export async function cleanupTestData() {
   const testPrefix = "playwright-test-";
 
   // Delete in correct order to avoid foreign key constraints
-
-  // First delete bookmarks for test users
-  await prisma.bookmark.deleteMany({
+  // First, find all test user IDs
+  const testUsers = await prisma.user.findMany({
     where: {
-      user: {
-        email: {
-          startsWith: testPrefix,
-        },
+      email: {
+        startsWith: testPrefix,
       },
     },
+    select: { id: true },
   });
 
-  // Delete tags for test users
-  await prisma.tag.deleteMany({
-    where: {
-      user: {
-        email: {
-          startsWith: testPrefix,
-        },
-      },
-    },
-  });
+  const testUserIds = testUsers.map(user => user.id);
 
-  // Delete bookmark opens for test users
-  await prisma.bookmarkOpen.deleteMany({
-    where: {
-      user: {
-        email: {
-          startsWith: testPrefix,
+  if (testUserIds.length > 0) {
+    // Delete BookmarkTag relations first (through bookmarks)
+    await prisma.bookmarkTag.deleteMany({
+      where: {
+        bookmark: {
+          userId: {
+            in: testUserIds,
+          },
         },
       },
-    },
-  });
+    });
+
+    // Delete BookmarkChunk relations (through bookmarks)
+    await prisma.bookmarkChunk.deleteMany({
+      where: {
+        bookmark: {
+          userId: {
+            in: testUserIds,
+          },
+        },
+      },
+    });
+
+    // Delete bookmarks for test users
+    await prisma.bookmark.deleteMany({
+      where: {
+        userId: {
+          in: testUserIds,
+        },
+      },
+    });
+
+    // Delete tags for test users
+    await prisma.tag.deleteMany({
+      where: {
+        userId: {
+          in: testUserIds,
+        },
+      },
+    });
+
+    // Delete bookmark opens for test users
+    await prisma.bookmarkOpen.deleteMany({
+      where: {
+        userId: {
+          in: testUserIds,
+        },
+      },
+    });
+
+    // Delete API keys for test users
+    await prisma.apikey.deleteMany({
+      where: {
+        userId: {
+          in: testUserIds,
+        },
+      },
+    });
+
+    // Delete subscriptions for test users
+    await prisma.subscription.deleteMany({
+      where: {
+        referenceId: {
+          in: testUserIds,
+        },
+      },
+    });
+
+    // Delete BookmarkProcessingRun for test users
+    await prisma.bookmarkProcessingRun.deleteMany({
+      where: {
+        userId: {
+          in: testUserIds,
+        },
+      },
+    });
+  }
 
   // Then delete test users (cascade will handle sessions, accounts, etc.)
   await prisma.user.deleteMany({
@@ -124,6 +180,25 @@ export async function cleanupTestData() {
       },
     },
   });
+
+  // Clean up Redis data for test users if Redis is available
+  try {
+    const { Redis } = require("@upstash/redis");
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+
+    // Clean up changelog dismissal data for test users
+    for (const userId of testUserIds) {
+      const keys = await redis.keys(`user:${userId}:dismissed_changelog:*`);
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    }
+  } catch (error) {
+    console.log("Redis cleanup skipped (not available in test environment):", error.message);
+  }
 
   // Test data cleanup completed
 }

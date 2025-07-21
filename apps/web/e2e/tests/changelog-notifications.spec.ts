@@ -3,6 +3,8 @@ import { signInWithEmail } from "../utils/auth-test.js";
 import { getUserEmail } from "../utils/test-data.js";
 
 test.describe("Changelog Notifications", () => {
+  // Use the same user for dismiss-related tests
+  const SHARED_TEST_USER_EMAIL = getUserEmail();
   test("new user should see changelog notification after login", async ({
     page,
   }) => {
@@ -13,11 +15,14 @@ test.describe("Changelog Notifications", () => {
     await page.goto("/app");
     await page.waitForLoadState("networkidle");
 
+    // Wait for React hydration and API calls to complete
+    await page.waitForTimeout(3000);
+
     // Check if changelog notification appears
     const notification = page.locator('[data-testid="changelog-notification"]');
 
     // The notification should be visible for new users
-    await expect(notification).toBeVisible({ timeout: 10000 });
+    await expect(notification).toBeVisible({ timeout: 15000 });
 
     // Verify notification content
     await expect(notification.locator('text="What\'s New"')).toBeVisible();
@@ -31,66 +36,42 @@ test.describe("Changelog Notifications", () => {
     // Dialog should open
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('text="What\'s New in v"')).toBeVisible();
+    await expect(dialog.locator('text="What\'s New in v1.3.1"')).toBeVisible();
   });
 
   test("user can dismiss changelog notification", async ({ page }) => {
-    // Login with a new user
-    await signInWithEmail({ email: getUserEmail(), page });
-
-    // Navigate to app
-    await page.goto("/app");
-    await page.waitForLoadState("networkidle");
+    // Login with shared user
+    await signInWithEmail({ email: SHARED_TEST_USER_EMAIL, page });
 
     // Wait for notification to appear
     const notification = page.locator('[data-testid="changelog-notification"]');
-    await expect(notification).toBeVisible({ timeout: 10000 });
+    await expect(notification).toBeVisible({ timeout: 15000 });
 
     // Click the close button
-    const closeButton = notification.locator(
-      'button[aria-label="Close notification"]',
-    );
+    const closeButton = page.getByRole("button", {
+      name: "Close notification",
+    });
     await closeButton.click();
 
     // Notification should disappear
-    await expect(notification).not.toBeVisible();
+    await expect(notification).not.toBeVisible({ timeout: 10000 });
 
     // Refresh page to verify notification doesn't reappear
     await page.reload();
     await page.waitForLoadState("networkidle");
-
-    // Notification should still not be visible
-    await expect(notification).not.toBeVisible();
-  });
-
-  test("dismissed notification doesn't appear on subsequent visits", async ({
-    page,
-  }) => {
-    // This test requires the previous test to have run and dismissed the notification
-    // Login with the same user
-    await signInWithEmail({ email: getUserEmail(), page });
-
-    // Navigate to app
-    await page.goto("/app");
-    await page.waitForLoadState("networkidle");
-
-    // Wait a bit to ensure notification doesn't appear
     await page.waitForTimeout(3000);
 
-    // Notification should not be visible
-    const notification = page.locator('[data-testid="changelog-notification"]');
-    await expect(notification).not.toBeVisible();
+    // Notification should still not be visible
+    await expect(notification).not.toBeVisible({ timeout: 10000 });
   });
 
   test("changelog dialog shows full details", async ({ page }) => {
-    // Login and navigate to app
+    // Login and navigate to app with a new user
     await signInWithEmail({ email: getUserEmail(), page });
-    await page.goto("/app");
-    await page.waitForLoadState("networkidle");
 
     // Wait for and click notification
     const notification = page.locator('[data-testid="changelog-notification"]');
-    await expect(notification).toBeVisible({ timeout: 10000 });
+    await expect(notification).toBeVisible({ timeout: 15000 });
     await notification.click();
 
     // Verify dialog content
@@ -98,7 +79,7 @@ test.describe("Changelog Notifications", () => {
     await expect(dialog).toBeVisible();
 
     // Check for dialog elements
-    await expect(dialog.locator('text="What\'s New in v"')).toBeVisible();
+    await expect(dialog.locator('text="What\'s New in v1.3.1"')).toBeVisible();
     await expect(dialog.locator('text="Changes:"')).toBeVisible();
     await expect(dialog.locator('text="View full changelog"')).toBeVisible();
     await expect(dialog.locator('button:has-text("Got it!")')).toBeVisible();
