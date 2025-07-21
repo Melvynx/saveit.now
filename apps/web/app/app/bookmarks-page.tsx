@@ -37,22 +37,45 @@ export function BookmarksPage() {
     searchInputRef.current?.focus();
   });
 
-  useEffect(() => {
-    // @ts-expect-error - onboarding is not typed
-    if (!session.isPending && session.data?.user.onboarding === false) {
-      redirect("/start");
-    }
-  }, [session.isPending, session.data]);
-
-  // Handle authentication redirect - this needs to happen immediately
-  if (!session.isPending && !session.data?.session) {
-    toast.error("You need to be logged in to access this page");
-    router.push("/signin");
-    return null; // Return null to prevent rendering while redirecting
+  if (session.isPending) {
+    return (
+      <div
+        className="flex w-screen flex-col gap-4 px-4 py-4 lg:px-12 mx-auto"
+        style={{
+          maxWidth: 3000,
+        }}
+      >
+        <AlertExtensions />
+        <BookmarkHeader />
+        <SearchInput ref={searchInputRef} />
+        <div
+          className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:max-w-[25rem] [&>*]:w-full place-items-start"
+          style={{
+            // @ts-expect-error CSS Variable not typed
+            "--card-height": "calc(var(--spacing) * 64)",
+          }}
+        >
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
+            />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  const isAuthenticated = !session.isPending && session.data?.session;
-  const shouldShowContent = isAuthenticated;
+  if (!session.data?.session) {
+    toast.error("You need to be logged in to access this page");
+    router.push("/signin");
+    return null;
+  }
+
+  // @ts-expect-error - onboarding is not typed
+  if (session.data?.user.onboarding === false) {
+    redirect("/start");
+  }
 
   return (
     <div
@@ -72,16 +95,7 @@ export function BookmarksPage() {
           "--card-height": "calc(var(--spacing) * 64)",
         }}
       >
-        {!shouldShowContent ? (
-          <>
-            {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
-              />
-            ))}
-          </>
-        ) : isPending ? (
+        {isPending ? (
           <>
             {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
               <Skeleton
