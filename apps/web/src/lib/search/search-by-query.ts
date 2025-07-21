@@ -165,7 +165,7 @@ export async function searchByVector({
 
   if (types && types.length > 0) {
     const typesParamStart = 4 + tags.length;
-    typesCondition = `AND b.type IN (${types.map((_, i) => `$${typesParamStart + i}`).join(",")})`;
+    typesCondition = `AND b.type IN (${types.map((_, i) => `$${typesParamStart + i}::"BookmarkType"`).join(",")})`;
     params = [...params, ...types];
   }
 
