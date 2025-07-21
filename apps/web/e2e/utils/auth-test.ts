@@ -220,10 +220,9 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
 
   await page.getByRole("textbox").fill(otpCode);
 
-  // Check if user goes to /start (new user) or /app (existing user)
-  await page.waitForLoadState("networkidle");
   await page.waitForTimeout(1000);
-  
+  await page.waitForLoadState("networkidle");
+
   const currentUrl = page.url();
   if (currentUrl.includes("/start")) {
     await setUserOnboardingTrue(testEmail);

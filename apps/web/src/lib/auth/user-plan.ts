@@ -14,7 +14,7 @@ export const useUserPlan = create<UserPlan>(() => ({
   name: "free",
   limits: {
     bookmarks: 20,
-    monthlyBookmarks: 20,
+    monthlyBookmarkRuns: 20,
     canExport: 0,
   },
   isLoading: true,

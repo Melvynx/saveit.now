@@ -1,6 +1,6 @@
+import { getServerUrl } from "@/lib/server-url";
 import { prisma } from "@workspace/database";
 import { sendEmail } from "./send-email";
-import { getServerUrl } from "@/lib/server-url";
 
 type SendMarketingEmailParams = Parameters<typeof sendEmail>[0] & {
   userId: string;
@@ -19,7 +19,7 @@ export class UserUnsubscribedError extends Error {
 const addUnsubscribeLink = (content: string, userId: string): string => {
   const unsubscribeUrl = `${getServerUrl()}/unsubscribe/${userId}`;
   const unsubscribeText = `\n\n---\n\n[Unsubscribe from marketing emails](${unsubscribeUrl})`;
-  
+
   return content + unsubscribeText;
 };
 
@@ -47,13 +47,25 @@ export const sendMarketingEmail = async (params: SendMarketingEmailParams) => {
   // Add unsubscribe link to text content
   const modifiedParams = {
     ...emailParams,
-    text: emailParams.text ? addUnsubscribeLink(emailParams.text, userId) : undefined,
+    text: emailParams.text
+      ? addUnsubscribeLink(emailParams.text, userId)
+      : undefined,
   };
 
   // If HTML is provided and is a React component, we'll need to modify the markdown
-  if (typeof emailParams.html === "object" && emailParams.html && emailParams.html !== null && "props" in emailParams.html) {
+  if (
+    typeof emailParams.html === "object" &&
+    emailParams.html &&
+    emailParams.html !== null &&
+    "props" in emailParams.html
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const htmlElement = emailParams.html as any;
-    if (htmlElement.props && "markdown" in htmlElement.props && typeof htmlElement.props.markdown === "string") {
+    if (
+      htmlElement.props &&
+      "markdown" in htmlElement.props &&
+      typeof htmlElement.props.markdown === "string"
+    ) {
       modifiedParams.html = {
         ...htmlElement,
         props: {

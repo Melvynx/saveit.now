@@ -1,3 +1,5 @@
+"use client";
+
 import { WithUseRouter } from "@/components-hooks/with-use-router";
 import { LoadingButton } from "@/features/form/loading-button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -6,9 +8,9 @@ import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, Share, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAction } from "next-safe-action/hooks";
-import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import React from "react";
+import { useNavigate } from "react-router";
 import { reBookmarkAction } from "./bookmarks.action";
 
 export const BackButton = () => {
@@ -134,7 +136,7 @@ export const ReBookmarkButton = ({
   children?: React.ReactNode;
 }) => {
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const navigate = useNavigate();
   const posthog = usePostHog();
   const action = useAction(reBookmarkAction, {
     onSuccess: () => {
@@ -142,7 +144,7 @@ export const ReBookmarkButton = ({
         predicate: (query) =>
           Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
       });
-      router.back();
+      navigate(-1);
     },
   });
 
