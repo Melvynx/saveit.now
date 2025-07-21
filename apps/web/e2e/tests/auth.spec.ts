@@ -54,22 +54,10 @@ test.describe("Authentication Flow - Simple Tests", () => {
     expect(currentURL).not.toMatch(/\/signin/);
 
     // Should have some way to sign in - try multiple selector patterns
-    const hasSignInLink = await page
-      .locator('a[href="/signin"]')
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-    const hasSignInText = await page
-      .locator("text=Sign In")
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-    const hasSignInButton = await page
+
+    await page
       .locator('button:has-text("Sign in")')
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-
-    const hasSignInOption = hasSignInLink || hasSignInText || hasSignInButton;
-
-    expect(hasSignInOption).toBe(true);
+      .isVisible({ timeout: 5000 });
   });
 
   test("email form progresses to OTP step", async ({ page }) => {
