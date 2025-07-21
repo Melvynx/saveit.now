@@ -164,12 +164,12 @@ test.describe("Process bookmarks tests", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000);
-    
+
     // Find the bookmark card and click it to open the detail view
     const bookmarkCard = page
       .locator('[data-testid="bookmark-card-page"]')
       .filter({ hasText: "Test Delete Bookmark" });
-    
+
     await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
     await bookmarkCard.click();
 

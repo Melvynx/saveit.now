@@ -1,4 +1,8 @@
+import { writeFile } from "fs/promises";
 import { nanoid } from "nanoid";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { testAuth } from "./utils/better-auth-test";
 import {
   cleanupTestData,
   seedTestBookmarks,
@@ -6,9 +10,6 @@ import {
 } from "./utils/database";
 import { getPrismaClient } from "./utils/database-loader.mjs";
 import { TEST_EMAIL, TEST_NAME } from "./utils/test-data";
-import { writeFile } from "fs/promises";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 
 async function globalSetup() {
   try {
@@ -38,43 +39,26 @@ async function globalSetup() {
       });
     }
 
-    // Create API key for testing
-    const apiKeyData = {
-      id: nanoid(),
-      name: "E2E Test API Key",
-      key: `saveit_${nanoid(32)}`,
-      userId: testUser.id,
-      enabled: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Clean up existing test API key
-    await prisma.apikey.deleteMany({
-      where: { 
+    const result = await testAuth.api.createApiKey({
+      body: {
         userId: testUser.id,
-        name: "E2E Test API Key"
-      }
-    });
-
-    // Create new test API key
-    await prisma.apikey.create({
-      data: apiKeyData,
+        name: "E2E Test API Key",
+      },
     });
 
     // Store API key for tests to use
     const testConfig = {
-      apiKey: apiKeyData.key,
+      apiKey: result.key,
       userId: testUser.id,
       userEmail: TEST_EMAIL,
     };
 
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    
+
     await writeFile(
       join(__dirname, "test-config.json"),
-      JSON.stringify(testConfig, null, 2)
+      JSON.stringify(testConfig, null, 2),
     );
 
     // Seed test data

@@ -37,6 +37,7 @@ model User {
   bookmarks        Bookmark[]
   bookmarkOpens    BookmarkOpen[]
   subscriptions    Subscription[]
+  bookmarkProcessingRuns BookmarkProcessingRun[]
 
   @@unique([email])
   @@map("user")
@@ -161,6 +162,12 @@ enum BookmarkStatus {
   ERROR
 }
 
+enum BookmarkProcessingRunStatus {
+  STARTED
+  COMPLETED
+  FAILED
+}
+
 model Bookmark {
   id     String @id @default(ulid())
   userId String
@@ -200,6 +207,24 @@ model Bookmark {
   opens BookmarkOpen[]
 
   BookmarkChunk BookmarkChunk[]
+  processingRuns BookmarkProcessingRun[]
+}
+
+model BookmarkProcessingRun {
+  id            String   @id @default(cuid())
+  inngestRunId  String   @unique
+  bookmarkId    String
+  userId        String
+  status        BookmarkProcessingRunStatus @default(STARTED)
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  failureReason String?
+  
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, startedAt])
+  @@index([inngestRunId])
 }
 
 model BookmarkChunk {

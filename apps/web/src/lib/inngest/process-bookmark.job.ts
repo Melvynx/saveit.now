@@ -28,19 +28,33 @@ export const processBookmarkJob = inngest.createFunction(
 
       const error = event.data.error;
 
-      try {
-        await prisma.bookmark.update({
-          where: { id: bookmarkId },
-          data: {
-            status: "ERROR",
-            metadata: {
-              error: error.message,
-            },
+      const bookmark = await prisma.bookmark.update({
+        where: { id: bookmarkId },
+        data: {
+          status: "ERROR",
+          metadata: {
+            error: error.message,
           },
-        });
-      } catch {
-        // ignore
+        },
+        select: {
+          inngestRunId: true,
+        },
+      });
+
+      if (!bookmark.inngestRunId) {
+        return;
       }
+
+      await prisma.bookmarkProcessingRun.updateManyAndReturn({
+        where: {
+          inngestRunId: bookmark.inngestRunId,
+        },
+        data: {
+          status: "FAILED",
+          failureReason: error.message,
+          completedAt: new Date(),
+        },
+      });
 
       await publish({
         channel: `bookmark:${bookmarkId}`,
@@ -75,23 +89,36 @@ export const processBookmarkJob = inngest.createFunction(
       });
     });
 
-    await step.run("update-bookmark-status", async () => {
-      await prisma.bookmark.update({
-        where: { id: bookmarkId },
-        data: { inngestRunId: runId, status: "PROCESSING" },
-      });
-    });
-
     if (!bookmark) {
       throw new Error("Bookmark not found");
     }
+
+    // Extract bookmark properties to avoid null assertions
+    const { userId, url } = bookmark;
+
+    await step.run("update-bookmark-status", async () => {
+      await Promise.all([
+        prisma.bookmark.update({
+          where: { id: bookmarkId },
+          data: { inngestRunId: runId, status: "PROCESSING" },
+        }),
+        prisma.bookmarkProcessingRun.create({
+          data: {
+            inngestRunId: runId,
+            bookmarkId: bookmarkId,
+            userId: userId,
+            status: "STARTED",
+          },
+        }),
+      ]);
+    });
 
     // Validate bookmark limits before processing
     await step.run("validate-bookmark-limits", async () => {
       try {
         await validateBookmarkLimits({
-          userId: bookmark.userId,
-          url: bookmark.url,
+          userId: userId,
+          url: url,
           skipExistenceCheck: true, // Skip existence check since bookmark already exists
         });
       } catch (error) {

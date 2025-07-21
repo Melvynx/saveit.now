@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import { z } from "zod";
@@ -52,84 +53,89 @@ export async function processYouTubeBookmark(
   const existingBookmark = await step.run("get-existing-bookmark", async () => {
     return await prisma.bookmark.findUnique({
       where: { id: context.bookmarkId },
-      select: { metadata: true }
+      select: { metadata: true },
     });
   });
 
-  const extensionTranscript = existingBookmark?.metadata && 
-    typeof existingBookmark.metadata === 'object' && 
+  const extensionTranscript =
+    existingBookmark?.metadata &&
+    typeof existingBookmark.metadata === "object" &&
     existingBookmark.metadata !== null &&
-    'transcript' in existingBookmark.metadata
-    ? (existingBookmark.metadata as Record<string, any>).transcript as string
-    : null;
+    "transcript" in existingBookmark.metadata
+      ? ((existingBookmark.metadata as Record<string, any>)
+          .transcript as string)
+      : null;
 
-  console.log('Extension transcript available:', !!extensionTranscript);
+  console.log("Extension transcript available:", !!extensionTranscript);
 
   // Get video info including title, thumbnails, and other metadata
-  const videoInfo = await step.run("get-video-info", async (): Promise<{
-    title: string;
-    thumbnail: string;
-    transcript?: string;
-    transcriptSource: 'extension' | 'worker' | 'none';
-  }> => {
-    // If we don't have extension transcript, try to get from worker
-    if (!extensionTranscript) {
-      try {
-        const data = await upfetch(
-          `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
-          {
-            schema: z.object({
-              title: z.string(),
-              thumbnail: z.string(),
-              transcript: z.string().optional(),
-            }),
-          },
-        );
-        return {
-          ...data,
-          transcript: data.transcript,
-          transcriptSource: 'worker' as const
-        };
-      } catch (error) {
-        console.error('Failed to get video info from worker:', error);
-        // Return minimal info if worker fails
-        return {
-          title: context.url,
-          thumbnail: '',
-          transcript: undefined,
-          transcriptSource: 'none' as const
-        };
+  const videoInfo = await step.run(
+    "get-video-info",
+    async (): Promise<{
+      title: string;
+      thumbnail: string;
+      transcript?: string;
+      transcriptSource: "extension" | "worker" | "none";
+    }> => {
+      // If we don't have extension transcript, try to get from worker
+      if (!extensionTranscript) {
+        try {
+          const data = await upfetch(
+            `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
+            {
+              schema: z.object({
+                title: z.string(),
+                thumbnail: z.string(),
+                transcript: z.string().optional(),
+              }),
+            },
+          );
+          return {
+            ...data,
+            transcript: data.transcript,
+            transcriptSource: "worker" as const,
+          };
+        } catch (error) {
+          console.error("Failed to get video info from worker:", error);
+          // Return minimal info if worker fails
+          return {
+            title: context.url,
+            thumbnail: "",
+            transcript: undefined,
+            transcriptSource: "none" as const,
+          };
+        }
+      } else {
+        // Use extension transcript, but still get video metadata
+        try {
+          const data = await upfetch(
+            `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
+            {
+              schema: z.object({
+                title: z.string(),
+                thumbnail: z.string(),
+                transcript: z.string().optional(),
+              }),
+            },
+          );
+          return {
+            ...data,
+            transcript: extensionTranscript,
+            transcriptSource: "extension" as const,
+          };
+        } catch (error) {
+          console.error("Failed to get video metadata from worker:", error);
+          // Fallback to using just extension transcript with basic info
+          return {
+            title: context.url,
+            thumbnail: "",
+            transcript: extensionTranscript,
+            transcriptSource: "extension" as const,
+          };
+        }
       }
-    } else {
-      // Use extension transcript, but still get video metadata
-      try {
-        const data = await upfetch(
-          `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
-          {
-            schema: z.object({
-              title: z.string(),
-              thumbnail: z.string(),
-              transcript: z.string().optional(),
-            }),
-          },
-        );
-        return {
-          ...data,
-          transcript: extensionTranscript,
-          transcriptSource: 'extension' as const
-        };
-      } catch (error) {
-        console.error('Failed to get video metadata from worker:', error);
-        // Fallback to using just extension transcript with basic info
-        return {
-          title: context.url,
-          thumbnail: '',
-          transcript: extensionTranscript,
-          transcriptSource: 'extension' as const
-        };
-      }
-    }
-  });
+    },
+  );
 
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
@@ -228,7 +234,7 @@ export async function processYouTubeBookmark(
   await step.run("update-bookmark", async () => {
     // Preserve existing metadata and add new information
     const finalMetadata: Record<string, any> = {
-      ...(existingBookmark?.metadata as object || {}),
+      ...((existingBookmark?.metadata as object) || {}),
       youtubeId,
       transcriptAvailable: !!videoInfo.transcript,
       transcriptSource: videoInfo.transcriptSource,

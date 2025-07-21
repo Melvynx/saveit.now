@@ -24,6 +24,7 @@ export const AlertExtensions = () => {
     if (state === "installed") return;
 
     setTimeout(() => {
+      if (typeof window === "undefined") return;
       const container = document.querySelector("#saveit-now-container");
 
       setState(!container ? "installed" : "not-installed");

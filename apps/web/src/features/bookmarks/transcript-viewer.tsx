@@ -82,17 +82,6 @@ export const TranscriptViewer = ({ transcript }: TranscriptViewerProps) => {
     }
   };
 
-  const getSourceBadgeVariant = (source: string) => {
-    switch (source) {
-      case "extension":
-        return "default";
-      case "worker":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
   if (!transcript) {
     return null;
   }

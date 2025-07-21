@@ -65,29 +65,29 @@ export const validateBookmarkLimits = async (
     );
   }
 
-  // Check monthly bookmarks limit
+  // Check monthly bookmark runs limit
   const startOfMonth = dayjs().startOf("month");
-  const monthlyBookmarks = await prisma.bookmark.count({
+  const monthlyBookmarkRuns = await prisma.bookmarkProcessingRun.count({
     where: {
       userId,
-      createdAt: {
+      startedAt: {
         gte: startOfMonth.toDate(),
       },
     },
   });
 
-  if (monthlyBookmarks >= limits.monthlyBookmarks) {
-    logger.info("Monthly bookmark limit reached", { userId });
+  if (monthlyBookmarkRuns >= limits.monthlyBookmarkRuns) {
+    logger.info("Monthly bookmark runs limit reached", { userId });
     posthogClient.capture({
       distinctId: userId,
-      event: "monthly_bookmark_limit_reached",
+      event: "monthly_bookmark_runs_limit_reached",
       properties: {
-        bookmarks: monthlyBookmarks,
-        limit: limits.monthlyBookmarks,
+        bookmarkRuns: monthlyBookmarkRuns,
+        limit: limits.monthlyBookmarkRuns,
       },
     });
     throw new BookmarkValidationError(
-      "You have reached the maximum number of bookmarks for this month",
+      "You have reached the maximum number of bookmark processing runs for this month",
       BookmarkErrorType.MAX_BOOKMARKS,
     );
   }
@@ -119,7 +119,7 @@ export const validateBookmarkLimits = async (
 
   return {
     totalBookmarks,
-    monthlyBookmarks,
+    monthlyBookmarkRuns,
     limits,
     plan,
   };

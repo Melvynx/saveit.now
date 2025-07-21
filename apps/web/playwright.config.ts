@@ -26,24 +26,24 @@ export default defineConfig({
     navigationTimeout: 15000,
     launchOptions: {
       slowMo: HEADLESS ? 0 : 200,
+      env: {
+        ...process.env,
+        NODE_ENV: "test",
+      },
     },
+    // env: {
+    //   ...process.env,
+    //   NODE_ENV: "test",
+    // },
   },
 
   projects: [
     {
-      name: "setup",
-      testMatch: /.*\.setup\.ts/,
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
       name: "chromium",
-      use: { 
+      use: {
         ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/user.json",
+        // storageState: "playwright/.auth/user.json",
       },
-      dependencies: ["setup"],
-      testMatch: /.*\/api\/.*\.spec\.ts/,
     },
   ],
-
 });

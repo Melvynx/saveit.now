@@ -4,7 +4,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Loader } from "@workspace/ui/components/loader";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -49,7 +49,7 @@ export function BookmarksPage() {
 
   // @ts-expect-error - onboarding is not typed
   if (session.data?.user.onboarding === false) {
-    redirect("/start");
+    router.push("/start");
   }
 
   return (
