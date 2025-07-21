@@ -38,17 +38,18 @@ export function BookmarksPage() {
   });
 
   useEffect(() => {
-    if (!session.isPending && !session.data?.session) {
-      toast.error("You need to be logged in to access this page");
-      router.push("/signin");
-      return;
-    }
-
     // @ts-expect-error - onboarding is not typed
     if (!session.isPending && session.data?.user.onboarding === false) {
       redirect("/start");
     }
-  }, [session.isPending, session.data, router]);
+  }, [session.isPending, session.data]);
+
+  // Handle authentication redirect - this needs to happen immediately
+  if (!session.isPending && !session.data?.session) {
+    toast.error("You need to be logged in to access this page");
+    router.push("/signin");
+    return null; // Return null to prevent rendering while redirecting
+  }
 
   const isAuthenticated = !session.isPending && session.data?.session;
   const shouldShowContent = isAuthenticated;

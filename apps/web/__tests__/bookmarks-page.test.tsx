@@ -66,7 +66,7 @@ describe("BookmarksPage", () => {
     expect(searchInput).toBeInTheDocument();
   });
 
-  it("should always show search bar and header when user is not authenticated", async () => {
+  it("should immediately redirect when user is not authenticated", async () => {
     mockUseSession.mockReturnValue({
       isPending: false,
       data: null,
@@ -74,17 +74,10 @@ describe("BookmarksPage", () => {
 
     render(<BookmarksPage />);
 
-    expect(screen.getByText("SaveIt")).toBeInTheDocument();
-
-    const searchInput = screen.getByRole("combobox");
-    expect(searchInput).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        "You need to be logged in to access this page",
-      );
-      expect(mockPush).toHaveBeenCalledWith("/signin");
-    });
+    expect(toast.error).toHaveBeenCalledWith(
+      "You need to be logged in to access this page",
+    );
+    expect(mockPush).toHaveBeenCalledWith("/signin");
   });
 
   it("should show skeleton loading cards when session is pending", () => {
@@ -99,16 +92,16 @@ describe("BookmarksPage", () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("should show skeleton loading cards when not authenticated", () => {
+  it("should not render content when not authenticated", () => {
     mockUseSession.mockReturnValue({
       isPending: false,
       data: null,
     });
 
-    render(<BookmarksPage />);
+    const { container } = render(<BookmarksPage />);
 
-    const skeletons = document.querySelectorAll(".animate-pulse");
-    expect(skeletons.length).toBeGreaterThan(0);
+    // Component should return null and not render anything
+    expect(container.firstChild).toBeNull();
   });
 
   it("should redirect to /start when user is authenticated but onboarding is incomplete", async () => {
