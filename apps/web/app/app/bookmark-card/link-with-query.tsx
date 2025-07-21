@@ -3,7 +3,7 @@ import { PostHogErrorBoundary } from "posthog-js/react";
 import Link from "next/link";
 import { ComponentProps } from "react";
 
-type LinkProps = ComponentProps<typeof Link> & { to: string };
+type LinkProps = Omit<ComponentProps<typeof Link>, 'href'> & { to: string };
 
 export const LinkWithQueryInner = ({ children, to, ...props }: LinkProps) => {
   const searchParams = useSearchParams();
