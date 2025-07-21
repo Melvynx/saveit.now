@@ -1,12 +1,15 @@
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PostHogErrorBoundary } from "posthog-js/react";
-import { Link, LinkProps, useNavigate } from "react-router";
+import Link from "next/link";
+import { ComponentProps } from "react";
+
+type LinkProps = Omit<ComponentProps<typeof Link>, 'href'> & { to: string };
 
 export const LinkWithQueryInner = ({ children, to, ...props }: LinkProps) => {
   const searchParams = useSearchParams();
 
   return (
-    <Link to={to + "?" + searchParams.toString()} {...props}>
+    <Link href={to + "?" + searchParams.toString()} {...props}>
       {children}
     </Link>
   );
@@ -21,10 +24,10 @@ export const LinkWithQuery = (props: LinkProps) => {
 };
 
 export const useNavigateWithQuery = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   return (to: string) => {
-    navigate(to + "?" + searchParams.toString());
+    router.push(to + "?" + searchParams.toString());
   };
 };

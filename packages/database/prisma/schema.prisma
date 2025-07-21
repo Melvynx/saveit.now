@@ -16,27 +16,27 @@ datasource db {
 }
 
 model User {
-  id               String    @id
-  name             String
-  email            String
-  emailVerified    Boolean
-  image            String?
-  createdAt        DateTime
-  updatedAt        DateTime
-  stripeCustomerId String?
-  role             String?
-  banned           Boolean?
-  banReason        String?
-  banExpires       DateTime?
-  onboarding       Boolean   @default(false)
-  unsubscribed     Boolean   @default(false)
-  sessions         Session[]
-  accounts         Account[]
-  apikeys          Apikey[]
-  tags             Tag[]
-  bookmarks        Bookmark[]
-  bookmarkOpens    BookmarkOpen[]
-  subscriptions    Subscription[]
+  id                     String                  @id
+  name                   String
+  email                  String
+  emailVerified          Boolean
+  image                  String?
+  createdAt              DateTime
+  updatedAt              DateTime
+  stripeCustomerId       String?
+  role                   String?
+  banned                 Boolean?
+  banReason              String?
+  banExpires             DateTime?
+  onboarding             Boolean                 @default(false)
+  unsubscribed           Boolean                 @default(false)
+  sessions               Session[]
+  accounts               Account[]
+  apikeys                Apikey[]
+  tags                   Tag[]
+  bookmarks              Bookmark[]
+  bookmarkOpens          BookmarkOpen[]
+  subscriptions          Subscription[]
   bookmarkProcessingRuns BookmarkProcessingRun[]
 
   @@unique([email])
@@ -144,11 +144,8 @@ model BookmarkTag {
 }
 
 enum BookmarkType {
-  VIDEO
-  BLOG
   ARTICLE
   PAGE
-  POST
   IMAGE
   YOUTUBE
   TWEET
@@ -179,7 +176,7 @@ model Bookmark {
   title          String?
   titleEmbedding Unsupported("vector(1536)")?
 
-  summary          String?
+  summary String?
 
   note    String?
   preview String?
@@ -206,23 +203,23 @@ model Bookmark {
 
   opens BookmarkOpen[]
 
-  BookmarkChunk BookmarkChunk[]
+  BookmarkChunk  BookmarkChunk[]
   processingRuns BookmarkProcessingRun[]
 }
 
 model BookmarkProcessingRun {
-  id            String   @id @default(cuid())
-  inngestRunId  String   @unique
+  id            String                      @id @default(cuid())
+  inngestRunId  String                      @unique
   bookmarkId    String
   userId        String
   status        BookmarkProcessingRunStatus @default(STARTED)
-  startedAt     DateTime @default(now())
+  startedAt     DateTime                    @default(now())
   completedAt   DateTime?
   failureReason String?
-  
+
   bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId, startedAt])
   @@index([inngestRunId])
 }

@@ -183,11 +183,6 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.IMAGE;
         }
 
-        if (headers["content-type"]?.startsWith("video/")) {
-          // Handle direct video files
-          type = BookmarkType.VIDEO;
-          // We don't need to fetch the content for direct video files
-        }
 
         if (headers["content-type"]?.startsWith("application/pdf")) {
           content = await response.arrayBuffer();
