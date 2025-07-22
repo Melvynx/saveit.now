@@ -28,6 +28,7 @@ export const AlertExtensions = () => {
       const container = document.querySelector("#saveit-now-container");
 
       setState(!container ? "installed" : "not-installed");
+      console.log("container", container);
     }, 2000);
   }, [state]);
 

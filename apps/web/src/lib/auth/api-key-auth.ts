@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@workspace/database";
 import { NextRequest } from "next/server";
-import { logger } from "../logger";
+import { getAuthLimits } from "../auth-limits";
 
 type ResponseType =
   | {
@@ -47,18 +47,6 @@ export async function validateApiKey(
     const result = await auth.api.verifyApiKey({
       body: { key: token },
     });
-    const xxx = await prisma.apikey.findFirst({
-      where: {
-        key: token,
-        enabled: true,
-      },
-    });
-
-    logger.info("result", {
-      result,
-      token,
-      xxx,
-    });
 
     if (!result.valid) {
       return { error: "Invalid API key", status: 401, success: false };
@@ -66,6 +54,33 @@ export async function validateApiKey(
 
     if (!result.key) {
       return { error: "API key not found", status: 401, success: false };
+    }
+
+    const plan = await prisma.user.findUnique({
+      where: {
+        id: result.key.userId,
+      },
+      select: {
+        subscriptions: {
+          select: {
+            plan: true,
+          },
+          where: {
+            status: "active",
+          },
+        },
+      },
+    });
+
+    const currentPlan = plan?.subscriptions[0]?.plan;
+    const limits = getAuthLimits({ plan: currentPlan });
+
+    if (limits.apiAccess === 0) {
+      return {
+        error: "Pro plan required",
+        status: 403,
+        success: false,
+      };
     }
 
     return {

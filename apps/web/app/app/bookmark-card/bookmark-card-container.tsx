@@ -52,7 +52,11 @@ export const BookmarkCardContainer = ({
         <Card
           ref={ref}
           className={cn(
+<<<<<<< HEAD
             "group w-full gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
+=======
+            "group gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
+>>>>>>> e047fde (make landing page great again)
             className,
           )}
           onMouseEnter={handleMouseEnter}

@@ -25,7 +25,10 @@ export const MaxWidthContainer = (
     <div
       {...props}
       className={cn(
-        maxWidthContainerVariants({ spacing: props.spacing }),
+        maxWidthContainerVariants({
+          spacing: props.spacing,
+          width: props.width,
+        }),
         props.className,
       )}
     />

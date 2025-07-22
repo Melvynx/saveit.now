@@ -16,11 +16,13 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { CreditCard, Gem, Key, Shield, User, UserX } from "lucide-react";
 import Link from "next/link";
+import { useMedia } from "react-use";
 import { LogoutButton } from "../auth/logout";
 
 export const HeaderUser = () => {
   const plan = useUserPlan();
   const session = authClient.useSession();
+  const isMobile = useMedia("(max-width: 768px)");
 
   const isImpersonating = session.data?.session.impersonatedBy !== null;
   const isAdmin = session.data?.user.role === "admin";
@@ -52,7 +54,7 @@ export const HeaderUser = () => {
               {plan.name === "pro" ? (
                 <Gem className="size-4 text-primary" />
               ) : null}
-              {user.name || user.email}
+              {isMobile ? <User className="size-4" /> : user.name || user.email}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>

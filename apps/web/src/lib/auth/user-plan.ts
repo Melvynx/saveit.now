@@ -16,6 +16,7 @@ export const useUserPlan = create<UserPlan>(() => ({
     bookmarks: 20,
     monthlyBookmarkRuns: 20,
     canExport: 0,
+    apiAccess: 0,
   },
   isLoading: true,
 }));

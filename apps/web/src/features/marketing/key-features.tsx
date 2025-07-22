@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
+import { SvglImg } from "@/components/svgl-auto-dark-mode-image";
 import { Typography } from "@workspace/ui/components/typography";
 import { useIsClient } from "@workspace/ui/hooks/use-is-client";
 import {
@@ -21,7 +22,7 @@ export const KeyFeatures = () => {
   return (
     <BrowserRouter>
       <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">
-        <div className="text-center">
+        <div className="text-center flex flex-col gap-2">
           <Typography variant="h2">We save everything for you.</Typography>
           <Typography variant="lead">
             PDF, YouTube video, X post, web page or simple blog post -- we got
@@ -38,7 +39,9 @@ export const KeyFeatures = () => {
                 className="size-6"
                 alt="YouTube"
               />
-              <Typography variant="h3">YouTube Video</Typography>
+              <Typography variant="h3" className="whitespace-nowrap">
+                YouTube Video
+              </Typography>
             </div>
             <div className="hidden lg:flex flex-1"></div>
             <ArrowRight className="text-muted-foreground hidden lg:block" />
@@ -80,7 +83,9 @@ export const KeyFeatures = () => {
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-1">
               <File className="size-6 text-red-500" />
-              <Typography variant="h3">PDF Document</Typography>
+              <Typography variant="h3" className="whitespace-nowrap">
+                PDF Document
+              </Typography>
             </div>
             <div className="hidden lg:flex flex-1"></div>
             <ArrowRight className="text-muted-foreground hidden lg:block" />
@@ -115,7 +120,9 @@ export const KeyFeatures = () => {
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-1">
               <Globe className="size-6 text-blue-500" />
-              <Typography variant="h3">Web Page</Typography>
+              <Typography variant="h3" className="whitespace-nowrap">
+                Web Page
+              </Typography>
             </div>
             <div className="hidden lg:flex flex-1"></div>
             <ArrowRight className="text-muted-foreground hidden lg:block" />
@@ -154,10 +161,10 @@ export const KeyFeatures = () => {
           {/* Tweet */}
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-1">
-              <img
-                src="https://svgl.app/library/x_dark.svg"
+              <SvglImg
+                lightIconName="x"
+                darkIconName="x_dark"
                 className="size-6"
-                alt="X"
               />
               <Typography variant="h3">X Post</Typography>
             </div>

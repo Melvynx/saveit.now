@@ -3,10 +3,10 @@ import { APP_LINKS } from "@/lib/app-links";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { SignInWith } from "../auth/sign-in-with";
 import { MaxWidthContainer } from "../page/page";
-import { BookmarkInputLanding } from "./bookmark-input-landing";
 
 export const LandingHero = () => {
   return (
@@ -22,7 +22,8 @@ export const LandingHero = () => {
         width="lg"
         className="w-full my-12 lg:my-24 flex flex-col lg:flex-row gap-8 lg:gap-12"
       >
-        <div className="ml-auto flex flex-1 flex-col gap-6">
+        <div className="lg:ml-auto flex flex-1 flex-col gap-6">
+          <Badge variant="outline">Bookmarking System</Badge>
           <Typography variant="h1" className="font-bold">
             Organize nothing. Find everything.
           </Typography>
@@ -68,11 +69,30 @@ export const LandingHero = () => {
               </div>
             </li>
           </ul>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-col lg:flex-row gap-2">
             <SignInWith buttonProps={{ size: "lg" }} type="google" />
-            <Button asChild size="lg" variant="outline" className="flex-1">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="flex-1 max-lg:py-2 w-full"
+            >
               <Link href={APP_LINKS.signin}>Sign in</Link>
             </Button>
+          </div>
+          <div className="flex flex-row gap-3">
+            <div className="flex items-center gap-1">
+              <Check className="size-4 text-green-500" />
+              <Typography variant="muted">No credit card required</Typography>
+            </div>
+            <div className="flex items-center gap-1">
+              <Check className="size-4 text-green-500" />
+              <Typography variant="muted">24/7 Support</Typography>
+            </div>
+            <div className="flex items-center gap-1">
+              <Check className="size-4 text-green-500" />
+              <Typography variant="muted">Free plan</Typography>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <Typography variant="muted">Work with</Typography>
@@ -121,7 +141,6 @@ export const LandingHero = () => {
           </div>
         </div>
         <div className="flex-1 flex flex-col gap-4">
-          <BookmarkInputLanding />
           <div
             style={{
               position: "relative",
@@ -140,7 +159,7 @@ export const LandingHero = () => {
                 height: "100%",
                 border: "0",
               }}
-              src="https://www.tella.tv/video/cmb4nsi2h00000bl10w833n83/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
+              src="https://www.tella.tv/video/cmddukdo200000al8f8h71bcd/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
               allowFullScreen
             ></iframe>
           </div>

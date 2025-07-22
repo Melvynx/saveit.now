@@ -1,6 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { SvglImg } from "@/components/svgl-auto-dark-mode-image";
 import { authClient, useSession } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
@@ -12,9 +12,15 @@ import { LoadingButton } from "../form/loading-button";
 
 type OAuthProvider = "github" | "google";
 
-const IconMap: Record<OAuthProvider, string> = {
-  github: "github_dark.svg",
-  google: "google.svg",
+const IconMap: Record<OAuthProvider, { light: string; dark: string }> = {
+  github: {
+    light: "github_light",
+    dark: "github_dark",
+  },
+  google: {
+    light: "google",
+    dark: "google",
+  },
 };
 
 export const SignInWith = (props: {
@@ -48,17 +54,18 @@ export const SignInWith = (props: {
   return (
     <LoadingButton
       loading={mutation.isPending}
-      className={cn("flex-1", props.className)}
+      className={cn("flex-1 max-lg:py-2 w-full", props.className)}
       variant="outline"
       onClick={() => {
         mutation.mutate();
       }}
       {...props.buttonProps}
     >
-      <img
+      <SvglImg
         height="16"
         width="16"
-        src={`https://svgl.app/library/${IconMap[props.type]}`}
+        lightIconName={IconMap[props.type].light}
+        darkIconName={IconMap[props.type].dark}
       />
 
       {props.type === "github" ? "Continue with GitHub" : null}
