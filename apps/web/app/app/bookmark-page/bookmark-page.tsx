@@ -8,7 +8,7 @@ import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { BookOpen, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useParams } from "react-router";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { useNavigateWithQuery } from "../bookmark-card/link-with-query";
 import { ExternalLinkTracker } from "../external-link-tracker";

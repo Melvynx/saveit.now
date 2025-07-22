@@ -5,7 +5,7 @@ import { fetch } from "cross-fetch";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import React from "react";
 import { beforeEach, vi } from "vitest";
-import { mockDeep, mockReset } from "vitest-mock-extended";
+import { mockDeep } from "vitest-mock-extended";
 
 beforeEach(() => {
   cleanup();
@@ -141,10 +141,7 @@ vi.mock("@/lib/up-fetch", () => ({
 vi.mock("@workspace/database", () => ({
   prisma: mockDeep(),
   BookmarkType: {
-    VIDEO: "VIDEO",
-    BLOG: "BLOG",
     PAGE: "PAGE",
-    POST: "POST",
     IMAGE: "IMAGE",
     YOUTUBE: "YOUTUBE",
     TWEET: "TWEET",
@@ -164,7 +161,8 @@ vi.mock("@tanstack/react-query", () => ({
   QueryClient: vi.fn(() => ({
     defaultOptions: {},
   })),
-  QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  QueryClientProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
 }));
 
 // Set global fetch
