@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { ButtonProps } from "@workspace/ui/components/button";
@@ -23,6 +23,7 @@ export const SignInWith = (props: {
   buttonProps: ButtonProps;
 }) => {
   const posthog = usePostHog();
+  const session = useSession();
   const mutation = useMutation({
     mutationFn: () => {
       posthog.capture("sign_in_with_social", {
@@ -36,6 +37,7 @@ export const SignInWith = (props: {
       );
     },
     onSuccess: () => {
+      session.refetch();
       toast.success("Signed in with GitHub");
     },
     onError: (ctx: { error: { message: string } }) => {

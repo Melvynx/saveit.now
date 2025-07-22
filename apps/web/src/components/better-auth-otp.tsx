@@ -138,7 +138,7 @@ export function OtpForm<T>({
               transition={{ duration: 0.3 }}
               custom={direction}
             >
-              <div className="flex flex-col items-center gap-4 w-full">
+              <div className="flex flex-col text-center items-center gap-4 w-full">
                 <p className="text-muted-foreground text-sm">
                   Enter the code sent to your email{" "}
                   <span className="font-bold">{email}</span>

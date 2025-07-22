@@ -10,6 +10,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
+import { cn } from "@workspace/ui/lib/utils";
 import { Check, CircleAlert, Copy, Trash } from "lucide-react";
 import { ReactNode } from "react";
 import { useDeleteBookmark } from "../bookmark-page/delete-button";
@@ -47,10 +48,13 @@ export const BookmarkCardContainer = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger>
+      <ContextMenuTrigger asChild>
         <Card
           ref={ref}
-          className={`group w-full gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)] ${className}`}
+          className={cn(
+            "group w-full gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
+            className,
+          )}
           onMouseEnter={handleMouseEnter}
           data-testid={testId}
         >

@@ -41,7 +41,7 @@ export const BookmarkCardInput = () => {
   };
 
   return (
-    <BookmarkCardContainer bookmark={mockBookmark}>
+    <BookmarkCardContainer className="h-full" bookmark={mockBookmark}>
       <CardHeader className="pt-4">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />
