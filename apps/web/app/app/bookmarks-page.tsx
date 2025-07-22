@@ -40,7 +40,7 @@ export function BookmarksPage() {
   if (!session.isPending && !session.data?.user) {
     console.log("redirecting to signin", session);
     toast.error("You need to be logged in to access this page");
-    // router.push("/signin");
+    router.push("/signin");
   }
 
   // @ts-expect-error - onboarding is not typed
