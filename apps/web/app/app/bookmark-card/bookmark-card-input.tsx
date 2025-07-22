@@ -41,14 +41,7 @@ export const BookmarkCardInput = () => {
   };
 
   return (
-<<<<<<< HEAD
     <BookmarkCardContainer className="h-full" bookmark={mockBookmark}>
-=======
-    <BookmarkCardContainer
-      bookmark={mockBookmark}
-      className="h-full min-h-full"
-    >
->>>>>>> e047fde (make landing page great again)
       <CardHeader className="pt-4">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />
