@@ -28,7 +28,6 @@
     "cookies",
     "webRequest",
     "https://saveit.now/*",
-    "http://localhost:3000/*",
     "https://www.youtube.com/*"
   ],
 
