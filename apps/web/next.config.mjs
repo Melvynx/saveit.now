@@ -11,6 +11,20 @@ const nextConfig = {
   experimental: {
     authInterrupts: true,
   },
+  redirects: async () => {
+    return [
+      {
+        source: "/blog",
+        destination: "/posts",
+        permanent: true,
+      },
+      {
+        source: "/blog/:path*",
+        destination: "/posts/:path*",
+        permanent: true,
+      },
+    ];
+  },
   rewrites: async () => {
     return [
       {

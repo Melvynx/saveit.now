@@ -9,7 +9,7 @@ import { cn } from "@workspace/ui/lib/utils";
 export function PostCard(props: { post: Post; large?: boolean }) {
   const { post, large } = props;
   return (
-    <Link href={`/blog/${post.slug}`} className="block group">
+    <Link href={`/posts/${post.slug}`} className="block group">
       <Card
         className={cn(
           "overflow-hidden p-0 border-none hover:bg-card transition shadow-none bg-transparent group-hover:shadow-md p-2",

@@ -6,7 +6,7 @@ import { MaxWidthContainer } from "./page";
 
 export function Footer() {
   return (
-    <footer className="bg-background border-t">
+    <footer className="bg-background border-t pb-8">
       <MaxWidthContainer className="my-14">
         <div className="flex flex-col gap-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_2fr]">
@@ -29,7 +29,7 @@ export function Footer() {
                     variant="link"
                     className="h-auto justify-start p-0"
                   >
-                    <Link href="/blog">Blog</Link>
+                    <Link href="/posts">Blog</Link>
                   </Button>
                   <Button
                     asChild
@@ -77,6 +77,40 @@ export function Footer() {
                     >
                       Twitter
                     </a>
+                  </Button>
+                </nav>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <h4 className="font-medium">Comparaison</h4>
+                <nav className="flex flex-col gap-2">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/posts/saveit-vs-pocket-comparison">vs Pocket</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/posts/saveit-vs-mymind-comparison">vs MyMind</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/posts/saveit-vs-raindrop-comparison">vs Raindrop.io</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/posts/best-bookmark-managers-2024-complete-guide">All Tools</Link>
                   </Button>
                 </nav>
               </div>

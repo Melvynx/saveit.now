@@ -40,7 +40,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
           {/* Back Link */}
           <div>
             <Button variant="ghost" asChild className="gap-2">
-              <Link href="/blog">
+              <Link href="/posts">
                 <ArrowLeft className="size-4" />
                 Back to Blog
               </Link>

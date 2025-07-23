@@ -1,0 +1,33 @@
+/* Create an animation that will appear the element from bottom when the page load */
+
+@keyframes slideInFromBottom {
+  0% {
+    transform: translateY(100%);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes wiggle {
+  0% {
+    transform: translateX(0) rotate(0);
+  }
+  25% {
+    transform: translateX(-5px) rotate(-5deg);
+  }
+  50% {
+    transform: translateX(5px) rotate(5deg);
+  }
+  75% {
+    transform: translateX(-5px) rotate(-5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+}
+
+.slideInFromBottom {
+  animation: 400ms ease-out 0s 1 slideInFromBottom, 400ms ease-out 1s 1 wiggle;
+}

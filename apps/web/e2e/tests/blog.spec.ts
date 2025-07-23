@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 test("blog page loads and post navigation works", async ({ page }) => {
-  await page.goto("/blog");
+  await page.goto("/posts");
 
   // Check for h1 heading
   await expect(page.locator("h1")).toBeVisible();
 
   // Find and click on a blog post link
-  const postLink = page.locator("a[href*='/blog/']").first();
+  const postLink = page.locator("a[href*='/posts/']").first();
 
   // Check if post exists and click it
   if (await postLink.isVisible()) {
@@ -16,6 +16,6 @@ test("blog page loads and post navigation works", async ({ page }) => {
 
     // Verify URL is correct
     await expect(page).toHaveURL(new RegExp(href!));
-    await expect(page).toHaveURL(/\/blog\/.+/);
+    await expect(page).toHaveURL(/\/posts\/.+/);
   }
 });

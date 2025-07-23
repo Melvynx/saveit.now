@@ -13,6 +13,20 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.4.0",
+    date: "2025-07-23",
+    type: "improvement",
+    title: "Live on Product Hunt !",
+    description: "Join the hype and try SaveIt.now on Product Hunt !",
+    changes: [
+      {
+        type: "new",
+        text: "Join the hype and try SaveIt.now on Product Hunt !",
+      },
+    ],
+    image: "/changelog/ph.png",
+  },
+  {
     version: "1.3.1",
     date: "2025-07-19",
     type: "improvement",
