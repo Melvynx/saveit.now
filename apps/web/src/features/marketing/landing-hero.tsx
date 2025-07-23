@@ -159,7 +159,7 @@ export const LandingHero = () => {
                 height: "100%",
                 border: "0",
               }}
-              src="https://www.tella.tv/video/cmddukdo200000al8f8h71bcd/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
+              src="https://www.tella.tv/video/cmdfelaz300170bjr8yymdxsy/embed?b=0&title=0&a=1&loop=0&t=0&muted=0&wt=0"
               allowFullScreen
             ></iframe>
           </div>
