@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { MaxWidthContainer } from "@/features/page/page";
@@ -24,11 +25,15 @@ export default function StartPage() {
   const session = useSession();
   const router = useRouter();
   const finishMutation = useMutation({
-    mutationFn: finishOnboardingAction,
-    onSuccess: () => {
+    mutationFn: (_params: "extension" | "app") => finishOnboardingAction({}),
+    onSuccess: (_, params) => {
       session.refetch();
       setTimeout(() => {
-        router.push(APP_LINKS.app);
+        if (params === "extension") {
+          router.push(APP_LINKS.extensions);
+        } else {
+          router.push(APP_LINKS.app);
+        }
       }, 500);
       toast.success("Onboarding finished");
     },
@@ -40,7 +45,7 @@ export default function StartPage() {
     createdBookmarks: number;
     totalUrls: number;
   }) => {
-    finishMutation.mutate({});
+    finishMutation.mutate("app");
     toast.success(
       `Great! You've imported ${data.createdBookmarks} bookmarks. Let's explore your dashboard!`,
     );
@@ -79,7 +84,7 @@ export default function StartPage() {
           <Button asChild variant="outline">
             <Link
               href={APP_LINKS.app}
-              onClick={() => finishMutation.mutate({})}
+              onClick={() => finishMutation.mutate("app")}
             >
               Start with Empty Dashboard
               <ArrowRight className="size-4 ml-2" />
@@ -88,7 +93,7 @@ export default function StartPage() {
           <Button asChild variant="outline">
             <Link
               href={APP_LINKS.extensions}
-              onClick={() => finishMutation.mutate({})}
+              onClick={() => finishMutation.mutate("extension")}
             >
               Install Browser Extension
               <ArrowRight className="size-4 ml-2" />
