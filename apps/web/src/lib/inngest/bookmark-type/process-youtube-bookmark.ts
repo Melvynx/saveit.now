@@ -40,6 +40,121 @@ export async function processYouTubeBookmark(
 ): Promise<void> {
   const youtubeId = getVideoId(context.url);
 
+  // Check if this YouTube video has already been processed
+  const existingBookmarkWithSameVideo = await step.run("check-existing-youtube-video", async () => {
+    return await prisma.bookmark.findFirst({
+      where: {
+        type: BookmarkType.YOUTUBE,
+        metadata: {
+          path: ["youtubeId"],
+          equals: youtubeId,
+        },
+        status: "READY",
+      },
+      select: {
+        id: true,
+        title: true,
+        summary: true,
+        vectorSummary: true,
+        preview: true,
+        faviconUrl: true,
+        metadata: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  // If we found an existing processed bookmark with the same YouTube video, copy its data
+  if (existingBookmarkWithSameVideo) {
+    await publish({
+      channel: `bookmark:${context.bookmarkId}`,
+      topic: "status",
+      data: {
+        id: BOOKMARK_STEP_ID_TO_ID["saving"],
+        order: 8,
+      },
+    });
+
+    await step.run("copy-existing-youtube-data", async () => {
+      // Copy all the processed data from the existing bookmark
+      const metadata = existingBookmarkWithSameVideo.metadata as Record<string, any> || {};
+      
+      await updateBookmark({
+        bookmarkId: context.bookmarkId,
+        type: BookmarkType.YOUTUBE,
+        title: existingBookmarkWithSameVideo.title || context.url,
+        summary: existingBookmarkWithSameVideo.summary || "",
+        vectorSummary: existingBookmarkWithSameVideo.vectorSummary || "",
+        preview: existingBookmarkWithSameVideo.preview,
+        faviconUrl: existingBookmarkWithSameVideo.faviconUrl || `${getServerUrl()}/favicon/youtube.svg`,
+        tags: existingBookmarkWithSameVideo.tags.map(bt => bt.tag),
+        metadata: {
+          ...metadata,
+          youtubeId,
+          dataCopiedFrom: existingBookmarkWithSameVideo.id,
+          dataCopiedAt: new Date().toISOString(),
+        },
+      });
+    });
+
+    // Generate embeddings for the new bookmark based on copied data
+    await step.run("update-embedding", async () => {
+      const title = existingBookmarkWithSameVideo.title || context.url;
+      const vectorSummary = existingBookmarkWithSameVideo.vectorSummary || "";
+
+      if (!vectorSummary) {
+        const embedding = await embedMany({
+          model: OPENAI_MODELS.embedding,
+          values: [title],
+        });
+        const [titleEmbedding] = embedding.embeddings;
+
+        await prisma.$executeRaw`
+          UPDATE "Bookmark"
+          SET 
+            "titleEmbedding" = ${titleEmbedding}::vector
+          WHERE id = ${context.bookmarkId}
+        `;
+        return;
+      }
+
+      const embedding = await embedMany({
+        model: OPENAI_MODELS.embedding,
+        values: [title, vectorSummary],
+      });
+      const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
+
+      await prisma.$executeRaw`
+        UPDATE "Bookmark"
+        SET 
+          "titleEmbedding" = ${titleEmbedding}::vector,
+          "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        WHERE id = ${context.bookmarkId}
+      `;
+    });
+
+    await publish({
+      channel: `bookmark:${context.bookmarkId}`,
+      topic: "finish",
+      data: {
+        id: BOOKMARK_STEP_ID_TO_ID["finish"],
+        order: 9,
+      },
+    });
+
+    return; // Early return - we've successfully copied data from existing bookmark
+  }
+
+  // If no existing bookmark found, proceed with normal processing
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
