@@ -111,7 +111,7 @@ export const UserRow = ({ user, onUserUpdate }: UserRowProps) => {
     },
   });
 
-  const isPremium = !!user.stripeCustomerId;
+  const isPremium = user.subscriptions.some((s) => s.status === "active");
 
   return (
     <TableRow key={user.id}>
