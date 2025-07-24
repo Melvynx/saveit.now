@@ -49,30 +49,38 @@ export const KeyFeatures = () => {
             <div className="w-full max-w-96">
               <BookmarkCardYouTube
                 bookmark={{
-                  id: "01K08HSNTBXYNR446W3J6KG77F",
-                  userId: "demo",
-                  url: "https://www.youtube.com/watch?v=2USUfv7klr8",
+                  id: "01K0TE4ZFPFPQY8KVPGGQM3D6B",
+                  url: "https://www.youtube.com/watch?v=vagyIcmIGOQ&t=5292s",
                   title:
-                    "Grok 4 pushes humanity closer to AGI… but there's a problem",
-                  summary: "AI video about Grok 4 and AGI development",
+                    "DHH: Future of Programming, AI, Ruby on Rails, Productivity & Parenting | Lex Fridman Podcast #474",
+                  summary:
+                    "This video explores the philosophy of programming and web development with David Heinemeier Hansson (DHH), the creator of Ruby on Rails. It delves into his journey, the principles behind Rails, and his perspective on the tech industry. The video also touches on topics like AI, open source, and the importance of balancing work with personal life.\n",
+                  preview:
+                    "https://saveit.mlvcdn.com/users/vO5Y7R4q2ZMb22Yp6HgmQfYvstbJbylf/bookmarks/01K0TE4ZFPFPQY8KVPGGQM3D6B/og-image.jpg",
                   type: "YOUTUBE",
                   status: "READY",
-                  ogImageUrl:
-                    "https://saveit.mlvcdn.com/users/WU21ivFMBWCXetgE1HHPJ5if7UbsoBEh/bookmarks/01K08HSNTBXYNR446W3J6KG77F/og-image.jpg",
-                  faviconUrl: "http://localhost:3000/favicon/youtube.svg",
+                  ogImageUrl: null,
+                  ogDescription: null,
+                  faviconUrl: "https://saveit.now/favicon/youtube.svg",
                   metadata: {
-                    youtubeId: "2USUfv7klr8",
-                    transcriptAvailable: false,
+                    youtubeId: "vagyIcmIGOQ",
+                    transcript: "xx",
+                    transcriptSource: "extension",
+                    youtubeTranscript: {
+                      source: "xhr-interception",
+                      videoId: "vagyIcmIGOQ",
+                      extractedAt: "2025-07-23T01:25:13.533Z",
+                    },
+                    transcriptAvailable: true,
+                    transcriptExtractedAt: "2025-07-23T01:26:22.197Z",
                   },
                   starred: false,
                   read: false,
                   note: null,
-                  preview: null,
                   vectorSummary: null,
                   imageDescription: null,
-                  ogDescription: null,
                   inngestRunId: null,
-                  createdAt: new Date(),
+                  createdAt: new Date("2025-07-23T01:25:15.382Z"),
                   updatedAt: new Date(),
                 }}
               />
