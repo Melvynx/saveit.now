@@ -167,7 +167,7 @@ Return a precise description of the image.
 
 Important: if the image is invalid, call the tool "invalid-image" with the reason. An image is considered invalid if it shows:
 - Black or completely dark screens
-- Error pages (403, 404, 500, etc.)
+- Unexpected error pages (403, 404, 500, etc.) that appear due to access issues
 - Login or authentication pages (like "Sign in to continue")
 - Captcha verification pages
 - "Access denied" or "Permission required" messages
