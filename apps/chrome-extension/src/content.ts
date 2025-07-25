@@ -261,8 +261,6 @@ async function uploadScreenshotViaBackground(
   screenshotBlob: Blob
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log("Converting blob to data URL for message passing...");
-    
     // Convert blob to data URL for serialization
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -271,19 +269,13 @@ async function uploadScreenshotViaBackground(
       reader.readAsDataURL(screenshotBlob);
     });
     
-    console.log("Sending UPLOAD_SCREENSHOT message to background script...");
-    console.log("Data URL length:", dataUrl.length);
-    
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({
         type: "UPLOAD_SCREENSHOT",
         bookmarkId,
         screenshotDataUrl: dataUrl
       }, (response) => {
-        console.log("Received upload response from background script:", response);
-        
         if (chrome.runtime.lastError) {
-          console.error("Chrome runtime error during upload:", chrome.runtime.lastError);
           resolve({
             success: false,
             error: chrome.runtime.lastError.message
@@ -298,7 +290,6 @@ async function uploadScreenshotViaBackground(
       });
     });
   } catch (error) {
-    console.error("Error in uploadScreenshotViaBackground:", error);
     return {
       success: false,
       error: error.message || "Failed to upload screenshot"
@@ -309,62 +300,27 @@ async function uploadScreenshotViaBackground(
 // Capturer une capture d'écran de la page actuelle
 async function captureScreenshot(): Promise<Blob | null> {
   try {
-    console.log("Sending CAPTURE_SCREENSHOT message to background script...");
     
     // Demander au background script de capturer la capture d'écran
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({ type: "CAPTURE_SCREENSHOT" }, (response) => {
-        console.log("Received response from background script:", response);
-        
         if (chrome.runtime.lastError) {
-          console.error("Chrome runtime error:", chrome.runtime.lastError);
           resolve(null);
           return;
         }
         
         if (response && response.success && response.screenshotDataUrl) {
-          console.log("Screenshot captured by background script, converting to blob...");
-          console.log("Data URL length:", response.screenshotDataUrl.length);
-          console.log("Data URL starts with:", response.screenshotDataUrl.substring(0, 50) + "...");
-          
           // Convertir le data URL en Blob
           fetch(response.screenshotDataUrl)
-            .then(res => {
-              console.log("Fetch response status:", res.status, res.statusText);
-              return res.blob();
-            })
-            .then(blob => {
-              console.log("Successfully converted to blob:", blob.size, "bytes, type:", blob.type);
-              resolve(blob);
-            })
-            .catch(error => {
-              console.error("Error converting screenshot data URL to blob:", error);
-              console.error("Conversion error details:", {
-                name: error.name,
-                message: error.message,
-                stack: error.stack
-              });
-              resolve(null);
-            });
+            .then(res => res.blob())
+            .then(blob => resolve(blob))
+            .catch(() => resolve(null));
         } else {
-          console.error("Failed to capture screenshot from background script");
-          console.error("Response details:", {
-            success: response?.success,
-            hasDataUrl: !!response?.screenshotDataUrl,
-            error: response?.error,
-            fullResponse: response
-          });
           resolve(null);
         }
       });
     });
   } catch (error) {
-    console.error("Error in captureScreenshot function:", error);
-    console.error("Capture error details:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
     return null;
   }
 }
@@ -450,54 +406,24 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
       // Étape 2: Capturer et envoyer la capture d'écran (sauf pour YouTube)
       if (result.bookmarkId && !isYouTubeVideoPage()) {
         try {
-          console.log(`Starting screenshot process for bookmark ID: ${result.bookmarkId}`);
-          
           // Hide extension UI before capturing screenshot to avoid it appearing in the image
-          console.log("Hiding extension UI for clean screenshot...");
           setState(SaverState.HIDDEN);
           
           // Wait a bit to ensure UI is hidden before capturing
           await new Promise(resolve => setTimeout(resolve, 150));
           
-          console.log("Attempting to capture screenshot...");
           const screenshot = await captureScreenshot();
           
           if (screenshot) {
-            console.log(`Screenshot captured successfully, size: ${screenshot.size} bytes, type: ${screenshot.type}`);
-            
             // Show standard loading state during upload
             setState(SaverState.LOADING);
             setLoadingMessage("Uploading screenshot...");
             
-            console.log("Uploading screenshot to server via background script...");
-            const uploadResult = await uploadScreenshotViaBackground(result.bookmarkId, screenshot);
-            
-            if (uploadResult.success) {
-              console.log("Screenshot uploaded successfully");
-            } else {
-              console.warn("Screenshot upload failed:", uploadResult.error);
-              console.warn("Upload result details:", uploadResult);
-              // Continue to success even if screenshot upload fails
-            }
-          } else {
-            console.warn("Screenshot capture returned null - no screenshot was captured");
-            console.warn("This could be due to permissions, tab capture failure, or browser restrictions");
-            // Continue to success even if screenshot capture fails
+            await uploadScreenshotViaBackground(result.bookmarkId, screenshot);
           }
         } catch (error) {
-          console.error("Error during screenshot capture/upload process:", error);
-          console.error("Error details:", {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-          });
           // Continue to success even if screenshot process fails
         }
-      } else if (result.bookmarkId && isYouTubeVideoPage()) {
-        console.log("YouTube video detected, skipping screenshot capture");
-      } else {
-        console.warn("No bookmark ID returned from save operation, skipping screenshot");
-        console.warn("Save result:", result);
       }
       
       setState(SaverState.SUCCESS);

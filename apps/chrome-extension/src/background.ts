@@ -154,13 +154,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         { format: "png" },
         (screenshotDataUrl) => {
           if (chrome.runtime.lastError) {
-            console.error("Screenshot capture error:", chrome.runtime.lastError.message);
             sendResponse({
               success: false,
               error: chrome.runtime.lastError.message,
             });
           } else {
-            console.log("Screenshot captured successfully");
             sendResponse({
               success: true,
               screenshotDataUrl,
@@ -179,11 +177,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "UPLOAD_SCREENSHOT") {
     // Handle screenshot upload request from content script
-    console.log("Background: UPLOAD_SCREENSHOT request", {
-      bookmarkId: message.bookmarkId,
-      hasDataUrl: !!message.screenshotDataUrl,
-      dataUrlLength: message.screenshotDataUrl?.length
-    });
 
     if (!message.bookmarkId || !message.screenshotDataUrl) {
       sendResponse({
@@ -194,22 +187,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     // Convert data URL to blob
-    console.log("Background: Converting data URL to blob...");
     fetch(message.screenshotDataUrl)
-      .then(res => {
-        console.log("Background: Fetch response status:", res.status);
-        return res.blob();
-      })
-      .then(blob => {
-        console.log("Background: Blob created successfully, size:", blob.size, "type:", blob.type);
-        return uploadScreenshot(message.bookmarkId, blob);
-      })
-      .then(result => {
-        console.log("Background: Screenshot upload result", result);
-        sendResponse(result);
-      })
+      .then(res => res.blob())
+      .then(blob => uploadScreenshot(message.bookmarkId, blob))
+      .then(result => sendResponse(result))
       .catch(error => {
-        console.error("Background: Screenshot upload error", error);
         sendResponse({
           success: false,
           error: error?.message || "Failed to upload screenshot"
@@ -223,7 +205,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Listen for auth events
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === "local" && changes.authSession) {
-    console.log("Auth session changed");
+    // Auth session changed
   }
 });
 

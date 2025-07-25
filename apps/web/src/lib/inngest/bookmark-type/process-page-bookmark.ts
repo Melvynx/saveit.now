@@ -128,17 +128,11 @@ export async function processStandardWebpage(
       select: { preview: true },
     });
 
-    console.log("freshBookmark", freshBookmark);
-
     if (freshBookmark?.preview) {
-      console.log(
-        "Screenshot already exists from extension upload, skipping server screenshot",
-      );
       return freshBookmark.preview;
     }
 
     try {
-      console.log("No existing screenshot found, generating server screenshot");
       const url = new URL(env.SCREENSHOT_WORKER_URL);
       url.searchParams.set("url", context.url);
 
@@ -209,9 +203,6 @@ export async function processStandardWebpage(
 
       if (result.toolCalls?.[0]?.toolName === "invalid-image") {
         const invalidReason = result.toolCalls[0].args.reason;
-        console.log(
-          `Screenshot invalid for bookmark ${context.bookmarkId}: ${invalidReason}`,
-        );
         return { description: null, isInvalid: true, invalidReason };
       }
 
