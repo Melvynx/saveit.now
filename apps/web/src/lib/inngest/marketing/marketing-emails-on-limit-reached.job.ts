@@ -3,7 +3,6 @@ import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { stripeClient } from "@/lib/stripe";
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
-import MarkdownEmail from "emails/markdown.emails";
 import { nanoid } from "nanoid";
 import { inngest } from "../client";
 import { EMAILS } from "./emails.const";
@@ -85,10 +84,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
         to: email,
         subject: "You reached your limit! Here's a special discount 🎁",
         text: EMAILS.LIMIT_REACHED_DISCOUNT_EMAIL(promoCode),
-        html: MarkdownEmail({
-          markdown: EMAILS.LIMIT_REACHED_DISCOUNT_EMAIL(promoCode),
-          preview: "You reached your limit! Here's a special discount",
-        }),
+        preview: "You reached your limit! Here's a special discount",
       });
     });
 
@@ -100,10 +96,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
         to: email,
         subject: "Don't forget your $1 discount! 💰",
         text: EMAILS.LIMIT_REACHED_REMINDER_EMAIL(promoCode),
-        html: MarkdownEmail({
-          markdown: EMAILS.LIMIT_REACHED_REMINDER_EMAIL(promoCode),
-          preview: "Don't forget your $1 discount!",
-        }),
+        preview: "Don't forget your $1 discount!",
       });
     });
 
@@ -115,10 +108,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
         to: email,
         subject: "Last chance: $1 deal expires today! ⏰",
         text: EMAILS.LIMIT_REACHED_LAST_CHANCE_EMAIL(promoCode),
-        html: MarkdownEmail({
-          markdown: EMAILS.LIMIT_REACHED_LAST_CHANCE_EMAIL(promoCode),
-          preview: "Last chance: $1 deal expires today!",
-        }),
+        preview: "Last chance: $1 deal expires today!",
       });
     });
   },

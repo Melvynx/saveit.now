@@ -36,19 +36,24 @@ The SaveIt.now Team`,
     deleteUser: {
       enabled: true,
       beforeDelete: async (user) => {
-        const stripeCustomer = await stripeClient.customers.retrieve(user.id);
-        if (!stripeCustomer) return;
+        try {
+          const stripeCustomer = await stripeClient.customers.retrieve(user.id);
+          if (!stripeCustomer || stripeCustomer.deleted) return;
 
-        const subscriptions = await stripeClient.subscriptions.list({
-          customer: stripeCustomer.id,
-        });
-        if (!subscriptions.data.length) return;
+          const subscriptions = await stripeClient.subscriptions.list({
+            customer: stripeCustomer.id,
+          });
+          if (!subscriptions.data.length) return;
 
-        await Promise.all(
-          subscriptions.data.map((subscription) =>
-            stripeClient.subscriptions.cancel(subscription.id),
-          ),
-        );
+          await Promise.all(
+            subscriptions.data.map((subscription) =>
+              stripeClient.subscriptions.cancel(subscription.id),
+            ),
+          );
+        } catch (error) {
+          // If customer doesn't exist in Stripe, that's fine - just continue with deletion
+          console.log("Stripe customer not found during user deletion:", error);
+        }
       },
       afterDelete: async (user) => {
         await resend.emails.send({

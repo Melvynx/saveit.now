@@ -1,6 +1,5 @@
 import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { prisma } from "@workspace/database";
-import MarkdownEmail from "emails/markdown.emails";
 import { inngest } from "../client";
 import { EMAILS } from "./emails.const";
 
@@ -55,10 +54,7 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
         to: email,
         subject: "Welcome to SaveIt.pro !",
         text: EMAILS.SUBSCRIPTION_THANK_YOU_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.SUBSCRIPTION_THANK_YOU_EMAIL,
-          preview: "Thanks for your trust!",
-        }),
+        preview: "Thanks for your trust!",
       });
     });
 
@@ -72,10 +68,7 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
         to: email,
         subject: "How to use your premium effectively",
         text: EMAILS.SUBSCRIPTION_HOW_TO_USE_PREMIUM_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.SUBSCRIPTION_HOW_TO_USE_PREMIUM_EMAIL,
-          preview: "How to use your premium effectively",
-        }),
+        preview: "How to use your premium effectively",
       });
     });
 
@@ -89,10 +82,7 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
         to: email,
         subject: "Let's talk? 💬",
         text: EMAILS.SUBSCRIPTION_LETS_TALK_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.SUBSCRIPTION_LETS_TALK_EMAIL,
-          preview: "Let's talk?",
-        }),
+        preview: "Let's talk?",
       });
     });
 
@@ -106,10 +96,7 @@ export const marketingEmailsOnSubscriptionJob = inngest.createFunction(
         to: email,
         subject: "Our commitment to you",
         text: EMAILS.SUBSCRIPTION_OUR_COMMITMENT_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.SUBSCRIPTION_OUR_COMMITMENT_EMAIL,
-          preview: "Our commitment to you",
-        }),
+        preview: "Our commitment to you",
       });
     });
   },

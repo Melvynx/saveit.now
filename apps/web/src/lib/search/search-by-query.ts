@@ -35,10 +35,28 @@ export async function searchByDomain({
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
       ...specialFilterConditions,
     },
-    include: {
+    select: {
+      id: true,
+      url: true,
+      title: true,
+      summary: true,
+      preview: true,
+      type: true,
+      status: true,
+      ogImageUrl: true,
+      ogDescription: true,
+      faviconUrl: true,
+      createdAt: true,
+      metadata: true,
+      starred: true,
+      read: true,
       tags: {
-        include: {
-          tag: true,
+        select: {
+          tag: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -102,10 +120,28 @@ export async function searchByTags({
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
       ...specialFilterConditions,
     },
-    include: {
+    select: {
+      id: true,
+      url: true,
+      title: true,
+      summary: true,
+      preview: true,
+      type: true,
+      status: true,
+      ogImageUrl: true,
+      ogDescription: true,
+      faviconUrl: true,
+      createdAt: true,
+      metadata: true,
+      starred: true,
+      read: true,
       tags: {
-        include: {
-          tag: true,
+        select: {
+          tag: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

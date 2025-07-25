@@ -1,6 +1,5 @@
 import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { prisma } from "@workspace/database";
-import MarkdownEmail from "emails/markdown.emails";
 import { inngest } from "../client";
 import { EMAILS } from "./emails.const";
 
@@ -30,7 +29,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
   { event: "user/new-subscriber" },
   async ({ event, step }) => {
     const userId = event.data.userId;
-    
+
     if (!userId) {
       throw new Error("User ID is required for marketing emails");
     }
@@ -57,10 +56,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
         to: email,
         subject: "Welcome to SaveIt.now (from Melvyn)",
         text: EMAILS.WELCOME_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.WELCOME_EMAIL,
-          preview: "Just a quick note to say welcome to SaveIt.now",
-        }),
+        preview: "Just a quick note to say welcome to SaveIt.now",
       });
     });
 
@@ -88,10 +84,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
           to: email,
           subject: "Install the SaveIt.now Chrome Extension",
           text: EMAILS.CHROME_EXTENSION_EMAIL,
-          html: MarkdownEmail({
-            markdown: EMAILS.CHROME_EXTENSION_EMAIL,
-            preview: "Install the SaveIt.now Chrome Extension",
-          }),
+          preview: "Install the SaveIt.now Chrome Extension",
         });
       });
 
@@ -104,10 +97,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
         to: email,
         subject: "Master the art of finding your bookmarks",
         text: EMAILS.HOW_USE_CHROME_EXTENSION_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.HOW_USE_CHROME_EXTENSION_EMAIL,
-          preview: "How to use the Chrome extension effectively",
-        }),
+        preview: "How to use the Chrome extension effectively",
       });
     });
 
@@ -119,10 +109,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
         to: email,
         subject: "How to import your bookmarks",
         text: EMAILS.HOW_TO_IMPORT_BOOKMARKS_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.HOW_TO_IMPORT_BOOKMARKS_EMAIL,
-          preview: "How to import your existing bookmarks",
-        }),
+        preview: "How to import your existing bookmarks",
       });
     });
 
@@ -145,10 +132,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
           to: email,
           subject: "How to get the most out of your bookmarks",
           text: EMAILS.HOW_TO_USE_BOOKMARKS_EMAIL,
-          html: MarkdownEmail({
-            markdown: EMAILS.HOW_TO_USE_BOOKMARKS_EMAIL,
-            preview: "Tips to get the most out of your bookmarks",
-          }),
+          preview: "Tips to get the most out of your bookmarks",
         });
       });
 
@@ -161,10 +145,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
         to: email,
         subject: "Master the art of finding your bookmarks",
         text: EMAILS.HOW_TO_SEARCH_BOOKMARKS_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.HOW_TO_SEARCH_BOOKMARKS_EMAIL,
-          preview: "Master the art of finding your bookmarks",
-        }),
+        preview: "Master the art of finding your bookmarks",
       });
     });
 
@@ -176,10 +157,7 @@ export const marketingEmailsOnNewSubscriberJob = inngest.createFunction(
         to: email,
         subject: "My commitment to SaveIt.now",
         text: EMAILS.PREMIUM_COMMITMENT_EMAIL,
-        html: MarkdownEmail({
-          markdown: EMAILS.PREMIUM_COMMITMENT_EMAIL,
-          preview: "My commitment to SaveIt.now",
-        }),
+        preview: "My commitment to SaveIt.now",
       });
     });
   },

@@ -1,9 +1,11 @@
+import { EmailChangeForm } from "@/features/auth/email-change-form";
 import { SubmitButton } from "@/features/form/loading-button";
+import { DeleteAccountButton } from "@/components/delete-account-button";
 import { MaxWidthContainer } from "@/features/page/page";
 import { auth } from "@/lib/auth";
 import { getUser } from "@/lib/auth-session";
+import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
 import { serverToast } from "@/lib/server-toast";
-import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -16,8 +18,6 @@ import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
-import { EmailChangeForm } from "@/features/auth/email-change-form";
 
 export default async function AuthPage() {
   const user = await getUser();
@@ -64,10 +64,10 @@ export default async function AuthPage() {
         onEmailChange={async (formData) => {
           "use server";
           const newEmail = formData.get("email") as string;
-          
+
           try {
             const validatedData = EmailChangeSchema.parse({ newEmail });
-            
+
             await auth.api.changeEmail({
               headers: await headers(),
               body: {
@@ -78,11 +78,13 @@ export default async function AuthPage() {
 
             await serverToast("Check your current email for verification link");
           } catch (error) {
-            if (error instanceof Error && 'issues' in error) {
+            if (error instanceof Error && "issues" in error) {
               // Zod validation error
               const zodError = error as { issues?: Array<{ message: string }> };
               const firstError = zodError.issues?.[0]?.message;
-              await serverToast(firstError || "Please enter a valid email address");
+              await serverToast(
+                firstError || "Please enter a valid email address",
+              );
             } else {
               await serverToast("Failed to change email. Please try again.");
             }
@@ -99,28 +101,7 @@ export default async function AuthPage() {
             confirm the deletion via a link sent to your email.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="flex justify-end">
-          <form>
-            <Button
-              formAction={async () => {
-                "use server";
-
-                await auth.api.deleteUser({
-                  headers: await headers(),
-                  body: {
-                    callbackURL: "/goodbye",
-                  },
-                });
-                await serverToast(
-                  "Click on the link in your email to delete your account",
-                );
-              }}
-              variant="destructive"
-            >
-              Delete account
-            </Button>
-          </form>
-        </CardFooter>
+        <DeleteAccountButton />
       </Card>
     </MaxWidthContainer>
   );

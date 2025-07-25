@@ -39,6 +39,22 @@ export async function getDefaultBookmarks({
       ...(types && types.length > 0 ? { type: { in: types } } : {}),
       ...specialFilterConditions,
     },
+    select: {
+      id: true,
+      url: true,
+      title: true,
+      summary: true,
+      preview: true,
+      type: true,
+      status: true,
+      ogImageUrl: true,
+      ogDescription: true,
+      faviconUrl: true,
+      createdAt: true,
+      metadata: true,
+      starred: true,
+      read: true,
+    },
     orderBy: [
       {
         id: "desc", // Sort by ULID (naturally sorted by creation time) - NEWEST FIRST
@@ -109,6 +125,22 @@ export async function getBookmarksByType({
       type: { in: types },
       ...cursorCondition,
       ...specialFilterConditions,
+    },
+    select: {
+      id: true,
+      url: true,
+      title: true,
+      summary: true,
+      preview: true,
+      type: true,
+      status: true,
+      ogImageUrl: true,
+      ogDescription: true,
+      faviconUrl: true,
+      createdAt: true,
+      metadata: true,
+      starred: true,
+      read: true,
     },
     orderBy: [
       { id: "desc" }, // Use ULID ordering - NEWEST FIRST

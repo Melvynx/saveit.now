@@ -211,6 +211,23 @@ export function buildSpecialFilterConditions(
 }
 
 /**
+ * Removes transcript from metadata to reduce response size
+ */
+function cleanMetadata(metadata?: Prisma.JsonValue): Prisma.JsonValue | undefined {
+  if (!metadata || typeof metadata !== 'object' || metadata === null) {
+    return metadata;
+  }
+
+  if (Array.isArray(metadata)) {
+    return metadata;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { transcript: _, ...cleanedMetadata } = metadata as Record<string, unknown>;
+  return cleanedMetadata as Prisma.JsonValue;
+}
+
+/**
  * Converts a bookmark from database to SearchResult format
  */
 export function bookmarkToSearchResult(
@@ -250,7 +267,7 @@ export function bookmarkToSearchResult(
     matchType,
     matchedTags,
     createdAt: bookmark.createdAt,
-    metadata: bookmark.metadata,
+    metadata: cleanMetadata(bookmark.metadata),
     openCount,
     starred: bookmark.starred,
     read: bookmark.read,

@@ -1,9 +1,14 @@
 import { getServerUrl } from "@/lib/server-url";
 import { prisma } from "@workspace/database";
+import MarkdownEmail from "emails/markdown.emails";
 import { sendEmail } from "./send-email";
 
-type SendMarketingEmailParams = Parameters<typeof sendEmail>[0] & {
+type SendMarketingEmailParams = {
   userId: string;
+  to: string;
+  subject: string;
+  preview: string;
+  text: string;
 };
 
 export class UserUnsubscribedError extends Error {
@@ -29,7 +34,7 @@ const addUnsubscribeLink = (content: string, userId: string): string => {
  * Throws UserUnsubscribedError if the user has unsubscribed.
  */
 export const sendMarketingEmail = async (params: SendMarketingEmailParams) => {
-  const { userId, ...emailParams } = params;
+  const { userId } = params;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -44,37 +49,13 @@ export const sendMarketingEmail = async (params: SendMarketingEmailParams) => {
     throw new UserUnsubscribedError(userId, user.email);
   }
 
-  // Add unsubscribe link to text content
-  const modifiedParams = {
-    ...emailParams,
-    text: emailParams.text
-      ? addUnsubscribeLink(emailParams.text, userId)
-      : undefined,
-  };
-
-  // If HTML is provided and is a React component, we'll need to modify the markdown
-  if (
-    typeof emailParams.html === "object" &&
-    emailParams.html &&
-    emailParams.html !== null &&
-    "props" in emailParams.html
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const htmlElement = emailParams.html as any;
-    if (
-      htmlElement.props &&
-      "markdown" in htmlElement.props &&
-      typeof htmlElement.props.markdown === "string"
-    ) {
-      modifiedParams.html = {
-        ...htmlElement,
-        props: {
-          ...htmlElement.props,
-          markdown: addUnsubscribeLink(htmlElement.props.markdown, userId),
-        },
-      };
-    }
-  }
-
-  return await sendEmail(modifiedParams);
+  return await sendEmail({
+    to: params.to,
+    subject: params.subject,
+    text: params.text,
+    html: MarkdownEmail({
+      markdown: addUnsubscribeLink(params.text, userId),
+      preview: params.preview,
+    }),
+  });
 };
