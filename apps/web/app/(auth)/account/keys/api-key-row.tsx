@@ -5,8 +5,8 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ApiKeyRowProps {
   apiKey: {
@@ -25,7 +25,8 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
   const handleDelete = async () => {
     dialogManager.add({
       title: "Delete API Key",
-      description: "Are you sure you want to delete this API key? This action cannot be undone.",
+      description:
+        "Are you sure you want to delete this API key? This action cannot be undone.",
       action: {
         label: "Delete",
         onClick: async () => {
@@ -34,12 +35,12 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
             const { error } = await authClient.apiKey.delete({
               keyId: apiKey.id,
             });
-            
+
             if (error) {
               console.error("Failed to delete API key:", error);
               return;
             }
-            
+
             router.refresh();
           } finally {
             setIsDeleting(false);
@@ -70,6 +71,7 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
         variant="ghost"
         size="sm"
         onClick={handleDelete}
+        data-testid={`delete-api-key-button-${apiKey.name}`}
         disabled={isDeleting}
         className="text-destructive hover:text-destructive"
       >

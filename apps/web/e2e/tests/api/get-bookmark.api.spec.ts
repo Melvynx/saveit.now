@@ -45,9 +45,9 @@ test.describe("GET /api/v1/bookmarks", () => {
       },
     );
 
+    const responseData = await response.json();
     expect(response.status()).toBe(200);
 
-    const responseData = await response.json();
     expect(responseData.success).toBe(true);
     expect(responseData.bookmarks).toBeDefined();
     expect(Array.isArray(responseData.bookmarks)).toBe(true);
