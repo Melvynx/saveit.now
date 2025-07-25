@@ -1,5 +1,6 @@
 "use client";
 
+import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
@@ -17,7 +18,16 @@ export function DeleteAccountButton() {
       );
     },
     onSuccess: () => {
-      toast.success("Click on the link in your email to delete your account");
+      dialogManager.add({
+        title: "Delete account",
+        description: "Click on the link in your email to delete your account",
+        cancel: {
+          label: "Ok",
+          onClick: () => {
+            // Nothing
+          },
+        },
+      });
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete account: ${error.message}`);
