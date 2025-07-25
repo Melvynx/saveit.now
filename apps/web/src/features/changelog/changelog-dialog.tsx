@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { ChangelogEntry } from "@/lib/changelog/changelog-data";
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from "@workspace/ui/components/dialog";
 import { ExternalLink } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 interface ChangelogDialogProps {
@@ -56,10 +56,9 @@ export function ChangelogDialog({
 
           {entry.image && (
             <div className="relative aspect-video rounded-lg overflow-hidden border">
-              <Image
+              <img
                 src={entry.image}
                 alt={`${entry.title} preview`}
-                fill
                 className="object-cover"
               />
             </div>

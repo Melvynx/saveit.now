@@ -1,10 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Sparkles, X } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import { ChangelogDialog } from "./changelog-dialog";
 import { useChangelogNotification } from "./use-changelog-notification";
@@ -72,10 +72,9 @@ export function ChangelogNotification() {
 
             {latestEntry.image && (
               <div className="relative aspect-video rounded-md overflow-hidden border">
-                <Image
+                <img
                   src={latestEntry.image}
                   alt={`${latestEntry.title} preview`}
-                  fill
                   className="object-cover"
                 />
               </div>
