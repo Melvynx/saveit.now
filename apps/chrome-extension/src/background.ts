@@ -1,6 +1,6 @@
 // This background script can handle authentication events and communication
 // between the extension and the SaveIt Now website
-import { getSession, saveBookmark } from "./auth-client";
+import { getSession, saveBookmark, uploadScreenshot } from "./auth-client";
 
 // Menu contextuel IDs
 const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
@@ -145,12 +145,67 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true; // Indicates async response
   }
+
+  if (message.type === "CAPTURE_SCREENSHOT") {
+    // Handle screenshot capture request from content script
+    if (sender.tab?.id) {
+      chrome.tabs.captureVisibleTab(
+        sender.tab.windowId,
+        { format: "png" },
+        (screenshotDataUrl) => {
+          if (chrome.runtime.lastError) {
+            sendResponse({
+              success: false,
+              error: chrome.runtime.lastError.message,
+            });
+          } else {
+            sendResponse({
+              success: true,
+              screenshotDataUrl,
+            });
+          }
+        }
+      );
+    } else {
+      sendResponse({
+        success: false,
+        error: "No active tab found",
+      });
+    }
+    return true; // Indicates async response
+  }
+
+  if (message.type === "UPLOAD_SCREENSHOT") {
+    // Handle screenshot upload request from content script
+
+    if (!message.bookmarkId || !message.screenshotDataUrl) {
+      sendResponse({
+        success: false,
+        error: "Missing bookmark ID or screenshot data URL"
+      });
+      return;
+    }
+
+    // Convert data URL to blob
+    fetch(message.screenshotDataUrl)
+      .then(res => res.blob())
+      .then(blob => uploadScreenshot(message.bookmarkId, blob))
+      .then(result => sendResponse(result))
+      .catch(error => {
+        sendResponse({
+          success: false,
+          error: error?.message || "Failed to upload screenshot"
+        });
+      });
+    
+    return true; // Indicates async response
+  }
 });
 
 // Listen for auth events
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === "local" && changes.authSession) {
-    console.log("Auth session changed");
+    // Auth session changed
   }
 });
 
@@ -167,7 +222,7 @@ chrome.action.onClicked.addListener(async (tab) => {
         type: "page",
         url: tab.url,
       },
-      (response) => {
+      () => {
         if (chrome.runtime.lastError) {
           // Le content script n'est probablement pas chargé, on l'injecte manuellement
           chrome.scripting

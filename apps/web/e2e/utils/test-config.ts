@@ -11,7 +11,6 @@ interface TestConfig {
 let testConfig: TestConfig | null = null;
 
 export async function getTestConfig(): Promise<TestConfig> {
-  console.log("testConfig", testConfig);
   if (!testConfig) {
     try {
       const __filename = fileURLToPath(import.meta.url);

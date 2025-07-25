@@ -121,7 +121,17 @@ export async function processStandardWebpage(
   });
 
   const screenshot = await step.run("get-screenshot-v2", async () => {
-    if (context.bookmark.preview) return context.bookmark.preview;
+    // Check for fresh data from database in case extension already uploaded a screenshot
+
+    const freshBookmark = await prisma.bookmark.findUnique({
+      where: { id: context.bookmarkId },
+      select: { preview: true },
+    });
+
+    if (freshBookmark?.preview) {
+      return freshBookmark.preview;
+    }
+
     try {
       const url = new URL(env.SCREENSHOT_WORKER_URL);
       url.searchParams.set("url", context.url);
@@ -157,7 +167,8 @@ export async function processStandardWebpage(
   const screenshotAnalysis = await step.run(
     "get-screenshot-description",
     async () => {
-      if (!screenshotUrl) return { description: null, isInvalid: false, invalidReason: null };
+      if (!screenshotUrl)
+        return { description: null, isInvalid: false, invalidReason: null };
 
       const screenshotBase64 = await getImageUrlToBase64(screenshotUrl);
 
@@ -192,11 +203,14 @@ export async function processStandardWebpage(
 
       if (result.toolCalls?.[0]?.toolName === "invalid-image") {
         const invalidReason = result.toolCalls[0].args.reason;
-        console.log(`Screenshot invalid for bookmark ${context.bookmarkId}: ${invalidReason}`);
         return { description: null, isInvalid: true, invalidReason };
       }
 
-      return { description: result.text, isInvalid: false, invalidReason: null };
+      return {
+        description: result.text,
+        isInvalid: false,
+        invalidReason: null,
+      };
     },
   );
 
@@ -305,9 +319,11 @@ ${screenshotAnalysis.description}
 
   await step.run("update-bookmark", async () => {
     // Use og-image as fallback when screenshot is invalid
-    const finalPreview = screenshotAnalysis.isInvalid 
-      ? images.ogImageUrl 
-      : (screenshotAnalysis.description ? screenshot : images.ogImageUrl);
+    const finalPreview = screenshotAnalysis.isInvalid
+      ? images.ogImageUrl
+      : screenshotAnalysis.description
+        ? screenshot
+        : images.ogImageUrl;
 
     await updateBookmark({
       bookmarkId: context.bookmarkId,

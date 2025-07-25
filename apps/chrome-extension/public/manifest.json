@@ -22,7 +22,8 @@
     "storage",
     "scripting",
     "cookies",
-    "contextMenus"
+    "contextMenus",
+    "tabs"
   ],
   "host_permissions": ["https://saveit.now/*"],
   "icons": {

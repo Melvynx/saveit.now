@@ -56,14 +56,11 @@ export async function saveBookmark(
   url: string,
   transcript?: string,
   metadata?: any,
-): Promise<{ success: boolean; error?: string; errorType?: string }> {
+): Promise<{ success: boolean; error?: string; errorType?: string; bookmarkId?: string }> {
   try {
-    console.log("Saving bookmark for URL:", url);
-
     // Vérifier d'abord si l'utilisateur est connecté
     const session = await getSession();
     if (!session) {
-      console.error("No session available, cannot save bookmark");
       return {
         success: false,
         error: "You must be logged in to save a bookmark",
@@ -130,14 +127,71 @@ export async function saveBookmark(
       };
     }
 
-    console.log("Bookmark saved successfully");
-    return { success: true };
+    const responseData = await response.json();
+    return { success: true, bookmarkId: responseData.bookmark?.id };
   } catch (error) {
-    console.error("Error saving bookmark:", error);
     return {
       success: false,
       error: "Network error occurred. Please try again.",
       errorType: "NETWORK_ERROR",
+    };
+  }
+}
+
+export async function uploadScreenshot(
+  bookmarkId: string,
+  screenshotBlob: Blob,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return {
+        success: false,
+        error: "You must be logged in to upload a screenshot",
+      };
+    }
+    const formData = new FormData();
+    formData.append("file", screenshotBlob, "screenshot.png");
+
+    const uploadUrl = `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`;
+
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      credentials: "include",
+      mode: "cors",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to upload screenshot";
+      let responseText = "";
+      
+      try {
+        responseText = await response.text();
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch (e) {
+        // Ignore parsing errors
+      }
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+
+    let responseData;
+    try {
+      const responseText = await response.text();
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      responseData = { message: "Upload successful" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Network error occurred while uploading screenshot",
     };
   }
 }

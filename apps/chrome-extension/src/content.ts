@@ -2,6 +2,7 @@
 
 // Import type uniquement, plus d'import de fonctions
 import type { Session } from "./auth-client";
+import { uploadScreenshot } from "./auth-client";
 import {
   extractYouTubeTranscript,
   isYouTubeVideoPage,
@@ -22,6 +23,7 @@ enum SaveType {
 enum SaverState {
   HIDDEN = "hidden",
   LOADING = "loading",
+  CAPTURING_SCREENSHOT = "capturing-screenshot",
   SUCCESS = "success",
   ERROR = "error",
   AUTH_REQUIRED = "auth-required",
@@ -104,6 +106,11 @@ function createSaverUI() {
         <div id="saveit-loading-message" class="saveit-message">Saving...</div>
       </div>
       
+      <div id="saveit-capturing-screenshot" class="saveit-state">
+        <svg class="saveit-loader" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle-icon lucide-loader-circle"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <div class="saveit-message">Capturing screenshot...</div>
+      </div>
+      
       <div id="saveit-success" class="saveit-state">
         <svg class="saveit-checkmark" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
         <div id="saveit-success-message" class="saveit-message">Page saved!</div>
@@ -177,6 +184,11 @@ function setState(state: SaverState) {
         loadingMsg.textContent = `Saving ${getSaveTypeText(currentSaveType)}...`;
       }
       break;
+    case SaverState.CAPTURING_SCREENSHOT:
+      container.classList.remove("hidden");
+      const capturingEl = document.getElementById("saveit-capturing-screenshot");
+      if (capturingEl) capturingEl.style.display = "flex";
+      break;
     case SaverState.SUCCESS:
       container.classList.remove("hidden");
       const successEl = document.getElementById("saveit-success");
@@ -240,6 +252,76 @@ function setLoadingMessage(message: string) {
   const loadingMessageEl = document.getElementById("saveit-loading-message");
   if (loadingMessageEl) {
     loadingMessageEl.textContent = message;
+  }
+}
+
+// Upload screenshot via background script
+async function uploadScreenshotViaBackground(
+  bookmarkId: string,
+  screenshotBlob: Blob
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Convert blob to data URL for serialization
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(screenshotBlob);
+    });
+    
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        type: "UPLOAD_SCREENSHOT",
+        bookmarkId,
+        screenshotDataUrl: dataUrl
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve({
+            success: false,
+            error: chrome.runtime.lastError.message
+          });
+          return;
+        }
+        
+        resolve(response || {
+          success: false,
+          error: "No response from background script"
+        });
+      });
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || "Failed to upload screenshot"
+    };
+  }
+}
+
+// Capturer une capture d'écran de la page actuelle
+async function captureScreenshot(): Promise<Blob | null> {
+  try {
+    
+    // Demander au background script de capturer la capture d'écran
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "CAPTURE_SCREENSHOT" }, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve(null);
+          return;
+        }
+        
+        if (response && response.success && response.screenshotDataUrl) {
+          // Convertir le data URL en Blob
+          fetch(response.screenshotDataUrl)
+            .then(res => res.blob())
+            .then(blob => resolve(blob))
+            .catch(() => resolve(null));
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  } catch (error) {
+    return null;
   }
 }
 
@@ -321,6 +403,29 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
     );
 
     if (result.success) {
+      // Étape 2: Capturer et envoyer la capture d'écran (sauf pour YouTube)
+      if (result.bookmarkId && !isYouTubeVideoPage()) {
+        try {
+          // Hide extension UI before capturing screenshot to avoid it appearing in the image
+          setState(SaverState.HIDDEN);
+          
+          // Wait a bit to ensure UI is hidden before capturing
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          const screenshot = await captureScreenshot();
+          
+          if (screenshot) {
+            // Show standard loading state during upload
+            setState(SaverState.LOADING);
+            setLoadingMessage("Uploading screenshot...");
+            
+            await uploadScreenshotViaBackground(result.bookmarkId, screenshot);
+          }
+        } catch (error) {
+          // Continue to success even if screenshot process fails
+        }
+      }
+      
       setState(SaverState.SUCCESS);
     } else {
       // Gérer les différents types d'erreurs basé sur errorType
