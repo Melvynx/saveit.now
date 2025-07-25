@@ -77,15 +77,41 @@ async function compileTypeScript() {
   }
 }
 
+// Function to update manifest.json for development
+function updateManifestForDev() {
+  const manifestPath = path.join(targetDir, "manifest.json");
+  
+  if (fs.existsSync(manifestPath)) {
+    const manifestContent = fs.readFileSync(manifestPath, "utf8");
+    const manifest = JSON.parse(manifestContent);
+    
+    // Add localhost:3000 to host_permissions for dev builds
+    if (!manifest.host_permissions.includes("http://localhost:3000/*")) {
+      manifest.host_permissions.push("http://localhost:3000/*");
+    }
+    
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    console.log("Updated manifest.json for development with localhost:3000");
+  }
+}
+
 // Main execution
 async function main() {
   try {
     console.log("Starting build process...");
 
+    // Check if --dev flag is passed
+    const isDev = process.argv.includes('--dev');
+
     // First, copy all files from public to dist
     console.log("Copying files from public to dist...");
     copyFiles(sourceDir, targetDir);
     console.log("Files copied successfully!");
+
+    // Update manifest for development if needed
+    if (isDev) {
+      updateManifestForDev();
+    }
 
     // Then compile TypeScript
     console.log("Compiling TypeScript files...");

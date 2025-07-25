@@ -1,6 +1,6 @@
 // This background script can handle authentication events and communication
 // between the extension and the SaveIt Now website
-import { getSession, saveBookmark } from "./auth-client";
+import { getSession, saveBookmark, uploadScreenshot } from "./auth-client";
 
 // Menu contextuel IDs
 const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
@@ -176,6 +176,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true; // Indicates async response
   }
+
+  if (message.type === "UPLOAD_SCREENSHOT") {
+    // Handle screenshot upload request from content script
+    console.log("Background: UPLOAD_SCREENSHOT request", {
+      bookmarkId: message.bookmarkId,
+      hasDataUrl: !!message.screenshotDataUrl,
+      dataUrlLength: message.screenshotDataUrl?.length
+    });
+
+    if (!message.bookmarkId || !message.screenshotDataUrl) {
+      sendResponse({
+        success: false,
+        error: "Missing bookmark ID or screenshot data URL"
+      });
+      return;
+    }
+
+    // Convert data URL to blob
+    console.log("Background: Converting data URL to blob...");
+    fetch(message.screenshotDataUrl)
+      .then(res => {
+        console.log("Background: Fetch response status:", res.status);
+        return res.blob();
+      })
+      .then(blob => {
+        console.log("Background: Blob created successfully, size:", blob.size, "type:", blob.type);
+        return uploadScreenshot(message.bookmarkId, blob);
+      })
+      .then(result => {
+        console.log("Background: Screenshot upload result", result);
+        sendResponse(result);
+      })
+      .catch(error => {
+        console.error("Background: Screenshot upload error", error);
+        sendResponse({
+          success: false,
+          error: error?.message || "Failed to upload screenshot"
+        });
+      });
+    
+    return true; // Indicates async response
+  }
 });
 
 // Listen for auth events
@@ -198,7 +240,7 @@ chrome.action.onClicked.addListener(async (tab) => {
         type: "page",
         url: tab.url,
       },
-      (response) => {
+      () => {
         if (chrome.runtime.lastError) {
           // Le content script n'est probablement pas chargé, on l'injecte manuellement
           chrome.scripting

@@ -13,6 +13,29 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    date: "2025-07-25",
+    type: "improvement",
+    title: "Chrome Extension Screenshots",
+    description:
+      "New Chrome Extension now takes screenshots directly from the browser for better quality and compatibility.",
+    changes: [
+      {
+        type: "improvement",
+        text: "Chrome Extension now captures screenshots directly from the browser",
+      },
+      {
+        type: "improvement",
+        text: "Better screenshot quality and resolution for all websites",
+      },
+      {
+        type: "fix",
+        text: "Solved screenshot issues with e-commerce and protected websites",
+      },
+    ],
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/dssdkasdl.gif",
+  },
+  {
     version: "1.4.0",
     date: "2025-07-23",
     type: "improvement",
@@ -24,7 +47,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Join the hype and try SaveIt.now on Product Hunt !",
       },
     ],
-    image: "/changelog/ph.png",
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/ph.png",
   },
   {
     version: "1.3.1",
@@ -39,7 +62,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Add changelog notification to easily see the new features",
       },
     ],
-    image: "/changelog/changelog.png",
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/changelog.png",
   },
   {
     version: "1.2.0",
@@ -54,7 +77,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Update bookmark screenshots effortlessly",
       },
     ],
-    image: "/changelog/add-screenshot.gif",
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/add-screenshot.gif",
   },
   {
     version: "1.1.0",
@@ -85,7 +108,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Enhanced developer experience with code samples",
       },
     ],
-    image: "/changelog/api-key.gif",
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/api-key.gif",
   },
   {
     version: "1.0.0",
@@ -100,6 +123,6 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "You can now filter your research by tags, state and type",
       },
     ],
-    image: "/changelog/1.0.0.gif",
+    image: "https://codelynx.mlvcdn.com/images/2025-07-25/1.0.0.gif",
   },
 ];
