@@ -165,7 +165,15 @@ You are an expert in image analysis. You should make a precise description of th
 <goal>
 Return a precise description of the image.
 
-Important : if the image is invalid, call the tool "invalid-image" with the reason.
+Important: if the image is invalid, call the tool "invalid-image" with the reason. An image is considered invalid if it shows:
+- Black or completely dark screens
+- Unexpected error pages (403, 404, 500, etc.) that appear due to access issues
+- Login or authentication pages (like "Sign in to continue")
+- Captcha verification pages
+- "Access denied" or "Permission required" messages
+- Loading screens or placeholder content that doesn't show the actual webpage content
+- Browser error messages or connection issues
+- Pages that require login to view the actual content (like dev.to login walls)
 </goal>
 
 <input>

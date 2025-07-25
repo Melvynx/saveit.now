@@ -154,10 +154,10 @@ export async function processStandardWebpage(
     },
   });
 
-  const screenshotDescription = await step.run(
+  const screenshotAnalysis = await step.run(
     "get-screenshot-description",
     async () => {
-      if (!screenshotUrl) return null;
+      if (!screenshotUrl) return { description: null, isInvalid: false, invalidReason: null };
 
       const screenshotBase64 = await getImageUrlToBase64(screenshotUrl);
 
@@ -191,15 +191,17 @@ export async function processStandardWebpage(
       });
 
       if (result.toolCalls?.[0]?.toolName === "invalid-image") {
-        return null;
+        const invalidReason = result.toolCalls[0].args.reason;
+        console.log(`Screenshot invalid for bookmark ${context.bookmarkId}: ${invalidReason}`);
+        return { description: null, isInvalid: true, invalidReason };
       }
 
-      return result.text;
+      return { description: result.text, isInvalid: false, invalidReason: null };
     },
   );
 
   const userInput =
-    markdown || screenshotDescription
+    markdown || screenshotAnalysis.description
       ? `${
           markdown
             ? `Here is the content in markdown of the website :
@@ -210,10 +212,10 @@ ${markdown}
         }
 
 ${
-  screenshotDescription
+  screenshotAnalysis.description
     ? `Here is the description of the screenshot :
 <screenshot-description>
-${screenshotDescription}
+${screenshotAnalysis.description}
 </screenshot-description>`
     : null
 }`
@@ -302,19 +304,24 @@ ${screenshotDescription}
   });
 
   await step.run("update-bookmark", async () => {
+    // Use og-image as fallback when screenshot is invalid
+    const finalPreview = screenshotAnalysis.isInvalid 
+      ? images.ogImageUrl 
+      : (screenshotAnalysis.description ? screenshot : images.ogImageUrl);
+
     await updateBookmark({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PAGE,
       title: pageMetadata.title,
       vectorSummary: vectorSummary,
       summary: summary || "",
-      preview: screenshotDescription ? screenshot : images.ogImageUrl,
+      preview: finalPreview,
       faviconUrl: images.faviconUrl,
       ogImageUrl: images.ogImageUrl,
       tags: getTags,
       imageDescription:
-        typeof screenshotDescription === "string"
-          ? screenshotDescription
+        typeof screenshotAnalysis.description === "string"
+          ? screenshotAnalysis.description
           : null,
     });
   });

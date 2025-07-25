@@ -1,3 +1,4 @@
+import { PrismaClient } from "@workspace/database";
 import { writeFile } from "fs/promises";
 import { nanoid } from "nanoid";
 import { dirname, join } from "path";
@@ -17,7 +18,7 @@ async function globalSetup() {
     await cleanupTestData();
 
     // Create main test user directly in database since email/password signup is not enabled
-    const prisma = getPrismaClient();
+    const prisma: PrismaClient = getPrismaClient();
 
     // Check if user already exists
     let testUser = await prisma.user.findUnique({
@@ -35,6 +36,15 @@ async function globalSetup() {
           onboarding: true,
           createdAt: new Date(),
           updatedAt: new Date(),
+          subscriptions: {
+            create: {
+              stripeCustomerId: "cus_1234567890",
+              stripeSubscriptionId: "sub_1234567890",
+              id: "xx",
+              plan: "pro",
+              status: "active",
+            },
+          },
         },
       });
     }

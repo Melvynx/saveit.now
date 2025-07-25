@@ -1,10 +1,14 @@
 import { expect, test } from "@playwright/test";
+import { changelogEntries } from "../../src/lib/changelog/changelog-data.js";
 import { signInWithEmail } from "../utils/auth-test.js";
 import { getUserEmail } from "../utils/test-data.js";
 
 test.describe("Changelog Notifications", () => {
   // Use the same user for dismiss-related tests
   const SHARED_TEST_USER_EMAIL = getUserEmail();
+
+  // Get the latest changelog entry dynamically
+  const latestEntry = changelogEntries[0];
   test("new user should see changelog notification after login", async ({
     page,
   }) => {
@@ -36,7 +40,9 @@ test.describe("Changelog Notifications", () => {
     // Dialog should open
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('text="What\'s New in v1.3.1"')).toBeVisible();
+    await expect(
+      dialog.locator(`text="What's New in v${latestEntry?.version}"`),
+    ).toBeVisible();
   });
 
   test("user can dismiss changelog notification", async ({ page }) => {
@@ -79,7 +85,9 @@ test.describe("Changelog Notifications", () => {
     await expect(dialog).toBeVisible();
 
     // Check for dialog elements
-    await expect(dialog.locator('text="What\'s New in v1.3.1"')).toBeVisible();
+    await expect(
+      dialog.locator(`text="What's New in v${latestEntry?.version}"`),
+    ).toBeVisible();
     await expect(dialog.locator('text="Changes:"')).toBeVisible();
     await expect(dialog.locator('text="View full changelog"')).toBeVisible();
     await expect(dialog.locator('button:has-text("Got it!")')).toBeVisible();
