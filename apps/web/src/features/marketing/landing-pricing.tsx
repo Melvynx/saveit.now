@@ -1,3 +1,4 @@
+import { APP_LINKS } from "@/lib/app-links";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -6,7 +7,7 @@ const tiers = [
   {
     name: "Free",
     id: "tier-free",
-    href: "/auth/signin",
+    href: APP_LINKS.signin,
     priceMonthly: "$0",
     description:
       "Perfect for getting started with bookmarking and organizing your digital content.",
@@ -19,7 +20,7 @@ const tiers = [
   {
     name: "Pro",
     id: "tier-pro",
-    href: "/auth/signin",
+    href: APP_LINKS.signin,
     priceMonthly: "$5",
     description:
       "Everything you need to organize your digital knowledge with advanced features.",
