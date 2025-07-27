@@ -37,7 +37,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
   { event: "marketing/email-on-limit-reached" },
   async ({ event, step }) => {
     const userId = event.data.userId;
-    
+
     if (!userId) {
       throw new Error("User ID is required for marketing emails");
     }
@@ -67,7 +67,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
         coupon: env.STRIPE_COUPON_ID,
         code,
         max_redemptions: 1,
-        expires_at: dayjs().add(2, "days").unix(),
+        expires_at: dayjs().add(3, "days").unix(),
         customer: user?.stripeCustomerId ?? undefined,
         active: true,
         restrictions: {
