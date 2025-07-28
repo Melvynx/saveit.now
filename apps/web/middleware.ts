@@ -1,9 +1,25 @@
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { updateHeaders } from "./src/lib/cors";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname.slice(1);
+
+  // Handle CORS for all /api routes
+  if (request.nextUrl.pathname.startsWith("/api")) {
+    // For OPTIONS requests, return early with CORS headers
+    if (request.method === "OPTIONS") {
+      const response = new NextResponse(null, { status: 200 });
+      updateHeaders(response.headers, request);
+      return response;
+    }
+
+    // For other API requests, continue with the request and add CORS headers to response
+    const response = NextResponse.next();
+    updateHeaders(response.headers, request);
+    return response;
+  }
 
   try {
     const url = new URL(pathname);
@@ -35,11 +51,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

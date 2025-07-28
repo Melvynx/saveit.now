@@ -7,7 +7,10 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "vercel-build": "turbo run build && turbo run db:deploy"
+    "vercel-build": "turbo run build && turbo run db:deploy",
+    "dev:mobile": "turbo dev:mobile",
+    "build:mobile": "turbo build:mobile",
+    "build:mobile:dev": "turbo build:mobile:dev"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
