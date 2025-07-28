@@ -10,6 +10,9 @@ interface Bookmark {
   starred: boolean;
   read: boolean;
   createdAt: string;
+  summary?: string;
+  type?: string;
+  faviconUrl?: string;
   tags: Array<{
     tag: {
       id: string;
@@ -29,14 +32,20 @@ class ApiClient {
   private async getAuthHeaders(): Promise<HeadersInit> {
     try {
       const cookies = authClient.getCookie();
-      const headers = {
-        Cookie: cookies,
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
       };
+
+      if (cookies) {
+        headers.Cookie = cookies;
+      }
 
       return headers;
     } catch (error) {
       console.error("Error getting auth headers", error);
-      throw error;
+      return {
+        "Content-Type": "application/json",
+      };
     }
   }
 
@@ -45,9 +54,7 @@ class ApiClient {
     cursor?: string;
     limit?: number;
   }): Promise<BookmarksResponse> {
-    console.log("params", params);
     const headers = await this.getAuthHeaders();
-    console.log("headers", headers);
     const searchParams = new URLSearchParams();
 
     if (params?.query) searchParams.set("query", params.query);
@@ -55,8 +62,6 @@ class ApiClient {
     if (params?.limit) searchParams.set("limit", params.limit.toString());
 
     const url = `${API_BASE_URL}/api/bookmarks?${searchParams.toString()}`;
-
-    console.log("url", url);
 
     const response = await fetch(url, {
       method: "GET",
@@ -69,6 +74,23 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  async getBookmark(id: string): Promise<Bookmark> {
+    const headers = await this.getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch bookmark: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.bookmark;
   }
 
   async createBookmark(data: {

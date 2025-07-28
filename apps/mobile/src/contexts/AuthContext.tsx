@@ -46,10 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (result.error) {
+        console.error("Send OTP error:", JSON.stringify(result.error));
         throw new Error(result.error.message);
       }
     } catch (error) {
-      console.error("Send OTP error:", error);
+      console.error("Send OTP error:", JSON.stringify(error));
       throw error;
     }
   };

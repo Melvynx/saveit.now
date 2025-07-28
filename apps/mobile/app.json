@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.saveit.mobile"
+      "bundleIdentifier": "com.saveit.mobile",
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,7 +33,20 @@
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
+            "NSExtensionActivationSupportsImageWithMaxCount": 5,
+            "NSExtensionActivationSupportsMovieWithMaxCount": 1,
+            "NSExtensionActivationSupportsText": true
+          },
+          "androidIntentFilters": ["text/*", "image/*", "video/*"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

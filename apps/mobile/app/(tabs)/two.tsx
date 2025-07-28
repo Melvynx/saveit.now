@@ -1,102 +1,91 @@
-import { StyleSheet, Pressable, Alert } from 'react-native';
+import { LogOut, User } from "@tamagui/lucide-icons";
+import { Alert } from "react-native";
+import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
-import { Text, View } from '../../components/Themed';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from "../../src/contexts/AuthContext";
 
 export default function TabTwoScreen() {
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to sign out');
-            }
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            Alert.alert("Error", "Failed to sign out");
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   if (!user) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.description}>Please sign in to access settings.</Text>
-      </View>
+      <YStack
+        flex={1}
+        alignItems="center"
+        justifyContent="center"
+        padding="$4"
+        gap="$4"
+      >
+        <Text fontSize="$8" fontWeight="bold" color="$color">
+          Settings
+        </Text>
+        <Text fontSize="$4" textAlign="center" color="$gray10">
+          Please sign in to access settings.
+        </Text>
+      </YStack>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      
-      <View style={styles.userInfo}>
-        <Text style={styles.label}>Signed in as:</Text>
-        <Text style={styles.email}>{user.email}</Text>
-      </View>
+    <YStack flex={1} padding="$4" gap="$4">
+      <YStack alignItems="center" space="$4" marginTop="$8">
+        <Text fontSize="$8" fontWeight="bold" color="$color">
+          Settings
+        </Text>
+        <Separator width="80%" />
+      </YStack>
 
-      <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </Pressable>
-    </View>
+      <Card
+        padding="$4"
+        space="$3"
+        backgroundColor="$backgroundTransparent"
+        borderWidth={1}
+        borderColor="$borderColor"
+      >
+        <XStack alignItems="center" space="$3">
+          <User size={24} color="$gray10" />
+          <YStack flex={1}>
+            <Text fontSize="$3" color="$gray10">
+              Signed in as:
+            </Text>
+            <Text fontSize="$5" fontWeight="500" color="$color">
+              {user.email}
+            </Text>
+          </YStack>
+        </XStack>
+      </Card>
+
+      <Button
+        onPress={handleSignOut}
+        theme="red"
+        size="$4"
+        backgroundColor="$red10"
+        color="white"
+        fontWeight="bold"
+        marginTop="$6"
+      >
+        <LogOut size={20} />
+        <Text color="white" fontSize="$4" fontWeight="bold">
+          Sign Out
+        </Text>
+      </Button>
+    </YStack>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#666',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-  userInfo: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  label: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
-  },
-  email: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  signOutButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  signOutText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});

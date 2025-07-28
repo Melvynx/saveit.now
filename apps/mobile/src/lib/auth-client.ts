@@ -5,6 +5,7 @@ import * as SecureStore from "expo-secure-store";
 
 export const authClient = createAuthClient({
   baseURL: "http://localhost:3000",
+  storage: SecureStore,
   plugins: [
     expoClient({
       scheme: "saveit",

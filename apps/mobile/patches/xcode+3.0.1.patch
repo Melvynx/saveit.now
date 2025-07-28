@@ -1,0 +1,12 @@
+--- /tmp/pbxProject.js.orig	2025-07-28 13:32:00
++++ /Users/melvynx/Developer/saas/saveit.now-mono/node_modules/.pnpm/xcode@3.0.1/node_modules/xcode/lib/pbxProject.js	2025-07-28 13:32:04
+@@ -1679,7 +1679,8 @@
+ function correctForPath(file, project, group) {
+     var r_group_dir = new RegExp('^' + group + '[\\\\/]');
+ 
+-    if (project.pbxGroupByName(group).path)
++    var groupData = project.pbxGroupByName(group);
++    if (groupData && groupData.path)
+         file.path = file.path.replace(r_group_dir, '');
+ 
+     return file;

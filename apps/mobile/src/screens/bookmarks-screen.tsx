@@ -1,113 +1,20 @@
-import { Check, Circle, Star } from "@tamagui/lucide-icons";
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, FlatList, RefreshControl } from "react-native";
-import { Button, Card, H5, Input, Text, XStack, YStack } from "tamagui";
+import { Button, Input, Text, XStack, YStack } from "tamagui";
+import { BookmarkItem } from "../components/bookmark-item";
 import { apiClient, type Bookmark } from "../lib/api-client";
-
-interface BookmarkItemProps {
-  bookmark: Bookmark;
-  onPress: () => void;
-  onToggleStar: () => void;
-  onToggleRead: () => void;
-}
-
-function BookmarkItem({
-  bookmark,
-  onPress,
-  onToggleStar,
-  onToggleRead,
-}: BookmarkItemProps) {
-  return (
-    <Card
-      elevate
-      size="$4"
-      bordered
-      marginBottom="$3"
-      pressStyle={{ scale: 0.98 }}
-      onPress={onPress}
-    >
-      <Card.Header>
-        <XStack justifyContent="space-between" alignItems="flex-start">
-          <YStack flex={1} marginRight="$3">
-            <H5 size="$5" numberOfLines={2}>
-              {bookmark.title || bookmark.url}
-            </H5>
-          </YStack>
-
-          <XStack space="$2">
-            <Button
-              size="$3"
-              circular
-              variant={bookmark.starred ? "outlined" : "outlined"}
-              onPress={onToggleStar}
-              theme={bookmark.starred ? "yellow" : undefined}
-            >
-              <Star
-                size={16}
-                color={bookmark.starred ? "$yellow10" : "$gray10"}
-              />
-            </Button>
-
-            <Button
-              size="$3"
-              circular
-              variant={bookmark.read ? "outlined" : "outlined"}
-              onPress={onToggleRead}
-              theme={bookmark.read ? "green" : undefined}
-            >
-              {bookmark.read ? (
-                <Check size={16} color="$green10" />
-              ) : (
-                <Circle size={16} color="$gray10" />
-              )}
-            </Button>
-          </XStack>
-        </XStack>
-
-        <Text color="$gray10" numberOfLines={1} marginTop="$2">
-          {bookmark.url}
-        </Text>
-
-        {bookmark.tags && bookmark.tags.length > 0 && (
-          <XStack flexWrap="wrap" gap="$2" marginTop="$3">
-            {bookmark.tags.slice(0, 3).map((tagWrapper) => (
-              <YStack
-                key={tagWrapper.tag.id}
-                backgroundColor="$blue5"
-                paddingHorizontal="$2"
-                paddingVertical="$1"
-                borderRadius="$2"
-              >
-                <Text fontSize="$2" color="$blue11">
-                  {tagWrapper.tag.name}
-                </Text>
-              </YStack>
-            ))}
-            {bookmark.tags.length > 3 && (
-              <Text color="$gray10" fontStyle="italic">
-                +{bookmark.tags.length - 3} more
-              </Text>
-            )}
-          </XStack>
-        )}
-
-        <Text color="$gray8" marginTop="$2">
-          {new Date(bookmark.createdAt).toLocaleDateString()}
-        </Text>
-      </Card.Header>
-    </Card>
-  );
-}
 
 export default function BookmarksScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Debounce search query
   useEffect(() => {
@@ -194,8 +101,7 @@ export default function BookmarksScreen() {
   };
 
   const handleBookmarkPress = (bookmark: Bookmark) => {
-    // TODO: Navigate to bookmark detail screen
-    Alert.alert("Bookmark", `Opening: ${bookmark.title || bookmark.url}`);
+    router.push(`/bookmark/${bookmark.id}`);
   };
 
   const handleToggleStar = async (bookmark: Bookmark) => {
@@ -221,19 +127,6 @@ export default function BookmarksScreen() {
     />
   );
 
-  if (isLoading) {
-    return (
-      <YStack
-        flex={1}
-        justifyContent="center"
-        alignItems="center"
-        backgroundColor="$background"
-      >
-        <Text color="$gray10">Loading bookmarks...</Text>
-      </YStack>
-    );
-  }
-
   if (error) {
     return (
       <YStack
@@ -252,10 +145,10 @@ export default function BookmarksScreen() {
   }
 
   return (
-    <YStack flex={1} backgroundColor="$background">
+    <YStack flex={1}>
       <XStack
         padding="$4"
-        space="$3"
+        gap="$2"
         borderBottomWidth={1}
         borderBottomColor="$borderColor"
       >
@@ -273,36 +166,45 @@ export default function BookmarksScreen() {
         </Button>
       </XStack>
 
-      <FlatList
-        data={bookmarks}
-        keyExtractor={(item) => item.id}
-        renderItem={renderBookmark}
-        contentContainerStyle={{ padding: 16 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <YStack alignItems="center" padding="$4">
-              <Text color="$gray10">Loading more...</Text>
+      {isLoading ? (
+        <YStack flex={1} justifyContent="center" alignItems="center">
+          <Text color="$gray10">Loading bookmarks...</Text>
+        </YStack>
+      ) : (
+        <FlatList
+          data={bookmarks}
+          keyExtractor={(item) => item.id}
+          renderItem={renderBookmark}
+          contentContainerStyle={{ padding: 16 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={handleRefresh}
+            />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <YStack alignItems="center" padding="$4">
+                <Text color="$gray10">Loading more...</Text>
+              </YStack>
+            ) : null
+          }
+          ListEmptyComponent={
+            <YStack alignItems="center" marginTop="$8" space="$4">
+              <Text fontWeight="600" color="$gray10">
+                No bookmarks found
+              </Text>
+              <Text color="$gray8" textAlign="center">
+                {searchQuery
+                  ? "Try a different search term"
+                  : "Start saving your first bookmark!"}
+              </Text>
             </YStack>
-          ) : null
-        }
-        ListEmptyComponent={
-          <YStack alignItems="center" marginTop="$8" space="$4">
-            <Text fontWeight="600" color="$gray10">
-              No bookmarks found
-            </Text>
-            <Text color="$gray8" textAlign="center">
-              {searchQuery
-                ? "Try a different search term"
-                : "Start saving your first bookmark!"}
-            </Text>
-          </YStack>
-        }
-      />
+          }
+        />
+      )}
     </YStack>
   );
 }

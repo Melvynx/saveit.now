@@ -4,17 +4,29 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { TamaguiProvider } from "@tamagui/core";
+import { TamaguiProvider, Theme } from "@tamagui/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ShareIntentProvider } from "expo-share-intent";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments, usePathname, useGlobalSearchParams } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "../components/useColorScheme";
 import { AuthProvider } from "../src/contexts/AuthContext";
 import config from "../tamagui.config";
+
+// Theme context for managing theme state across the app
+const AppThemeContext = createContext<{
+  currentTheme: 'light' | 'dark';
+  toggleTheme: () => void;
+}>({
+  currentTheme: 'light',
+  toggleTheme: () => {},
+});
+
+export const useAppTheme = () => useContext(AppThemeContext);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -23,7 +35,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
+  initialRouteName: "index",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -40,10 +52,19 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  const systemColorScheme = useColorScheme();
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(
+    systemColorScheme === 'dark' ? 'dark' : 'light'
+  );
+  
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
+
+  const toggleTheme = () => {
+    setCurrentTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -62,23 +83,58 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TamaguiProvider config={config}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
-      </TamaguiProvider>
+      <ShareIntentProvider>
+        <TamaguiProvider config={config}>
+          <AppThemeContext.Provider value={{ currentTheme, toggleTheme }}>
+            <Theme name={currentTheme}>
+              <AuthProvider>
+                <RootLayoutNav />
+              </AuthProvider>
+            </Theme>
+          </AppThemeContext.Provider>
+        </TamaguiProvider>
+      </ShareIntentProvider>
     </QueryClientProvider>
   );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { currentTheme } = useAppTheme();
+  const segments = useSegments();
+  const pathname = usePathname();
+  const globalParams = useGlobalSearchParams();
+
+  useEffect(() => {
+    console.log("🚀 Navigation - Current pathname:", pathname);
+    console.log("🚀 Navigation - Current segments:", segments);
+    console.log("🚀 Navigation - Global params:", globalParams);
+    console.log("🚀 Navigation - All search params:", JSON.stringify(globalParams));
+  }, [pathname, segments, globalParams]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={currentTheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen 
+          name="bookmark/[id]" 
+          options={{ 
+            presentation: "modal",
+            headerShown: false 
+          }} 
+        />
+        <Stack.Screen 
+          name="share-handler" 
+          options={{ 
+            presentation: "modal",
+            headerShown: false 
+          }} 
+        />
+        <Stack.Screen 
+          name="[...slug]" 
+          options={{ headerShown: false }} 
+        />
       </Stack>
     </ThemeProvider>
   );

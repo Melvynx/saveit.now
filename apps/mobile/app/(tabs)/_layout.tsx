@@ -1,11 +1,12 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Tabs } from 'expo-router';
+import { Button, useTheme } from 'tamagui';
 
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 import { useClientOnlyValue } from '../../components/useClientOnlyValue';
+import { useAppTheme } from '../_layout';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -13,6 +14,29 @@ function TabBarIcon(props: {
   color: string;
 }) {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+}
+
+function ThemeToggleButton() {
+  const theme = useTheme();
+  const { currentTheme, toggleTheme } = useAppTheme();
+
+  return (
+    <Button
+      size="$3"
+      variant="outlined"
+      backgroundColor="transparent"
+      onPress={toggleTheme}
+      padding="$2"
+      borderRadius="$3"
+      marginRight="$3"
+    >
+      <FontAwesome
+        name={currentTheme === 'dark' ? 'sun-o' : 'moon-o'}
+        size={20}
+        color={theme.color?.val || Colors[currentTheme ?? 'light'].text}
+      />
+    </Button>
+  );
 }
 
 export default function TabLayout() {
@@ -29,29 +53,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Bookmarks',
-          tabBarIcon: ({ color }) => <TabBarIcon name="bookmark" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: 'My Bookmarks',
+          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="bookmark" color={color} />,
+          headerRight: () => <ThemeToggleButton />,
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color }) => <TabBarIcon name="gear" color={color} />,
+          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="gear" color={color} />,
         }}
       />
     </Tabs>
