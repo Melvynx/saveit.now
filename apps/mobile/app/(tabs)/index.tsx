@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import { useLayoutEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Text, View } from '../../components/Themed';
@@ -7,6 +9,25 @@ import BookmarksScreen from '../../src/screens/bookmarks-screen';
 
 export default function TabOneScreen() {
   const { user, isLoading } = useAuth();
+  const navigation = useNavigation();
+  const [searchText, setSearchText] = useState('');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerSearchBarOptions: {
+        placeholder: 'Search bookmarks...',
+        onChangeText: (event: any) => {
+          setSearchText(event.nativeEvent.text);
+        },
+        onSearchButtonPress: (event: any) => {
+          setSearchText(event.nativeEvent.text);
+        },
+        onCancelButtonPress: () => {
+          setSearchText('');
+        },
+      },
+    });
+  }, [navigation]);
 
   if (isLoading) {
     return (
@@ -20,7 +41,7 @@ export default function TabOneScreen() {
     return <SignInScreen />;
   }
 
-  return <BookmarksScreen />;
+  return <BookmarksScreen searchQuery={searchText} />;
 }
 
 const styles = StyleSheet.create({

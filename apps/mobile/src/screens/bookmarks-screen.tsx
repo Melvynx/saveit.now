@@ -6,13 +6,16 @@ import {
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, FlatList, RefreshControl } from "react-native";
-import { Button, Input, Text, XStack, YStack } from "tamagui";
+import { Button, Text, YStack } from "tamagui";
 import { BookmarkItem } from "../components/bookmark-item";
 import { apiClient, type Bookmark } from "../lib/api-client";
 
-export default function BookmarksScreen() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+interface BookmarksScreenProps {
+  searchQuery?: string;
+}
+
+export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenProps) {
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -96,9 +99,6 @@ export default function BookmarksScreen() {
     }
   };
 
-  const handleSearch = () => {
-    setDebouncedSearchQuery(searchQuery);
-  };
 
   const handleBookmarkPress = (bookmark: Bookmark) => {
     router.push(`/bookmark/${bookmark.id}`);
@@ -145,26 +145,7 @@ export default function BookmarksScreen() {
   }
 
   return (
-    <YStack flex={1}>
-      <XStack
-        padding="$4"
-        gap="$2"
-        borderBottomWidth={1}
-        borderBottomColor="$borderColor"
-      >
-        <Input
-          flex={1}
-          placeholder="Search bookmarks..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-          returnKeyType="search"
-          size="$4"
-        />
-        <Button onPress={handleSearch} theme="blue" size="$4">
-          Search
-        </Button>
-      </XStack>
+    <YStack flex={1} paddingTop="$2">
 
       {isLoading ? (
         <YStack flex={1} justifyContent="center" alignItems="center">
@@ -199,7 +180,7 @@ export default function BookmarksScreen() {
                 No bookmarks found
               </Text>
               <Text color="$gray8" textAlign="center">
-                {searchQuery
+                {debouncedSearchQuery
                   ? "Try a different search term"
                   : "Start saving your first bookmark!"}
               </Text>

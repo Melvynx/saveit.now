@@ -156,3 +156,8 @@ Copy `.env.example` to `.env` and configure:
 - **React DevTools**: Component inspection
 - **Network**: Monitor API calls
 - **Logs**: Use `npx react-native log-ios` or `npx react-native log-android`
+
+## Development Memories
+
+### Tamagui Component Guidelines
+- Always use `gap` and not `space` with tamgui component

@@ -58,11 +58,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }: { color: string }) => (
             <TabBarIcon name="bookmark" color={color} />
           ),
-          headerRight: () => <ThemeToggleButton />,
+          headerSearchBarOptions: {
+            placeholder: "Search bookmarks...",
+          },
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="settings"
         options={{
           title: "Settings",
           tabBarIcon: ({ color }: { color: string }) => (
