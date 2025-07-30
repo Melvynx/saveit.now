@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 6.0.0"
+    "version": ">= 6.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -22,6 +23,19 @@
     "production": {
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "RN_PRIVACY_MANIFEST_AGGREGATION": "false",
+        "EX_DEV_CLIENT_NETWORK_INSPECTOR": "false"
+      }
+    },
+    "melvynmal": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "RN_PRIVACY_MANIFEST_AGGREGATION": "false"
       }
     }
   },

@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.saveit.mobile",
+      "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png"
     },
     "android": {
@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.saveit.mobile"
+      "package": "now.saveit.saveitapp"
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +33,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
       [
         "expo-share-intent",
         {
@@ -44,7 +43,11 @@
             "NSExtensionActivationSupportsMovieWithMaxCount": 1,
             "NSExtensionActivationSupportsText": true
           },
-          "androidIntentFilters": ["text/*", "image/*", "video/*"]
+          "androidIntentFilters": [
+            "text/*",
+            "image/*",
+            "video/*"
+          ]
         }
       ]
     ],
@@ -54,6 +57,14 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "d09eb4d5-85f0-4a4a-9b9e-5ca5cc19d4fa"
+      }
+    },
+    "env": {
+      "production": {
+        "EXPO_PUBLIC_API_URL": "https://saveit.now"
       }
     }
   }

@@ -5,7 +5,6 @@ import { useShareIntentContext } from "expo-share-intent";
 import React, { useEffect } from "react";
 import {
   Button,
-  Card,
   Circle,
   H2,
   Paragraph,
@@ -31,15 +30,13 @@ export default function ShareHandler() {
       metadata: Record<string, any>;
     }) => apiClient.createBookmark({ url, metadata }),
     onSuccess: () => {
-      console.log("📤 ShareHandler - Bookmark saved successfully!");
       // Show success for 2 seconds, then close
       setTimeout(() => {
         resetShareIntent();
         router.dismiss();
       }, 2000);
     },
-    onError: (error) => {
-      console.error("📤 ShareHandler - Error creating bookmark:", error);
+    onError: () => {
       // Show error UI for 3 seconds, then close
       setTimeout(() => {
         resetShareIntent();
@@ -48,46 +45,9 @@ export default function ShareHandler() {
     },
   });
 
-  console.log("📤 ShareHandler - Component loaded");
-  console.log("📤 ShareHandler - hasShareIntent:", hasShareIntent);
-  console.log("📤 ShareHandler - shareIntent:", shareIntent);
-  console.log("📤 ShareHandler - shareIntent.webUrl:", shareIntent?.webUrl);
-  console.log("📤 ShareHandler - shareIntent.text:", shareIntent?.text);
-  console.log("📤 ShareHandler - shareIntent.type:", shareIntent?.type);
-  console.log("📤 ShareHandler - shareIntent.files:", shareIntent?.files);
-  console.log("📤 ShareHandler - error:", error);
-  console.log("📤 ShareHandler - URL params:", params);
-
   useEffect(() => {
-    console.log("📤 ShareHandler - useEffect triggered");
-    console.log(
-      "📤 ShareHandler - useEffect - hasShareIntent:",
-      hasShareIntent,
-    );
-    console.log("📤 ShareHandler - useEffect - shareIntent:", shareIntent);
-    console.log(
-      "📤 ShareHandler - useEffect - shareIntent.webUrl:",
-      shareIntent?.webUrl,
-    );
-    console.log(
-      "📤 ShareHandler - useEffect - shareIntent.text:",
-      shareIntent?.text,
-    );
-    console.log(
-      "📤 ShareHandler - useEffect - shareIntent.type:",
-      shareIntent?.type,
-    );
-    console.log(
-      "📤 ShareHandler - useEffect - shareIntent.files:",
-      shareIntent?.files,
-    );
-    console.log("📤 ShareHandler - useEffect - params:", params);
-
     // If no share intent, immediately redirect to tabs
     if (!hasShareIntent && !shareIntent) {
-      console.log(
-        "📤 ShareHandler - NO SHARE INTENT - Redirecting to tabs immediately",
-      );
       resetShareIntent();
       router.replace("/(tabs)");
       return;
@@ -100,68 +60,24 @@ export default function ShareHandler() {
       !createBookmarkMutation.isSuccess &&
       !createBookmarkMutation.isError
     ) {
-      console.log(
-        "📤 ShareHandler - CONDITIONS MET! About to handle shared content AUTOMATICALLY",
-      );
-      console.log(
-        "📤 ShareHandler - Will handle with URL:",
-        shareIntent.webUrl,
-      );
-      console.log("📤 ShareHandler - Will handle with text:", shareIntent.text);
       handleSharedContent();
-    } else {
-      console.log("📤 ShareHandler - CONDITIONS NOT MET");
-      console.log("📤 ShareHandler - hasShareIntent is:", hasShareIntent);
-      console.log("📤 ShareHandler - shareIntent is:", shareIntent);
-      console.log(
-        "📤 ShareHandler - isPending is:",
-        createBookmarkMutation.isPending,
-      );
-      console.log(
-        "📤 ShareHandler - isSuccess is:",
-        createBookmarkMutation.isSuccess,
-      );
-      console.log(
-        "📤 ShareHandler - isError is:",
-        createBookmarkMutation.isError,
-      );
     }
   }, [hasShareIntent, shareIntent]);
 
   const handleSharedContent = () => {
-    console.log("📤 handleSharedContent - CALLED!");
-    console.log("📤 handleSharedContent - shareIntent:", shareIntent);
-
     if (!shareIntent) {
-      console.log("📤 handleSharedContent - NO SHARE INTENT, RETURNING");
       return;
     }
 
     let url = "";
     let metadata: Record<string, any> = {};
 
-    console.log("📤 handleSharedContent - Processing content...");
-    console.log(
-      "📤 handleSharedContent - shareIntent.webUrl:",
-      shareIntent.webUrl,
-    );
-    console.log("📤 handleSharedContent - shareIntent.text:", shareIntent.text);
-    console.log(
-      "📤 handleSharedContent - shareIntent.files:",
-      shareIntent.files,
-    );
-
     // Handle different types of shared content
     if (shareIntent.webUrl) {
-      console.log(
-        "📤 handleSharedContent - FOUND WEB URL:",
-        shareIntent.webUrl,
-      );
       // Direct URL sharing
       url = shareIntent.webUrl;
       metadata.title = shareIntent.text || "";
     } else if (shareIntent.text) {
-      console.log("📤 handleSharedContent - FOUND TEXT:", shareIntent.text);
       // Text content - check if it's a URL
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       const urlMatch = shareIntent.text.match(urlRegex);
@@ -190,7 +106,6 @@ export default function ShareHandler() {
     }
 
     if (!url) {
-      console.error("No valid content to bookmark");
       return;
     }
 
@@ -375,7 +290,6 @@ export default function ShareHandler() {
 
   // This should never be reached now since we redirect immediately
   // if there's no share intent, but just in case show a loading state
-  console.log("📤 ShareHandler - UNEXPECTED FALLBACK STATE");
 
   return (
     <View flex={1} backgroundColor="$background">

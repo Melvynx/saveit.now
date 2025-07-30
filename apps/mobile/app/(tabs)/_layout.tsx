@@ -1,16 +1,16 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
-import { Button, useTheme } from 'tamagui';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Tabs } from "expo-router";
+import React from "react";
+import { Button, useTheme } from "tamagui";
 
-import Colors from '../../constants/Colors';
-import { useColorScheme } from '../../components/useColorScheme';
-import { useClientOnlyValue } from '../../components/useClientOnlyValue';
-import { useAppTheme } from '../_layout';
+import { useClientOnlyValue } from "../../components/useClientOnlyValue";
+import { useColorScheme } from "../../components/useColorScheme";
+import Colors from "../../constants/Colors";
+import { useAppTheme } from "../_layout";
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: React.ComponentProps<typeof FontAwesome>["name"];
   color: string;
 }) {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
@@ -31,9 +31,9 @@ function ThemeToggleButton() {
       marginRight="$3"
     >
       <FontAwesome
-        name={currentTheme === 'dark' ? 'sun-o' : 'moon-o'}
+        name={currentTheme === "dark" ? "sun-o" : "moon-o"}
         size={20}
-        color={theme.color?.val || Colors[currentTheme ?? 'light'].text}
+        color={theme.color?.val || Colors[currentTheme ?? "light"].text}
       />
     </Button>
   );
@@ -45,24 +45,29 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'My Bookmarks',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="bookmark" color={color} />,
+          title: "Bookmarks",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <TabBarIcon name="bookmark" color={color} />
+          ),
           headerRight: () => <ThemeToggleButton />,
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="gear" color={color} />,
+          title: "Settings",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <TabBarIcon name="gear" color={color} />
+          ),
         }}
       />
     </Tabs>

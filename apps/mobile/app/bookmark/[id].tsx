@@ -4,6 +4,7 @@ import {
   Copy,
   ExternalLink,
   Star,
+  Tag,
   Trash2,
   X,
 } from "@tamagui/lucide-icons";
@@ -33,6 +34,13 @@ export default function BookmarkDetailScreen() {
     },
     enabled: !!id,
   });
+
+  const preview =
+    bookmark?.preview ||
+    "https://codelynx.mlvcdn.com/images/2025-07-28/placeholder.png";
+  const faviconUrl =
+    bookmark?.faviconUrl ||
+    "https://codelynx.mlvcdn.com/images/2025-07-28/placeholder-favicon.png";
 
   // Update bookmark mutation
   const updateBookmarkMutation = useMutation({
@@ -178,7 +186,7 @@ export default function BookmarkDetailScreen() {
         borderBottomColor="$borderColor"
         backgroundColor="$background"
       >
-        <H3 flex={1} numberOfLines={1}>
+        <H3 flex={1} numberOfLines={1} fontSize="$5">
           {bookmark.title || domainName}
         </H3>
         <Button
@@ -194,33 +202,22 @@ export default function BookmarkDetailScreen() {
       <ScrollView style={{ flex: 1 }}>
         <YStack padding="$4" gap="$4">
           {/* Preview Image */}
-          {bookmark.preview && (
+          {preview && (
             <Card padding="$0" overflow="hidden">
-              <Image
-                source={{ uri: bookmark.preview }}
-                height={200}
-                width="100%"
-                resizeMode="cover"
-              />
+              <Image source={{ uri: preview }} height={200} width="100%" />
             </Card>
           )}
 
           {/* URL and Basic Info */}
           <Card padding="$4" gap="$3">
-            <XStack alignItems="center" gap="$2">
+            <XStack alignItems="flex-start" gap="$2">
               {/* Favicon placeholder */}
-              <YStack
-                width={32}
-                height={32}
-                backgroundColor="$gray3"
+              <Image
+                source={{ uri: faviconUrl }}
+                width={24}
+                height={24}
                 borderRadius="$3"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Text fontSize="$3" fontWeight="600">
-                  {domainName.charAt(0).toUpperCase()}
-                </Text>
-              </YStack>
+              />
               <YStack flex={1}>
                 <Text fontSize="$5" fontWeight="600" numberOfLines={2}>
                   {bookmark.title || "Untitled"}
@@ -248,38 +245,23 @@ export default function BookmarkDetailScreen() {
               <H4>Tags</H4>
               <XStack flexWrap="wrap" gap="$2">
                 {bookmark.tags.map((tagWrapper) => (
-                  <YStack
+                  <Button
                     key={tagWrapper.tag.id}
+                    size="$2"
+                    icon={<Tag size={14} />}
                     backgroundColor="$blue4"
+                    color="$blue11"
+                    fontSize="$2"
+                    borderRadius="$3"
                     paddingHorizontal="$3"
                     paddingVertical="$2"
-                    borderRadius="$3"
                   >
-                    <Text fontSize="$2" color="$blue11">
-                      {tagWrapper.tag.name}
-                    </Text>
-                  </YStack>
+                    {tagWrapper.tag.name}
+                  </Button>
                 ))}
               </XStack>
             </Card>
           )}
-
-          {/* Metadata */}
-          <Card padding="$4" gap="$3">
-            <H4>Details</H4>
-            <YStack gap="$2">
-              <XStack justifyContent="space-between">
-                <Text color="$gray10">Created:</Text>
-                <Text>{new Date(bookmark.createdAt).toLocaleDateString()}</Text>
-              </XStack>
-              {bookmark.type && (
-                <XStack justifyContent="space-between">
-                  <Text color="$gray10">Type:</Text>
-                  <Text>{bookmark.type}</Text>
-                </XStack>
-              )}
-            </YStack>
-          </Card>
         </YStack>
       </ScrollView>
 

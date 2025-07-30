@@ -309,7 +309,7 @@ PODS:
     - Yoga
   - ExpoSecureStore (14.0.1):
     - ExpoModulesCore
-  - ExpoShareIntentModule (2.7.0):
+  - ExpoShareIntentModule (2.1.0):
     - ExpoModulesCore
   - ExpoSplashScreen (0.30.10):
     - ExpoModulesCore
@@ -2269,7 +2269,7 @@ DEPENDENCIES:
   - "ExpoLinking (from `../../../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_857fff3c198c8de21f66c6bf3ac9a14e/node_modules/expo-linking/ios`)"
   - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core`)"
   - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_05a1ecc9bb71cf803a7c9af4a5c41eb9/node_modules/expo-secure-store/ios`)"
-  - "ExpoShareIntentModule (from `../../../node_modules/.pnpm/expo-share-intent@2.7.0_expo-constants@17.1.7_expo@53.0.20_@babel+core@7.28.0_@expo+met_4f464222b430a84bd4236a8cace76b1e/node_modules/expo-share-intent/ios`)"
+  - "ExpoShareIntentModule (from `../../../node_modules/.pnpm/expo-share-intent@2.1.0_expo-constants@17.1.7_expo@53.0.20_@babel+core@7.28.0_@expo+met_dbd3c379bf4033c2d8075a76cafc26ca/node_modules/expo-share-intent/ios`)"
   - "ExpoSplashScreen (from `../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_a0e71f9cf3b14f59f103fedcd74a95fc/node_modules/expo-splash-screen/ios`)"
   - "ExpoSystemUI (from `../../../node_modules/.pnpm/expo-system-ui@5.0.10_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_c4c0fbfc32386fae48d3d0ac89825c01/node_modules/expo-system-ui/ios`)"
   - "ExpoWebBrowser (from `../../../node_modules/.pnpm/expo-web-browser@14.2.0_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react_297641cef83c74cee5294a1a4ca3887e/node_modules/expo-web-browser/ios`)"
@@ -2393,7 +2393,7 @@ EXTERNAL SOURCES:
   ExpoSecureStore:
     :path: "../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_05a1ecc9bb71cf803a7c9af4a5c41eb9/node_modules/expo-secure-store/ios"
   ExpoShareIntentModule:
-    :path: "../../../node_modules/.pnpm/expo-share-intent@2.7.0_expo-constants@17.1.7_expo@53.0.20_@babel+core@7.28.0_@expo+met_4f464222b430a84bd4236a8cace76b1e/node_modules/expo-share-intent/ios"
+    :path: "../../../node_modules/.pnpm/expo-share-intent@2.1.0_expo-constants@17.1.7_expo@53.0.20_@babel+core@7.28.0_@expo+met_dbd3c379bf4033c2d8075a76cafc26ca/node_modules/expo-share-intent/ios"
   ExpoSplashScreen:
     :path: "../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.20_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_a0e71f9cf3b14f59f103fedcd74a95fc/node_modules/expo-splash-screen/ios"
   ExpoSystemUI:
@@ -2568,7 +2568,7 @@ SPEC CHECKSUMS:
   ExpoLinking: d5c183998ca6ada66ff45e407e0f965b398a8902
   ExpoModulesCore: 00a1b5c73248465bd0b93f59f8538c4573dac579
   ExpoSecureStore: 9a3665d7161dd1031be386e278bffd623658f316
-  ExpoShareIntentModule: b7f8ec3a79811b8846fe8acb0113b336036f9e9e
+  ExpoShareIntentModule: 8c6ba03499ec135f43725c6d4aeccd0b0ebcba45
   ExpoSplashScreen: 0ad5acac1b5d2953c6e00d4319f16d616f70d4dd
   ExpoSystemUI: c2724f9d5af6b1bb74e013efadf9c6a8fae547a2
   ExpoWebBrowser: dc39a88485f007e61a3dff05d6a75f22ab4a2e92

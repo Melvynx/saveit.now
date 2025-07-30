@@ -5,7 +5,7 @@
     <key>CFBundleName</key>
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundleDisplayName</key>
-    <string>SaveIt - Share Extension</string>
+    <string>$(PRODUCT_NAME) Share Extension</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleDevelopmentRegion</key>
@@ -33,15 +33,11 @@
           <key>NSExtensionActivationSupportsText</key>
           <true/>
         </dict>
-        <key>NSExtensionJavaScriptPreprocessingFile</key>
-        <string>ShareExtensionPreprocessor</string>
       </dict>
       <key>NSExtensionMainStoryboard</key>
       <string>MainInterface</string>
       <key>NSExtensionPointIdentifier</key>
       <string>com.apple.share-services</string>
     </dict>
-    <key>AppGroupIdentifier</key>
-    <string>group.com.saveit.mobile</string>
   </dict>
 </plist>

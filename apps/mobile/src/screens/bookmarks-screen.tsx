@@ -180,6 +180,8 @@ export default function BookmarksScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
+              tintColor="#007AFF"
+              colors={["#007AFF"]}
             />
           }
           onEndReached={handleLoadMore}
