@@ -9,7 +9,7 @@ import { resend } from "./resend";
 import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
 
-export const AUTH_PARAMS: BetterAuthOptions = {
+export const AUTH_PARAMS = {
   baseURL: getServerUrl(),
   user: {
     changeEmail: {
