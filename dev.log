@@ -1,0 +1,96 @@
+
+> shadcn-ui-monorepo@0.0.1 dev /Users/melvynx/conductor/repo/saveit.now/hong-kong
+> turbo dev --filter\=web
+
+turbo 2.4.2
+
+• Packages in scope: web
+• Running dev in 1 packages
+• Remote caching disabled
+@workspace/database:db:generate: cache bypass, force executing 10f0068a23d636e8
+@workspace/database:db:generate: 
+@workspace/database:db:generate: > @workspace/database@0.0.0 db:generate /Users/melvynx/conductor/repo/saveit.now/hong-kong/packages/database
+@workspace/database:db:generate: > prisma generate
+@workspace/database:db:generate: 
+@workspace/database:db:generate: Prisma schema loaded from prisma/schema.prisma
+@workspace/database:db:generate: 
+@workspace/database:db:generate: ✔ Generated Prisma Client (v6.8.2) to ./generated/prisma in 56ms
+@workspace/database:db:generate: 
+@workspace/database:db:generate: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+@workspace/database:db:generate: 
+@workspace/database:db:generate: Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+@workspace/database:db:generate: 
+@workspace/database:db:generate: ┌─────────────────────────────────────────────────────────┐
+@workspace/database:db:generate: │  Update available 6.8.2 -> 6.13.0                       │
+@workspace/database:db:generate: │  Run the following to update                            │
+@workspace/database:db:generate: │    npm i --save-dev prisma@latest                       │
+@workspace/database:db:generate: │    npm i @prisma/client@latest                          │
+@workspace/database:db:generate: └─────────────────────────────────────────────────────────┘
+web:dev: cache bypass, force executing dca8297b0bc95115
+web:dev: 
+web:dev: > web@0.0.1 dev /Users/melvynx/conductor/repo/saveit.now/hong-kong/apps/web
+web:dev: > next dev --turbopack
+web:dev: 
+web:dev:    ▲ Next.js 15.2.3 (Turbopack)
+web:dev:    - Local:        http://localhost:3000
+web:dev:    - Network:      http://192.168.0.18:3000
+web:dev:    - Experiments (use with caution):
+web:dev:      ✓ authInterrupts
+web:dev: 
+web:dev:  ✓ Starting...
+web:dev:  ✓ Compiled in 310ms
+web:dev:  ✓ Ready in 1099ms
+web:dev:  ⚠ Webpack is configured while Turbopack is not, which may cause problems.
+web:dev:  ⚠ See instructions if you need to configure Turbopack:
+web:dev:   https://nextjs.org/docs/app/api-reference/next-config-js/turbo
+web:dev: 
+web:dev:  ○ Compiling / ...
+web:dev:  ✓ Compiled / in 3s
+web:dev: ❌ Invalid environment variables: [
+web:dev:   {
+web:dev:     code: 'invalid_type',
+web:dev:     expected: 'string',
+web:dev:     received: 'undefined',
+web:dev:     path: [ 'UPSTASH_REDIS_REST_URL' ],
+web:dev:     message: 'Required'
+web:dev:   },
+web:dev:   {
+web:dev:     code: 'invalid_type',
+web:dev:     expected: 'string',
+web:dev:     received: 'undefined',
+web:dev:     path: [ 'UPSTASH_REDIS_REST_TOKEN' ],
+web:dev:     message: 'Required'
+web:dev:   }
+web:dev: ]
+web:dev:  ⨯ Error: Invalid environment variables
+web:dev:     at [project]/apps/web/src/lib/env.ts [app-rsc] (ecmascript) (src/lib/env.ts:10:29)
+web:dev:     at [project]/apps/web/src/lib/aws-s3/aws-s3-client.ts [app-rsc] (ecmascript) (src/lib/aws-s3/aws-s3-client.ts:2:0)
+web:dev:     at [project]/apps/web/src/lib/aws-s3/aws-s3-delete-files.ts [app-rsc] (ecmascript) (src/lib/aws-s3/aws-s3-delete-files.ts:2:0)
+web:dev:     at [project]/apps/web/src/lib/database/delete-bookmark.ts [app-rsc] (ecmascript) (src/lib/database/delete-bookmark.ts:2:0)
+web:dev:     at [project]/apps/web/app/app/bookmark-page/bookmarks.action.ts [app-rsc] (ecmascript) (app/app/bookmark-page/bookmarks.action.ts:3:0)
+web:dev:     at [project]/apps/web/.next-internal/server/app/(landing)/page/actions.js { ACTIONS_MODULE0 => "[project]/apps/web/src/features/server-sonner/server-toaster.tsx [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/apps/web/app/app/bookmark-page/bookmarks.action.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/apps/web/app/app/bookmarks.action.ts [app-rsc] (ecmascript)", ACTIONS_MODULE3 => "[project]/apps/web/app/app/bookmark-page/track-bookmark-open.action.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <module evaluation> (.next/server/chunks/ssr/[root of the server]__1d6f7dd3._.js:493:194)
+web:dev:     at [project]/apps/web/.next-internal/server/app/(landing)/page/actions.js { ACTIONS_MODULE0 => "[project]/apps/web/src/features/server-sonner/server-toaster.tsx [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/apps/web/app/app/bookmark-page/bookmarks.action.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/apps/web/app/app/bookmarks.action.ts [app-rsc] (ecmascript)", ACTIONS_MODULE3 => "[project]/apps/web/app/app/bookmark-page/track-bookmark-open.action.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) (.next/server/chunks/ssr/[root of the server]__1d6f7dd3._.js:536:933)
+web:dev:     at Object.<anonymous> (.next/server/app/(landing)/page.js:42:9)
+web:dev:    8 |  */
+web:dev:    9 |
+web:dev: > 10 | export const env = createEnv({
+web:dev:      |                             ^
+web:dev:   11 |   server: {
+web:dev:   12 |     AWS_ACCESS_KEY_ID: z.string().min(1).default("ci-placeholder"),
+web:dev:   13 |     AWS_SECRET_ACCESS_KEY: z.string().min(1).default("ci-placeholder"), {
+web:dev:   page: '/'
+web:dev: }
+web:dev:  ✓ Compiled /_error in 457ms
+web:dev:  HEAD / 500 in 4445ms
+web:dev:  ✓ Compiled in 318ms
+web:dev:  ✓ Compiled in 375ms
+web:dev:  ✓ Compiled in 436ms
+web:dev:  ✓ Compiled in 386ms
+web:dev:  ✓ Compiled in 328ms
+web:dev:  ✓ Compiled in 484ms
+web:dev: [?25h
+
+ Tasks:    2 successful, 2 total
+Cached:    0 cached, 2 total
+  Time:    16m48.261s 
+
