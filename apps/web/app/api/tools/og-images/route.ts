@@ -1,20 +1,17 @@
 import { SafeRouteError } from "@/lib/errors";
 import { routeClient } from "@/lib/safe-route";
 import * as cheerio from "cheerio";
-import { z } from "zod";
-
-const requestSchema = z.object({
-  url: z.string().url("Please provide a valid URL"),
-});
+import { ogImageRequestSchema, type OGImageResponse } from "./og-images.type";
 
 export const POST = routeClient
-  .body(requestSchema)
-  .handler(async (_, { body }) => {
+  .body(ogImageRequestSchema)
+  .handler(async (_, { body }): Promise<OGImageResponse> => {
     const { url } = body;
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       },
     });
 
@@ -31,18 +28,20 @@ export const POST = routeClient
     const ogImageAlt = $("meta[property='og:image:alt']").attr("content");
     const ogImageWidth = $("meta[property='og:image:width']").attr("content");
     const ogImageHeight = $("meta[property='og:image:height']").attr("content");
-    
+
     const twitterImage = $("meta[name='twitter:image']").attr("content");
     const twitterImageAlt = $("meta[name='twitter:image:alt']").attr("content");
-    
+
     const ogTitle = $("meta[property='og:title']").attr("content");
     const ogDescription = $("meta[property='og:description']").attr("content");
     const ogSiteName = $("meta[property='og:site_name']").attr("content");
     const ogType = $("meta[property='og:type']").attr("content");
-    
+
     const twitterCard = $("meta[name='twitter:card']").attr("content");
     const twitterTitle = $("meta[name='twitter:title']").attr("content");
-    const twitterDescription = $("meta[name='twitter:description']").attr("content");
+    const twitterDescription = $("meta[name='twitter:description']").attr(
+      "content",
+    );
     const twitterSite = $("meta[name='twitter:site']").attr("content");
     const twitterCreator = $("meta[name='twitter:creator']").attr("content");
 

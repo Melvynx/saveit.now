@@ -17,49 +17,11 @@ import { Typography } from "@workspace/ui/components/typography";
 import { Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { z } from "zod";
-
-interface OGImageData {
-  url: string;
-  metadata: {
-    openGraph: {
-      title?: string;
-      description?: string;
-      siteName?: string;
-      type?: string;
-      image: {
-        url?: string;
-        alt?: string;
-        width?: number;
-        height?: number;
-      };
-    };
-    twitter: {
-      card?: string;
-      title?: string;
-      description?: string;
-      site?: string;
-      creator?: string;
-      image: {
-        url?: string;
-        alt?: string;
-      };
-    };
-    page: {
-      title?: string;
-      description?: string;
-    };
-    images: {
-      ogImage?: string;
-      twitterImage?: string;
-      primary?: string;
-    };
-  };
-}
+import { ogImageResponseSchema, type OGImageResponse } from "../../../api/tools/og-images/og-images.type";
 
 export function OGImageTool() {
   const [url, setUrl] = useState("");
-  const [data, setData] = useState<OGImageData | null>(null);
+  const [data, setData] = useState<OGImageResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,43 +56,7 @@ export function OGImageTool() {
         headers: {
           "Content-Type": "application/json",
         },
-        schema: z.object({
-          url: z.string(),
-          metadata: z.object({
-            openGraph: z.object({
-              title: z.string().optional(),
-              description: z.string().optional(),
-              siteName: z.string().optional(),
-              type: z.string().optional(),
-              image: z.object({
-                url: z.string().optional(),
-                alt: z.string().optional(),
-                width: z.number().optional(),
-                height: z.number().optional(),
-              }),
-            }),
-            twitter: z.object({
-              card: z.string().optional(),
-              title: z.string().optional(),
-              description: z.string().optional(),
-              site: z.string().optional(),
-              creator: z.string().optional(),
-              image: z.object({
-                url: z.string().optional(),
-                alt: z.string().optional(),
-              }),
-            }),
-            page: z.object({
-              title: z.string().optional(),
-              description: z.string().optional(),
-            }),
-            images: z.object({
-              ogImage: z.string().optional(),
-              twitterImage: z.string().optional(),
-              primary: z.string().optional(),
-            }),
-          }),
-        }),
+        schema: ogImageResponseSchema,
         body: JSON.stringify({ url: url.trim() }),
       });
 
