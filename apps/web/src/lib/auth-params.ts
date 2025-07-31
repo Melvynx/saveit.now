@@ -105,6 +105,14 @@ Melvyn`,
   },
   plugins: [
     emailOTP({
+      generateOTP(data) {
+        // For App Store review, we need to generate a fixed OTP
+        if (data.email === "help@saveit.now") {
+          return "123456";
+        }
+        // Generate a 6-digit OTP by ensuring the number is between 100000 and 999999
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      },
       async sendVerificationOTP({ email, otp }) {
         await resend.emails.send({
           to: email,
