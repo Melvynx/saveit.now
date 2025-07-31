@@ -9,6 +9,13 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
+  trustedOrigins: [
+    "saveit://*",
+    "saveit://",
+    "http://localhost:8081",
+    "http://localhost:8081/*",
+  ],
   databaseHooks: {
     user: {
       create: {
