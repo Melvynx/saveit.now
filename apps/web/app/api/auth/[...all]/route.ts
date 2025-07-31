@@ -4,7 +4,7 @@ import { toNextJsHandler } from "better-auth/next-js";
 
 export const dynamic = "force-dynamic";
 
-export const handlers = toNextJsHandler(auth);
+const handlers = toNextJsHandler(auth);
 
 export const POST = async (request: Request) => {
   const response = await handlers.POST(request);
