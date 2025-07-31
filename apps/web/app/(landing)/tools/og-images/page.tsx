@@ -30,46 +30,41 @@ export default function OGImageToolPage() {
       <Header />
       
       {/* Hero Section with H1 */}
-      <div className="bg-gradient-to-b from-background to-muted/20 border-b border-border/30">
-        <MaxWidthContainer width="lg" className="text-center py-20 px-4">
-          <div className="max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-              <span className="mr-2">🖼️</span>
-              OG Image Extractor
-            </Badge>
-            <Typography variant="h1" className="mb-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-              Free OG Image & Twitter Card Extractor
-            </Typography>
-            <Typography variant="lead" className="mb-10 text-muted-foreground leading-relaxed">
-              Extract Open Graph images, Twitter cards, and social media meta tags from any URL instantly. 
-              Preview how your links will appear on Facebook, Twitter, LinkedIn, and other social platforms.
-            </Typography>
-            <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-8">
-              <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <Typography variant="small" className="font-medium text-primary">
-                  Free Forever
-                </Typography>
-              </div>
-              <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <Typography variant="small" className="font-medium text-primary">
-                  No Registration Required
-                </Typography>
-              </div>
-              <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <Typography variant="small" className="font-medium text-primary">
-                  Instant Results
-                </Typography>
-              </div>
-            </div>
-          </div>
+      <div
+        style={{
+          // @ts-expect-error CSS custom property
+          "--box-color": "color-mix(in srgb, var(--border) 30%, transparent)",
+        }}
+        className="bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30"
+      >
+        <MaxWidthContainer width="lg" className="text-center py-16">
+          <Badge variant="outline" className="mb-6">🖼️ OG Image Extractor</Badge>
+          <Typography variant="h1" className="mb-6">
+            Free OG Image & Twitter Card Extractor
+          </Typography>
+          <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
+            Extract Open Graph images, Twitter cards, and social media meta tags from any URL instantly. 
+            Preview how your links will appear on Facebook, Twitter, LinkedIn, and other social platforms.
+          </Typography>
+          <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
+            <li className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
+              <Typography variant="muted">Free Forever</Typography>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
+              <Typography variant="muted">No Registration Required</Typography>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
+              <Typography variant="muted">Instant Results</Typography>
+            </li>
+          </ul>
         </MaxWidthContainer>
       </div>
 
       {/* Tool Section */}
-      <MaxWidthContainer className="py-12 px-4">
+      <MaxWidthContainer className="py-12">
         <OGImageTool />
       </MaxWidthContainer>
 
