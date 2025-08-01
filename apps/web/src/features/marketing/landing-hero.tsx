@@ -126,16 +126,18 @@ export const LandingHero = () => {
                 <Typography>Firefox</Typography>
               </Typography>
               <Typography
+                as={Link}
+                href={APP_LINKS.ios}
                 variant="small"
-                className="flex items-center gap-2 hover:underline cursor-not-allowed"
+                target="_blank"
+                className="flex items-center gap-2 hover:underline"
               >
                 <img
                   alt="ios-icon"
                   src="https://svgl.app/library/apple_dark.svg"
                   className="size-4 fill-white"
                 />
-                <Typography as="span">iOS</Typography>
-                <Badge variant="outline">Soon</Badge>
+                <Typography>iOS</Typography>
               </Typography>
             </div>
           </div>

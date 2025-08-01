@@ -89,6 +89,12 @@ export const BookmarkCardInput = () => {
               className="size-8"
             />
           </Link>
+          <Link
+            href={APP_LINKS.ios}
+            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+          >
+            <img src="https://svgl.app/library/apple.svg" className="size-8" />
+          </Link>
         </div>
       </CardFooter>
     </BookmarkCardContainer>
