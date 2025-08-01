@@ -4,28 +4,6 @@ export const extractMetadataRequestSchema = z.object({
   url: z.string().url("Please provide a valid URL"),
 });
 
-export const jsonLdSchema = z.object({
-  type: z.string().optional(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  url: z.string().optional(),
-  image: z.union([z.string(), z.array(z.string())]).optional(),
-  author: z.union([z.string(), z.object({
-    name: z.string().optional(),
-    url: z.string().optional(),
-  })]).optional(),
-  datePublished: z.string().optional(),
-  dateModified: z.string().optional(),
-  headline: z.string().optional(),
-  publisher: z.union([z.string(), z.object({
-    name: z.string().optional(),
-    logo: z.object({
-      url: z.string().optional(),
-    }).optional(),
-  })]).optional(),
-  mainEntityOfPage: z.string().optional(),
-}).passthrough();
-
 export const pageAnalysisSchema = z.object({
   wordCount: z.number(),
   imageCount: z.number(),
@@ -82,19 +60,23 @@ export const openGraphSchema = z.object({
   type: z.string().optional(),
   url: z.string().optional(),
   siteName: z.string().optional(),
-  image: z.object({
-    url: z.string().optional(),
-    alt: z.string().optional(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    type: z.string().optional(),
-  }).optional(),
-  video: z.object({
-    url: z.string().optional(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    type: z.string().optional(),
-  }).optional(),
+  image: z
+    .object({
+      url: z.string().optional(),
+      alt: z.string().optional(),
+      width: z.number().optional(),
+      height: z.number().optional(),
+      type: z.string().optional(),
+    })
+    .optional(),
+  video: z
+    .object({
+      url: z.string().optional(),
+      width: z.number().optional(),
+      height: z.number().optional(),
+      type: z.string().optional(),
+    })
+    .optional(),
   audio: z.string().optional(),
   locale: z.string().optional(),
   localeAlternate: z.array(z.string()).optional(),
@@ -107,33 +89,45 @@ export const twitterCardSchema = z.object({
   creator: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
-  image: z.object({
-    url: z.string().optional(),
-    alt: z.string().optional(),
-  }).optional(),
-  player: z.object({
-    url: z.string().optional(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    stream: z.string().optional(),
-  }).optional(),
-  app: z.object({
-    name: z.object({
-      iphone: z.string().optional(),
-      ipad: z.string().optional(),
-      googleplay: z.string().optional(),
-    }).optional(),
-    id: z.object({
-      iphone: z.string().optional(),
-      ipad: z.string().optional(),
-      googleplay: z.string().optional(),
-    }).optional(),
-    url: z.object({
-      iphone: z.string().optional(),
-      ipad: z.string().optional(),
-      googleplay: z.string().optional(),
-    }).optional(),
-  }).optional(),
+  image: z
+    .object({
+      url: z.string().optional(),
+      alt: z.string().optional(),
+    })
+    .optional(),
+  player: z
+    .object({
+      url: z.string().optional(),
+      width: z.number().optional(),
+      height: z.number().optional(),
+      stream: z.string().optional(),
+    })
+    .optional(),
+  app: z
+    .object({
+      name: z
+        .object({
+          iphone: z.string().optional(),
+          ipad: z.string().optional(),
+          googleplay: z.string().optional(),
+        })
+        .optional(),
+      id: z
+        .object({
+          iphone: z.string().optional(),
+          ipad: z.string().optional(),
+          googleplay: z.string().optional(),
+        })
+        .optional(),
+      url: z
+        .object({
+          iphone: z.string().optional(),
+          ipad: z.string().optional(),
+          googleplay: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const extractMetadataResponseSchema = z.object({
@@ -143,15 +137,17 @@ export const extractMetadataResponseSchema = z.object({
     openGraph: openGraphSchema,
     twitter: twitterCardSchema,
     technical: technicalMetaSchema,
-    jsonLd: z.array(jsonLdSchema).optional(),
     pageAnalysis: pageAnalysisSchema,
   }),
   extractedAt: z.string(),
 });
 
-export type ExtractMetadataRequest = z.infer<typeof extractMetadataRequestSchema>;
-export type ExtractMetadataResponse = z.infer<typeof extractMetadataResponseSchema>;
-export type JsonLdData = z.infer<typeof jsonLdSchema>;
+export type ExtractMetadataRequest = z.infer<
+  typeof extractMetadataRequestSchema
+>;
+export type ExtractMetadataResponse = z.infer<
+  typeof extractMetadataResponseSchema
+>;
 export type PageAnalysis = z.infer<typeof pageAnalysisSchema>;
 export type TechnicalMeta = z.infer<typeof technicalMetaSchema>;
 export type StandardMeta = z.infer<typeof standardMetaSchema>;
