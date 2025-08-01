@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyableField } from "@/components/tools/copyable-field";
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
 import { upfetch } from "@/lib/up-fetch";
@@ -17,7 +18,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
 import { useMutation } from "@tanstack/react-query";
-import { Clock, Download, FileText, Hash } from "lucide-react";
+import { Clock, Download, FileText, Hash, Heading, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 import { extractContentResponseSchema } from "../../../api/tools/extract-content/extract-content.types";
 
@@ -153,24 +154,22 @@ export function ExtractContentTool() {
           </Card>
 
           {/* Article Metadata */}
-          {(mutation.data.metadata.title || mutation.data.metadata.description || mutation.data.metadata.author) && (
+          {(mutation.data.metadata.title || mutation.data.metadata.description || mutation.data.metadata.author || mutation.data.metadata.publishedDate) && (
             <Card>
               <CardHeader>
                 <CardTitle>Article Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {mutation.data.metadata.title && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Title</Label>
-                    <Typography className="mt-1">{mutation.data.metadata.title}</Typography>
-                  </div>
-                )}
-                {mutation.data.metadata.description && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Description</Label>
-                    <Typography className="mt-1 text-muted-foreground">{mutation.data.metadata.description}</Typography>
-                  </div>
-                )}
+              <CardContent className="space-y-4">
+                <CopyableField
+                  label="Title"
+                  value={mutation.data.metadata.title}
+                  icon={<Heading className="h-4 w-4" />}
+                />
+                <CopyableField
+                  label="Description"
+                  value={mutation.data.metadata.description}
+                  icon={<MessageSquareText className="h-4 w-4" />}
+                />
                 {mutation.data.metadata.author && (
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Author</Label>

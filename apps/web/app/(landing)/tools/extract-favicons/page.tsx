@@ -20,17 +20,6 @@ export const metadata = {
     "Extract and download all favicon variants from any website including Apple touch icons, Android icons, and standard favicons in various sizes and formats. Free online tool.",
   keywords:
     "favicon extractor, favicon downloader, apple touch icon, android icon, website icons, ico png svg, favicon sizes, icon collection tool",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
   alternates: {
     canonical: "/tools/extract-favicons",
   },
@@ -81,8 +70,8 @@ export default function ExtractFaviconsToolPage() {
             Free Favicon Extractor & Downloader
           </Typography>
           <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
-            Extract and download all favicon variants from any website including 
-            Apple touch icons, Android icons, standard favicons, and SVG icons 
+            Extract and download all favicon variants from any website including
+            Apple touch icons, Android icons, standard favicons, and SVG icons
             in all available sizes and formats.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
@@ -119,10 +108,11 @@ export default function ExtractFaviconsToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Favicons are small icons that represent websites in browser tabs, 
-                bookmarks, and mobile home screens. Modern websites use multiple 
-                favicon variants to ensure perfect display across all devices and 
-                platforms, from 16x16 pixel browser tabs to 512x512 pixel PWA icons.
+                Favicons are small icons that represent websites in browser
+                tabs, bookmarks, and mobile home screens. Modern websites use
+                multiple favicon variants to ensure perfect display across all
+                devices and platforms, from 16x16 pixel browser tabs to 512x512
+                pixel PWA icons.
               </Typography>
             </CardContent>
           </Card>
@@ -133,10 +123,10 @@ export default function ExtractFaviconsToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Extracting favicons is essential for design research, competitor 
-                analysis, icon collection, and understanding how brands represent 
-                themselves visually. It's also useful for developers studying 
-                favicon implementation best practices.
+                Extracting favicons is essential for design research, competitor
+                analysis, icon collection, and understanding how brands
+                represent themselves visually. It's also useful for developers
+                studying favicon implementation best practices.
               </Typography>
             </CardContent>
           </Card>
@@ -162,8 +152,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Extract Favicons:</Typography>
                   <Typography variant="muted">
-                    Our tool scans the website for all favicon variants including 
-                    hidden and standard locations
+                    Our tool scans the website for all favicon variants
+                    including hidden and standard locations
                   </Typography>
                 </div>
               </li>
@@ -172,7 +162,7 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Browse Results:</Typography>
                   <Typography variant="muted">
-                    View all discovered favicons with their sizes, formats, and 
+                    View all discovered favicons with their sizes, formats, and
                     platform-specific information
                   </Typography>
                 </div>
@@ -182,7 +172,7 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Download Icons:</Typography>
                   <Typography variant="muted">
-                    Download individual favicons or use bulk download to get all 
+                    Download individual favicons or use bulk download to get all
                     valid icons at once
                   </Typography>
                 </div>
@@ -202,7 +192,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Standard Favicon:</Typography>
                   <Typography variant="muted">
-                    Classic favicon.ico file displayed in browser tabs and bookmarks
+                    Classic favicon.ico file displayed in browser tabs and
+                    bookmarks
                   </Typography>
                 </div>
               </li>
@@ -211,7 +202,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Apple Touch Icons:</Typography>
                   <Typography variant="muted">
-                    High-resolution icons used for iOS Safari bookmarks and home screen shortcuts
+                    High-resolution icons used for iOS Safari bookmarks and home
+                    screen shortcuts
                   </Typography>
                 </div>
               </li>
@@ -238,7 +230,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Microsoft Tile Icons:</Typography>
                   <Typography variant="muted">
-                    Windows-specific icons for Start Menu tiles and notifications
+                    Windows-specific icons for Start Menu tiles and
+                    notifications
                   </Typography>
                 </div>
               </li>
@@ -247,7 +240,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Multiple Sizes:</Typography>
                   <Typography variant="muted">
-                    From 16x16 pixels for browser tabs to 512x512 pixels for PWA icons
+                    From 16x16 pixels for browser tabs to 512x512 pixels for PWA
+                    icons
                   </Typography>
                 </div>
               </li>
@@ -266,7 +260,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Design Research:</Typography>
                   <Typography variant="muted">
-                    Study how competitors and industry leaders design their brand icons
+                    Study how competitors and industry leaders design their
+                    brand icons
                   </Typography>
                 </div>
               </li>
@@ -275,16 +270,20 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Icon Collection:</Typography>
                   <Typography variant="muted">
-                    Build a library of high-quality icons for inspiration or reference
+                    Build a library of high-quality icons for inspiration or
+                    reference
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Development Reference:</Typography>
+                  <Typography variant="small">
+                    Development Reference:
+                  </Typography>
                   <Typography variant="muted">
-                    Learn favicon implementation best practices from real websites
+                    Learn favicon implementation best practices from real
+                    websites
                   </Typography>
                 </div>
               </li>
@@ -293,7 +292,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Brand Analysis:</Typography>
                   <Typography variant="muted">
-                    Analyze how brands adapt their logos for different icon sizes and contexts
+                    Analyze how brands adapt their logos for different icon
+                    sizes and contexts
                   </Typography>
                 </div>
               </li>
@@ -302,7 +302,8 @@ export default function ExtractFaviconsToolPage() {
                 <div>
                   <Typography variant="small">Quality Assurance:</Typography>
                   <Typography variant="muted">
-                    Verify that your own website has all necessary favicon variants implemented
+                    Verify that your own website has all necessary favicon
+                    variants implemented
                   </Typography>
                 </div>
               </li>
@@ -327,7 +328,7 @@ export default function ExtractFaviconsToolPage() {
                 How to Create Perfect Favicons for All Devices
               </CardTitle>
               <CardDescription>
-                Complete guide to designing and implementing favicons that work 
+                Complete guide to designing and implementing favicons that work
                 perfectly across all browsers, devices, and platforms.
               </CardDescription>
             </CardHeader>
@@ -344,7 +345,7 @@ export default function ExtractFaviconsToolPage() {
                 Favicon Size Guide: Which Sizes Do You Really Need?
               </CardTitle>
               <CardDescription>
-                Learn which favicon sizes are essential for modern websites and 
+                Learn which favicon sizes are essential for modern websites and
                 which ones you can skip to optimize loading times.
               </CardDescription>
             </CardHeader>
@@ -361,7 +362,7 @@ export default function ExtractFaviconsToolPage() {
                 Progressive Web App Icons: A Complete Implementation Guide
               </CardTitle>
               <CardDescription>
-                Everything you need to know about implementing PWA icons for 
+                Everything you need to know about implementing PWA icons for
                 Android, iOS, and desktop applications.
               </CardDescription>
             </CardHeader>
