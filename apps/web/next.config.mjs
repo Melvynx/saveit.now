@@ -2,11 +2,13 @@ import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  logging: process.env.CI ? {
-    fetches: {
-      fullUrl: true,
-    },
-  } : undefined,
+  logging: process.env.CI
+    ? {
+        fetches: {
+          fullUrl: true,
+        },
+      }
+    : undefined,
   transpilePackages: ["@workspace/ui"],
   experimental: {
     authInterrupts: true,
@@ -22,6 +24,11 @@ const nextConfig = {
         source: "/blog/:path*",
         destination: "/posts/:path*",
         permanent: true,
+      },
+      {
+        source: "/docs",
+        destination: "/docs/getting-started",
+        permanent: false,
       },
     ];
   },

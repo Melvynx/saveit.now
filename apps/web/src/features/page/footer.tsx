@@ -20,7 +20,7 @@ export function Footer() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2  gap-8 sm:grid-cols-3">
+            <div className="grid grid-cols-2  gap-8 sm:grid-cols-4">
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium">Product</h4>
                 <nav className="flex flex-col gap-2">
@@ -44,6 +44,54 @@ export function Footer() {
                     className="h-auto justify-start p-0"
                   >
                     <Link href="/changelog">Changelog</Link>
+                  </Button>
+                </nav>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <h4 className="font-medium">Tools</h4>
+                <nav className="flex flex-col gap-2">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools">All Tools</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools/og-images">OG Images</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools/extract-metadata">Extract Metadata</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools/extract-content">Extract Content</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools/extract-favicons">Extract Favicons</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/tools/youtube-metadata">YouTube Metadata</Link>
                   </Button>
                 </nav>
               </div>

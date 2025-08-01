@@ -15,6 +15,17 @@ export const Header = async () => {
             </span>
           </Link>
         </div>
+        <nav className="hidden md:flex items-center gap-6 ml-8">
+          <Link href="/tools" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+            Tools
+          </Link>
+          <Link href="/pricing" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+            Pricing
+          </Link>
+          <Link href="/docs" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+            Docs
+          </Link>
+        </nav>
         <div className="flex-1"></div>
         <ModeToggle />
         <HeaderUser />

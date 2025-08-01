@@ -29,3 +29,10 @@ When working with analytics:
 - When you create `Server Function` please always look code in @apps/web/app/(layout)/exports/exports.action.ts and use @apps/web/src/lib/safe-action.ts to do it. Each action should be name `ACTION_NAME.action.ts`
 - For fetch request, always use @apps/web/src/lib/up-fetch.ts
 - For env variables, use @apps/web/src/lib/env.ts to typesafe env
+- Always use `useMutation` or `useQuery` when you work with query (with `upfetch`)
+
+## React Component
+
+- Always use Shadcn/UI component
+- Always use `cn` methods when you add classes (example : `cn("bg-red-500", { "bg-blue-500": isEnabled }))`)
+- Avoid color like `bg-red-500` and use theme colors (in `globals.css`)

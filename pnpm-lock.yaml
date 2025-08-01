@@ -18,7 +18,7 @@ importers:
         specifier: ^9.27.0
         version: 9.32.0(jiti@2.5.1)
       prettier:
-        specifier: ^3.5.3
+        specifier: ^3.6.2
         version: 3.6.2
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
