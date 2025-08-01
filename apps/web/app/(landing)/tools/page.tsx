@@ -1,16 +1,27 @@
+import { SaveItCTA } from "@/components/tools/saveit-cta";
+import { ToolCard } from "@/components/tools/tool-card";
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
 import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@workspace/ui/components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 
 export const metadata = {
   title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
-  description: "Collection of free SEO tools and web utilities including OG image extractor, meta tag analyzer, and social media preview tools. No registration required.",
-  keywords: "free SEO tools, web utilities, og image extractor, meta tags, social media tools, website analysis",
+  description: "Collection of free SEO tools and web utilities including OG image extractor, metadata analyzer, content extractor, favicon tools, and YouTube metadata tools. No registration required.",
+  keywords: "free SEO tools, web utilities, og image extractor, meta tags, content extractor, favicon extractor, youtube metadata, social media tools, website analysis",
+  openGraph: {
+    title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
+    description: "Powerful collection of free SEO tools including OG image extractor, metadata analyzer, content extractor, and more. No registration required.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
+    description: "Free SEO tools for content extraction, metadata analysis, and social media optimization.",
+  },
 };
 
 export default function ToolsPage() {
@@ -23,22 +34,33 @@ export default function ToolsPage() {
       features: ["Open Graph extraction", "Twitter card preview", "Social media optimization", "Meta tag analysis"],
       popular: true,
     },
-    // Placeholder for future tools
     {
-      title: "Meta Tag Analyzer",
-      description: "Comprehensive analysis of all meta tags including SEO, social media, and technical tags.",
-      href: "#",
+      title: "Extract Website Metadata",
+      description: "Comprehensive analysis of all meta tags including SEO, social media, and technical metadata from any URL.",
+      href: "/tools/extract-metadata",
       icon: "🏷️",
-      features: ["SEO meta tags", "Social tags", "Technical analysis", "Recommendations"],
-      comingSoon: true,
+      features: ["Complete meta tag analysis", "SEO tag extraction", "Social media tags", "Technical metadata"],
     },
     {
-      title: "Favicon Extractor",
-      description: "Extract and download favicons from any website in multiple sizes and formats.",
-      href: "#",
+      title: "Extract Website Content",
+      description: "Extract and analyze the main content from any webpage, including text, headings, and structure.",
+      href: "/tools/extract-content",
+      icon: "📄",
+      features: ["Main content extraction", "Text analysis", "Heading structure", "Content optimization"],
+    },
+    {
+      title: "Extract Website Favicons",
+      description: "Extract and download favicons from any website in multiple sizes and formats with quality analysis.",
+      href: "/tools/extract-favicons",
       icon: "⭐",
-      features: ["Multiple sizes", "Various formats", "Instant download", "Quality analysis"],
-      comingSoon: true,
+      features: ["Multiple favicon sizes", "Various formats (ICO, PNG)", "Quality analysis", "Instant download"],
+    },
+    {
+      title: "YouTube Metadata Extractor",
+      description: "Extract comprehensive metadata from YouTube videos including title, description, thumbnails, and analytics.",
+      href: "/tools/youtube-metadata",
+      icon: "🎥",
+      features: ["Video metadata", "Thumbnail extraction", "Channel information", "SEO optimization"],
     },
   ];
 
@@ -55,26 +77,28 @@ export default function ToolsPage() {
         className="bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30"
       >
         <MaxWidthContainer width="lg" className="text-center py-16">
-          <Badge variant="outline" className="mb-6">SEO Tools & Utilities</Badge>
+          <Badge variant="outline" className="mb-6">
+            🛠️ SEO Tools & Utilities
+          </Badge>
           <Typography variant="h1" className="mb-6">
             Free SEO Tools & Web Utilities
           </Typography>
-          <Typography variant="lead" className="mb-8 max-w-3xl mx-auto">
+          <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
             Powerful, free tools to analyze, optimize, and enhance your web presence. 
-            No registration required, instant results, completely free forever.
+            Extract metadata, analyze content, optimize images, and boost your SEO with our comprehensive toolkit.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
             <li className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
-              <Typography variant="muted">100% Free</Typography>
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Free Forever</Typography>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
-              <Typography variant="muted">No Sign-up</Typography>
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">No Registration Required</Typography>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-4 h-4 bg-green-500 rounded-full"></span>
-              <Typography variant="muted">Privacy Focused</Typography>
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Instant Results</Typography>
             </li>
           </ul>
         </MaxWidthContainer>
@@ -84,132 +108,173 @@ export default function ToolsPage() {
       <MaxWidthContainer width="lg" className="py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {tools.map((tool, index) => (
-            <Card key={index} className={`transition-all hover:shadow-md relative ${
-              tool.popular ? "border-primary" : ""
-            }`}>
-              {tool.popular && (
-                <Badge className="absolute -top-2 left-4 bg-primary text-primary-foreground">
-                  Most Popular
-                </Badge>
-              )}
-              
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">{tool.icon}</span>
-                  <div className="flex-1">
-                    <CardTitle className="mb-2">{tool.title}</CardTitle>
-                    {tool.comingSoon && (
-                      <Badge variant="outline" className="text-orange-600 border-orange-600">
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <CardDescription className="leading-relaxed">
-                  {tool.description}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-3">
-                  <Typography variant="small" className="font-semibold">Features:</Typography>
-                  <ul className="space-y-2">
-                    {tool.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                        <Typography variant="muted" className="text-sm">{feature}</Typography>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-              
-              <CardFooter>
-                {tool.comingSoon ? (
-                  <Button disabled className="w-full" variant="outline">
-                    Coming Soon
-                  </Button>
-                ) : (
-                  <Button asChild className="w-full">
-                    <Link href={tool.href}>
-                      Use Tool →
-                    </Link>
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
+            <ToolCard
+              key={index}
+              title={tool.title}
+              description={tool.description}
+              href={tool.href}
+              icon={tool.icon}
+              features={tool.features}
+              popular={tool.popular}
+            />
           ))}
         </div>
       </MaxWidthContainer>
 
-      {/* Why Choose Our Tools */}
-      <div className="bg-muted/30">
-        <MaxWidthContainer className="py-16">
-          <Typography variant="h2" className="text-center mb-12">
-            Why Choose Our Free SEO Tools?
-          </Typography>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚀</span>
-              </div>
-              <Typography variant="large" className="mb-2">Fast & Reliable</Typography>
-              <Typography variant="muted">
-                Get instant results with our optimized tools built for speed and accuracy.
-              </Typography>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🔒</span>
-              </div>
-              <Typography variant="large" className="mb-2">Privacy First</Typography>
-              <Typography variant="muted">
-                We don't store your data. All analysis happens in real-time without logging.
-              </Typography>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💎</span>
-              </div>
-              <Typography variant="large" className="mb-2">Always Free</Typography>
-              <Typography variant="muted">
-                No hidden costs, no premium tiers. Full access to all features, forever.
-              </Typography>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎯</span>
-              </div>
-              <Typography variant="large" className="mb-2">SEO Focused</Typography>
-              <Typography variant="muted">
-                Tools designed by SEO experts to solve real optimization challenges.
-              </Typography>
-            </div>
-          </div>
-        </MaxWidthContainer>
-      </div>
+      {/* SEO Content Section */}
+      <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
+        <Typography variant="h2" className="">
+          Everything You Need for Website Analysis & SEO
+        </Typography>
 
-      {/* SaveIt.now Integration */}
-      <div className="bg-gradient-to-r from-primary to-purple-600 text-white">
-        <MaxWidthContainer className="py-16 text-center">
-          <Typography variant="h2" className="mb-6 text-white">
-            Save and Organize Your SEO Research
-          </Typography>
-          <Typography variant="lead" className="mb-8 text-primary-foreground/80 max-w-3xl mx-auto">
-            Use our tools to analyze websites and social media optimization, then save your findings 
-            with SaveIt.now for easy reference and team collaboration.
-          </Typography>
-          <Button asChild size="lg" variant="secondary">
-            <Link href="/">
-              Try SaveIt.now Free →
-            </Link>
-          </Button>
-        </MaxWidthContainer>
-      </div>
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>Why Use Our Free SEO Tools?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Typography variant="p">
+                Our comprehensive suite of SEO tools helps you analyze, optimize, and enhance your web presence. 
+                From extracting Open Graph images to analyzing metadata and content structure, 
+                our tools provide the insights you need to improve your website's performance and social media presence.
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Built for SEO Professionals & Marketers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Typography variant="p">
+                Whether you're an SEO expert, digital marketer, or website owner, our tools are designed to save you time 
+                and provide accurate insights. All tools are completely free, require no registration, and respect your privacy 
+                by not storing any of your data.
+              </Typography>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>How Our SEO Tools Help Your Business</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal list-inside space-y-4">
+              <li className="flex items-start gap-3">
+                <span className="font-semibold text-primary">1.</span>
+                <div>
+                  <Typography variant="small">Analyze Competitor Content:</Typography>
+                  <Typography variant="muted">
+                    Extract and analyze metadata, content structure, and social media optimization from any website
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-semibold text-primary">2.</span>
+                <div>
+                  <Typography variant="small">Optimize Social Media Presence:</Typography>
+                  <Typography variant="muted">
+                    Preview how your content appears on social platforms and optimize for maximum engagement
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-semibold text-primary">3.</span>
+                <div>
+                  <Typography variant="small">Improve SEO Performance:</Typography>
+                  <Typography variant="muted">
+                    Analyze technical SEO elements, meta tags, and content structure to boost search rankings
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-semibold text-primary">4.</span>
+                <div>
+                  <Typography variant="small">Save Time on Research:</Typography>
+                  <Typography variant="muted">
+                    Get instant insights without manual inspection, then save findings with SaveIt.now for future reference  
+                  </Typography>
+                </div>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Why Choose Our Free SEO Tools?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Fast & Reliable:</Typography>
+                  <Typography variant="muted">
+                    Get instant results with our optimized tools built for speed and accuracy
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Privacy First:</Typography>
+                  <Typography variant="muted">
+                    We don't store your data. All analysis happens in real-time without logging
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Always Free:</Typography>
+                  <Typography variant="muted">
+                    No hidden costs, no premium tiers. Full access to all features, forever
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">SEO Focused:</Typography>
+                  <Typography variant="muted">
+                    Tools designed by SEO experts to solve real optimization challenges
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">No Registration Required:</Typography>
+                  <Typography variant="muted">
+                    Start using any tool immediately without signing up or providing personal information
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Comprehensive Analysis:</Typography>
+                  <Typography variant="muted">
+                    Extract everything from metadata and content to favicons and social media previews
+                  </Typography>
+                </div>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </MaxWidthContainer>
+
+      {/* SaveIt.now CTA Section */}
+      <SaveItCTA 
+        title="Save and Organize Your SEO Research"
+        description="Use our tools to analyze websites and social media optimization, then save your findings with SaveIt.now for easy reference and team collaboration."
+        primaryButtonText="Try SaveIt.now Free"
+        primaryButtonHref="/"
+        secondaryButtonText="View all tools"
+        secondaryButtonHref="/tools"
+      />
 
       <Footer />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
+import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
 import { upfetch } from "@/lib/up-fetch";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -14,58 +15,33 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Typography } from "@workspace/ui/components/typography";
+import { useMutation } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { ogImageResponseSchema, type OGImageResponse } from "../../../api/tools/og-images/og-images.type";
+import { ogImageResponseSchema } from "../../../api/tools/og-images/og-images.type";
 
 export function OGImageTool() {
   const [url, setUrl] = useState("");
-  const [data, setData] = useState<OGImageResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const downloadImage = async (imageUrl: string, filename?: string) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename || "og-image.jpg";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Failed to download image:", error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-
-    setIsLoading(true);
-    setError(null);
-    setData(null);
-
-    try {
-      const response = await upfetch("/api/tools/og-images", {
+  const mutation = useMutation({
+    mutationFn: async (urlToFetch: string) => {
+      return upfetch("/api/tools/og-images", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         schema: ogImageResponseSchema,
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: urlToFetch }),
       });
+    },
+  });
 
-      setData(response);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url.trim()) return;
+
+    mutation.mutate(url.trim());
   };
 
   return (
@@ -94,7 +70,7 @@ export function OGImageTool() {
             </div>
             <LoadingButton
               type="submit"
-              loading={isLoading}
+              loading={mutation.isPending}
               className="w-full"
               size="lg"
             >
@@ -105,17 +81,19 @@ export function OGImageTool() {
       </Card>
 
       {/* Error Display */}
-      {error && (
+      {mutation.error && (
         <Alert variant="destructive">
-          <Typography variant="small">{error}</Typography>
+          <Typography variant="small">
+            {mutation.error instanceof Error ? mutation.error.message : "An error occurred"}
+          </Typography>
         </Alert>
       )}
 
       {/* Results Display */}
-      {data && (
+      {mutation.data && (
         <div className="space-y-8">
           {/* Primary Image Preview */}
-          {data.metadata.images.primary && (
+          {mutation.mutation.data.metadata.images.primary && (
             <Card>
               <CardHeader>
                 <CardTitle>Primary Social Media Image</CardTitle>
@@ -129,9 +107,9 @@ export function OGImageTool() {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    downloadImage(
-                      data.metadata.images.primary!,
-                      `og-image-${new URL(data.url).hostname}.jpg`,
+                    downloadFile(
+                      mutation.data!.metadata.images.primary!,
+                      generateFilenameFromURL(mutation.data!.url, "og-image", ".jpg"),
                     )
                   }
                   className="absolute top-4 right-4 w-fit"
@@ -140,15 +118,15 @@ export function OGImageTool() {
                   Download
                 </Button>
                 <Image
-                  src={data.metadata.images.primary}
-                  alt={data.metadata.openGraph.image.alt || "OG Image"}
+                  src={mutation.mutation.data.metadata.images.primary}
+                  alt={mutation.mutation.data.metadata.openGraph.image.alt || "OG Image"}
                   width={800}
                   height={400}
                   className="w-full h-auto max-h-96 object-contain"
                   unoptimized
                 />
                 <Typography variant="muted" className="break-all text-xs">
-                  {data.metadata.images.primary}
+                  {mutation.mutation.data.metadata.images.primary}
                 </Typography>
               </CardContent>
             </Card>
@@ -192,10 +170,10 @@ export function OGImageTool() {
                     
                     {/* Link Preview */}
                     <div className="border-t border-border">
-                      {data.metadata.images.ogImage && (
+                      {mutation.data.metadata.images.ogImage && (
                         <div className="relative">
                           <Image
-                            src={data.metadata.images.ogImage}
+                            src={mutation.data.metadata.images.ogImage}
                             alt="Facebook preview"
                             width={400}
                             height={210}
@@ -206,13 +184,13 @@ export function OGImageTool() {
                       )}
                       <div className="p-3 bg-muted/50">
                         <div className="text-xs text-muted-foreground uppercase mb-1">
-                          {data.metadata.openGraph.siteName || new URL(data.url).hostname}
+                          {mutation.data.metadata.openGraph.siteName || new URL(mutation.data.url).hostname}
                         </div>
                         <div className="text-sm font-medium text-foreground line-clamp-2 mb-1">
-                          {data.metadata.openGraph.title || data.metadata.page.title}
+                          {mutation.data.metadata.openGraph.title || mutation.data.metadata.page.title}
                         </div>
                         <div className="text-xs text-muted-foreground line-clamp-2">
-                          {data.metadata.openGraph.description || data.metadata.page.description}
+                          {mutation.data.metadata.openGraph.description || mutation.data.metadata.page.description}
                         </div>
                       </div>
                     </div>
@@ -282,10 +260,10 @@ export function OGImageTool() {
                         
                         {/* Twitter Card */}
                         <div className="mt-3 border border-border rounded-2xl overflow-hidden">
-                          {data.metadata.images.twitterImage && (
+                          {mutation.data.metadata.images.twitterImage && (
                             <div className="relative">
                               <Image
-                                src={data.metadata.images.twitterImage}
+                                src={mutation.data.metadata.images.twitterImage}
                                 alt="Twitter preview"
                                 width={400}
                                 height={200}
@@ -296,13 +274,13 @@ export function OGImageTool() {
                           )}
                           <div className="p-4">
                             <div className="text-sm text-muted-foreground mb-1">
-                              {new URL(data.url).hostname}
+                              {new URL(mutation.data.url).hostname}
                             </div>
                             <div className="text-sm font-medium text-foreground line-clamp-2 mb-1">
-                              {data.metadata.twitter.title || data.metadata.openGraph.title || data.metadata.page.title}
+                              {mutation.data.metadata.twitter.title || mutation.data.metadata.openGraph.title || mutation.data.metadata.page.title}
                             </div>
                             <div className="text-sm text-muted-foreground line-clamp-2">
-                              {data.metadata.twitter.description || data.metadata.openGraph.description || data.metadata.page.description}
+                              {mutation.data.metadata.twitter.description || mutation.data.metadata.openGraph.description || mutation.data.metadata.page.description}
                             </div>
                           </div>
                         </div>

@@ -12,14 +12,15 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { CheckCircle } from "lucide-react";
-import { OGImageTool } from "./og-image-tool";
+import { ExtractMetadataTool } from "./extract-metadata-tool";
 
 export const metadata = {
-  title: "Free OG Image & Twitter Card Extractor | Open Graph Meta Tags Tool",
+  title:
+    "Free Website Metadata Extractor | Extract Meta Tags, Open Graph & JSON-LD",
   description:
-    "Extract Open Graph images, Twitter cards, and social media meta tags from any URL. Free online tool to preview how your links appear on social media platforms.",
+    "Extract comprehensive website metadata including Open Graph, Twitter Cards, JSON-LD structured data, and technical meta tags from any URL. Free online SEO analysis tool.",
   keywords:
-    "og image extractor, twitter card, open graph, meta tags, social media preview, facebook preview, linkedin preview, free SEO tool",
+    "metadata extractor, meta tags analyzer, open graph extractor, twitter cards, json-ld extractor, structured data, seo meta tags, website analysis, free seo tool",
   robots: {
     index: true,
     follow: true,
@@ -32,35 +33,35 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: "/tools/og-images",
+    canonical: "/tools/extract-metadata",
   },
   openGraph: {
-    title: "Free OG Image & Twitter Card Extractor Tool",
+    title: "Free Website Metadata Extractor Tool",
     description:
-      "Extract and preview Open Graph images and Twitter cards from any URL instantly. Perfect for social media optimization and SEO.",
+      "Extract and analyze comprehensive website metadata including Open Graph, Twitter Cards, JSON-LD, and technical meta tags instantly.",
     type: "website",
-    url: "/tools/og-images",
+    url: "/tools/extract-metadata",
     siteName: "SaveIt.now",
     locale: "en_US",
     images: [
       {
-        url: "/og-images/tools/og-images.png",
+        url: "/og-images/tools/extract-metadata.png",
         width: 1200,
         height: 630,
-        alt: "OG Image Extractor Tool - Extract Open Graph images and Twitter cards",
+        alt: "Metadata Extractor Tool - Extract meta tags, Open Graph, and structured data",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free OG Image & Twitter Card Extractor Tool",
+    title: "Free Website Metadata Extractor Tool",
     description:
-      "Extract Open Graph images and Twitter cards from any URL. Free online tool for social media optimization.",
-    images: ["/og-images/tools/og-images.png"],
+      "Extract comprehensive metadata from any website including Open Graph, Twitter Cards, and JSON-LD structured data.",
+    images: ["/og-images/tools/extract-metadata.png"],
   },
 };
 
-export default function OGImageToolPage() {
+export default function ExtractMetadataToolPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -75,24 +76,23 @@ export default function OGImageToolPage() {
       >
         <MaxWidthContainer width="lg" className="text-center py-16">
           <Badge variant="outline" className="mb-6">
-            🖼️ OG Image Extractor
+            🔍 Metadata Extractor
           </Badge>
           <Typography variant="h1" className="mb-6">
-            Free OG Image & Twitter Card Extractor
+            Free Website Metadata Extractor
           </Typography>
           <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
-            Extract Open Graph images, Twitter cards, and social media meta tags
-            from any URL instantly. Preview how your links will appear on
-            Facebook, Twitter, LinkedIn, and other social platforms.
+            Extract essential metadata and preview how your website appears on
+            social media platforms.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">Free Forever</Typography>
+              <Typography variant="muted">Essential Metadata</Typography>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">No Registration Required</Typography>
+              <Typography variant="muted">Social Media Preview</Typography>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
@@ -102,43 +102,41 @@ export default function OGImageToolPage() {
         </MaxWidthContainer>
         {/* Tool Section */}
         <MaxWidthContainer className="py-12">
-          <OGImageTool />
+          <ExtractMetadataTool />
         </MaxWidthContainer>
       </div>
 
       {/* SEO Content Section */}
       <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
         <Typography variant="h2" className="">
-          Everything You Need to Know About Open Graph Images
+          Complete Guide to Website Metadata Extraction
         </Typography>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <Card>
             <CardHeader>
-              <CardTitle>What are Open Graph Images?</CardTitle>
+              <CardTitle>What is Website Metadata?</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Open Graph images are the preview images that appear when you
-                share a link on social media platforms like Facebook, Twitter,
-                LinkedIn, and WhatsApp. These meta tags were created by Facebook
-                to standardize how content appears when shared across social
-                networks.
+                Metadata is structured information embedded in HTML that describes
+                your web page content. It includes title tags, meta descriptions,
+                Open Graph data, Twitter Cards, and technical tags that help
+                search engines and social platforms understand your content.
               </Typography>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Why Are OG Images Important?</CardTitle>
+              <CardTitle>Why Extract Metadata?</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                OG images significantly impact click-through rates and
-                engagement on social media. Posts with compelling images receive
-                2.3x more engagement than those without. They help create a
-                professional appearance and improve your content's visibility in
-                social feeds.
+                Analyzing metadata helps optimize SEO performance, improve social
+                media sharing, and ensure your content appears correctly across
+                platforms. Proper metadata can increase click-through rates by up
+                to 30% and improve search rankings.
               </Typography>
             </CardContent>
           </Card>
@@ -146,7 +144,7 @@ export default function OGImageToolPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>How to Use Our OG Image Extractor Tool</CardTitle>
+            <CardTitle>How to Use Our Metadata Extractor</CardTitle>
           </CardHeader>
           <CardContent>
             <ol className="list-decimal list-inside space-y-4">
@@ -162,32 +160,27 @@ export default function OGImageToolPage() {
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">2.</span>
                 <div>
-                  <Typography variant="small">Click Extract:</Typography>
+                  <Typography variant="small">Extract Metadata:</Typography>
                   <Typography variant="muted">
-                    Our tool will fetch and analyze all meta tags from the
-                    webpage
+                    Our tool analyzes the webpage and extracts all metadata tags
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">3.</span>
                 <div>
-                  <Typography variant="small">View Results:</Typography>
+                  <Typography variant="small">Review Results:</Typography>
                   <Typography variant="muted">
-                    See the Open Graph image, Twitter card, and all social media
-                    metadata
+                    View organized metadata including standard, Open Graph, and Twitter tags
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">4.</span>
                 <div>
-                  <Typography variant="small">
-                    Preview Social Shares:
-                  </Typography>
+                  <Typography variant="small">Preview Social Cards:</Typography>
                   <Typography variant="muted">
-                    Understand exactly how your link will appear on different
-                    platforms
+                    See how your content appears on Facebook and Twitter
                   </Typography>
                 </div>
               </li>
@@ -197,62 +190,61 @@ export default function OGImageToolPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Best Practices for Open Graph Images</CardTitle>
+            <CardTitle>Essential Metadata Tags for SEO</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Optimal Size:</Typography>
+                  <Typography variant="small">Title Tag:</Typography>
                   <Typography variant="muted">
-                    Use 1200x630 pixels for the best compatibility across all
-                    platforms
+                    Keep between 50-60 characters, include primary keyword, make it compelling
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">File Format:</Typography>
+                  <Typography variant="small">Meta Description:</Typography>
                   <Typography variant="muted">
-                    PNG or JPG formats work best, keep file size under 8MB
+                    150-160 characters that summarize your page content and encourage clicks
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Text Overlay:</Typography>
+                  <Typography variant="small">Open Graph Tags:</Typography>
                   <Typography variant="muted">
-                    If using text, make it large and readable on mobile devices
+                    Optimize for social sharing with og:title, og:description, and og:image
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Brand Consistency:</Typography>
+                  <Typography variant="small">Twitter Cards:</Typography>
                   <Typography variant="muted">
-                    Include your logo or brand colors for recognition
+                    Enhance Twitter sharing with twitter:card, twitter:title, and twitter:description
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">High Quality:</Typography>
+                  <Typography variant="small">Canonical URL:</Typography>
                   <Typography variant="muted">
-                    Use high-resolution images that look good at different sizes
+                    Prevent duplicate content issues by specifying the preferred URL version
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Avoid Small Text:</Typography>
+                  <Typography variant="small">Robots Meta Tag:</Typography>
                   <Typography variant="muted">
-                    Text smaller than 20px may not be readable in previews
+                    Control how search engines index and follow links on your page
                   </Typography>
                 </div>
               </li>
@@ -262,28 +254,30 @@ export default function OGImageToolPage() {
       </MaxWidthContainer>
 
       {/* SaveIt.now CTA Section */}
-      <SaveItCTA />
+      <SaveItCTA
+        title="Save and organize your research with SaveIt.now"
+        description="Keep track of all the websites you analyze, bookmark important resources, and organize your SEO research efficiently."
+      />
 
-      {/* Related Articles */}
+      {/* Related Tools */}
       <MaxWidthContainer className="py-16">
         <Typography variant="h2" className="text-center mb-12">
-          Related
+          Related Tools
         </Typography>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                How to Optimize Open Graph Images for Social Media
+                Free OG Image & Twitter Card Extractor
               </CardTitle>
               <CardDescription>
-                Learn the best practices for creating compelling OG images that
-                drive engagement and clicks on social platforms.
+                Extract and preview Open Graph images and Twitter cards from any URL for social media optimization.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Typography variant="link" className="text-sm font-medium">
-                Read more →
+                Try OG Image Tool →
               </Typography>
             </CardContent>
           </Card>
@@ -291,16 +285,15 @@ export default function OGImageToolPage() {
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                Twitter Card Types and When to Use Them
+                How to Optimize Meta Tags for Better SEO
               </CardTitle>
               <CardDescription>
-                Understanding the different Twitter card types and how to choose
-                the right one for your content.
+                Learn best practices for writing compelling title tags and meta descriptions that improve search rankings.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Typography variant="link" className="text-sm font-medium">
-                Read more →
+                Read Guide →
               </Typography>
             </CardContent>
           </Card>
@@ -308,16 +301,15 @@ export default function OGImageToolPage() {
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                Meta Tags That Actually Matter for SEO
+                Social Media Meta Tags Checklist
               </CardTitle>
               <CardDescription>
-                A comprehensive guide to the most important meta tags for search
-                engine optimization and social sharing.
+                Complete checklist for optimizing Open Graph and Twitter Card meta tags for maximum engagement.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Typography variant="link" className="text-sm font-medium">
-                Read more →
+                Get Checklist →
               </Typography>
             </CardContent>
           </Card>

@@ -1,6 +1,7 @@
 import { ServerToaster } from "@/features/server-sonner/server-toaster";
 import { getUserLimits } from "@/lib/auth-session";
 import { InjectUserPlan } from "@/lib/auth/user-plan";
+import { getServerUrl } from "@/lib/server-url";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Metadata } from "next";
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
   title: "SaveIt.now",
   description:
     "Don't ever lose your bookmarks again. Let's our advanced AI system find it for you.",
+  metadataBase: new URL(getServerUrl()),
 };
 
 export default function RootLayout({

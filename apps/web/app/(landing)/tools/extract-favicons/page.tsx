@@ -12,14 +12,14 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { CheckCircle } from "lucide-react";
-import { OGImageTool } from "./og-image-tool";
+import { ExtractFaviconsTool } from "./extract-favicons-tool";
 
 export const metadata = {
-  title: "Free OG Image & Twitter Card Extractor | Open Graph Meta Tags Tool",
+  title: "Free Favicon Extractor & Downloader | Extract All Website Icons",
   description:
-    "Extract Open Graph images, Twitter cards, and social media meta tags from any URL. Free online tool to preview how your links appear on social media platforms.",
+    "Extract and download all favicon variants from any website including Apple touch icons, Android icons, and standard favicons in various sizes and formats. Free online tool.",
   keywords:
-    "og image extractor, twitter card, open graph, meta tags, social media preview, facebook preview, linkedin preview, free SEO tool",
+    "favicon extractor, favicon downloader, apple touch icon, android icon, website icons, ico png svg, favicon sizes, icon collection tool",
   robots: {
     index: true,
     follow: true,
@@ -32,35 +32,35 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: "/tools/og-images",
+    canonical: "/tools/extract-favicons",
   },
   openGraph: {
-    title: "Free OG Image & Twitter Card Extractor Tool",
+    title: "Free Favicon Extractor & Downloader Tool",
     description:
-      "Extract and preview Open Graph images and Twitter cards from any URL instantly. Perfect for social media optimization and SEO.",
+      "Extract all favicon variants from any website instantly. Download Apple touch icons, Android icons, and standard favicons in all sizes and formats.",
     type: "website",
-    url: "/tools/og-images",
+    url: "/tools/extract-favicons",
     siteName: "SaveIt.now",
     locale: "en_US",
     images: [
       {
-        url: "/og-images/tools/og-images.png",
+        url: "/og-images/tools/extract-favicons.png",
         width: 1200,
         height: 630,
-        alt: "OG Image Extractor Tool - Extract Open Graph images and Twitter cards",
+        alt: "Favicon Extractor Tool - Download all website icons and favicons",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free OG Image & Twitter Card Extractor Tool",
+    title: "Free Favicon Extractor & Downloader Tool",
     description:
-      "Extract Open Graph images and Twitter cards from any URL. Free online tool for social media optimization.",
-    images: ["/og-images/tools/og-images.png"],
+      "Extract and download all favicon variants from any website. Perfect for design research and icon collection.",
+    images: ["/og-images/tools/extract-favicons.png"],
   },
 };
 
-export default function OGImageToolPage() {
+export default function ExtractFaviconsToolPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -75,70 +75,68 @@ export default function OGImageToolPage() {
       >
         <MaxWidthContainer width="lg" className="text-center py-16">
           <Badge variant="outline" className="mb-6">
-            🖼️ OG Image Extractor
+            🎯 Favicon Extractor
           </Badge>
           <Typography variant="h1" className="mb-6">
-            Free OG Image & Twitter Card Extractor
+            Free Favicon Extractor & Downloader
           </Typography>
           <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
-            Extract Open Graph images, Twitter cards, and social media meta tags
-            from any URL instantly. Preview how your links will appear on
-            Facebook, Twitter, LinkedIn, and other social platforms.
+            Extract and download all favicon variants from any website including 
+            Apple touch icons, Android icons, standard favicons, and SVG icons 
+            in all available sizes and formats.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">All Favicon Formats</Typography>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Bulk Download</Typography>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
               <Typography variant="muted">Free Forever</Typography>
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">No Registration Required</Typography>
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">Instant Results</Typography>
             </li>
           </ul>
         </MaxWidthContainer>
         {/* Tool Section */}
         <MaxWidthContainer className="py-12">
-          <OGImageTool />
+          <ExtractFaviconsTool />
         </MaxWidthContainer>
       </div>
 
       {/* SEO Content Section */}
       <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
         <Typography variant="h2" className="">
-          Everything You Need to Know About Open Graph Images
+          Complete Guide to Website Favicons and Icons
         </Typography>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <Card>
             <CardHeader>
-              <CardTitle>What are Open Graph Images?</CardTitle>
+              <CardTitle>What are Favicons?</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Open Graph images are the preview images that appear when you
-                share a link on social media platforms like Facebook, Twitter,
-                LinkedIn, and WhatsApp. These meta tags were created by Facebook
-                to standardize how content appears when shared across social
-                networks.
+                Favicons are small icons that represent websites in browser tabs, 
+                bookmarks, and mobile home screens. Modern websites use multiple 
+                favicon variants to ensure perfect display across all devices and 
+                platforms, from 16x16 pixel browser tabs to 512x512 pixel PWA icons.
               </Typography>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Why Are OG Images Important?</CardTitle>
+              <CardTitle>Why Extract Favicons?</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                OG images significantly impact click-through rates and
-                engagement on social media. Posts with compelling images receive
-                2.3x more engagement than those without. They help create a
-                professional appearance and improve your content's visibility in
-                social feeds.
+                Extracting favicons is essential for design research, competitor 
+                analysis, icon collection, and understanding how brands represent 
+                themselves visually. It's also useful for developers studying 
+                favicon implementation best practices.
               </Typography>
             </CardContent>
           </Card>
@@ -146,14 +144,14 @@ export default function OGImageToolPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>How to Use Our OG Image Extractor Tool</CardTitle>
+            <CardTitle>How to Use Our Favicon Extractor Tool</CardTitle>
           </CardHeader>
           <CardContent>
             <ol className="list-decimal list-inside space-y-4">
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">1.</span>
                 <div>
-                  <Typography variant="small">Enter the URL:</Typography>
+                  <Typography variant="small">Enter Website URL:</Typography>
                   <Typography variant="muted">
                     Paste any website URL into the input field above
                   </Typography>
@@ -162,32 +160,30 @@ export default function OGImageToolPage() {
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">2.</span>
                 <div>
-                  <Typography variant="small">Click Extract:</Typography>
+                  <Typography variant="small">Extract Favicons:</Typography>
                   <Typography variant="muted">
-                    Our tool will fetch and analyze all meta tags from the
-                    webpage
+                    Our tool scans the website for all favicon variants including 
+                    hidden and standard locations
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">3.</span>
                 <div>
-                  <Typography variant="small">View Results:</Typography>
+                  <Typography variant="small">Browse Results:</Typography>
                   <Typography variant="muted">
-                    See the Open Graph image, Twitter card, and all social media
-                    metadata
+                    View all discovered favicons with their sizes, formats, and 
+                    platform-specific information
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">4.</span>
                 <div>
-                  <Typography variant="small">
-                    Preview Social Shares:
-                  </Typography>
+                  <Typography variant="small">Download Icons:</Typography>
                   <Typography variant="muted">
-                    Understand exactly how your link will appear on different
-                    platforms
+                    Download individual favicons or use bulk download to get all 
+                    valid icons at once
                   </Typography>
                 </div>
               </li>
@@ -197,62 +193,116 @@ export default function OGImageToolPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Best Practices for Open Graph Images</CardTitle>
+            <CardTitle>Types of Favicons Our Tool Detects</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Optimal Size:</Typography>
+                  <Typography variant="small">Standard Favicon:</Typography>
                   <Typography variant="muted">
-                    Use 1200x630 pixels for the best compatibility across all
-                    platforms
+                    Classic favicon.ico file displayed in browser tabs and bookmarks
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">File Format:</Typography>
+                  <Typography variant="small">Apple Touch Icons:</Typography>
                   <Typography variant="muted">
-                    PNG or JPG formats work best, keep file size under 8MB
+                    High-resolution icons used for iOS Safari bookmarks and home screen shortcuts
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Text Overlay:</Typography>
+                  <Typography variant="small">Android Icons:</Typography>
                   <Typography variant="muted">
-                    If using text, make it large and readable on mobile devices
+                    Progressive Web App icons for Android devices and Chrome
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Brand Consistency:</Typography>
+                  <Typography variant="small">SVG Icons:</Typography>
                   <Typography variant="muted">
-                    Include your logo or brand colors for recognition
+                    Scalable vector icons that look crisp at any size
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">High Quality:</Typography>
+                  <Typography variant="small">Microsoft Tile Icons:</Typography>
                   <Typography variant="muted">
-                    Use high-resolution images that look good at different sizes
+                    Windows-specific icons for Start Menu tiles and notifications
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Avoid Small Text:</Typography>
+                  <Typography variant="small">Multiple Sizes:</Typography>
                   <Typography variant="muted">
-                    Text smaller than 20px may not be readable in previews
+                    From 16x16 pixels for browser tabs to 512x512 pixels for PWA icons
+                  </Typography>
+                </div>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Common Use Cases for Favicon Extraction</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Design Research:</Typography>
+                  <Typography variant="muted">
+                    Study how competitors and industry leaders design their brand icons
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Icon Collection:</Typography>
+                  <Typography variant="muted">
+                    Build a library of high-quality icons for inspiration or reference
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Development Reference:</Typography>
+                  <Typography variant="muted">
+                    Learn favicon implementation best practices from real websites
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Brand Analysis:</Typography>
+                  <Typography variant="muted">
+                    Analyze how brands adapt their logos for different icon sizes and contexts
+                  </Typography>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                <div>
+                  <Typography variant="small">Quality Assurance:</Typography>
+                  <Typography variant="muted">
+                    Verify that your own website has all necessary favicon variants implemented
                   </Typography>
                 </div>
               </li>
@@ -267,18 +317,18 @@ export default function OGImageToolPage() {
       {/* Related Articles */}
       <MaxWidthContainer className="py-16">
         <Typography variant="h2" className="text-center mb-12">
-          Related
+          Related Tools & Resources
         </Typography>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                How to Optimize Open Graph Images for Social Media
+                How to Create Perfect Favicons for All Devices
               </CardTitle>
               <CardDescription>
-                Learn the best practices for creating compelling OG images that
-                drive engagement and clicks on social platforms.
+                Complete guide to designing and implementing favicons that work 
+                perfectly across all browsers, devices, and platforms.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -291,11 +341,11 @@ export default function OGImageToolPage() {
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                Twitter Card Types and When to Use Them
+                Favicon Size Guide: Which Sizes Do You Really Need?
               </CardTitle>
               <CardDescription>
-                Understanding the different Twitter card types and how to choose
-                the right one for your content.
+                Learn which favicon sizes are essential for modern websites and 
+                which ones you can skip to optimize loading times.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -308,11 +358,11 @@ export default function OGImageToolPage() {
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">
-                Meta Tags That Actually Matter for SEO
+                Progressive Web App Icons: A Complete Implementation Guide
               </CardTitle>
               <CardDescription>
-                A comprehensive guide to the most important meta tags for search
-                engine optimization and social sharing.
+                Everything you need to know about implementing PWA icons for 
+                Android, iOS, and desktop applications.
               </CardDescription>
             </CardHeader>
             <CardContent>
