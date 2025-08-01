@@ -4,6 +4,7 @@ import { CopyableField } from "@/components/tools/copyable-field";
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
 import { upfetch } from "@/lib/up-fetch";
+import { useMutation } from "@tanstack/react-query";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -15,10 +16,21 @@ import {
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
-import { useMutation } from "@tanstack/react-query";
-import { Clock, Download, FileText, Hash, Heading, MessageSquareText } from "lucide-react";
+import {
+  Clock,
+  Download,
+  FileText,
+  Hash,
+  Heading,
+  MessageSquareText,
+} from "lucide-react";
 import { useState } from "react";
 import { extractContentResponseSchema } from "../../../api/tools/extract-content/extract-content.types";
 
@@ -47,18 +59,30 @@ export function ExtractContentTool() {
 
   const downloadTextFile = () => {
     if (!mutation.data) return;
-    const blob = new Blob([mutation.mutation.data.content.plainText], { type: "text/plain" });
+    const blob = new Blob([mutation.data.content.plainText], {
+      type: "text/plain",
+    });
     const url = URL.createObjectURL(blob);
-    const filename = generateFilenameFromURL(mutation.mutation.data.url, "content", ".txt");
+    const filename = generateFilenameFromURL(
+      mutation.data.url,
+      "content",
+      ".txt",
+    );
     downloadFile(url, filename);
     URL.revokeObjectURL(url);
   };
 
   const downloadMarkdownFile = () => {
     if (!mutation.data) return;
-    const blob = new Blob([mutation.mutation.data.content.markdown], { type: "text/markdown" });
+    const blob = new Blob([mutation.data.content.markdown], {
+      type: "text/markdown",
+    });
     const url = URL.createObjectURL(blob);
-    const filename = generateFilenameFromURL(mutation.mutation.data.url, "content", ".md");
+    const filename = generateFilenameFromURL(
+      mutation.data.url,
+      "content",
+      ".md",
+    );
     downloadFile(url, filename);
     URL.revokeObjectURL(url);
   };
@@ -70,8 +94,8 @@ export function ExtractContentTool() {
         <CardHeader>
           <CardTitle>Content Extraction Tool</CardTitle>
           <CardDescription>
-            Extract clean, readable content from any webpage. Get both plain text
-            and markdown formats with content statistics.
+            Extract clean, readable content from any webpage. Get both plain
+            text and markdown formats with content statistics.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,7 +127,9 @@ export function ExtractContentTool() {
       {mutation.error && (
         <Alert variant="destructive">
           <Typography variant="small">
-            {mutation.error instanceof Error ? mutation.error.message : "An error occurred"}
+            {mutation.error instanceof Error
+              ? mutation.error.message
+              : "An error occurred"}
           </Typography>
         </Alert>
       )}
@@ -119,7 +145,9 @@ export function ExtractContentTool() {
                 Content Statistics
               </CardTitle>
               <CardDescription>
-                Overview of the extracted content from {mutation.data.metadata.siteName || new URL(mutation.data.url).hostname}
+                Overview of the extracted content from{" "}
+                {mutation.data.metadata.siteName ||
+                  new URL(mutation.data.url).hostname}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -134,13 +162,17 @@ export function ExtractContentTool() {
                   <div className="text-2xl font-bold text-primary">
                     {mutation.data.content.statistics.charCount.toLocaleString()}
                   </div>
-                  <div className="text-sm text-muted-foreground">Characters</div>
+                  <div className="text-sm text-muted-foreground">
+                    Characters
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">
                     {mutation.data.content.statistics.paragraphCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">Paragraphs</div>
+                  <div className="text-sm text-muted-foreground">
+                    Paragraphs
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-2xl font-bold text-primary">
@@ -154,7 +186,10 @@ export function ExtractContentTool() {
           </Card>
 
           {/* Article Metadata */}
-          {(mutation.data.metadata.title || mutation.data.metadata.description || mutation.data.metadata.author || mutation.data.metadata.publishedDate) && (
+          {(mutation.data.metadata.title ||
+            mutation.data.metadata.description ||
+            mutation.data.metadata.author ||
+            mutation.data.metadata.publishedDate) && (
             <Card>
               <CardHeader>
                 <CardTitle>Article Information</CardTitle>
@@ -172,14 +207,24 @@ export function ExtractContentTool() {
                 />
                 {mutation.data.metadata.author && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Author</Label>
-                    <Typography className="mt-1">{mutation.data.metadata.author}</Typography>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Author
+                    </Label>
+                    <Typography className="mt-1">
+                      {mutation.data.metadata.author}
+                    </Typography>
                   </div>
                 )}
                 {mutation.data.metadata.publishedDate && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Published</Label>
-                    <Typography className="mt-1">{new Date(mutation.data.metadata.publishedDate).toLocaleDateString()}</Typography>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Published
+                    </Label>
+                    <Typography className="mt-1">
+                      {new Date(
+                        mutation.data.metadata.publishedDate,
+                      ).toLocaleDateString()}
+                    </Typography>
                   </div>
                 )}
               </CardContent>
@@ -226,32 +271,36 @@ export function ExtractContentTool() {
                   <TabsTrigger value="markdown">Markdown</TabsTrigger>
                   <TabsTrigger value="text">Plain Text</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="preview" className="mt-4">
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     <Typography variant="h3" className="mb-4">
                       {mutation.data.content.title}
                     </Typography>
                     <hr className="mb-4 border-border" />
-                    <div 
+                    <div
                       className="whitespace-pre-wrap leading-relaxed"
                       dangerouslySetInnerHTML={{
                         __html: mutation.data.content.markdown
-                          .replace(/^# .*/gm, '') // Remove h1 headers
-                          .replace(/\n/g, '<br/>')
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/^# .*/gm, "") // Remove h1 headers
+                          .replace(/\n/g, "<br/>")
+                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                          .replace(/\*(.*?)\*/g, "<em>$1</em>"),
                       }}
                     />
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="markdown" className="mt-4">
                   <div className="relative">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigator.clipboard.writeText(mutation.data.content.markdown)}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          mutation.data.content.markdown,
+                        )
+                      }
                       className="absolute top-2 right-2 z-10"
                     >
                       Copy
@@ -261,13 +310,17 @@ export function ExtractContentTool() {
                     </pre>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="text" className="mt-4">
                   <div className="relative">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigator.clipboard.writeText(mutation.data.content.plainText)}
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          mutation.data.content.plainText,
+                        )
+                      }
                       className="absolute top-2 right-2 z-10"
                     >
                       Copy

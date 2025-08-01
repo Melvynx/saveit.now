@@ -9,18 +9,18 @@ import { Typography } from "@workspace/ui/components/typography";
 import { CheckCircle } from "lucide-react";
 
 export const metadata = {
-  title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
-  description: "Collection of free SEO tools and web utilities including OG image extractor, metadata analyzer, content extractor, favicon tools, and YouTube metadata tools. No registration required.",
-  keywords: "free SEO tools, web utilities, og image extractor, meta tags, content extractor, favicon extractor, youtube metadata, social media tools, website analysis",
+  title: "Free SEO Tools for Marketers & Content Creators | SaveIt.now",
+  description: "Professional-grade SEO tools to extract website data, analyze metadata, and optimize content. Used by 10,000+ marketers. Free forever, no registration required.",
+  keywords: "free SEO tools, website analysis, og image extractor, meta tags analyzer, content extractor, favicon tools, youtube metadata, social media optimization, marketing tools",
   openGraph: {
-    title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
-    description: "Powerful collection of free SEO tools including OG image extractor, metadata analyzer, content extractor, and more. No registration required.",
+    title: "Free SEO Tools for Marketers & Content Creators | SaveIt.now",
+    description: "Professional-grade SEO tools to extract website data, analyze metadata, and optimize content. Used by 10,000+ marketers worldwide.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free SEO Tools & Web Utilities | SaveIt.now Tools",
-    description: "Free SEO tools for content extraction, metadata analysis, and social media optimization.",
+    title: "Free SEO Tools for Marketers & Content Creators | SaveIt.now",
+    description: "Professional-grade SEO tools for website analysis, content optimization, and social media research.",
   },
 };
 
@@ -78,27 +78,27 @@ export default function ToolsPage() {
       >
         <MaxWidthContainer width="lg" className="text-center py-16">
           <Badge variant="outline" className="mb-6">
-            🛠️ SEO Tools & Utilities
+            🚀 Professional SEO Tools
           </Badge>
           <Typography variant="h1" className="mb-6">
-            Free SEO Tools & Web Utilities
+            Free Website Analysis Tools That Actually Work
           </Typography>
           <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
-            Powerful, free tools to analyze, optimize, and enhance your web presence. 
-            Extract metadata, analyze content, optimize images, and boost your SEO with our comprehensive toolkit.
+            Get professional-grade website insights in seconds. We built these tools for our own SaveIt.now system to extract everything about any website. 
+            Now you can use them for free to analyze competitors, optimize content, and boost your SEO rankings.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">Free Forever</Typography>
+              <Typography variant="muted">Used by 10,000+ Marketers</Typography>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Professional-Grade Results</Typography>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
               <Typography variant="muted">No Registration Required</Typography>
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-green-500" />
-              <Typography variant="muted">Instant Results</Typography>
             </li>
           </ul>
         </MaxWidthContainer>
@@ -124,32 +124,32 @@ export default function ToolsPage() {
       {/* SEO Content Section */}
       <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
         <Typography variant="h2" className="">
-          Everything You Need for Website Analysis & SEO
+          The Same Tools We Use to Power SaveIt.now
         </Typography>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <Card>
             <CardHeader>
-              <CardTitle>Why Use Our Free SEO Tools?</CardTitle>
+              <CardTitle>Why These Tools Are Different</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Our comprehensive suite of SEO tools helps you analyze, optimize, and enhance your web presence. 
-                From extracting Open Graph images to analyzing metadata and content structure, 
-                our tools provide the insights you need to improve your website's performance and social media presence.
+                We didn't build these as side projects - they're the actual tools powering SaveIt.now's website analysis engine. 
+                Every day, they help us extract metadata, analyze content, and optimize our own systems. 
+                Now you get the same professional-grade tools, completely free.
               </Typography>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Built for SEO Professionals & Marketers</CardTitle>
+              <CardTitle>Built for Real Marketing Workflows</CardTitle>
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Whether you're an SEO expert, digital marketer, or website owner, our tools are designed to save you time 
-                and provide accurate insights. All tools are completely free, require no registration, and respect your privacy 
-                by not storing any of your data.
+                Stop wasting time with basic tools that give you incomplete data. Our comprehensive analysis extracts everything 
+                - from hidden meta tags to social media optimization insights. Use these for competitor research, 
+                content audits, and SEO optimization that actually moves the needle.
               </Typography>
             </CardContent>
           </Card>
@@ -157,43 +157,43 @@ export default function ToolsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>How Our SEO Tools Help Your Business</CardTitle>
+            <CardTitle>Get Professional Website Intelligence in Seconds</CardTitle>
           </CardHeader>
           <CardContent>
             <ol className="list-decimal list-inside space-y-4">
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">1.</span>
                 <div>
-                  <Typography variant="small">Analyze Competitor Content:</Typography>
+                  <Typography variant="small">Spy on Competitor Strategies:</Typography>
                   <Typography variant="muted">
-                    Extract and analyze metadata, content structure, and social media optimization from any website
+                    See exactly how top-performing websites structure their metadata, social media optimization, and content hierarchy
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">2.</span>
                 <div>
-                  <Typography variant="small">Optimize Social Media Presence:</Typography>
+                  <Typography variant="small">Optimize for Maximum Visibility:</Typography>
                   <Typography variant="muted">
-                    Preview how your content appears on social platforms and optimize for maximum engagement
+                    Preview and perfect how your content appears on Google, Twitter, LinkedIn, and Facebook before you publish
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">3.</span>
                 <div>
-                  <Typography variant="small">Improve SEO Performance:</Typography>
+                  <Typography variant="small">Find Hidden SEO Opportunities:</Typography>
                   <Typography variant="muted">
-                    Analyze technical SEO elements, meta tags, and content structure to boost search rankings
+                    Uncover technical SEO elements, missing meta tags, and content gaps that your competitors might be missing
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-semibold text-primary">4.</span>
                 <div>
-                  <Typography variant="small">Save Time on Research:</Typography>
+                  <Typography variant="small">Research Smarter, Not Harder:</Typography>
                   <Typography variant="muted">
-                    Get instant insights without manual inspection, then save findings with SaveIt.now for future reference  
+                    Get comprehensive website analysis in one click, then organize your findings with SaveIt.now for team collaboration
                   </Typography>
                 </div>
               </li>
@@ -203,61 +203,61 @@ export default function ToolsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Why Choose Our Free SEO Tools?</CardTitle>
+            <CardTitle>Why These Tools Beat The Competition</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Fast & Reliable:</Typography>
+                  <Typography variant="small">Battle-Tested Technology:</Typography>
                   <Typography variant="muted">
-                    Get instant results with our optimized tools built for speed and accuracy
+                    The same extraction engine that powers SaveIt.now's bookmark analysis for thousands of users daily
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Privacy First:</Typography>
+                  <Typography variant="small">Complete Data Privacy:</Typography>
                   <Typography variant="muted">
-                    We don't store your data. All analysis happens in real-time without logging
+                    Zero data retention. We analyze and return results without storing anything about your research
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Always Free:</Typography>
+                  <Typography variant="small">Actually Free Forever:</Typography>
                   <Typography variant="muted">
-                    No hidden costs, no premium tiers. Full access to all features, forever
+                    No freemium tricks or usage limits. We give you the full professional experience at zero cost
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">SEO Focused:</Typography>
+                  <Typography variant="small">Built by Marketing Engineers:</Typography>
                   <Typography variant="muted">
-                    Tools designed by SEO experts to solve real optimization challenges
+                    Created by the team who built SaveIt.now - we understand both technical SEO and real marketing needs
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">No Registration Required:</Typography>
+                  <Typography variant="small">Zero Friction Access:</Typography>
                   <Typography variant="muted">
-                    Start using any tool immediately without signing up or providing personal information
+                    Start analyzing websites immediately - no signup, no email verification, no credit card required
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Comprehensive Analysis:</Typography>
+                  <Typography variant="small">Enterprise-Level Analysis:</Typography>
                   <Typography variant="muted">
-                    Extract everything from metadata and content to favicons and social media previews
+                    Extract hidden metadata, analyze technical SEO, and get insights that basic tools completely miss
                   </Typography>
                 </div>
               </li>
@@ -268,11 +268,11 @@ export default function ToolsPage() {
 
       {/* SaveIt.now CTA Section */}
       <SaveItCTA 
-        title="Save and Organize Your SEO Research"
-        description="Use our tools to analyze websites and social media optimization, then save your findings with SaveIt.now for easy reference and team collaboration."
-        primaryButtonText="Try SaveIt.now Free"
+        title="Great Tools for Analysis → But Where Do You Save Your Findings?"
+        description="You just discovered how to extract powerful website insights. Now organize all your research, competitor analysis, and SEO findings in one place with SaveIt.now. Never lose track of your discoveries again."
+        primaryButtonText="Start Organizing Your Research"
         primaryButtonHref="/"
-        secondaryButtonText="View all tools"
+        secondaryButtonText="Continue using tools"
         secondaryButtonHref="/tools"
       />
 
