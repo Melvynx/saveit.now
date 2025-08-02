@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { SaveItCTA } from "@/components/tools/saveit-cta";
+import { Footer } from "@/features/page/footer";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
 import { Badge } from "@workspace/ui/components/badge";
@@ -16,11 +18,14 @@ import Link from "next/link";
 
 export const metadata = {
   title: "SaveIt.now - iOS App | Save Anything, Anywhere",
-  description: "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization. Available on the App Store.",
-  keywords: "iOS app, bookmark manager, save links, mobile bookmarks, iPhone app, iPad app, content organization, SaveIt.now",
+  description:
+    "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization. Available on the App Store.",
+  keywords:
+    "iOS app, bookmark manager, save links, mobile bookmarks, iPhone app, iPad app, content organization, SaveIt.now",
   openGraph: {
     title: "SaveIt.now - iOS App | Save Anything, Anywhere",
-    description: "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization.",
+    description:
+      "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization.",
     type: "website",
     images: [
       {
@@ -34,7 +39,8 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "SaveIt.now - iOS App | Save Anything, Anywhere",
-    description: "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization.",
+    description:
+      "The ultimate bookmark manager for iOS. Save links, images, and content from anywhere with AI-powered organization.",
     images: ["/images/ios/ios-app-1.png"],
   },
 };
@@ -44,17 +50,20 @@ export default function IOSPage() {
     {
       icon: <Smartphone className="size-5" />,
       title: "Native iOS Experience",
-      description: "Built specifically for iOS with intuitive gestures and native performance",
+      description:
+        "Built specifically for iOS with intuitive gestures and native performance",
     },
     {
       icon: <Star className="size-5" />,
       title: "AI-Powered Organization",
-      description: "Automatically categorize and tag your saved content with intelligent AI",
+      description:
+        "Automatically categorize and tag your saved content with intelligent AI",
     },
     {
       icon: <Download className="size-5" />,
       title: "Save from Anywhere",
-      description: "Share extension lets you save content from any app on your device",
+      description:
+        "Share extension lets you save content from any app on your device",
     },
   ];
 
@@ -86,194 +95,190 @@ export default function IOSPage() {
   ];
 
   return (
-    <MaxWidthContainer className="space-y-12">
-      {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="relative">
-            <img
-              src="/images/ios/icon.png"
-              alt="SaveIt.now iOS App Icon"
-              className="size-24 rounded-2xl shadow-lg"
-            />
-            <Badge 
-              variant="outline" 
-              className="absolute -top-2 -right-2 bg-background border-green-500 text-green-700"
-            >
-              New
-            </Badge>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <Typography variant="h1" className="max-w-4xl mx-auto">
-            SaveIt.now for iOS
-          </Typography>
-          <Typography variant="lead" className="max-w-3xl mx-auto text-muted-foreground">
-            The ultimate bookmark manager for your iPhone and iPad. Save anything, anywhere, 
-            with AI-powered organization that works seamlessly across all your devices.
-          </Typography>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg" className="gap-2">
-            <Link href={APP_LINKS.ios} target="_blank" rel="noopener noreferrer">
-              <Download className="size-4" />
-              Download on App Store
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/start">
-              Try Web Version
-            </Link>
-          </Button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="size-4 text-green-500" />
-            <Typography variant="muted">Free to Download</Typography>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="size-4 text-green-500" />
-            <Typography variant="muted">Works Offline</Typography>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="size-4 text-green-500" />
-            <Typography variant="muted">Universal App</Typography>
-          </div>
-        </div>
-      </div>
-
-      {/* Screenshot Gallery */}
-      <div className="space-y-8">
-        <div className="text-center space-y-2">
-          <Typography variant="h2">
-            Experience SaveIt.now on iOS
-          </Typography>
-          <Typography variant="muted" className="max-w-2xl mx-auto">
-            See how SaveIt.now transforms the way you save and organize content on your iPhone and iPad
-          </Typography>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {screenshots.map((screenshot, index) => (
-            <div
-              key={index}
-              className="relative group cursor-pointer transform transition-all duration-300 hover:scale-105"
-            >
-              <div className="relative overflow-hidden rounded-2xl bg-gray-100">
-                <img
-                  src={screenshot.src}
-                  alt={screenshot.alt}
-                  className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              </div>
-              {/* iPhone Frame Effect */}
-              <div className="absolute inset-0 rounded-2xl border-4 border-gray-800 pointer-events-none" />
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full pointer-events-none" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="space-y-8">
-        <div className="text-center space-y-2">
-          <Typography variant="h2">
-            Why Choose SaveIt.now for iOS?
-          </Typography>
-          <Typography variant="muted" className="max-w-2xl mx-auto">
-            Built from the ground up for iOS, with features designed specifically for mobile productivity
-          </Typography>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <Card key={index} className="text-center">
-              <CardHeader>
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-full bg-primary/10 text-primary">
-                    {feature.icon}
-                  </div>
-                </div>
-                <CardTitle className="text-lg">{feature.title}</CardTitle>
-                <CardDescription>{feature.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* How It Works */}
-      <Card>
-        <CardHeader>
-          <CardTitle>How to Get Started</CardTitle>
-          <CardDescription>
-            Start saving and organizing your content in minutes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                1
-              </div>
-              <Typography variant="small" className="font-semibold">
-                Download & Install
-              </Typography>
-              <Typography variant="muted" className="text-sm">
-                Get SaveIt.now from the App Store and sign in with your account
-              </Typography>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                2
-              </div>
-              <Typography variant="small" className="font-semibold">
-                Enable Share Extension
-              </Typography>
-              <Typography variant="muted" className="text-sm">
-                Add SaveIt.now to your share sheet for quick saving from any app
-              </Typography>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                3
-              </div>
-              <Typography variant="small" className="font-semibold">
-                Start Saving
-              </Typography>
-              <Typography variant="muted" className="text-sm">
-                Save links, images, and content from anywhere on your device
-              </Typography>
+    <div className="flex flex-col gap-12 w-full">
+      <MaxWidthContainer className="space-y-12">
+        {/* Hero Section */}
+        <div className="text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="relative">
+              <img
+                src="/images/ios/icon.png"
+                alt="SaveIt.now iOS App Icon"
+                className="size-24 rounded-2xl shadow-lg"
+              />
+              <Badge
+                variant="outline"
+                className="absolute -top-2 -right-2 bg-background border-green-500 text-green-700"
+              >
+                New
+              </Badge>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Download CTA */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="text-center p-8">
           <div className="space-y-4">
-            <Typography variant="h3">
-              Ready to Transform Your Mobile Productivity?
+            <Typography variant="h1" className="max-w-4xl mx-auto">
+              SaveIt.now for iOS
             </Typography>
-            <Typography variant="muted" className="max-w-2xl mx-auto">
-              Join thousands of users who have revolutionized how they save and organize content on iOS
+            <Typography
+              variant="lead"
+              className="max-w-3xl mx-auto text-muted-foreground"
+            >
+              The ultimate bookmark manager for your iPhone and iPad. Save
+              anything, anywhere, with AI-powered organization that works
+              seamlessly across all your devices.
             </Typography>
-            <div className="pt-4">
-              <Button asChild size="lg" className="gap-2">
-                <Link href={APP_LINKS.ios} target="_blank" rel="noopener noreferrer">
-                  <Download className="size-4" />
-                  Download SaveIt.now for iOS
-                </Link>
-              </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg" className="gap-2">
+              <Link
+                href={APP_LINKS.ios}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="size-4" />
+                Download on App Store
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/start">Try Web Version</Link>
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Free to Download</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">Use the Share feature</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <Typography variant="muted">iOS only</Typography>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </MaxWidthContainer>
+        </div>
+
+        {/* Screenshot Gallery */}
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <Typography variant="h2">Experience SaveIt.now on iOS</Typography>
+            <Typography variant="muted" className="max-w-2xl mx-auto">
+              See how SaveIt.now transforms the way you save and organize
+              content on your iPhone and iPad
+            </Typography>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {screenshots.map((screenshot, index) => (
+              <div
+                key={index}
+                className="relative group cursor-pointer transform transition-all"
+              >
+                <div className="relative overflow-hidden rounded-2xl bg-gray-100">
+                  <img
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                </div>
+                {/* iPhone Frame Effect */}
+                <div className="absolute inset-0 rounded-2xl border-4 border-gray-800 pointer-events-none" />
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full pointer-events-none" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <Typography variant="h2">Why Choose SaveIt.now for iOS?</Typography>
+            <Typography variant="muted" className="max-w-2xl mx-auto">
+              Built from the ground up for iOS, with features designed
+              specifically for mobile productivity
+            </Typography>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {features.map((feature, index) => (
+              <Card key={index} className="text-center">
+                <CardHeader>
+                  <div className="flex justify-center mb-4">
+                    <div className="p-3 rounded-full bg-primary/10 text-primary">
+                      {feature.icon}
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* How It Works */}
+        <Card>
+          <CardHeader>
+            <CardTitle>How to Get Started</CardTitle>
+            <CardDescription>
+              Start saving and organizing your content in minutes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                  1
+                </div>
+                <Typography variant="small" className="font-semibold">
+                  Download & Install
+                </Typography>
+                <Typography variant="muted" className="text-sm">
+                  Get SaveIt.now from the App Store and sign in with your
+                  account
+                </Typography>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                  2
+                </div>
+                <Typography variant="small" className="font-semibold">
+                  Enable Share Extension
+                </Typography>
+                <Typography variant="muted" className="text-sm">
+                  Add SaveIt.now to your share sheet for quick saving from any
+                  app
+                </Typography>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                  3
+                </div>
+                <Typography variant="small" className="font-semibold">
+                  Start Saving
+                </Typography>
+                <Typography variant="muted" className="text-sm">
+                  Save links, images, and content from anywhere on your device
+                </Typography>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </MaxWidthContainer>
+
+      {/* SaveIt.now CTA Section */}
+      <SaveItCTA
+        title="Ready to Transform Your Mobile Productivity?"
+        description="Join thousands of users who have revolutionized how they save and organize content on iOS. Download SaveIt.now today and experience seamless content management on your iPhone and iPad."
+        primaryButtonText="Download SaveIt.now for iOS"
+        primaryButtonHref={APP_LINKS.ios}
+      />
+
+      <Footer />
+    </div>
   );
 }
