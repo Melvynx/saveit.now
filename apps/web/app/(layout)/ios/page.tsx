@@ -160,39 +160,36 @@ export default function IOSPage() {
             </div>
           </div>
         </div>
-
-        {/* Screenshot Gallery */}
-        <div className="space-y-8">
-          <div className="text-center space-y-2">
-            <Typography variant="h2">Experience SaveIt.now on iOS</Typography>
-            <Typography variant="muted" className="max-w-2xl mx-auto">
-              See how SaveIt.now transforms the way you save and organize
-              content on your iPhone and iPad
-            </Typography>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {screenshots.map((screenshot, index) => (
-              <div
-                key={index}
-                className="relative group cursor-pointer transform transition-all"
-              >
-                <div className="relative overflow-hidden rounded-2xl bg-gray-100">
-                  <img
-                    src={screenshot.src}
-                    alt={screenshot.alt}
-                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                </div>
-                {/* iPhone Frame Effect */}
-                <div className="absolute inset-0 rounded-2xl border-4 border-gray-800 pointer-events-none" />
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-800 rounded-full pointer-events-none" />
-              </div>
-            ))}
-          </div>
+      </MaxWidthContainer>
+      {/* Screenshot Gallery */}
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <Typography variant="h2">Experience SaveIt.now on iOS</Typography>
+          <Typography variant="muted" className="max-w-2xl mx-auto">
+            See how SaveIt.now transforms the way you save and organize content
+            on your iPhone and iPad
+          </Typography>
         </div>
 
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+          {screenshots.map((screenshot, index) => (
+            <div
+              key={index}
+              className="relative group cursor-pointer transform transition-all"
+            >
+              <div className="relative overflow-hidden">
+                <img
+                  src={screenshot.src}
+                  alt={screenshot.alt}
+                  className="w-full h-auto object-cover transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-300" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <MaxWidthContainer className="space-y-12">
         {/* Features Section */}
         <div className="space-y-8">
           <div className="text-center space-y-2">
