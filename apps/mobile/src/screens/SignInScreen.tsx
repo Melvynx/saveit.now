@@ -26,10 +26,6 @@ export default function SignInScreen() {
     try {
       await sendOTP(email.trim());
       setStep("otp");
-      Alert.alert(
-        "OTP Sent",
-        "Please check your email for the verification code",
-      );
     } catch (error) {
       Alert.alert(
         "Error",
@@ -64,23 +60,17 @@ export default function SignInScreen() {
     setOtp("");
   };
 
-  if (step === "otp") {
-    return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <YStack
-            flex={1}
-            justifyContent="center"
-            padding="$4"
-            gap="$4"
-            backgroundColor="$background"
-          >
+        {step === "otp" ? (
+          <YStack flex={1} justifyContent="center" padding="$4" gap="$4">
             <YStack gap="$2" alignItems="center">
               <H2 textAlign="center">Verify Your Email</H2>
               <Text textAlign="center" color="$gray10">
@@ -100,71 +90,48 @@ export default function SignInScreen() {
               size="$5"
             />
 
+            <Button onPress={handleVerifyOTP} disabled={isLoading} theme="blue">
+              {isLoading ? "Verifying..." : "Verify Code"}
+            </Button>
+
+            <Button variant="outlined" onPress={handleBackToEmail}>
+              Use different email
+            </Button>
+          </YStack>
+        ) : (
+          <YStack flex={1} justifyContent="center" padding="$4" gap="$4">
+            <YStack gap="$2" alignItems="center">
+              <Image
+                source={{ uri: "https://saveit.now/images/logo.png" }}
+                style={{ width: 200, height: 80 }}
+                resizeMode="contain"
+              />
+              <Text textAlign="center" color="$gray10">
+                Enter your email to receive a verification code
+              </Text>
+            </YStack>
+
+            <Input
+              placeholder="Email address"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              size="$5"
+            />
+
             <Button
-              onPress={handleVerifyOTP}
+              onPress={handleSendOTP}
               disabled={isLoading}
               size="$5"
               theme="blue"
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
-            </Button>
-
-            <Button variant="outlined" onPress={handleBackToEmail} size="$4">
-              Use different email
+              {isLoading ? "Sending..." : "Send Verification Code"}
             </Button>
           </YStack>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    );
-  }
-
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <YStack
-          flex={1}
-          justifyContent="center"
-          padding="$4"
-          gap="$4"
-          backgroundColor="$background"
-        >
-          <YStack gap="$2" alignItems="center">
-            <Image
-              source={{ uri: "https://saveit.now/images/logo.png" }}
-              style={{ width: 200, height: 80 }}
-              resizeMode="contain"
-            />
-            <Text textAlign="center" color="$gray10">
-              Enter your email to receive a verification code
-            </Text>
-          </YStack>
-
-          <Input
-            placeholder="Email address"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            size="$5"
-          />
-
-          <Button
-            onPress={handleSendOTP}
-            disabled={isLoading}
-            size="$5"
-            theme="blue"
-          >
-            {isLoading ? "Sending..." : "Send Verification Code"}
-          </Button>
-        </YStack>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

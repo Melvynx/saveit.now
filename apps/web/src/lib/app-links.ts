@@ -7,5 +7,6 @@ export const APP_LINKS = {
   app: "/app",
   chrome: "https://mlv.sh/saveit-chrome",
   firefox: "https://mlv.sh/saveit-firefox",
+  ios: "https://mlv.sh/saveit-ios",
   changelog: "/changelog",
 };

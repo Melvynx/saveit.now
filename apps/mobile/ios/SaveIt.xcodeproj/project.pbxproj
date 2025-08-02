@@ -587,7 +587,7 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@19.1.1_typescript@5._21c0d61eeaf6598f6912bcc35e648eb2/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@19.1.1_typescript@5._f56b94b0f2e0b28a723932fe76a9f612/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -645,7 +645,7 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@19.1.1_typescript@5._21c0d61eeaf6598f6912bcc35e648eb2/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@19.1.1_typescript@5._f56b94b0f2e0b28a723932fe76a9f612/node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;

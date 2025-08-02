@@ -1,4 +1,7 @@
 import { routeClient } from "@/lib/safe-route";
+import { getPostHogClient } from "@/lib/posthog";
+import { getPosthogId } from "@/lib/posthog-id";
+import { ANALYTICS } from "@/lib/analytics";
 import * as cheerio from "cheerio";
 import { 
   extractYoutubeMetadataRequestSchema, 
@@ -67,13 +70,26 @@ function parseISO8601Duration(duration: string): string {
 
 export const POST = routeClient
   .body(extractYoutubeMetadataRequestSchema)
-  .handler(async (_, { body }): Promise<ExtractYoutubeMetadataResponse> => {
+  .handler(async (req, { body }): Promise<ExtractYoutubeMetadataResponse> => {
     const { url } = body;
+    const posthog = getPostHogClient();
+    
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const distinctId = getPosthogId(ip, userAgent);
 
     try {
       // Extract video ID from URL
       const videoId = extractVideoId(url);
       if (!videoId) {
+        posthog.capture({
+          distinctId,
+          event: ANALYTICS.TOOL_USED,
+          properties: {
+            tool_name: "youtube-metadata",
+          },
+        });
+
         return {
           success: false,
           error: "Invalid YouTube URL. Please provide a valid YouTube video URL.",
@@ -94,6 +110,14 @@ export const POST = routeClient
       });
 
       if (!response.ok) {
+        posthog.capture({
+          distinctId,
+          event: ANALYTICS.TOOL_USED,
+          properties: {
+            tool_name: "youtube-metadata",
+          },
+        });
+
         return {
           success: false,
           error: `Failed to fetch YouTube page: ${response.status} ${response.statusText}`,
@@ -163,7 +187,7 @@ export const POST = routeClient
         title = title.slice(0, -10);
       }
 
-      return {
+      const result = {
         success: true,
         data: {
           videoId,
@@ -178,8 +202,31 @@ export const POST = routeClient
           url: `https://www.youtube.com/watch?v=${videoId}`,
         },
       };
+
+      // Track successful usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "youtube-metadata",
+        },
+      });
+
+      await posthog.shutdown();
+      return result;
     } catch (error) {
       console.error("Error extracting YouTube metadata:", error);
+      
+      // Track error
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "youtube-metadata",
+        },
+      });
+
+      await posthog.shutdown();
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to extract YouTube metadata",

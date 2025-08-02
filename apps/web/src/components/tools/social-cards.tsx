@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
 import Image from "next/image";
 
 interface SocialCardsProps {
