@@ -24,7 +24,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Download the iOS application now !",
       },
     ],
-    image: "https://codelynx.mlvcdn.com/images/2025-07-25/dssdkasdl.gif",
+    image: "https://codelynx.mlvcdn.com/images/2025-08-02/saveit-ios.png",
   },
   {
     version: "1.5.0",
