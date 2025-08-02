@@ -1,5 +1,8 @@
 import { SafeRouteError } from "@/lib/errors";
 import { routeClient } from "@/lib/safe-route";
+import { getPostHogClient } from "@/lib/posthog";
+import { getPosthogId } from "@/lib/posthog-id";
+import { ANALYTICS } from "@/lib/analytics";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { extractContentRequestSchema, type ExtractContentResponse } from "./extract-content.types";
@@ -26,19 +29,25 @@ function countParagraphs(text: string): number {
 
 export const POST = routeClient
   .body(extractContentRequestSchema)
-  .handler(async (_, { body }): Promise<ExtractContentResponse> => {
+  .handler(async (req, { body }): Promise<ExtractContentResponse> => {
     const { url } = body;
+    const posthog = getPostHogClient();
+    
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const distinctId = getPosthogId(ip, userAgent);
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      });
 
-    if (!response.ok) {
-      throw new SafeRouteError("Failed to fetch the webpage", 400);
-    }
+      if (!response.ok) {
+        throw new SafeRouteError("Failed to fetch the webpage", 400);
+      }
 
     const html = await response.text();
     const $ = cheerio.load(html);
@@ -130,27 +139,50 @@ export const POST = routeClient
         : `${new URL(url).origin}${ogImageHref}`
       : null;
 
-    return {
-      url,
-      content: {
-        title: title.trim(),
-        plainText,
-        markdown,
-        statistics: {
-          wordCount,
-          charCount,
-          paragraphCount,
-          readingTime,
+      const result = {
+        url,
+        content: {
+          title: title.trim(),
+          plainText,
+          markdown,
+          statistics: {
+            wordCount,
+            charCount,
+            paragraphCount,
+            readingTime,
+          },
         },
-      },
-      metadata: {
-        title: title.trim(),
-        description: description?.trim(),
-        siteName: siteName?.trim(),
-        author: author?.trim(),
-        publishedDate: publishedDate?.trim(),
-        faviconUrl,
-        ogImageUrl: ogImageUrl || undefined,
-      },
-    };
+        metadata: {
+          title: title.trim(),
+          description: description?.trim(),
+          siteName: siteName?.trim(),
+          author: author?.trim(),
+          publishedDate: publishedDate?.trim(),
+          faviconUrl,
+          ogImageUrl: ogImageUrl || undefined,
+        },
+      };
+
+      // Track tool usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-content",
+        },
+      });
+
+      return result;
+    } catch (error) {
+      // Track tool usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-content",
+        },
+      });
+
+      throw error;
+    }
   });

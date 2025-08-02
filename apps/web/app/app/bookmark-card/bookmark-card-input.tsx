@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { PosthogLink } from "@/components/posthog-link";
+import { ANALYTICS } from "@/lib/analytics";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
@@ -89,12 +91,15 @@ export const BookmarkCardInput = () => {
               className="size-8"
             />
           </Link>
-          <Link
+          <PosthogLink
             href={APP_LINKS.ios}
+            event={ANALYTICS.IOS_DOWNLOAD}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-md hover:bg-accent/50 transition-colors p-2"
           >
             <img src="https://svgl.app/library/apple.svg" className="size-8" />
-          </Link>
+          </PosthogLink>
         </div>
       </CardFooter>
     </BookmarkCardContainer>

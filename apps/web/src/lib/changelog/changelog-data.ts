@@ -21,7 +21,7 @@ export const changelogEntries: ChangelogEntry[] = [
     changes: [
       {
         type: "new",
-        text: "Download the iOS application now !",
+        text: "Application for iOS is now available on TestFlight",
       },
     ],
     image: "https://codelynx.mlvcdn.com/images/2025-08-02/saveit-ios.png",

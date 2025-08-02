@@ -1,4 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { PosthogLink } from "@/components/posthog-link";
+import { ANALYTICS } from "@/lib/analytics";
 import { APP_LINKS } from "@/lib/app-links";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -125,12 +129,12 @@ export const LandingHero = () => {
                 />
                 <Typography>Firefox</Typography>
               </Typography>
-              <Typography
-                as={Link}
+              <PosthogLink
                 href={APP_LINKS.ios}
-                variant="small"
+                event={ANALYTICS.IOS_DOWNLOAD}
                 target="_blank"
-                className="flex items-center gap-2 hover:underline"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:underline text-sm text-muted-foreground"
               >
                 <img
                   alt="ios-icon"
@@ -138,7 +142,7 @@ export const LandingHero = () => {
                   className="size-4 fill-white"
                 />
                 <Typography>iOS</Typography>
-              </Typography>
+              </PosthogLink>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { SaveItCTA } from "@/components/tools/saveit-cta";
+import { PosthogLink } from "@/components/posthog-link";
+import { ANALYTICS } from "@/lib/analytics";
 import { Footer } from "@/features/page/footer";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
@@ -14,7 +15,6 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { CheckCircle, Download, Smartphone, Star } from "lucide-react";
-import Link from "next/link";
 
 export const metadata = {
   title: "SaveIt.now - iOS App | Save Anything, Anywhere",
@@ -131,17 +131,18 @@ export default function IOSPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="gap-2">
-              <Link
+              <PosthogLink
                 href={APP_LINKS.ios}
+                event={ANALYTICS.IOS_DOWNLOAD}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <Download className="size-4" />
                 Download on App Store
-              </Link>
+              </PosthogLink>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/start">Try Web Version</Link>
+              <PosthogLink href="/start">Try Web Version</PosthogLink>
             </Button>
           </div>
 
@@ -268,12 +269,62 @@ export default function IOSPage() {
       </MaxWidthContainer>
 
       {/* SaveIt.now CTA Section */}
-      <SaveItCTA
-        title="Ready to Transform Your Mobile Productivity?"
-        description="Join thousands of users who have revolutionized how they save and organize content on iOS. Download SaveIt.now today and experience seamless content management on your iPhone and iPad."
-        primaryButtonText="Download SaveIt.now for iOS"
-        primaryButtonHref={APP_LINKS.ios}
-      />
+      <div className="py-24 sm:py-32">
+        <MaxWidthContainer>
+          <div className="relative isolate overflow-hidden bg-card border px-6 py-24 text-center shadow-2xl sm:rounded-3xl sm:px-16">
+            <Typography
+              variant="h2"
+              className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl"
+            >
+              Ready to Transform Your Mobile Productivity?
+            </Typography>
+            <Typography
+              variant="lead"
+              className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground"
+            >
+              Join thousands of users who have revolutionized how they save and organize content on iOS. Download SaveIt.now today and experience seamless content management on your iPhone and iPad.
+            </Typography>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Button asChild size="lg">
+                <PosthogLink
+                  href={APP_LINKS.ios}
+                  event={ANALYTICS.IOS_DOWNLOAD}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Download SaveIt.now for iOS
+                </PosthogLink>
+              </Button>
+              <PosthogLink
+                href="/start"
+                className="text-sm font-semibold text-foreground hover:text-foreground/80"
+              >
+                Try Web Version
+                <span aria-hidden="true">→</span>
+              </PosthogLink>
+            </div>
+            <svg
+              viewBox="0 0 1024 1024"
+              aria-hidden="true"
+              className="absolute top-1/2 left-1/2 -z-10 size-256 -translate-x-1/2 mask-[radial-gradient(closest-side,white,transparent)]"
+            >
+              <circle
+                r={512}
+                cx={512}
+                cy={512}
+                fill="url(#827591b1-ce8c-4110-b064-7cb85a0b1217)"
+                fillOpacity="0.7"
+              />
+              <defs>
+                <radialGradient id="827591b1-ce8c-4110-b064-7cb85a0b1217">
+                  <stop stopColor="#7775D6" />
+                  <stop offset={1} stopColor="#E935C1" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+        </MaxWidthContainer>
+      </div>
 
       <Footer />
     </div>
