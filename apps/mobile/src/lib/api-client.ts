@@ -15,6 +15,7 @@ interface Bookmark {
   summary?: string;
   type?: string;
   faviconUrl?: string;
+  status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
   tags: Array<{
     tag: {
       id: string;
