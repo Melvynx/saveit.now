@@ -1,4 +1,5 @@
 import { SafeRouteError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import { routeClient } from "@/lib/safe-route";
 import { getPostHogClient } from "@/lib/posthog";
 import { getPosthogId } from "@/lib/posthog-id";
@@ -24,7 +25,7 @@ export const POST = routeClient
         },
       });
 
-      console.log(response);
+      logger.debug("OG image fetch response:", { status: response.status, url });
 
       if (!response.ok) {
         throw new SafeRouteError("Failed to fetch the webpage", 400);

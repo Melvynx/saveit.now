@@ -1,12 +1,12 @@
 import { stripe } from "@better-auth/stripe";
 
 import { BetterAuthOptions } from "better-auth";
+import { logger } from "./logger";
 import { nextCookies } from "better-auth/next-js";
 import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
 import { AUTH_LIMITS } from "./auth-limits";
 import { inngest } from "./inngest/client";
 import { sendEmail } from "./mail/send-email";
-import { resend } from "./resend";
 import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
 
@@ -52,7 +52,7 @@ The SaveIt.now Team`,
           );
         } catch (error) {
           // If customer doesn't exist in Stripe, that's fine - just continue with deletion
-          console.log("Stripe customer not found during user deletion:", error);
+          logger.debug("Stripe customer not found during user deletion:", error);
         }
       },
       afterDelete: async (user) => {

@@ -1,4 +1,5 @@
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
+import { logger } from "../../logger";
 import { embedMany, generateText, tool } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
@@ -196,7 +197,7 @@ export async function processArticleBookmark(
 
       if (result.toolCalls?.[0]?.toolName === "invalid-image") {
         const invalidReason = result.toolCalls[0].args.reason;
-        console.log(`Screenshot invalid for bookmark ${context.bookmarkId}: ${invalidReason}`);
+        logger.debug(`Screenshot invalid for bookmark ${context.bookmarkId}: ${invalidReason}`);
         return { description: null, isInvalid: true, invalidReason };
       }
 
