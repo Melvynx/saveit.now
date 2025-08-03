@@ -33,6 +33,5 @@ export function generateTestUserData() {
   return {
     name: faker.person.fullName(),
     email: getUserEmail(),
-    password: faker.internet.password({ length: 12, memorable: true }),
   };
 }
