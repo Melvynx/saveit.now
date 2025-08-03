@@ -48,18 +48,15 @@ export const ImageWithPlaceholder = ({
     props.src = fallbackImage ?? "";
   }
 
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleError = () => {
     setIsLoading(false);
     setError(true);
-    console.log("error", e);
     if (onError) {
       onError(new Error("Failed to load image"));
     }
   };
 
   const src = error && fallbackImage ? fallbackImage : props.src;
-
-  console.log({ src });
 
   if (!src) {
     return (
@@ -77,7 +74,6 @@ export const ImageWithPlaceholder = ({
     );
   }
 
-  console.log({ isLoading });
   if (!isLoading) {
     return (
       <img
@@ -106,7 +102,6 @@ export const ImageWithPlaceholder = ({
           className,
         )}
         onLoad={() => {
-          console.log("onLoad");
           setIsLoading(false);
         }}
         onError={handleError}
