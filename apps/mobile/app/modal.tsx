@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 
 import { Text, View } from '../components/Themed';
-import { useAuth } from '../src/contexts/AuthContext';
+import { useAuth } from '../src/contexts/auth-context';
 import { apiClient } from '../src/lib/api-client';
 
 export default function AddBookmarkModal() {

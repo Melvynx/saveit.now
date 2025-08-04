@@ -3,7 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";
 import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
-import { useAuth } from "../../src/contexts/AuthContext";
+import { useAuth } from "../../src/contexts/auth-context";
 import { useAppTheme } from "../_layout";
 
 export default function TabTwoScreen() {

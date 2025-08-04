@@ -1,11 +1,12 @@
-import { screen, waitFor } from "@testing-library/react";
-import { useHotkeys } from "react-hotkeys-hook";
 import { useQueryState } from "nuqs";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { parseMention, removeMention } from "../app/app/utils/type-filter-utils";
-import { setup, setupWithoutProviders } from "../test/setup";
+import {
+  parseMention,
+  removeMention,
+} from "../app/app/utils/type-filter-utils";
 
 // Mock the modules
 vi.mock("react-hotkeys-hook");
@@ -24,7 +25,7 @@ describe("Search Input Functionality", () => {
   beforeEach(() => {
     mockSetQuery = vi.fn().mockResolvedValue(new URLSearchParams());
     mockUseHotkeys = vi.fn().mockReturnValue({ current: null });
-    
+
     // Mock useQueryState to return query and setQuery
     vi.mocked(useQueryState).mockReturnValue([
       "", // query

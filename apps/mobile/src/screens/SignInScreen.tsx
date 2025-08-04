@@ -7,14 +7,13 @@ import {
   ScrollView,
 } from "react-native";
 import { Button, H2, Input, Text, YStack } from "tamagui";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth-context";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
-  const [isLoading, setIsLoading] = useState(false);
-  const { sendOTP, verifyOTP } = useAuth();
+  const { sendOTP, verifyOTP, isSendingOTP, isVerifyingOTP } = useAuth();
 
   const handleSendOTP = async () => {
     if (!email.trim()) {
@@ -22,7 +21,6 @@ export default function SignInScreen() {
       return;
     }
 
-    setIsLoading(true);
     try {
       await sendOTP(email.trim());
       setStep("otp");
@@ -35,8 +33,6 @@ export default function SignInScreen() {
         "Error",
         error instanceof Error ? error.message : "Failed to send OTP",
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -46,7 +42,6 @@ export default function SignInScreen() {
       return;
     }
 
-    setIsLoading(true);
     try {
       await verifyOTP(email.trim(), otp.trim());
     } catch (error) {
@@ -54,8 +49,6 @@ export default function SignInScreen() {
         "Verification Failed",
         error instanceof Error ? error.message : "Invalid OTP code",
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -102,11 +95,11 @@ export default function SignInScreen() {
 
             <Button
               onPress={handleVerifyOTP}
-              disabled={isLoading}
+              disabled={isVerifyingOTP}
               size="$5"
               theme="blue"
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
+              {isVerifyingOTP ? "Verifying..." : "Verify Code"}
             </Button>
 
             <Button variant="outlined" onPress={handleBackToEmail} size="$4">
@@ -158,11 +151,11 @@ export default function SignInScreen() {
 
           <Button
             onPress={handleSendOTP}
-            disabled={isLoading}
+            disabled={isSendingOTP}
             size="$5"
             theme="blue"
           >
-            {isLoading ? "Sending..." : "Send Verification Code"}
+            {isSendingOTP ? "Sending..." : "Send Verification Code"}
           </Button>
         </YStack>
       </ScrollView>

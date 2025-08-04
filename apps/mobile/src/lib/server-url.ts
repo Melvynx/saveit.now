@@ -1,12 +1,10 @@
-import Constants from 'expo-constants';
-
 /**
  * This method returns the server URL based on the environment for mobile app.
  */
 export const getServerUrl = () => {
   // Get the API URL from environment variables first
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  
+
   if (apiUrl) {
     return apiUrl;
   }

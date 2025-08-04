@@ -14,7 +14,7 @@ import { useEffect, useState, createContext, useContext } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "../components/useColorScheme";
-import { AuthProvider } from "../src/contexts/AuthContext";
+import { AuthProvider } from "../src/contexts/auth-context";
 import config from "../tamagui.config";
 
 // Theme context for managing theme state across the app
