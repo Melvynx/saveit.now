@@ -4,10 +4,10 @@ import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { LucideIcon, Sparkle, TagIcon } from "lucide-react";
 
-import { BookmarkViewType } from "@/lib/database/get-bookmark";
-import { BookmarkFavicon } from "app/app/bookmark-favicon";
-import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
-import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import type { BookmarkViewType } from "@/lib/database/get-bookmark";
+import { BookmarkFavicon } from "@app/app/bookmark-favicon";
+import { BookmarkNote } from "@app/app/bookmark-page/bookmark-note";
+import { ExternalLinkTracker } from "@app/app/external-link-tracker";
 import { BookmarkPreview } from "./bookmark-preview";
 import { TranscriptViewer } from "./transcript-viewer";
 
@@ -18,6 +18,8 @@ export const BookmarkContentView = ({
   bookmark: BookmarkViewType;
   isPublic?: boolean;
 }) => {
+  const x = bookmark.type?.toLocaleLowerCase();
+
   // Extract transcript data from metadata
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metadata = bookmark.metadata as Record<string, any> | null;
@@ -33,15 +35,37 @@ export const BookmarkContentView = ({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
-              <Typography
-                variant="large"
-                className="line-clamp-1 cursor-pointer hover:underline"
-              >
-                {bookmark.url}
-              </Typography>
-            </ExternalLinkTracker>
-            <Typography variant="muted">{bookmark.title}</Typography>
+            {bookmark.type === "YOUTUBE" ? (
+              <>
+                <ExternalLinkTracker
+                  bookmarkId={bookmark.id}
+                  url={bookmark.url}
+                >
+                  <Typography
+                    variant="large"
+                    className="line-clamp-1 cursor-pointer hover:underline"
+                  >
+                    {bookmark.title}
+                  </Typography>
+                </ExternalLinkTracker>
+                <Typography variant="muted">{bookmark.url}</Typography>
+              </>
+            ) : (
+              <>
+                <ExternalLinkTracker
+                  bookmarkId={bookmark.id}
+                  url={bookmark.url}
+                >
+                  <Typography
+                    variant="large"
+                    className="line-clamp-1 cursor-pointer hover:underline"
+                  >
+                    {bookmark.url}
+                  </Typography>
+                </ExternalLinkTracker>
+                <Typography variant="muted">{bookmark.title}</Typography>
+              </>
+            )}
           </div>
         </div>
         {bookmark.ogImageUrl && (

@@ -3,7 +3,7 @@ import { useLayoutEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Text, View } from '../../components/Themed';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../src/contexts/auth-context';
 import SignInScreen from '../../src/screens/SignInScreen';
 import BookmarksScreen from '../../src/screens/bookmarks-screen';
 

@@ -24,14 +24,17 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
-      "@/app": path.resolve(__dirname, "./app/app"),
+      "@": path.resolve(__dirname, "./src"),
+      "@app": path.resolve(__dirname, "./app"),
       "@/lib": path.resolve(__dirname, "./src/lib"),
       "@/components": path.resolve(__dirname, "./src/components"),
       "@/features": path.resolve(__dirname, "./src/features"),
       "@/hooks": path.resolve(__dirname, "./src/hooks"),
       "@test": path.resolve(__dirname, "./test"),
-      "@workspace/database": path.resolve(__dirname, "../../packages/database/src"),
+      "@workspace/database": path.resolve(
+        __dirname,
+        "../../packages/database/src",
+      ),
       "@workspace/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
   },
