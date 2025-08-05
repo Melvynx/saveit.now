@@ -8,11 +8,11 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuTrigger,
   ContextMenuSeparator,
+  ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
 import { cn } from "@workspace/ui/lib/utils";
-import { Check, CircleAlert, Copy, Trash, Tags } from "lucide-react";
+import { Check, CircleAlert, Copy, Tags, Trash } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useDeleteBookmark } from "../bookmark-page/delete-button";
 import { usePrefetchBookmark } from "../bookmark-page/use-bookmark";
@@ -55,6 +55,7 @@ export const BookmarkCardContainer = ({
     prefetch(bookmark.id);
     onMouseEnter?.();
   };
+
 
   return (
     <>

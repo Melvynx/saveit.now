@@ -26,6 +26,7 @@ export type SearchResult = {
   score: number;
   matchType: "tag" | "vector" | "combined";
   matchedTags?: string[];
+  tags?: { tag: { id: string; name: string; type: string } }[];
   createdAt?: Date;
   metadata?: Prisma.JsonValue;
   openCount?: number;
@@ -246,6 +247,7 @@ export function bookmarkToSearchResult(
     metadata?: Prisma.JsonValue;
     starred?: boolean;
     read?: boolean;
+    tags?: { tag: { id: string; name: string; type: string } }[];
   },
   score: number = 0,
   matchType: "tag" | "vector" | "combined" = "tag",
@@ -266,6 +268,7 @@ export function bookmarkToSearchResult(
     score,
     matchType,
     matchedTags,
+    tags: bookmark.tags,
     createdAt: bookmark.createdAt,
     metadata: cleanMetadata(bookmark.metadata),
     openCount,

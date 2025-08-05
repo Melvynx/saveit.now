@@ -53,7 +53,6 @@ export function BookmarkCardTags({
 
   const userTags = tags.filter((tag) => tag.type === "USER");
   const aiTags = tags.filter((tag) => tag.type === "IA");
-  const allTagNames = tags.map((tag) => tag.name);
 
   const handleTagsChange = (newTagNames: string[]) => {
     if (onTagsUpdate) {
@@ -68,7 +67,7 @@ export function BookmarkCardTags({
       <div className={cn("flex items-center gap-2", className)}>
         <div className="flex-1">
           <TagSelector
-            selectedTags={allTagNames}
+            selectedTags={tags}
             onTagsChange={handleTagsChange}
             placeholder="Select tags..."
             disabled={disabled || isExecuting}

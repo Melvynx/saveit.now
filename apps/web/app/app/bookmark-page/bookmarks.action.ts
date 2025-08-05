@@ -15,6 +15,8 @@ export const updateBookmarkTagsAction = userAction
     }),
   )
   .action(async ({ parsedInput: input, ctx: { user } }) => {
+    console.log("updateBookmarkTagsAction", input);
+
     // 1. Get current bookmark tags
     const bookmark = await prisma.bookmark.findUnique({
       where: {
@@ -38,32 +40,26 @@ export const updateBookmarkTagsAction = userAction
     const tagsToAdd = input.tags.filter((tag) => !currentTags.includes(tag));
     const tagsToRemove = currentTags.filter((tag) => !input.tags.includes(tag));
 
+    console.log({ tagsToAdd, tagsToRemove });
+
     // 3. Process tag changes
     // Remove tags
-    await Promise.all(
-      tagsToRemove.map(async (tagName) => {
-        const tag = await prisma.tag.findUnique({
-          where: {
-            userId_name: { userId: user.id, name: tagName },
-          },
-        });
 
-        if (tag) {
-          await prisma.bookmarkTag.delete({
-            where: {
-              bookmarkId_tagId: {
-                bookmarkId: bookmark.id,
-                tagId: tag.id,
-              },
-            },
-          });
-        }
-      }),
-    );
+    await prisma.bookmarkTag.deleteMany({
+      where: {
+        bookmarkId: bookmark.id,
+        tag: {
+          name: {
+            in: tagsToRemove,
+          },
+        },
+      },
+    });
 
     // Add tags
     await Promise.all(
       tagsToAdd.map(async (tagName) => {
+        console.log("tagName", tagName);
         const tag = await prisma.tag.upsert({
           where: {
             userId_name: { userId: user.id, name: tagName },
@@ -72,6 +68,7 @@ export const updateBookmarkTagsAction = userAction
           update: {},
         });
 
+        console.log("tag", tag);
         await prisma.bookmarkTag.create({
           data: {
             bookmarkId: bookmark.id,
