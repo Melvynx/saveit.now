@@ -51,10 +51,12 @@ export async function searchByDomain({
       starred: true,
       read: true,
       tags: {
-        select: {
+        include: {
           tag: {
             select: {
+              id: true,
               name: true,
+              type: true,
             },
           },
         },
@@ -136,10 +138,12 @@ export async function searchByTags({
       starred: true,
       read: true,
       tags: {
-        select: {
+        include: {
           tag: {
             select: {
+              id: true,
               name: true,
+              type: true,
             },
           },
         },

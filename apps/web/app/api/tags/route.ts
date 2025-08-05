@@ -10,6 +10,8 @@ const TagSchema = z.object({
 export const GET = userRoute.handler(async (req, { ctx }) => {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("q");
+  const cursor = searchParams.get("cursor");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
 
   const tags = await prisma.tag.findMany({
     where: {
@@ -20,14 +22,27 @@ export const GET = userRoute.handler(async (req, { ctx }) => {
           mode: "insensitive",
         },
       }),
+      ...(cursor && {
+        id: {
+          gt: cursor,
+        },
+      }),
     },
     orderBy: {
-      name: "asc",
+      id: "asc",
     },
-    take: 10, // Limit results for performance
+    take: limit + 1, // Take one extra to check if there are more results
   });
 
-  return NextResponse.json(tags);
+  const hasNextPage = tags.length > limit;
+  const results = hasNextPage ? tags.slice(0, limit) : tags;
+  const nextCursor = hasNextPage ? results[results.length - 1]?.id : null;
+
+  return NextResponse.json({
+    tags: results,
+    nextCursor,
+    hasNextPage,
+  });
 });
 
 export const POST = userRoute

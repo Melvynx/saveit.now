@@ -54,6 +54,17 @@ export async function getDefaultBookmarks({
       metadata: true,
       starred: true,
       read: true,
+      tags: {
+        include: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+            },
+          },
+        },
+      },
     },
     orderBy: [
       {
@@ -141,6 +152,17 @@ export async function getBookmarksByType({
       metadata: true,
       starred: true,
       read: true,
+      tags: {
+        include: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+            },
+          },
+        },
+      },
     },
     orderBy: [
       { id: "desc" }, // Use ULID ordering - NEWEST FIRST

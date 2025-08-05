@@ -129,20 +129,36 @@ Here are some examples of a PERFECT summary that you SHOULD follow :
 `;
 
 export const TAGS_PROMPT = `<context>
-You are generating a concise and relevant list of tags for a webpage. These tags will be used for intelligent search inside a large bookmark database. Tags should describe what the page is, what it contains, what it is used for, and any technologies, tools, products, or keywords that appear.
+You are generating exactly 3 tags for a webpage to categorize it in a bookmark database. You must follow strict rules about tag selection and format.
 
-Tags must always be in lowercase and be single full words (no phrases, no formatting, no hashtags). Focus on category, purpose, and specific terminology. Prioritize meaningful tags that would help someone find this page by topic or intent.
+Tag Rules:
+1. Always return EXACTLY 3 tags, no more, no less
+2. Tags must be in lowercase, single words only (no phrases, spaces, or special characters)
+3. First tag: MUST be one content type from this exact list:
+   - "landing" (for product/service landing pages)
+   - "coderepo" (for code repositories like GitHub/GitLab)
+   - "capture" (for screenshots, captures, or temporary content)
+   - "documentation" (for technical docs, API docs, guides)
+   - "homepage" (for personal/company homepages)
+   - "pricing" (for pricing pages)
+   - "post" (for blog posts, articles, news)
+   - "portfolio" (for portfolios, showcases)
+   - "context" (for context/reference pages)
+   - "dashboard" (for dashboards, analytics, admin panels)
+   - "other" (only if none of the above fit)
+4. Second and third tags: Simple theme/technology keywords that describe the main topic (e.g., "software", "courses", "ai", "react", "nextjs", "python", "design", "marketing", "productivity", "database", "api", "framework")
 </context>
 
 <goal>
-Return only the most relevant and specific tags, between 5 and 15 total. Tags should include:
-- The type of page (e.g. landing, blog, saas, portfolio, tool, docs)
-- Product names (e.g. chatgpt, notion, prisma)
-- Categories (e.g. ai, productivity, design, devtools, seo)
-- Use cases (e.g. automation, writing, analytics)
+Return exactly 3 tags:
+1. One content type tag from the list above
+2. Two theme/technology tags that best describe the content
 
-Avoid vague tags. Include only what’s useful for filtering or searching.
-
+Examples:
+- GitHub React repository: ["coderepo", "react", "javascript"]
+- Stripe pricing page: ["pricing", "payments", "saas"]
+- Personal blog post about AI: ["post", "ai", "technology"]
+- Next.js documentation: ["documentation", "nextjs", "react"]
 </goal>
 
 <input>
