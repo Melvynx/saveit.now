@@ -12,7 +12,6 @@ import {
 } from "./bookmark-card-base";
 import { LinkWithQuery } from "./link-with-query";
 import { BookmarkCardData } from "./bookmark.types";
-import { BookmarkCardTags } from "./bookmark-card-tags";
 
 interface BookmarkCardPageProps {
   bookmark: BookmarkCardData;
@@ -61,13 +60,6 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
       <BookmarkCardContent bookmark={bookmark}>
         <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
         <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
-        {bookmark.tags && bookmark.tags.length > 0 && (
-          <BookmarkCardTags
-            bookmarkId={bookmark.id}
-            tags={bookmark.tags.map((t) => t.tag)}
-            className="mt-2"
-          />
-        )}
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );

@@ -75,12 +75,12 @@ export function BookmarkTagDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             <h4 className="text-sm font-medium">Current Tags</h4>
             <div className="flex flex-wrap gap-2">
               {aiTags.length > 0 && (
-                <div className="w-full space-y-1">
+                <div className="w-full flex flex-col gap-1">
                   <p className="text-xs text-muted-foreground">AI Generated</p>
                   <div className="flex flex-wrap gap-1">
                     {aiTags.map((tag) => (
@@ -98,7 +98,7 @@ export function BookmarkTagDialog({
               )}
 
               {userTags.length > 0 && (
-                <div className="w-full space-y-1">
+                <div className="w-full flex flex-col gap-1">
                   <p className="text-xs text-muted-foreground">User Tags</p>
                   <div className="flex flex-wrap gap-1">
                     {userTags.map((tag) => (
@@ -121,7 +121,7 @@ export function BookmarkTagDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <h4 className="text-sm font-medium">Edit Tags</h4>
             <TagSelector
               selectedTags={allTagNames}

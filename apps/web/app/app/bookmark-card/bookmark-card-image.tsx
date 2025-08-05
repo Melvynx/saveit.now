@@ -9,7 +9,6 @@ import {
   BookmarkCardTitle,
 } from "./bookmark-card-base";
 import { BookmarkCardData } from "./bookmark.types";
-import { BookmarkCardTags } from "./bookmark-card-tags";
 
 interface BookmarkCardImageProps {
   bookmark: BookmarkCardData;
@@ -46,13 +45,6 @@ export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
         <BookmarkCardDescription className="text-xs line-clamp-1">
           {bookmark.title || "Image"}
         </BookmarkCardDescription>
-        {bookmark.tags && bookmark.tags.length > 0 && (
-          <BookmarkCardTags
-            bookmarkId={bookmark.id}
-            tags={bookmark.tags.map((t) => t.tag)}
-            className="mt-2"
-          />
-        )}
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );
