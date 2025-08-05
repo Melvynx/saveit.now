@@ -12,6 +12,7 @@ import {
   HEADER_HEIGHT,
 } from "./bookmark-card-base";
 import { BookmarkCardData } from "./bookmark.types";
+import { BookmarkCardTags } from "./bookmark-card-tags";
 
 interface BookmarkCardYouTubeProps {
   bookmark: BookmarkCardData;
@@ -48,6 +49,13 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
           <div className="flex-1">
             <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
             <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
+            {bookmark.tags && bookmark.tags.length > 0 && (
+              <BookmarkCardTags
+                bookmarkId={bookmark.id}
+                tags={bookmark.tags.map((t) => t.tag)}
+                className="mt-2"
+              />
+            )}
           </div>
         </div>
       </BookmarkCardContent>

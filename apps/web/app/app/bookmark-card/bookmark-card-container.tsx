@@ -9,15 +9,24 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@workspace/ui/components/context-menu";
 import { cn } from "@workspace/ui/lib/utils";
-import { Check, CircleAlert, Copy, Trash } from "lucide-react";
-import { ReactNode } from "react";
+import { Check, CircleAlert, Copy, Trash, Tags } from "lucide-react";
+import { ReactNode, useState } from "react";
 import { useDeleteBookmark } from "../bookmark-page/delete-button";
 import { usePrefetchBookmark } from "../bookmark-page/use-bookmark";
+import { BookmarkTagDialog } from "./bookmark-tag-dialog";
+import { BookmarkTag } from "./bookmark.types";
 
 interface BookmarkCardContainerProps {
-  bookmark: { id: string; url: string; status: BookmarkStatus };
+  bookmark: {
+    id: string;
+    url: string;
+    status: BookmarkStatus;
+    title?: string | null;
+    tags?: BookmarkTag[];
+  };
   children: ReactNode;
   className?: string;
   onMouseEnter?: () => void;
@@ -33,6 +42,7 @@ export const BookmarkCardContainer = ({
   ref,
   testId,
 }: BookmarkCardContainerProps) => {
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const prefetch = usePrefetchBookmark();
   const { copyToClipboard, isCopied } = useCopyToClipboard(5000);
   const deleteBookmark = useDeleteBookmark();
@@ -47,50 +57,75 @@ export const BookmarkCardContainer = ({
   };
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <Card
-          ref={ref}
-          className={cn(
-            "group gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
-            className,
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <Card
+            ref={ref}
+            className={cn(
+              "group gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
+              className,
+            )}
+            onMouseEnter={handleMouseEnter}
+            data-testid={testId}
+          >
+            {children}
+          </Card>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          {bookmark.status === "READY" && (
+            <>
+              <ContextMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setTagDialogOpen(true);
+                }}
+              >
+                <Tags className="size-4" />
+                <span>Manage tags</span>
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  deleteBookmarkAction();
+                }}
+              >
+                {isConfirm ? (
+                  <CircleAlert className="size-4" />
+                ) : (
+                  <Trash className="size-4" />
+                )}
+                <span>{isConfirm ? "Are you sure?" : "Delete"}</span>
+              </ContextMenuItem>
+            </>
           )}
-          onMouseEnter={handleMouseEnter}
-          data-testid={testId}
-        >
-          {children}
-        </Card>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        {bookmark.status === "READY" && (
           <ContextMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              deleteBookmarkAction();
+            onClick={() => {
+              copyToClipboard(bookmark.url);
             }}
           >
-            {isConfirm ? (
-              <CircleAlert className="size-4" />
+            {isCopied ? (
+              <Check className="size-4" />
             ) : (
-              <Trash className="size-4" />
+              <Copy className="size-4" />
             )}
-            <span>{isConfirm ? "Are you sure?" : "Delete"}</span>
+            <span>Copy Link</span>
           </ContextMenuItem>
-        )}
-        <ContextMenuItem
-          onClick={() => {
-            copyToClipboard(bookmark.url);
-          }}
-        >
-          {isCopied ? (
-            <Check className="size-4" />
-          ) : (
-            <Copy className="size-4" />
-          )}
-          <span>Copy Link</span>
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      <BookmarkTagDialog
+        open={tagDialogOpen}
+        onOpenChange={setTagDialogOpen}
+        bookmark={{
+          id: bookmark.id,
+          title: bookmark.title || null,
+          tags: bookmark.tags,
+        }}
+      />
+    </>
   );
 };

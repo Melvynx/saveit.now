@@ -53,6 +53,7 @@ export async function getAITags(
         create: {
           name,
           userId,
+          type: "IA",
         },
         update: {},
         select: {
@@ -148,7 +149,7 @@ export async function updateBookmark(params: {
   imageDescription?: string | null;
 }) {
   const finalStatus = params.status || BookmarkStatus.READY;
-  
+
   const bookmarkUpdate = prisma.bookmark.update({
     where: { id: params.bookmarkId },
     data: {
@@ -189,10 +190,10 @@ export async function updateBookmark(params: {
       where: { id: params.bookmarkId },
       select: { inngestRunId: true },
     });
-    
+
     if (currentBookmark?.inngestRunId) {
       await prisma.bookmarkProcessingRun.update({
-        where: { 
+        where: {
           inngestRunId: currentBookmark.inngestRunId,
         },
         data: {

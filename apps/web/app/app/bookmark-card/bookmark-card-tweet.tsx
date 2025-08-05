@@ -8,6 +8,7 @@ import {
 } from "./bookmark-card-base";
 import { LinkWithQuery } from "./link-with-query";
 import { BookmarkCardData } from "./bookmark.types";
+import { BookmarkCardTags } from "./bookmark-card-tags";
 
 interface BookmarkCardTweetProps {
   bookmark: BookmarkCardData;
@@ -34,6 +35,14 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
           <LinkWithQuery to={`/app/b/${bookmark.id}`}>Open</LinkWithQuery>
         </Button>
       </BookmarkCardActions>
+      {bookmark.tags && bookmark.tags.length > 0 && (
+        <div className="p-4 pt-0">
+          <BookmarkCardTags
+            bookmarkId={bookmark.id}
+            tags={bookmark.tags.map((t) => t.tag)}
+          />
+        </div>
+      )}
     </BookmarkCardContainer>
   );
 };

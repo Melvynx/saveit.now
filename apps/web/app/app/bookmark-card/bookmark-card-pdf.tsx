@@ -9,6 +9,7 @@ import {
   BookmarkCardTitle,
 } from "./bookmark-card-base";
 import { BookmarkCardData } from "./bookmark.types";
+import { BookmarkCardTags } from "./bookmark-card-tags";
 
 interface BookmarkCardPDFProps {
   bookmark: BookmarkCardData;
@@ -16,7 +17,10 @@ interface BookmarkCardPDFProps {
 
 export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
   const domainName = new URL(bookmark.url).hostname;
-  const metadata = bookmark.metadata as { pdfUrl?: string; screenshotUrl?: string } | null;
+  const metadata = bookmark.metadata as {
+    pdfUrl?: string;
+    screenshotUrl?: string;
+  } | null;
   const pdfUrl = metadata?.pdfUrl || bookmark.url;
   const screenshotUrl = bookmark.ogImageUrl || metadata?.screenshotUrl;
 
@@ -57,6 +61,13 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
         <BookmarkCardDescription>
           {bookmark.summary || `PDF from ${domainName}`}
         </BookmarkCardDescription>
+        {bookmark.tags && bookmark.tags.length > 0 && (
+          <BookmarkCardTags
+            bookmarkId={bookmark.id}
+            tags={bookmark.tags.map((t) => t.tag)}
+            className="mt-2"
+          />
+        )}
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );

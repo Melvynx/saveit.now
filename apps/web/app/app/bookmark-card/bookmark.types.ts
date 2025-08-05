@@ -1,5 +1,13 @@
 import { BookmarkType, BookmarkStatus } from "@workspace/database";
 
+export type BookmarkTag = {
+  tag: {
+    id: string;
+    name: string;
+    type: "USER" | "IA";
+  };
+};
+
 export type BookmarkCardData = {
   id: string;
   url: string;
@@ -21,4 +29,5 @@ export type BookmarkCardData = {
   preview?: string | null;
   ogDescription?: string | null;
   createdAt?: Date;
+  tags?: BookmarkTag[];
 };
