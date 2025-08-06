@@ -33,8 +33,9 @@ export function BookmarksPage() {
   const router = useRouter();
   const searchInputRef = useRef<MentionFilterInputRef>(null);
   
-  // Feature flag for virtualization - enable for users with many bookmarks
-  const useVirtualization = bookmarks.length > 50;
+  // Feature flag for virtualization - temporarily disabled due to CSS Grid layout issues
+  // TODO: Implement proper grid virtualization that works with auto-fill
+  const useVirtualization = false; // bookmarks.length > 200;
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();

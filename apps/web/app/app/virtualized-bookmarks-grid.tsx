@@ -4,11 +4,7 @@ import { Bookmark } from "@workspace/database";
 import { Badge } from "@workspace/ui/components/badge";
 import { Sparkles } from "lucide-react";
 import { forwardRef, useCallback, useMemo, useRef } from "react";
-import {
-  VirtuosoGrid,
-  VirtuosoGridHandle,
-  GridItemProps,
-} from "react-virtuoso";
+// import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import {
   BookmarkCard,
   BookmarkCardInput,
@@ -49,15 +45,6 @@ const GridContainer = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>
 );
 GridContainer.displayName = "GridContainer";
 
-const ItemWrapper = forwardRef<HTMLDivElement, GridItemProps>(
-  ({ children, ...props }, ref) => (
-    <div ref={ref} {...props} className="w-full">
-      {children}
-    </div>
-  )
-);
-ItemWrapper.displayName = "ItemWrapper";
-
 export function VirtualizedBookmarksGrid({
   bookmarks,
   query,
@@ -65,7 +52,7 @@ export function VirtualizedBookmarksGrid({
   isFetchingNextPage,
   fetchNextPage,
 }: VirtualizedBookmarksGridProps) {
-  const virtuosoRef = useRef<VirtuosoGridHandle>(null);
+  // const virtuosoRef = useRef<VirtuosoHandle>(null);
   
   // Calculate total items including special cards
   const items = useMemo(() => {
@@ -150,18 +137,16 @@ export function VirtualizedBookmarksGrid({
     [items, query, fetchNextPage, hasNextPage, isFetchingNextPage]
   );
   
+  // Fallback to regular grid for now - VirtuosoGrid doesn't work well with CSS Grid auto-fill
   return (
-    <VirtuosoGrid
-      ref={virtuosoRef}
-      totalCount={items.length}
-      components={{
-        List: GridContainer,
-        Item: ItemWrapper,
+    <div
+      className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:w-full place-items-start"
+      style={{
+        // @ts-expect-error CSS Variable not typed
+        "--card-height": "calc(var(--spacing) * 64)",
       }}
-      itemContent={itemContent}
-      overscan={200}
-      style={{ height: "100%", width: "100%" }}
-      useWindowScroll
-    />
+    >
+      {items.map((_, index) => itemContent(index))}
+    </div>
   );
 }
