@@ -52,7 +52,7 @@ export const BookmarkCardContainer = ({
         <Card
           ref={ref}
           className={cn(
-            "group gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)]",
+            "group gap-4 overflow-hidden p-0 h-fit max-h-[var(--card-height)] min-h-[var(--card-height)]",
             className,
           )}
           onMouseEnter={handleMouseEnter}
