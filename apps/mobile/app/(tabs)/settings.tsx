@@ -1,14 +1,58 @@
-import { Book, HelpCircle, LogOut, Moon, Sun, Trash2, User } from "@tamagui/lucide-icons";
+import {
+  Book,
+  HelpCircle,
+  LogOut,
+  Moon,
+  Sun,
+  Trash2,
+  User,
+} from "@tamagui/lucide-icons";
+import { useMutation } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
-import { Alert, Linking } from "react-native";
-import { AlertDialog, Button, Card, Separator, Text, XStack, YStack } from "tamagui";
+import { Alert } from "react-native";
+import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
 import { useAuth } from "../../src/contexts/AuthContext";
+import { authClient } from "../../src/lib/auth-client";
 import { useAppTheme } from "../_layout";
 
 export default function TabTwoScreen() {
   const { user, signOut } = useAuth();
   const { currentTheme, toggleTheme } = useAppTheme();
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const result = await authClient.deleteUser({
+        callbackURL: "/goodbye",
+      });
+      if (result.data) {
+        return result.data;
+      }
+      throw new Error(result.error?.message || "Something went wrong");
+    },
+    onSuccess: () => {
+      Alert.alert(
+        "Delete Account",
+        "We've sent you an email with a confirmation link. Click on the link in your email to permanently delete your account. You will be signed out now.",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              try {
+                // await signOut();
+              } catch {
+                Alert.alert("Error", "Failed to sign out");
+              }
+            },
+          },
+        ],
+      );
+    },
+    onError: (error: Error) => {
+      console.error("Failed to delete account:", error);
+      Alert.alert("Error", `Failed to delete account: ${error.message}`);
+    },
+  });
 
   const openDocumentation = async () => {
     await WebBrowser.openBrowserAsync("https://saveit.now/docs");
@@ -33,14 +77,6 @@ export default function TabTwoScreen() {
         },
       },
     ]);
-  };
-
-  const handleDeleteAccountSteps = async () => {
-    try {
-      await signOut();
-    } catch {
-      Alert.alert("Error", "Failed to sign out");
-    }
   };
 
   if (!user) {
@@ -157,110 +193,38 @@ export default function TabTwoScreen() {
           </XStack>
         </Button>
 
-        <AlertDialog>
-          <AlertDialog.Trigger asChild>
-            <Button
-              size="$4"
-              backgroundColor="$backgroundTransparent"
-              borderWidth={1}
-              borderColor="$red8"
-              justifyContent="flex-start"
-            >
-              <XStack alignItems="center" gap="$3">
-                <Trash2 size={20} color="$red10" />
-                <Text fontSize="$4" color="$red10">
-                  Delete Account
-                </Text>
-              </XStack>
-            </Button>
-          </AlertDialog.Trigger>
-
-          <AlertDialog.Portal>
-            <AlertDialog.Overlay
-              key="overlay"
-              animation="quick"
-              opacity={0.5}
-              enterStyle={{ opacity: 0 }}
-              exitStyle={{ opacity: 0 }}
-            />
-            <AlertDialog.Content
-              bordered
-              elevate
-              key="content"
-              animation={[
-                "quick",
+        <Button
+          size="$4"
+          backgroundColor="$backgroundTransparent"
+          borderWidth={1}
+          borderColor="$red8"
+          justifyContent="flex-start"
+          onPress={() => {
+            Alert.alert(
+              "Delete Account",
+              "Are you sure you want to delete your account? This action cannot be undone.\n\nWe will send you an email with a confirmation link that you must click to permanently delete your account.",
+              [
+                { text: "Cancel", style: "cancel" },
                 {
-                  opacity: {
-                    overshootClamping: true,
-                  },
+                  text: "Send Email",
+                  style: "destructive",
+                  onPress: () => deleteAccountMutation.mutate(),
                 },
-              ]}
-              enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-              exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-              x={0}
-              scale={1}
-              opacity={1}
-              y={0}
-            >
-              <YStack gap="$3">
-                <AlertDialog.Title fontSize="$6" fontWeight="bold">
-                  Delete Account
-                </AlertDialog.Title>
-                <AlertDialog.Description fontSize="$4" color="$gray10" lineHeight="$5">
-                  To delete your account, please follow these steps:
-                </AlertDialog.Description>
-                
-                <YStack gap="$3" marginVertical="$2">
-                  <XStack gap="$2" alignItems="flex-start">
-                    <Text fontSize="$4" fontWeight="bold" color="$color" minWidth={20}>1.</Text>
-                    <Text fontSize="$4" color="$color" flex={1}>
-                      Go to{" "}
-                      <Text 
-                        fontSize="$4" 
-                        color="$blue10" 
-                        textDecorationLine="underline"
-                        onPress={() => Linking.openURL("https://saveit.now/signin?redirectUrl=https://saveit.now/account")}
-                      >
-                        https://saveit.now/signin?redirectUrl=https://saveit.now/account
-                      </Text>
-                    </Text>
-                  </XStack>
-                  
-                  <XStack gap="$2" alignItems="flex-start">
-                    <Text fontSize="$4" fontWeight="bold" color="$color" minWidth={20}>2.</Text>
-                    <Text fontSize="$4" color="$color" flex={1}>
-                      Click on the delete account button
-                    </Text>
-                  </XStack>
-                  
-                  <XStack gap="$2" alignItems="flex-start">
-                    <Text fontSize="$4" fontWeight="bold" color="$color" minWidth={20}>3.</Text>
-                    <Text fontSize="$4" color="$color" flex={1}>
-                      Click on the link in your email to confirm
-                    </Text>
-                  </XStack>
-                </YStack>
-
-                <Text fontSize="$3" color="$gray10" fontStyle="italic" marginTop="$2">
-                  Then your account will be deleted. The app will show an unlogged state after you follow these steps.
-                </Text>
-
-                <XStack gap="$3" justifyContent="flex-end" marginTop="$4">
-                  <AlertDialog.Cancel asChild>
-                    <Button size="$3" variant="outlined">
-                      <Text>Cancel</Text>
-                    </Button>
-                  </AlertDialog.Cancel>
-                  <AlertDialog.Action asChild>
-                    <Button theme="red" size="$3" onPress={handleDeleteAccountSteps}>
-                      <Text color="white">Got it</Text>
-                    </Button>
-                  </AlertDialog.Action>
-                </XStack>
-              </YStack>
-            </AlertDialog.Content>
-          </AlertDialog.Portal>
-        </AlertDialog>
+              ],
+            );
+          }}
+          opacity={deleteAccountMutation.isPending ? 0.5 : 1}
+          disabled={deleteAccountMutation.isPending}
+        >
+          <XStack alignItems="center" gap="$3">
+            <Trash2 size={20} color="$red10" />
+            <Text fontSize="$4" color="$red10">
+              {deleteAccountMutation.isPending
+                ? "Deleting..."
+                : "Delete Account"}
+            </Text>
+          </XStack>
+        </Button>
       </YStack>
 
       <Button
