@@ -54,6 +54,7 @@
     "inngest": "^3.36.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.475.0",
+    "masonic": "^4.1.0",
     "mime-types": "^3.0.1",
     "motion": "^12.12.1",
     "nanoid": "^5.1.5",

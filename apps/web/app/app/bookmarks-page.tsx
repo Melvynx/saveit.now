@@ -18,7 +18,7 @@ import { MentionFilterInputRef } from "./components/type-filter-input";
 import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
-import { VirtualizedBookmarksGrid } from "./virtualized-bookmarks-grid";
+import { MasonicBookmarksGrid } from "./masonic-bookmarks-grid";
 
 export function BookmarksPage() {
   const {
@@ -33,9 +33,9 @@ export function BookmarksPage() {
   const router = useRouter();
   const searchInputRef = useRef<MentionFilterInputRef>(null);
   
-  // Feature flag for virtualization - temporarily disabled due to CSS Grid layout issues
-  // TODO: Implement proper grid virtualization that works with auto-fill
-  const useVirtualization = false; // bookmarks.length > 200;
+  // Feature flag for virtualization with Masonic - THE ULTIMATE SOLUTION!
+  // Masonic handles responsive columns automatically with O(log n + m) performance
+  const useVirtualization = bookmarks.length > 20; // Lower threshold for better UX
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -81,7 +81,7 @@ export function BookmarksPage() {
           ))}
         </div>
       ) : useVirtualization ? (
-        <VirtualizedBookmarksGrid
+        <MasonicBookmarksGrid
           bookmarks={bookmarks}
           query={query}
           hasNextPage={hasNextPage}
