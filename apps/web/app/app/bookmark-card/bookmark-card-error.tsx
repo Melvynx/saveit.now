@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { Bookmark } from "@workspace/database";
 import { Input } from "@workspace/ui/components/input";
 import { AlertCircle, Trash2 } from "lucide-react";
@@ -21,7 +20,7 @@ interface BookmarkCardErrorProps {
   bookmark: Bookmark;
 }
 
-const BookmarkCardErrorComponent = ({ bookmark }: BookmarkCardErrorProps) => {
+export function BookmarkCardError({ bookmark }: BookmarkCardErrorProps) {
   const metadata = bookmark.metadata as { error: string };
 
   return (
@@ -57,6 +56,4 @@ const BookmarkCardErrorComponent = ({ bookmark }: BookmarkCardErrorProps) => {
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );
-};
-
-export const BookmarkCardError = memo(BookmarkCardErrorComponent);
+}

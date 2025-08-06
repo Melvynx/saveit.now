@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Tweet } from "react-tweet";
 import {
@@ -14,7 +13,7 @@ interface BookmarkCardTweetProps {
   bookmark: BookmarkCardData;
 }
 
-const BookmarkCardTweetComponent = ({ bookmark }: BookmarkCardTweetProps) => {
+export function BookmarkCardTweet({ bookmark }: BookmarkCardTweetProps) {
   const metadata = bookmark.metadata as { tweetId: string };
 
   return (
@@ -37,6 +36,4 @@ const BookmarkCardTweetComponent = ({ bookmark }: BookmarkCardTweetProps) => {
       </BookmarkCardActions>
     </BookmarkCardContainer>
   );
-};
-
-export const BookmarkCardTweet = memo(BookmarkCardTweetComponent);
+}

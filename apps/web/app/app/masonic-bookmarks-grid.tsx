@@ -83,7 +83,7 @@ export function MasonicBookmarksGrid({
     switch (item.type) {
       case "input":
         return (
-          <div style={{ width }}>
+          <div style={{ width, height: 288, overflow: 'hidden' }}> {/* Fixed height like original */}
             <BookmarkCardInput />
           </div>
         );
@@ -94,7 +94,7 @@ export function MasonicBookmarksGrid({
         
         if (query && originalIndex === 0) {
           return (
-            <div style={{ width }} className="relative">
+            <div style={{ width, height: 288, overflow: 'hidden' }} className="relative"> {/* Fixed height */}
               <Badge
                 variant="outline"
                 className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
@@ -108,7 +108,7 @@ export function MasonicBookmarksGrid({
         }
         
         return (
-          <div style={{ width }}>
+          <div style={{ width, height: 288, overflow: 'hidden' }}> {/* Fixed height */}
             <BookmarkCard bookmark={bookmark} />
           </div>
         );
@@ -116,21 +116,21 @@ export function MasonicBookmarksGrid({
       
       case "pricing":
         return (
-          <div style={{ width }}>
+          <div style={{ width, height: 288, overflow: 'hidden' }}> {/* Fixed height */}
             <BookmarkCardPricing />
           </div>
         );
         
       case "more-results":
         return (
-          <div style={{ width }}>
+          <div style={{ width, height: 288, overflow: 'hidden' }}> {/* Fixed height */}
             <MoreResultsButton />
           </div>
         );
         
       case "load-more":
         return (
-          <div style={{ width }}>
+          <div style={{ width, height: 288, overflow: 'hidden' }}> {/* Fixed height */}
             <BookmarkCardLoadMore
               loadNextPage={fetchNextPage}
               hasNextPage={hasNextPage}
@@ -152,7 +152,7 @@ export function MasonicBookmarksGrid({
         columnWidth={320} // 20rem = 320px (same as minmax(20rem,1fr))
         columnGutter={16} // gap-4 = 1rem = 16px
         rowGutter={24} // gap-6 = 1.5rem = 24px (lg:gap-6)
-        itemHeightEstimate={300} // Estimated card height
+        itemHeightEstimate={288} // Fixed card height = 18rem = 288px (same as original)
         className="w-full"
       />
     </div>

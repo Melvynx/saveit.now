@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { Bookmark } from "@workspace/database";
 
 import { LoadingButton } from "@/features/form/loading-button";
@@ -27,7 +26,7 @@ interface BookmarkCardPendingProps {
   bookmark: Bookmark;
 }
 
-const BookmarkCardPendingComponent = ({ bookmark }: BookmarkCardPendingProps) => {
+export function BookmarkCardPending({ bookmark }: BookmarkCardPendingProps) {
   const domainName = new URL(bookmark.url).hostname;
   const token = useBookmarkToken(bookmark.id);
   const pageMetadata = useBookmarkMetadata(bookmark.id);
@@ -61,9 +60,7 @@ const BookmarkCardPendingComponent = ({ bookmark }: BookmarkCardPendingProps) =>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );
-};
-
-export const BookmarkCardPending = memo(BookmarkCardPendingComponent);
+}
 
 export const DeleteButtonAction = ({
   bookmarkId,
