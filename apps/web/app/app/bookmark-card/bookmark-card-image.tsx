@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -14,7 +15,7 @@ interface BookmarkCardImageProps {
   bookmark: BookmarkCardData;
 }
 
-export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
+const BookmarkCardImageComponent = ({ bookmark }: BookmarkCardImageProps) => {
   const domainName = new URL(bookmark.url).hostname;
 
   return (
@@ -49,3 +50,5 @@ export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
     </BookmarkCardContainer>
   );
 };
+
+export const BookmarkCardImage = memo(BookmarkCardImageComponent);

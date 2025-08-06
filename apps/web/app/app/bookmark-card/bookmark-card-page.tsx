@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 
 import {
@@ -17,7 +18,7 @@ interface BookmarkCardPageProps {
   bookmark: BookmarkCardData;
 }
 
-export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
+const BookmarkCardPageComponent = ({ bookmark }: BookmarkCardPageProps) => {
   const domainName = new URL(bookmark.url).hostname;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,3 +65,5 @@ export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
     </BookmarkCardContainer>
   );
 };
+
+export const BookmarkCardPage = memo(BookmarkCardPageComponent);
