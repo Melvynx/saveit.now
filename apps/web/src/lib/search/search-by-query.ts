@@ -243,6 +243,8 @@ export async function searchByVector({
       faviconUrl: string | null;
       distance: number;
       tagNames?: string;
+      tagIds?: string;
+      tagTypes?: string;
       createdAt: Date;
       metadata?: Prisma.JsonValue;
       starred?: boolean;
@@ -282,7 +284,9 @@ export async function searchByVector({
     )
     SELECT 
       d.*,
-      string_agg(t.name, ',') as "tagNames"
+      string_agg(t.name, ',') as "tagNames",
+      string_agg(t.id, ',') as "tagIds",
+      string_agg(t.type, ',') as "tagTypes"
     FROM distances d
     LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
     LEFT JOIN "Tag" t ON bt."tagId" = t.id
@@ -310,15 +314,41 @@ export async function searchByVector({
 
   return bookmarks.map((bookmark) => {
     const baseScore = Math.max(0, 100 * (1 - bookmark.distance));
-    const bookmarkTags = bookmark.tagNames ? bookmark.tagNames.split(",") : [];
-    const matchedTags = bookmarkTags.filter((tag) => tags.includes(tag));
+    const bookmarkTagNames = bookmark.tagNames ? bookmark.tagNames.split(",") : [];
+    const matchedTags = bookmarkTagNames.filter((tag) => tags.includes(tag));
 
     // Apply open frequency boost
     const openCount = openCounts.get(bookmark.id) || 0;
     const score = applyOpenFrequencyBoost(baseScore, openCount);
 
+    // Reconstruct tags structure from aggregated data
+    const bookmarkTags: { tag: { id: string; name: string; type: string } }[] = [];
+    if (bookmark.tagNames && bookmark.tagIds && bookmark.tagTypes) {
+      const tagNames = bookmark.tagNames.split(",");
+      const tagIds = bookmark.tagIds.split(",");
+      const tagTypes = bookmark.tagTypes.split(",");
+      
+      for (let i = 0; i < tagNames.length; i++) {
+        if (tagNames[i] && tagIds[i] && tagTypes[i]) {
+          bookmarkTags.push({
+            tag: {
+              id: tagIds[i]!,
+              name: tagNames[i]!,
+              type: tagTypes[i]!,
+            },
+          });
+        }
+      }
+    }
+
+    // Create bookmark object with complete tag structure
+    const bookmarkWithTags = {
+      ...bookmark,
+      tags: bookmarkTags,
+    };
+
     return bookmarkToSearchResult(
-      bookmark,
+      bookmarkWithTags,
       score,
       "vector",
       matchedTags.length > 0 ? matchedTags : undefined,
