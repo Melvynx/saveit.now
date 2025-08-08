@@ -13,7 +13,7 @@ import {
 } from "@workspace/ui/components/context-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import { Check, CircleAlert, Copy, Tags, Trash } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, memo } from "react";
 import { useDeleteBookmark } from "../bookmark-page/delete-button";
 import { usePrefetchBookmark } from "../bookmark-page/use-bookmark";
 import { BookmarkTagDialog } from "./bookmark-tag-dialog";
@@ -34,7 +34,7 @@ interface BookmarkCardContainerProps {
   testId?: string;
 }
 
-export const BookmarkCardContainer = ({
+const BookmarkCardContainerComponent = ({
   bookmark,
   children,
   className = "",
@@ -130,3 +130,17 @@ export const BookmarkCardContainer = ({
     </>
   );
 };
+
+// Memoize the container component for better virtualization performance
+export const BookmarkCardContainer = memo(BookmarkCardContainerComponent, (prevProps, nextProps) => {
+  // Deep comparison for bookmark object since it contains nested properties
+  return (
+    prevProps.bookmark.id === nextProps.bookmark.id &&
+    prevProps.bookmark.url === nextProps.bookmark.url &&
+    prevProps.bookmark.status === nextProps.bookmark.status &&
+    prevProps.bookmark.title === nextProps.bookmark.title &&
+    JSON.stringify(prevProps.bookmark.tags) === JSON.stringify(nextProps.bookmark.tags) &&
+    prevProps.className === nextProps.className &&
+    prevProps.testId === nextProps.testId
+  );
+});

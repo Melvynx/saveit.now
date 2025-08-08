@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -14,7 +15,7 @@ interface BookmarkCardPDFProps {
   bookmark: BookmarkCardData;
 }
 
-export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
+const BookmarkCardPDFComponent = ({ bookmark }: BookmarkCardPDFProps) => {
   const domainName = new URL(bookmark.url).hostname;
   const metadata = bookmark.metadata as {
     pdfUrl?: string;
@@ -64,3 +65,6 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
     </BookmarkCardContainer>
   );
 };
+
+// Memoize for better virtualization performance
+export const BookmarkCardPDF = memo(BookmarkCardPDFComponent);
