@@ -1,5 +1,6 @@
 import { AlertExtensions } from "@/features/extensions/alert-extensions";
 import { useSession } from "@/lib/auth-client";
+import { env } from "@/lib/env";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Sparkles } from "lucide-react";
@@ -14,6 +15,7 @@ import {
   BookmarkCardPricing,
 } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
+import { VirtualizedBookmarksGrid } from "./components/virtualized-bookmarks-grid";
 import { MentionFilterInputRef } from "./components/type-filter-input";
 import { MoreResultsButton } from "./more-results-button";
 import { SearchInput } from "./search-input";
@@ -31,6 +33,9 @@ export function BookmarksPage() {
   const session = useSession();
   const router = useRouter();
   const searchInputRef = useRef<MentionFilterInputRef>(null);
+
+  // Feature flag for virtualization
+  const isVirtualizationEnabled = env.NEXT_PUBLIC_ENABLE_VIRTUALIZATION;
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -59,56 +64,68 @@ export function BookmarksPage() {
 
       <BookmarkHeader />
       <SearchInput ref={searchInputRef} />
-      <div
-        className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:w-full place-items-start"
-        style={{
-          // @ts-expect-error CSS Variable not typed
-          "--card-height": "calc(var(--spacing) * 64)",
-        }}
-      >
-        {isPending ? (
-          <>
-            {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
-              />
-            ))}
-          </>
-        ) : (
-          <>
-            {!query && <BookmarkCardInput />}
+      
+      {isVirtualizationEnabled ? (
+        <VirtualizedBookmarksGrid
+          bookmarks={bookmarks}
+          query={query}
+          isPending={isPending}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+        />
+      ) : (
+        <div
+          className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:w-full place-items-start"
+          style={{
+            // @ts-expect-error CSS Variable not typed
+            "--card-height": "calc(var(--spacing) * 64)",
+          }}
+        >
+          {isPending ? (
+            <>
+              {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
+                />
+              ))}
+            </>
+          ) : (
+            <>
+              {!query && <BookmarkCardInput />}
 
-            {bookmarks.map((bookmark, i) => {
-              if (query && i === 0) {
-                return (
-                  <div className="relative" key={bookmark.id}>
-                    <Badge
-                      variant="outline"
-                      className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
-                    >
-                      <Sparkles className="size-4 text-primary" />
-                      Best match
-                    </Badge>
-                    <BookmarkCard bookmark={bookmark} key={bookmark.id} />
-                  </div>
-                );
-              }
+              {bookmarks.map((bookmark, i) => {
+                if (query && i === 0) {
+                  return (
+                    <div className="relative" key={bookmark.id}>
+                      <Badge
+                        variant="outline"
+                        className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
+                      >
+                        <Sparkles className="size-4 text-primary" />
+                        Best match
+                      </Badge>
+                      <BookmarkCard bookmark={bookmark} key={bookmark.id} />
+                    </div>
+                  );
+                }
 
-              return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
-            })}
-            {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
-            {query && <MoreResultsButton />}
-            {bookmarks.length > 10 && (
-              <BookmarkCardLoadMore
-                loadNextPage={() => fetchNextPage()}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-              />
-            )}
-          </>
-        )}
-      </div>
+                return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
+              })}
+              {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
+              {query && <MoreResultsButton />}
+              {bookmarks.length > 10 && (
+                <BookmarkCardLoadMore
+                  loadNextPage={() => fetchNextPage()}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                />
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
