@@ -29,10 +29,6 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().min(1).default("re_placeholder_for_ci"),
     CI: z.coerce.boolean().optional().default(false),
   },
-  client: {
-    NEXT_PUBLIC_ENABLE_VIRTUALIZATION: z.coerce.boolean().default(false),
-  },
-  experimental__runtimeEnv: {
-    NEXT_PUBLIC_ENABLE_VIRTUALIZATION: process.env.NEXT_PUBLIC_ENABLE_VIRTUALIZATION,
-  },
+  client: {},
+  experimental__runtimeEnv: {},
 });

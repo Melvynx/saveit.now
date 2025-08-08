@@ -216,12 +216,9 @@ export function VirtualizedBookmarksGrid({
 
   return (
     <Virtuoso
+      useWindowScroll
       totalCount={gridRows.length}
       itemContent={RowComponent}
-      style={{ 
-        height: '100vh', // This will be overridden by the parent container
-        width: '100%',
-      }}
       overscan={2} // Render 2 rows outside viewport for smooth scrolling
       endReached={() => {
         // Trigger fetchNextPage when reaching the end, similar to the existing infinite scroll
