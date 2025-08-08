@@ -1,6 +1,7 @@
 "use client";
 
 import { Bookmark } from "@workspace/database";
+import { memo } from "react";
 
 import { BookmarkCardError } from "./bookmark-card-error";
 import { BookmarkCardImage } from "./bookmark-card-image";
@@ -14,7 +15,7 @@ interface BookmarkCardProps {
   bookmark: Bookmark;
 }
 
-export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
+const BookmarkCardComponent = ({ bookmark }: BookmarkCardProps) => {
   // Handle error state
   if (bookmark.status === "ERROR") {
     return <BookmarkCardError bookmark={bookmark} />;
@@ -47,6 +48,8 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
       return <BookmarkCardPage bookmark={bookmark} />;
   }
 };
+
+export const BookmarkCard = memo(BookmarkCardComponent);
 
 // Re-export individual components for direct usage if needed
 export { BookmarkCardBase } from "./bookmark-card-base";
