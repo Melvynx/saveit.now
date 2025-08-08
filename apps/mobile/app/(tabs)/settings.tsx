@@ -10,9 +10,8 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";
-import { Button, Card, Input, Separator, Text, XStack, YStack } from "tamagui";
+import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
-import { useState } from "react";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { authClient } from "../../src/lib/auth-client";
 import { useAppTheme } from "../_layout";
@@ -245,44 +244,3 @@ export default function TabTwoScreen() {
     </YStack>
   );
 }
-
-const UpdateNameForm = () => {
-  const [name, setName] = useState("");
-
-  const updateNameMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const result = await authClient.updateUser({ name });
-      if (result.data) {
-        return result.data;
-      }
-      throw new Error(result.error?.message || "Failed to update name");
-    },
-    onSuccess: () => {
-      Alert.alert("Success", "Your name has been updated successfully.");
-    },
-    onError: (error: Error) => {
-      console.error("Failed to update name:", error);
-      Alert.alert("Error", `Failed to update name: ${error.message}`);
-    },
-  });
-
-  return (
-    <YStack padding="$4" gap="$4">
-      <Text fontSize="$5" fontWeight="bold" color="$color">
-        Update Name
-      </Text>
-      <Input
-        placeholder="Enter your new name"
-        value={name}
-        onChangeText={setName}
-      />
-      <Button
-        onPress={() => updateNameMutation.mutate(name)}
-        disabled={updateNameMutation.isPending}
-        opacity={updateNameMutation.isPending ? 0.5 : 1}
-      >
-        {updateNameMutation.isPending ? "Updating..." : "Update Name"}
-      </Button>
-    </YStack>
-  );
-};
