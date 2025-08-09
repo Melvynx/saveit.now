@@ -16,7 +16,10 @@ interface BookmarkCardPDFProps {
 
 export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
   const domainName = new URL(bookmark.url).hostname;
-  const metadata = bookmark.metadata as { pdfUrl?: string; screenshotUrl?: string } | null;
+  const metadata = bookmark.metadata as {
+    pdfUrl?: string;
+    screenshotUrl?: string;
+  } | null;
   const pdfUrl = metadata?.pdfUrl || bookmark.url;
   const screenshotUrl = bookmark.ogImageUrl || metadata?.screenshotUrl;
 

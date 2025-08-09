@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { TagType } from "@workspace/database";
 
 type Tag = {
   id: string;
   name: string;
+  type: TagType;
 };
 
 async function getTags(): Promise<Tag[]> {

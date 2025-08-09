@@ -1,6 +1,8 @@
 "use client";
 
 import { AnimateChangeInHeight } from "@/components/animate-change-in-height";
+import { useDebounceFn } from "@/hooks/use-debounce-fn";
+import { TagType } from "@workspace/database";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Checkbox } from "@workspace/ui/components/checkbox";
@@ -20,61 +22,90 @@ import {
 } from "@workspace/ui/components/popover";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
-import { Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { useCreateTagMutation, useTags } from "./use-tags";
+import { Bot, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useCreateTagMutation } from "./use-tags";
+import { useInfiniteTags, type Tag as InfiniteTag } from "../../../app/app/hooks/use-tags";
 
-type Tag = {
-  id: string;
-  name: string;
-};
 
 type TagSelectorProps = {
-  selectedTags?: string[];
+  selectedTags?: { name: string; type: TagType; id: string }[];
   onTagsChange: (tags: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  showLimits?: number;
 };
-
-const VISIBLE_TAGS_COUNT = 3;
 
 export function TagSelector({
   selectedTags = [],
   onTagsChange,
   disabled,
   placeholder = "Add tags...",
+  showLimits,
 }: TagSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const commandInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: allTags = [] } = useTags();
+  const debouncedSetQuery = useDebounceFn((value: string) => {
+    setDebouncedQuery(value);
+  }, 300);
+
+  useEffect(() => {
+    debouncedSetQuery(searchQuery);
+  }, [searchQuery, debouncedSetQuery]);
+
+  const {
+    allTags,
+    filteredTags: availableTags,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: tagsLoading,
+  } = useInfiniteTags(debouncedQuery);
   const createTagMutation = useCreateTagMutation({});
 
   // Filter out duplicates (in case the same tag appears in multiple pages)
   const uniqueTags = Array.from(
-    new Map(allTags.map((tag: Tag) => [tag.id, tag])).values(),
+    new Map(allTags.map((tag: InfiniteTag) => [tag.id, tag])).values(),
   );
 
   const selectedTagObjects = uniqueTags.filter((tag) =>
-    selectedTags.includes(tag.name),
+    selectedTags.some((selectedTag) =>
+      typeof selectedTag === "string"
+        ? selectedTag === tag.name
+        : selectedTag.name === tag.name,
+    ),
   );
 
-  const nonSelectedTagObjects = uniqueTags.filter(
-    (tag) => !selectedTags.includes(tag.name),
-  );
-
-  const filteredNonSelectedTags = searchQuery
-    ? nonSelectedTagObjects.filter((tag) =>
-        tag.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : nonSelectedTagObjects;
+  const filteredNonSelectedTags = availableTags;
 
   const handleTagSelect = (tagName: string) => {
-    const newTags = selectedTags.includes(tagName)
-      ? selectedTags.filter((t) => t !== tagName)
-      : [...selectedTags, tagName];
-    onTagsChange(newTags);
+    console.log("handleTagSelect called with:", tagName);
+    console.log("Current selectedTags:", selectedTags);
+
+    const isSelected = selectedTags.some((selectedTag) =>
+      typeof selectedTag === "string"
+        ? selectedTag === tagName
+        : selectedTag.name === tagName,
+    );
+
+    console.log("isSelected:", isSelected);
+
+    const newTagNames = isSelected
+      ? selectedTags
+          .filter((t) =>
+            typeof t === "string" ? t !== tagName : t.name !== tagName,
+          )
+          .map((t) => (typeof t === "string" ? t : t.name))
+      : [
+          ...selectedTags.map((t) => (typeof t === "string" ? t : t.name)),
+          tagName,
+        ];
+
+    console.log("newTagNames:", newTagNames);
+    onTagsChange(newTagNames);
   };
 
   const handleCreateTag = async () => {
@@ -85,8 +116,11 @@ export function TagSelector({
       await createTagMutation.mutateAsync(searchQuery.trim());
 
       // Add it to selected tags
-      const newTags = [...selectedTags, searchQuery.trim()];
-      onTagsChange(newTags);
+      const newTagNames = [
+        ...selectedTags.map((t) => (typeof t === "string" ? t : t.name)),
+        searchQuery.trim(),
+      ];
+      onTagsChange(newTagNames);
 
       // Clear the search
       setSearchQuery("");
@@ -97,7 +131,10 @@ export function TagSelector({
 
   const handleRemoveTag = (tag: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onTagsChange(selectedTags.filter((t) => t !== tag));
+    const newTagNames = selectedTags
+      .filter((t) => (typeof t === "string" ? t !== tag : t.name !== tag))
+      .map((t) => (typeof t === "string" ? t : t.name));
+    onTagsChange(newTagNames);
   };
 
   // Determine what to display in the trigger
@@ -106,50 +143,72 @@ export function TagSelector({
       return <span className="text-muted-foreground">{placeholder}</span>;
     }
 
-    if (selectedTags.length <= VISIBLE_TAGS_COUNT) {
-      return selectedTags.map((tag) => (
-        <Badge
-          key={tag}
-          variant="secondary"
-          className="flex items-center gap-1 pr-1"
-        >
-          <span>{tag}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-accent size-4 rounded-full p-0 transition"
-            onClick={(e) => handleRemoveTag(tag, e)}
-            disabled={disabled}
-          >
-            <X className="size-3" />
-          </Button>
-        </Badge>
-      ));
-    }
+    const visibleCount = showLimits || selectedTags.length;
 
-    // If more than 1 tag, show first 1 and a count
-    return (
-      <>
-        {selectedTags.slice(0, VISIBLE_TAGS_COUNT).map((tag) => (
+    if (selectedTags.length <= visibleCount) {
+      return selectedTags.map((tag) => {
+        const tagName = typeof tag === "string" ? tag : tag.name;
+        const tagType = typeof tag === "string" ? "USER" : tag.type;
+        const isAIGenerated = tagType === "IA";
+
+        return (
           <Badge
-            key={tag}
-            variant="secondary"
-            className="flex items-center gap-1 pr-1"
+            key={tagName}
+            variant="outline"
+            className={cn(
+              "flex items-center gap-1 pr-1",
+              isAIGenerated && "border-blue-500",
+            )}
           >
-            <span>{tag}</span>
+            {isAIGenerated && <Bot className="size-3" />}
+            <span>{tagName}</span>
             <Button
               variant="ghost"
               size="icon"
               className="hover:bg-accent size-4 rounded-full p-0 transition"
-              onClick={(e) => handleRemoveTag(tag, e)}
+              onClick={(e) => handleRemoveTag(tagName, e)}
               disabled={disabled}
             >
               <X className="size-3" />
             </Button>
           </Badge>
-        ))}
+        );
+      });
+    }
+
+    // If more tags than visible count, show first N and a count
+    return (
+      <>
+        {selectedTags.slice(0, visibleCount).map((tag) => {
+          const tagName = typeof tag === "string" ? tag : tag.name;
+          const tagType = typeof tag === "string" ? "USER" : tag.type;
+          const isAIGenerated = tagType === "IA";
+
+          return (
+            <Badge
+              key={tagName}
+              variant="outline"
+              className={cn(
+                "flex items-center gap-1 pr-1",
+                isAIGenerated && "border-blue-500",
+              )}
+            >
+              {isAIGenerated && <Bot className="size-3" />}
+              <span>{tagName}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-accent size-4 rounded-full p-0 transition"
+                onClick={(e) => handleRemoveTag(tagName, e)}
+                disabled={disabled}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          );
+        })}
         <Badge variant="outline" className="bg-muted">
-          +{selectedTags.length - 1} more
+          +{selectedTags.length - visibleCount} more
         </Badge>
       </>
     );
@@ -163,6 +222,9 @@ export function TagSelector({
             "border-input focus-within:ring-ring shadow-xs flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-within:ring-1",
             disabled && "cursor-not-allowed opacity-50",
           )}
+          onClick={() => {
+            if (!disabled) setOpen(!open);
+          }}
         >
           {renderTagsDisplay()}
 
@@ -173,7 +235,7 @@ export function TagSelector({
             className="hover:bg-accent hover:text-accent-foreground ml-auto size-5 shrink-0 rounded-full p-0 opacity-50"
             onClick={(e) => {
               e.stopPropagation();
-              if (!disabled) setOpen(true);
+              if (!disabled) setOpen(!open);
             }}
             disabled={disabled}
           >
@@ -221,27 +283,40 @@ export function TagSelector({
                       {createTagMutation.isPending && "..."}
                     </Button>
                   )}
-                  {!searchQuery.trim() && (
+                  {!searchQuery.trim() && !tagsLoading && (
                     <p className="text-muted-foreground px-2 py-1.5 text-sm">
                       No tags found
+                    </p>
+                  )}
+                  {tagsLoading && (
+                    <p className="text-muted-foreground px-2 py-1.5 text-sm">
+                      Loading tags...
                     </p>
                   )}
                 </CommandEmpty>
 
                 {selectedTagObjects.length > 0 && (
                   <CommandGroup heading="Selected">
-                    {selectedTagObjects.map((tag) => (
-                      <CommandItem
-                        key={tag.id}
-                        className="flex items-center gap-2"
-                        onSelect={() => handleTagSelect(tag.name)}
-                      >
-                        <Checkbox checked={true} />
-                        <span className="text-accent-foreground text-xs">
-                          {tag.name}
-                        </span>
-                      </CommandItem>
-                    ))}
+                    {selectedTagObjects.map((tag: InfiniteTag) => {
+                      const isAIGenerated = tag.type === "IA";
+                      return (
+                        <CommandItem
+                          key={tag.id}
+                          className={cn("flex items-center gap-2")}
+                          onSelect={() => handleTagSelect(tag.name)}
+                        >
+                          <Checkbox checked={true} />
+                          {isAIGenerated && (
+                            <Bot className="size-3 text-blue-600" />
+                          )}
+                          <span
+                            className={cn("text-accent-foreground text-xs")}
+                          >
+                            {tag.name}
+                          </span>
+                        </CommandItem>
+                      );
+                    })}
                   </CommandGroup>
                 )}
 
@@ -249,19 +324,36 @@ export function TagSelector({
                   <>
                     {selectedTagObjects.length > 0 && <CommandSeparator />}
                     <CommandGroup heading="Available">
-                      {filteredNonSelectedTags.map((tag) => (
+                      {filteredNonSelectedTags.map((tag: InfiniteTag) => {
+                        const isAIGenerated = tag.type === "IA";
+                        return (
+                          <CommandItem
+                            key={tag.id}
+                            className={cn("flex items-center gap-2")}
+                            value={tag.name}
+                            onSelect={() => handleTagSelect(tag.name)}
+                          >
+                            <Checkbox checked={false} />
+                            {isAIGenerated && (
+                              <Bot className="size-3 text-blue-600" />
+                            )}
+                            <span
+                              className={cn("text-accent-foreground text-xs")}
+                            >
+                              {tag.name}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                      {hasNextPage && (
                         <CommandItem
-                          key={tag.id}
-                          className="flex items-center gap-2"
-                          value={tag.name}
-                          onSelect={() => handleTagSelect(tag.name)}
+                          className="justify-center text-muted-foreground"
+                          onSelect={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
                         >
-                          <Checkbox checked={false} />
-                          <span className="text-accent-foreground text-xs">
-                            {tag.name}
-                          </span>
+                          {isFetchingNextPage ? "Loading more..." : "Load more tags"}
                         </CommandItem>
-                      ))}
+                      )}
                     </CommandGroup>
                   </>
                 )}

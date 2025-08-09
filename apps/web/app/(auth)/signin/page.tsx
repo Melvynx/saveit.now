@@ -12,12 +12,13 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 export default function SignInPage() {
   const router = useRouter();
   const session = useSession();
+  const searchParams = useSearchParams();
 
   return (
     <MaxWidthContainer
@@ -117,7 +118,7 @@ export default function SignInPage() {
               return result.data.user;
             }}
             onSuccess={() => {
-              router.push("/app");
+              router.push(searchParams.get("redirectUrl") || "/app");
               session.refetch();
             }}
             onError={(error) => toast.error(error)}
