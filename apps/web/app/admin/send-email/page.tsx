@@ -12,6 +12,8 @@ import { Mail } from "lucide-react";
 import { notFound } from "next/navigation";
 import { EmailComposer } from "./email-composer";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SendEmailPage() {
   const user = await getRequiredUser();
 

@@ -2,6 +2,8 @@ import { getRequiredUser } from "@/lib/auth-session";
 import { inngest } from "@/lib/inngest/client";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getRequiredUser();
