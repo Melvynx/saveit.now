@@ -13,6 +13,20 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.6.0",
+    date: "2025-08-02",
+    type: "improvement",
+    title: "iOS App",
+    description: "Download the iOS application now !",
+    changes: [
+      {
+        type: "new",
+        text: "Application for iOS is now available on TestFlight",
+      },
+    ],
+    image: "https://codelynx.mlvcdn.com/images/2025-08-02/saveit-ios.png",
+  },
+  {
     version: "1.5.0",
     date: "2025-07-25",
     type: "improvement",

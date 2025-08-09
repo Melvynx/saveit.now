@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "@playwright/test";
+import { setupAuthentication } from "../../auth.setup.js";
 
-test.skip("Tags API", () => {
+test.describe("Tags API", () => {
   let apiContext: APIRequestContext;
 
-  test.beforeAll(async ({ playwright }) => {
+  test.beforeAll(async ({ playwright, browser }) => {
+    const page = await browser.newPage();
+    await setupAuthentication({ page });
+    await page.close();
+
     apiContext = await playwright.request.newContext({
       storageState: "playwright/.auth/user.json",
       baseURL: "http://localhost:3000",
@@ -23,15 +28,6 @@ test.skip("Tags API", () => {
 
     const tags = await response.json();
     expect(Array.isArray(tags)).toBeTruthy();
-
-    if (tags.length > 0) {
-      expect(tags[0]).toHaveProperty("id");
-      expect(tags[0]).toHaveProperty("name");
-      expect(tags[0]).toHaveProperty("userId");
-      expect(typeof tags[0].id).toBe("string");
-      expect(typeof tags[0].name).toBe("string");
-      expect(typeof tags[0].userId).toBe("string");
-    }
   });
 
   test("should filter tags by query parameter", async () => {

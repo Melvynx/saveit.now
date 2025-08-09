@@ -1,5 +1,8 @@
 import { SafeRouteError } from "@/lib/errors";
 import { routeClient } from "@/lib/safe-route";
+import { getPostHogClient } from "@/lib/posthog";
+import { getPosthogId } from "@/lib/posthog-id";
+import { ANALYTICS } from "@/lib/analytics";
 import * as cheerio from "cheerio";
 import {
   extractMetadataRequestSchema,
@@ -8,24 +11,28 @@ import {
 
 export const POST = routeClient
   .body(extractMetadataRequestSchema)
-  .handler(async (_, { body }): Promise<ExtractMetadataResponse> => {
+  .handler(async (req, { body }): Promise<ExtractMetadataResponse> => {
     const { url } = body;
-    const startTime = Date.now();
+    const posthog = getPostHogClient();
+    
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const distinctId = getPosthogId(ip, userAgent);
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      });
 
-    if (!response.ok) {
-      throw new SafeRouteError("Failed to fetch the webpage", 400);
-    }
+      if (!response.ok) {
+        throw new SafeRouteError("Failed to fetch the webpage", 400);
+      }
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const loadTime = Date.now() - startTime;
 
     const baseUrl = new URL(url);
     const resolveUrl = (relativeUrl: string | undefined) => {
@@ -240,18 +247,40 @@ export const POST = routeClient
       },
       hasAltText: imagesWithAlt.length,
       missingAltText: imagesWithoutAlt.length,
-      loadTime,
     };
 
-    return {
-      url,
-      metadata: {
-        standard,
-        openGraph,
-        twitter,
-        technical,
-        pageAnalysis,
-      },
-      extractedAt: new Date().toISOString(),
-    };
+      const result = {
+        url,
+        metadata: {
+          standard,
+          openGraph,
+          twitter,
+          technical,
+          pageAnalysis,
+        },
+        extractedAt: new Date().toISOString(),
+      };
+
+      // Track tool usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-metadata",
+        },
+      });
+
+      return result;
+    } catch (error) {
+      // Track tool usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-metadata",
+        },
+      });
+
+      throw error;
+    }
   });

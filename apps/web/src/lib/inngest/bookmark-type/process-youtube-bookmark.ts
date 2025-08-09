@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookmarkType, prisma } from "@workspace/database";
+import { logger } from "../../logger";
 import { embedMany } from "ai";
 import { z } from "zod";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
@@ -181,7 +182,7 @@ export async function processYouTubeBookmark(
           .transcript as string)
       : null;
 
-  console.log("Extension transcript available:", !!extensionTranscript);
+  logger.debug("Extension transcript available:", !!extensionTranscript);
 
   // Get video info including title, thumbnails, and other metadata
   const videoInfo = await step.run(
@@ -211,7 +212,7 @@ export async function processYouTubeBookmark(
             transcriptSource: "worker" as const,
           };
         } catch (error) {
-          console.error("Failed to get video info from worker:", error);
+          logger.debug("Failed to get video info from worker:", error);
           // Return minimal info if worker fails
           return {
             title: context.url,
@@ -239,7 +240,7 @@ export async function processYouTubeBookmark(
             transcriptSource: "extension" as const,
           };
         } catch (error) {
-          console.error("Failed to get video metadata from worker:", error);
+          logger.debug("Failed to get video metadata from worker:", error);
           // Fallback to using just extension transcript with basic info
           return {
             title: context.url,
@@ -288,7 +289,7 @@ export async function processYouTubeBookmark(
         });
         result.ogImageUrl = ogImageUrl;
       } catch (error) {
-        console.error("Error saving thumbnail:", error);
+        logger.debug("Error saving thumbnail:", error);
       }
     }
 

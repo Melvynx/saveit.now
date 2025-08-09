@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { logger } from "@/lib/logger";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -14,9 +15,9 @@ export function ChangelogNotification() {
     useChangelogNotification();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  console.log("shouldShow", {
+  logger.debug("Changelog notification state:", {
     shouldShow,
-    latestEntry,
+    latestEntry: latestEntry?.version,
     isLoading,
   });
 

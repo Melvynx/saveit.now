@@ -1,11 +1,12 @@
 import { stripe } from "@better-auth/stripe";
 
 import { BetterAuthOptions } from "better-auth";
+import { logger } from "./logger";
 import { nextCookies } from "better-auth/next-js";
 import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
 import { AUTH_LIMITS } from "./auth-limits";
 import { inngest } from "./inngest/client";
-import { resend } from "./resend";
+import { sendEmail } from "./mail/send-email";
 import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
 
@@ -15,8 +16,7 @@ export const AUTH_PARAMS = {
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ user, newEmail, url }) => {
-        await resend.emails.send({
-          from: "noreply@codeline.app",
+        await sendEmail({
           to: user.email, // verification email must be sent to the current user email to approve the change
           subject: "Approve email change",
           text: `Hello,
@@ -52,12 +52,11 @@ The SaveIt.now Team`,
           );
         } catch (error) {
           // If customer doesn't exist in Stripe, that's fine - just continue with deletion
-          console.log("Stripe customer not found during user deletion:", error);
+          logger.debug("Stripe customer not found during user deletion:", error);
         }
       },
       afterDelete: async (user) => {
-        await resend.emails.send({
-          from: "noreply@codeline.app",
+        await sendEmail({
           to: user.email,
           subject: "Account Deleted",
           text: `Hello, it's Melvyn the found of SaveIt.now.
@@ -74,8 +73,7 @@ Melvyn`,
         user, // The user object
         url, // The auto-generated URL for deletion
       }) => {
-        await resend.emails.send({
-          from: "noreply@codeline.app",
+        await sendEmail({
           to: user.email,
           subject: "Verify Deletion",
           text: `Click here to delete your account: ${url}`,
@@ -114,11 +112,10 @@ Melvyn`,
         return Math.floor(100000 + Math.random() * 900000).toString();
       },
       async sendVerificationOTP({ email, otp }) {
-        await resend.emails.send({
+        await sendEmail({
           to: email,
           subject: `SaveIt.now - ${otp} is your verification code`,
           html: `Your OTP code is: <strong>${otp}</strong>`,
-          from: "noreply@codeline.app",
         });
       },
       otpLength: 6,
@@ -161,8 +158,7 @@ Melvyn`,
     }),
     magicLink({
       async sendMagicLink(data) {
-        await resend.emails.send({
-          from: "noreply@codeline.app",
+        await sendEmail({
           to: data.email,
           subject: "Magic Link",
           text: `Click here to login: ${data.url}`,
