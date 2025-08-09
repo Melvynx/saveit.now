@@ -79,24 +79,7 @@ export default function TabTwoScreen() {
     ]);
   };
 
-  if (!user) {
-    return (
-      <YStack
-        flex={1}
-        alignItems="center"
-        justifyContent="center"
-        padding="$4"
-        gap="$4"
-      >
-        <Text fontSize="$8" fontWeight="bold" color="$color">
-          Settings
-        </Text>
-        <Text fontSize="$4" textAlign="center" color="$gray10">
-          Please sign in to access settings.
-        </Text>
-      </YStack>
-    );
-  }
+
 
   return (
     <YStack flex={1} padding="$4" gap="$4">
@@ -121,7 +104,7 @@ export default function TabTwoScreen() {
               Signed in as:
             </Text>
             <Text fontSize="$5" fontWeight="500" color="$color">
-              {user.email}
+              {user?.email || ""}
             </Text>
           </YStack>
         </XStack>
