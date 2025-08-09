@@ -6,9 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Typography } from "@workspace/ui/components/typography";
-import { Users } from "lucide-react";
+import { Mail, Users } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AdminFilters } from "./admin-filters";
@@ -30,9 +32,17 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center gap-2">
-        <Users className="size-6" />
-        <Typography variant="h1">Admin Panel</Typography>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="size-6" />
+          <Typography variant="h1">Admin Panel</Typography>
+        </div>
+        <Link href="/admin/send-email">
+          <Button className="flex items-center gap-2">
+            <Mail className="size-4" />
+            Send Marketing Email
+          </Button>
+        </Link>
       </div>
 
       <Card>
