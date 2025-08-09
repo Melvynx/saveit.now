@@ -14,8 +14,9 @@ import {
 import { Typography } from "@workspace/ui/components/typography";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { Suspense } from "react";
 
-export default function SignInPage() {
+function SignInPageContent() {
   const router = useRouter();
   const session = useSession();
   const searchParams = useSearchParams();
@@ -135,5 +136,43 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </MaxWidthContainer>
+  );
+}
+
+function SignInPageSkeleton() {
+  return (
+    <MaxWidthContainer
+      spacing="sm"
+      className="flex h-full w-full min-h-fit items-start flex-col lg:flex-row gap-8 lg:gap-12"
+    >
+      <div className="ml-auto flex lg:flex-1 flex-col gap-6">
+        <div className="h-10 bg-muted rounded animate-pulse" />
+        <div className="h-6 bg-muted rounded animate-pulse" />
+      </div>
+      <Card className="mx-auto h-fit flex-1 @container w-full">
+        <CardHeader>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>
+            We just need a few details to get you started.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="h-20 bg-muted rounded animate-pulse" />
+          <div className="h-px bg-muted" />
+          <div className="flex gap-2">
+            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
+            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
+          </div>
+        </CardContent>
+      </Card>
+    </MaxWidthContainer>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInPageSkeleton />}>
+      <SignInPageContent />
+    </Suspense>
   );
 }
