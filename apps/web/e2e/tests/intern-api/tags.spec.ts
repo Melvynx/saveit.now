@@ -27,7 +27,8 @@ test.describe("Tags API", () => {
     expect(response.status()).toBe(200);
 
     const tags = await response.json();
-    expect(Array.isArray(tags)).toBeTruthy();
+
+    expect(Array.isArray(tags.tags)).toBeTruthy();
   });
 
   test("should filter tags by query parameter", async () => {
@@ -43,7 +44,7 @@ test.describe("Tags API", () => {
 
     expect(response.status()).toBe(200);
 
-    const filteredTags = await response.json();
+    const { tags: filteredTags } = await response.json();
     expect(Array.isArray(filteredTags)).toBeTruthy();
 
     filteredTags.forEach((tag: any) => {

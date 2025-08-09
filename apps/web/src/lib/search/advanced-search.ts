@@ -1,4 +1,3 @@
-import { logger } from "../logger";
 import { getBookmarksByType, getDefaultBookmarks } from "./default-browsing";
 import {
   applySearchPagination,
@@ -36,8 +35,6 @@ export async function advancedSearch({
 }: SearchOptions): Promise<SearchResponse> {
   // Determine if this is a search query or default browsing
   const isSearch = isSearchQuery(query);
-
-  logger.info("isSearch", isSearch, { query, tags, types, specialFilters });
 
   if (!isSearch) {
     // Default browsing - show newest bookmarks first
