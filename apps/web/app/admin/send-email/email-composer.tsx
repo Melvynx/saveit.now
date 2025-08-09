@@ -4,7 +4,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Textarea } from "@workspace/ui/components/textarea";
-// import { marked } from "marked";
+import { marked } from "marked";
 import { Eye, EyeOff, Send, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -78,8 +78,7 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
 
   const renderMarkdownPreview = (text: string) => {
     try {
-      // return marked(text);
-      return `<pre>${text}</pre>`; // Temporary fallback
+      return marked(text);
     } catch {
       return "<p>Error rendering preview</p>";
     }
