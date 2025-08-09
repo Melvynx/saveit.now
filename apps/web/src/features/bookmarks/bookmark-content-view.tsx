@@ -60,15 +60,37 @@ export const BookmarkContentView = ({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
-              <Typography
-                variant="large"
-                className="line-clamp-1 cursor-pointer hover:underline"
-              >
-                {bookmark.url}
-              </Typography>
-            </ExternalLinkTracker>
-            <Typography variant="muted">{bookmark.title}</Typography>
+            {bookmark.type === "YOUTUBE" ? (
+              <>
+                <ExternalLinkTracker
+                  bookmarkId={bookmark.id}
+                  url={bookmark.url}
+                >
+                  <Typography
+                    variant="large"
+                    className="line-clamp-1 cursor-pointer hover:underline"
+                  >
+                    {bookmark.title}
+                  </Typography>
+                </ExternalLinkTracker>
+                <Typography variant="muted">{bookmark.url}</Typography>
+              </>
+            ) : (
+              <>
+                <ExternalLinkTracker
+                  bookmarkId={bookmark.id}
+                  url={bookmark.url}
+                >
+                  <Typography
+                    variant="large"
+                    className="line-clamp-1 cursor-pointer hover:underline"
+                  >
+                    {bookmark.url}
+                  </Typography>
+                </ExternalLinkTracker>
+                <Typography variant="muted">{bookmark.title}</Typography>
+              </>
+            )}
           </div>
         </div>
         {bookmark.ogImageUrl && (

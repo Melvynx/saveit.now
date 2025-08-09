@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { YouTubeEmbed } from "@next/third-parties/google";
 
 import {
@@ -18,7 +17,7 @@ interface BookmarkCardYouTubeProps {
   bookmark: BookmarkCardData;
 }
 
-const BookmarkCardYouTubeComponent = ({ bookmark }: BookmarkCardYouTubeProps) => {
+export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
   const metadata = bookmark.metadata as {
     youtubeId: string;
     transcript?: string;
@@ -47,14 +46,11 @@ const BookmarkCardYouTubeComponent = ({ bookmark }: BookmarkCardYouTubeProps) =>
       <BookmarkCardContent bookmark={bookmark}>
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
-            <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
+            <BookmarkCardTitle>{bookmark.title}</BookmarkCardTitle>
+            <BookmarkCardDescription>{domainName}</BookmarkCardDescription>
           </div>
         </div>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );
 };
-
-// Memoize for better virtualization performance
-export const BookmarkCardYouTube = memo(BookmarkCardYouTubeComponent);

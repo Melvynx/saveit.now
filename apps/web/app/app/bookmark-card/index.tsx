@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { Bookmark } from "@workspace/database";
 
 import { BookmarkCardError } from "./bookmark-card-error";
@@ -15,7 +14,7 @@ interface BookmarkCardProps {
   bookmark: Bookmark;
 }
 
-const BookmarkCardComponent = ({ bookmark }: BookmarkCardProps) => {
+export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
   // Handle error state
   if (bookmark.status === "ERROR") {
     return <BookmarkCardError bookmark={bookmark} />;
@@ -49,8 +48,6 @@ const BookmarkCardComponent = ({ bookmark }: BookmarkCardProps) => {
   }
 };
 
-// Memoize the main card router for better virtualization performance
-export const BookmarkCard = memo(BookmarkCardComponent);
 
 // Re-export individual components for direct usage if needed
 export { BookmarkCardBase } from "./bookmark-card-base";

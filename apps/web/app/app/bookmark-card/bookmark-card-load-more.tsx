@@ -61,7 +61,11 @@ export function BookmarkCardLoadMore({
 
   if (!hasNextPage && !isFetchingNextPage) {
     return (
-      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
+      <BookmarkCardContainer
+        bookmark={mockBookmark}
+        ref={loadMoreRef}
+        className="mb-16"
+      >
         <BookmarkCardHeader className="flex items-center justify-center bg-muted/30">
           <div className="flex flex-col items-center gap-4 text-center p-6">
             <Package className="text-muted-foreground size-12" />
@@ -93,7 +97,11 @@ export function BookmarkCardLoadMore({
 
   if (isFetchingNextPage) {
     return (
-      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
+      <BookmarkCardContainer
+        bookmark={mockBookmark}
+        ref={loadMoreRef}
+        className="mb-16"
+      >
         <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
           <div className="flex flex-col items-center gap-4 text-center p-6">
             <Loader className="text-primary" />
@@ -115,7 +123,11 @@ export function BookmarkCardLoadMore({
 
   // Default state - ready to load more
   return (
-    <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
+    <BookmarkCardContainer
+      bookmark={mockBookmark}
+      ref={loadMoreRef}
+      className="mb-16"
+    >
       <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
         <div className="flex flex-col items-center gap-4 text-center p-6">
           <div className="animate-bounce">
