@@ -1,8 +1,7 @@
 import { getServerUrl } from "@/lib/server-url";
-import { resend } from "@/lib/mail/resend";
+import { sendEmail } from "@/lib/mail/send-email";
 import { getMarketingEligibleUsers, MarketingEligibleUser } from "@/lib/database/marketing-users";
 import MarkdownEmail from "emails/markdown.emails";
-import { render } from "@react-email/render";
 import { inngest } from "../client";
 
 interface BatchEmailEvent {
@@ -25,23 +24,21 @@ const addUnsubscribeLink = (content: string, userId: string): string => {
 };
 
 /**
- * Creates an email object for batch sending
+ * Sends an individual marketing email to a user
  */
-const createBatchEmail = async (user: MarketingEligibleUser, subject: string, subheadline: string, markdown: string) => {
+const sendMarketingEmailToUser = async (user: MarketingEligibleUser, subject: string, subheadline: string, markdown: string) => {
   const markdownWithUnsubscribe = addUnsubscribeLink(markdown, user.id);
   
-  const htmlContent = await render(MarkdownEmail({
-    markdown: markdownWithUnsubscribe,
-    preview: subheadline,
-  }));
-  
-  return {
+  return await sendEmail({
     from: "Melvyn from SaveIt.now <help@re.saveit.now>",
     to: user.email,
     subject,
     text: markdownWithUnsubscribe,
-    html: htmlContent,
-  };
+    html: MarkdownEmail({
+      markdown: markdownWithUnsubscribe,
+      preview: subheadline,
+    }),
+  });
 };
 
 /**
@@ -102,16 +99,11 @@ export const batchMarketingEmailJob = inngest.createFunction(
       const batchNumber = i + 1;
       
       await step.run(`send-batch-${batchNumber}`, async () => {
-        // Create email objects for this batch
-        const emails = await Promise.all(
-          batch.map(user => 
-            createBatchEmail(user, subject, subheadline, markdown)
-          )
-        );
-
-        // Send individual emails in batch
+        // Send emails to all users in this batch
         const results = await Promise.all(
-          emails.map(email => resend.emails.send(email))
+          batch.map(user => 
+            sendMarketingEmailToUser(user, subject, subheadline, markdown)
+          )
         );
         
         // Check for any errors
