@@ -37,12 +37,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
           <Users className="size-6" />
           <Typography variant="h1">Admin Panel</Typography>
         </div>
-        <Link href="/admin/send-email">
-          <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" asChild>
+          <Link href="/admin/send-email">
             <Mail className="size-4" />
             Send Marketing Email
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <Card>
