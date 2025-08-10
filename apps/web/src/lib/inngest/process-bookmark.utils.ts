@@ -15,12 +15,25 @@ export async function generateAndCreateTags(
   prompt: string,
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
+  // Fetch user's existing tags to encourage reuse
+  const existingTags = await prisma.tag.findMany({
+    where: { userId },
+    select: { name: true },
+  });
+
+  const existingTagNames = existingTags.map(tag => tag.name);
+  
+  // Include existing tags in the system prompt to encourage reuse
+  const enhancedSystemPrompt = existingTagNames.length > 0 
+    ? `${systemPrompt}\n\nExisting user tags: ${existingTagNames.join(', ')}\nPrioritize reusing these existing tags when appropriate before creating new ones.`
+    : systemPrompt;
+
   const { object } = await generateObject({
     model: OPENAI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),
-    system: systemPrompt,
+    system: enhancedSystemPrompt,
     prompt,
   });
 

@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { FileDownIcon, FileUpIcon, Gem, Menu, Moon, Sun } from "lucide-react";
+import { FileDownIcon, FileUpIcon, Gem, Hash, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useMedia } from "react-use";
@@ -102,6 +102,11 @@ export const BookmarkHeader = () => {
           <DropdownMenuItem asChild>
             <Link href={APP_LINKS.exports}>
               <FileUpIcon className="size-4 mr-2" /> Exports
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={APP_LINKS.tags}>
+              <Hash className="size-4 mr-2" /> Tags
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
