@@ -339,34 +339,12 @@ export async function searchByVector({
   const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
   
   const [bookmarkTags, openCounts] = await Promise.all([
-    bookmarkIds.length > 0 ? prisma.bookmarkTag.findMany({
-      where: {
-        bookmarkId: {
-          in: bookmarkIds,
-        },
-      },
-      select: {
-        bookmarkId: true,
-        tag: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-          },
-        },
-      },
-    }) : [],
+    getBookmarkTags(bookmarkIds),
     getBookmarkOpenCounts(userId, bookmarkIds),
   ]);
 
-  // Group tags by bookmark ID using reduce for better performance
-  const tagsMap = bookmarkTags.reduce((acc, bt) => {
-    if (!acc.has(bt.bookmarkId)) {
-      acc.set(bt.bookmarkId, []);
-    }
-    acc.get(bt.bookmarkId)!.push(bt);
-    return acc;
-  }, new Map<string, { tag: { id: string; name: string; type: string } }[]>());
+  // Group tags by bookmark ID
+  const tagsMap = groupTagsByBookmarkId(bookmarkTags);
 
   return bookmarks.map((bookmark) => {
     const baseScore = Math.max(0, 100 * (1 - bookmark.distance));
