@@ -18,15 +18,10 @@ export const changelogEntries: ChangelogEntry[] = [
     date: "2025-01-10",
     type: "improvement",
     title: "Enhanced AI Summary System",
-    description:
-      "We've upgraded our AI infrastructure for better performance, faster processing, and more accurate bookmark summaries.",
+    description: "We've upgrade the AI models to GPT-5 for better summary.",
     changes: [
       {
         type: "improvement",
-        text: "Migrated to the latest AI SDK for improved reliability and performance",
-      },
-      {
-        type: "improvement", 
         text: "Faster bookmark processing with optimized AI models",
       },
       {
@@ -38,11 +33,12 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "More accurate tag generation and content categorization",
       },
       {
-        type: "fix",
-        text: "Improved error handling for edge cases in content processing",
+        type: "improvement",
+        text: "Adding GPT-5 for summary.",
       },
     ],
-    image: "https://codelynx.mlvcdn.com/images/2025-01-10/ai-upgrade.png",
+    image:
+      "https://codelynx.mlvcdn.com/images/2025-08-10/clipboard_image_1754804046.png",
   },
   {
     version: "1.6.0",

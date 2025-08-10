@@ -48,7 +48,10 @@ export const BookmarkHeader = () => {
           <HeaderAppNameExtension />
         </span>
       </Link>
-      <Badge></Badge>
+
+      <Badge asChild variant="outline" className="rounded-full">
+        <Link href="/ios">📱 New iOS App !</Link>
+      </Badge>
       <div className="flex-1"></div>
       {!isMobile ? (
         <>
