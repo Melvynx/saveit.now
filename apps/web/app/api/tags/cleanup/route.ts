@@ -1,5 +1,5 @@
-import { userRoute } from "@/lib/safe-route";
 import { generateTagCleanupSuggestions } from "@/lib/ai-tag-cleanup";
+import { userRoute } from "@/lib/safe-route";
 import { prisma } from "@workspace/database";
 import { NextResponse } from "next/server";
 
@@ -9,7 +9,6 @@ export const POST = userRoute.handler(async (req, { ctx }) => {
     const tags = await prisma.tag.findMany({
       where: {
         userId: ctx.user.id,
-        type: "USER", // Only analyze user-created tags for cleanup
       },
       select: {
         id: true,
@@ -42,11 +41,13 @@ export const POST = userRoute.handler(async (req, { ctx }) => {
       const refactorTagsWithMeta = suggestion.refactorTags
         .map((tagName) => {
           const tag = tags.find((t) => t.name === tagName);
-          return tag ? {
-            id: tag.id,
-            name: tag.name,
-            bookmarkCount: tag._count.bookmarks,
-          } : null;
+          return tag
+            ? {
+                id: tag.id,
+                name: tag.name,
+                bookmarkCount: tag._count.bookmarks,
+              }
+            : null;
         })
         .filter((tag): tag is NonNullable<typeof tag> => tag !== null);
 
@@ -58,7 +59,10 @@ export const POST = userRoute.handler(async (req, { ctx }) => {
         bestTagId: bestTagMeta?.id,
         bestTagBookmarkCount: bestTagMeta?._count.bookmarks || 0,
         refactorTags: refactorTagsWithMeta,
-        totalBookmarks: refactorTagsWithMeta.reduce((sum, tag) => sum + tag.bookmarkCount, 0),
+        totalBookmarks: refactorTagsWithMeta.reduce(
+          (sum, tag) => sum + tag.bookmarkCount,
+          0,
+        ),
       };
     });
 
@@ -70,7 +74,7 @@ export const POST = userRoute.handler(async (req, { ctx }) => {
     console.error("Tag cleanup suggestion error:", error);
     return NextResponse.json(
       { error: "Failed to generate cleanup suggestions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 });
