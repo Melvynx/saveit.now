@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { upfetch } from "@/lib/up-fetch";
 import { Button } from "@workspace/ui/components/button";
 import {
   Form,
@@ -21,7 +22,7 @@ import { z } from "zod";
 
 const emailSchema = z.object({
   subject: z.string().min(1, "Subject is required"),
-  subheadline: z.string().min(1, "Subheadline is required"),
+  preview: z.string().min(1, "Preview is required"),
   markdown: z.string().min(1, "Email content is required"),
 });
 
@@ -38,7 +39,7 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
     schema: emailSchema as any,
     defaultValues: {
       subject: "",
-      subheadline: "",
+      preview: "",
       markdown:
         "# Hello!\n\nWelcome to our newsletter update.\n\n**What's new:**\n\n- Feature 1\n- Feature 2\n- Feature 3\n\nThanks for being part of our community!",
     },
@@ -46,14 +47,14 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
 
   const sendEmailMutation = useMutation({
     mutationFn: async (data: EmailFormData) => {
-      const response = await fetch("/api/admin/send-email", {
+      const response = await upfetch("/api/admin/send-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           subject: data.subject.trim(),
-          subheadline: data.subheadline.trim(),
+          preview: data.preview.trim(),
           markdown: data.markdown.trim(),
         }),
       });
@@ -122,13 +123,13 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
         )}
       />
 
-      {/* Subheadline */}
+      {/* Preview */}
       <FormField
         control={form.control}
-        name="subheadline"
+        name="preview"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Subheadline (Email Preview)</FormLabel>
+            <FormLabel>Preview (Email Preview)</FormLabel>
             <FormControl>
               <Input
                 {...field}

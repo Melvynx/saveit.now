@@ -1,12 +1,14 @@
 import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
 import { signInWithEmail } from "../utils/auth-test.js";
+import { deleteApiKey } from "../utils/database-loader.mjs";
 import { getTestConfig } from "../utils/test-config.js";
 
 test.describe("API Keys Management", () => {
   test.beforeEach(async ({ page }) => {
     const testConfig = await getTestConfig();
     await signInWithEmail({ email: testConfig.userEmail, page });
+    await deleteApiKey(testConfig.userId);
   });
 
   test("should display API keys page", async ({ page }) => {

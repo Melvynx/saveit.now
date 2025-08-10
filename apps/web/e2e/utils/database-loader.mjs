@@ -83,7 +83,7 @@ export async function cleanupTestData() {
     select: { id: true },
   });
 
-  const testUserIds = testUsers.map(user => user.id);
+  const testUserIds = testUsers.map((user) => user.id);
 
   if (testUserIds.length > 0) {
     // Delete BookmarkTag relations first (through bookmarks)
@@ -197,7 +197,10 @@ export async function cleanupTestData() {
       }
     }
   } catch (error) {
-    console.log("Redis cleanup skipped (not available in test environment):", error.message);
+    console.log(
+      "Redis cleanup skipped (not available in test environment):",
+      error.message,
+    );
   }
 
   // Test data cleanup completed
@@ -264,3 +267,12 @@ export async function setUserOnboardingTrue(testEmail) {
     data: { onboarding: true },
   });
 }
+
+export const deleteApiKey = async (userId) => {
+  const prisma = getPrismaClient();
+  await prisma.apikey.deleteMany({
+    where: {
+      userId: userId,
+    },
+  });
+};
