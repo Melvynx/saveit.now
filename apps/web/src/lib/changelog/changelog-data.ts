@@ -3,6 +3,7 @@ export interface ChangelogEntry {
   date: string;
   type: "feature" | "improvement" | "fix" | "major";
   title: string;
+  url?: string;
   description: string;
   changes: Array<{
     type: "new" | "improvement" | "fix" | "security";
@@ -17,11 +18,12 @@ export const changelogEntries: ChangelogEntry[] = [
     date: "2025-08-02",
     type: "improvement",
     title: "iOS App",
-    description: "Download the iOS application now !",
+    description: "Download the iOS application now",
+    url: "https://saveit.now/ios",
     changes: [
       {
         type: "new",
-        text: "Application for iOS is now available on TestFlight",
+        text: "Application for iOS is now available",
       },
     ],
     image: "https://codelynx.mlvcdn.com/images/2025-08-02/saveit-ios.png",

@@ -6,6 +6,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Sparkles, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { ChangelogDialog } from "./changelog-dialog";
 import { useChangelogNotification } from "./use-changelog-notification";
@@ -69,6 +70,14 @@ export function ChangelogNotification() {
               <p className="text-xs text-muted-foreground line-clamp-2">
                 {latestEntry.description}
               </p>
+              {latestEntry.url ? (
+                <Link
+                  href={latestEntry.url}
+                  className="text-xs text-muted-foreground"
+                >
+                  {latestEntry.url}
+                </Link>
+              ) : null}
             </div>
 
             {latestEntry.image && (
