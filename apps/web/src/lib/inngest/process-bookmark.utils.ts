@@ -1,34 +1,22 @@
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
-import { MockLanguageModelV1 } from "ai/test";
-import { env } from "process";
 import { z } from "zod";
-import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
 
 /**
- * Generates tags for content using AI and saves them to the database
- * @param systemPrompt The prompt to send to the AI
- * @param userId The user ID to associate the tags with
- * @returns Array of tag objects with id and name
+ * Generates AI-powered tags from content and creates them in the database
+ * @param systemPrompt System instructions for the AI model
+ * @param prompt Content to analyze for tag generation
+ * @param userId User ID to associate tags with
+ * @returns Array of created/found tag objects with id and name
  */
-export async function getAITags(
+export async function generateAndCreateTags(
   systemPrompt: string,
   prompt: string,
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
   const { object } = await generateObject({
-    model: env.CI
-      ? new MockLanguageModelV1({
-          defaultObjectGenerationMode: "json",
-          doGenerate: async () => ({
-            rawCall: { rawPrompt: null, rawSettings: {} },
-            finishReason: "stop",
-            usage: { promptTokens: 10, completionTokens: 20 },
-            text: `{"tags":["tag1","tag2"]}`,
-          }),
-        })
-      : OPENAI_MODELS.cheap,
+    model: OPENAI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),
@@ -37,11 +25,11 @@ export async function getAITags(
   });
 
   // Extract tag names from the generated tags
-  const tagNames = object.tags || [];
+  const tagNames = (object as { tags?: string[] }).tags || [];
 
   // Create or connect tags for the user
   const results = await Promise.all(
-    tagNames.map(async (name) => {
+    tagNames.map(async (name: string) => {
       if (!name) return null;
       const tag = await prisma.tag.upsert({
         where: {
@@ -66,20 +54,23 @@ export async function getAITags(
     }),
   );
 
-  return results.filter((result) => result !== null);
+  return results.filter(
+    (result): result is { id: string; name: string } => result !== null,
+  );
 }
 
 /**
- * Generates a summary for content using AI
- * @param prompt The prompt to send to the AI
- * @returns The generated summary text
+ * Generates AI-powered content summary
+ * @param systemPrompt System instructions for the AI model
+ * @param prompt Content to summarize
+ * @returns Generated summary text
  */
-export async function getAISummary(
+export async function generateContentSummary(
   systemPrompt: string,
   prompt: string,
 ): Promise<string> {
   const summary = await generateText({
-    model: GEMINI_MODELS.cheap,
+    model: OPENAI_MODELS.cheap,
     system: systemPrompt,
     prompt,
   });
@@ -88,11 +79,11 @@ export async function getAISummary(
 }
 
 /**
- * Splits markdown content into chunks for embedding
- * @param markdown The markdown content to chunk
- * @returns Array of chunks
+ * Splits markdown content into smaller chunks for vector embedding processing
+ * @param markdown Markdown content to split into chunks
+ * @returns Array of text chunks, each under 1000 characters
  */
-export function chunkMarkdown(markdown: string): string[] {
+export function splitMarkdownIntoChunks(markdown: string): string[] {
   // Split by paragraphs or sections
   const paragraphs = markdown.split(/\n\s*\n/);
 
@@ -128,11 +119,11 @@ export function chunkMarkdown(markdown: string): string[] {
 }
 
 /**
- * Updates a bookmark with all its properties in a centralized way
- * @param params The parameters for updating the bookmark
- * @returns The updated bookmark
+ * Centralized bookmark update function with tag association and processing status management
+ * @param params Bookmark update parameters including metadata, tags, and status
+ * @returns The updated bookmark record
  */
-export async function updateBookmark(params: {
+export async function updateBookmarkWithMetadata(params: {
   bookmarkId: string;
   type: BookmarkType;
   title?: string;

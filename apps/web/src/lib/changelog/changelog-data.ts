@@ -14,6 +14,37 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    date: "2025-01-10",
+    type: "improvement",
+    title: "Enhanced AI Summary System",
+    description:
+      "We've upgraded our AI infrastructure for better performance, faster processing, and more accurate bookmark summaries.",
+    changes: [
+      {
+        type: "improvement",
+        text: "Migrated to the latest AI SDK for improved reliability and performance",
+      },
+      {
+        type: "improvement", 
+        text: "Faster bookmark processing with optimized AI models",
+      },
+      {
+        type: "improvement",
+        text: "Enhanced screenshot analysis for better content understanding",
+      },
+      {
+        type: "improvement",
+        text: "More accurate tag generation and content categorization",
+      },
+      {
+        type: "fix",
+        text: "Improved error handling for edge cases in content processing",
+      },
+    ],
+    image: "https://codelynx.mlvcdn.com/images/2025-01-10/ai-upgrade.png",
+  },
+  {
     version: "1.6.0",
     date: "2025-08-02",
     type: "improvement",

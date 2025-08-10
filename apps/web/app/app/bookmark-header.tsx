@@ -7,6 +7,7 @@ import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@workspace/ui/components/badge";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 
 import {
@@ -47,6 +48,7 @@ export const BookmarkHeader = () => {
           <HeaderAppNameExtension />
         </span>
       </Link>
+      <Badge></Badge>
       <div className="flex-1"></div>
       {!isMobile ? (
         <>

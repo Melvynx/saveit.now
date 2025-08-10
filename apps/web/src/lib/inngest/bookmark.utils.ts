@@ -1,7 +1,7 @@
 import { CheerioAPI } from "cheerio";
 import sharp from "sharp";
 
-export function chunkMarkdown(
+export function splitMarkdownIntoChunks(
   md: string,
   max = 1000, // char length
 ): string[] {

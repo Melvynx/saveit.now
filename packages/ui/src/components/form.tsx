@@ -208,8 +208,8 @@ const useZodForm = <Z extends ZodSchema>({
 }: UseZodFormProps<Z>) =>
   useForm({
     ...formProps,
-    resolver: zodResolver(schema),
-  });
+    resolver: zodResolver(schema as any),
+  }) as any;
 
 export {
   Form,

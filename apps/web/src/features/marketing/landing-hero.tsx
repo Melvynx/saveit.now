@@ -74,7 +74,10 @@ export const LandingHero = () => {
             </li>
           </ul>
           <div className="flex items-center flex-col lg:flex-row gap-2">
-            <SignInWith buttonProps={{ size: "lg" }} type="google" />
+            <SignInWith
+              buttonProps={{ size: "lg", variant: "default" }}
+              type="google"
+            />
             <Button
               asChild
               size="lg"

@@ -11,9 +11,9 @@ import { upfetch } from "../../up-fetch";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  getAISummary,
-  getAITags,
-  updateBookmark,
+  generateContentSummary,
+  generateAndCreateTags,
+  updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
   TAGS_PROMPT,
@@ -89,7 +89,7 @@ export async function processYouTubeBookmark(
       // Copy all the processed data from the existing bookmark
       const metadata = existingBookmarkWithSameVideo.metadata as Record<string, any> || {};
       
-      await updateBookmark({
+      await updateBookmarkWithMetadata({
         bookmarkId: context.bookmarkId,
         type: BookmarkType.YOUTUBE,
         title: existingBookmarkWithSameVideo.title || context.url,
@@ -310,14 +310,14 @@ export async function processYouTubeBookmark(
     if (!videoInfo.transcript) {
       return "";
     }
-    return await getAISummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
+    return await generateContentSummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
   });
 
   const vectorSummary = await step.run("get-vector-summary", async () => {
     if (!videoInfo.transcript) {
       return "";
     }
-    return await getAISummary(
+    return await generateContentSummary(
       YOUTUBE_VECTOR_SUMMARY_PROMPT,
       videoInfo.transcript,
     );
@@ -334,7 +334,7 @@ export async function processYouTubeBookmark(
 
   // Generate tags for the video
   const tags = await step.run("get-tags", async () => {
-    return await getAITags(TAGS_PROMPT, summary, context.userId);
+    return await generateAndCreateTags(TAGS_PROMPT, summary, context.userId);
   });
 
   await publish({
@@ -362,7 +362,7 @@ export async function processYouTubeBookmark(
       finalMetadata.transcriptExtractedAt = new Date().toISOString();
     }
 
-    await updateBookmark({
+    await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.YOUTUBE,
       title: videoInfo.title,

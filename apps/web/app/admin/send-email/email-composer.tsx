@@ -35,7 +35,7 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
   const [showPreview, setShowPreview] = useState(false);
 
   const form = useZodForm({
-    schema: emailSchema,
+    schema: emailSchema as any,
     defaultValues: {
       subject: "",
       subheadline: "",

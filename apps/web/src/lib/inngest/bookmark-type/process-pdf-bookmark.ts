@@ -6,9 +6,9 @@ import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  getAISummary,
-  getAITags,
-  updateBookmark,
+  generateContentSummary,
+  generateAndCreateTags,
+  updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
   PDF_SUMMARY_PROMPT,
@@ -91,7 +91,7 @@ export async function processPDFBookmark(
             {
               type: "file",
               data: new Uint8Array(pdfContent),
-              mimeType: "application/pdf",
+              mediaType: "application/pdf",
             },
           ],
         },
@@ -116,12 +116,12 @@ export async function processPDFBookmark(
       return "PDF Document";
     }
 
-    return await getAISummary(PDF_TITLE_PROMPT, pdfAnalysis);
+    return await generateContentSummary(PDF_TITLE_PROMPT, pdfAnalysis);
   });
 
   // Generate summary
   const summary = await step.run("get-summary", async () => {
-    return await getAISummary(USER_SUMMARY_PROMPT, pdfAnalysis);
+    return await generateContentSummary(USER_SUMMARY_PROMPT, pdfAnalysis);
   });
 
   await publish({
@@ -135,7 +135,7 @@ export async function processPDFBookmark(
 
   // Generate detailed summary for vector search
   const detailedSummary = await step.run("get-detailed-summary", async () => {
-    return await getAISummary(VECTOR_SUMMARY_PROMPT, pdfAnalysis);
+    return await generateContentSummary(VECTOR_SUMMARY_PROMPT, pdfAnalysis);
   });
 
   await publish({
@@ -149,7 +149,7 @@ export async function processPDFBookmark(
 
   // Generate AI tags
   const aiTags = await step.run("get-ai-tags", async () => {
-    return await getAITags(TAGS_PROMPT, pdfAnalysis, context.userId);
+    return await generateAndCreateTags(TAGS_PROMPT, pdfAnalysis, context.userId);
   });
 
   await publish({
@@ -210,7 +210,7 @@ export async function processPDFBookmark(
 
   // Update bookmark with all extracted data
   await step.run("update-bookmark", async () => {
-    await updateBookmark({
+    await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PDF,
       title,

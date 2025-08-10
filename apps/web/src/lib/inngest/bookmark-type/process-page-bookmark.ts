@@ -1,22 +1,19 @@
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateText, tool } from "ai";
+import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
-import { z } from "zod";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { env } from "../../env";
-import { GEMINI_MODELS } from "../../gemini";
+import { analyzeScreenshot } from "../screenshot-analysis.utils";
 import { OPENAI_MODELS } from "../../openai";
-import { getImageUrlToBase64 } from "../bookmark.utils";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  getAISummary,
-  getAITags,
-  updateBookmark,
+  generateContentSummary,
+  generateAndCreateTags,
+  updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
-  IMAGE_ANALYSIS_PROMPT,
   TAGS_PROMPT,
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
@@ -167,50 +164,7 @@ export async function processStandardWebpage(
   const screenshotAnalysis = await step.run(
     "get-screenshot-description",
     async () => {
-      if (!screenshotUrl)
-        return { description: null, isInvalid: false, invalidReason: null };
-
-      const screenshotBase64 = await getImageUrlToBase64(screenshotUrl);
-
-      const result = await generateText({
-        model: GEMINI_MODELS.cheap,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: IMAGE_ANALYSIS_PROMPT,
-              },
-              {
-                type: "image",
-                image: screenshotBase64,
-              },
-            ],
-          },
-        ],
-        tools: {
-          "invalid-image": tool({
-            description:
-              "The image is black, invalid, you see nothing on it. Or it's just a captcha or invalid website image.",
-            parameters: z.object({
-              reason: z.string(),
-            }),
-          }),
-        },
-        toolChoice: "auto",
-      });
-
-      if (result.toolCalls?.[0]?.toolName === "invalid-image") {
-        const invalidReason = result.toolCalls[0].args.reason;
-        return { description: null, isInvalid: true, invalidReason };
-      }
-
-      return {
-        description: result.text,
-        isInvalid: false,
-        invalidReason: null,
-      };
+      return await analyzeScreenshot(screenshotUrl);
     },
   );
 
@@ -249,7 +203,7 @@ ${screenshotAnalysis.description}
       return "";
     }
 
-    return await getAISummary(USER_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(USER_SUMMARY_PROMPT, userInput);
   });
 
   const vectorSummary = await step.run("get-big-summary", async () => {
@@ -257,7 +211,7 @@ ${screenshotAnalysis.description}
       return "";
     }
 
-    return await getAISummary(VECTOR_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(VECTOR_SUMMARY_PROMPT, userInput);
   });
 
   await publish({
@@ -274,7 +228,7 @@ ${screenshotAnalysis.description}
       return [];
     }
 
-    return await getAITags(TAGS_PROMPT, vectorSummary, context.userId);
+    return await generateAndCreateTags(TAGS_PROMPT, vectorSummary, context.userId);
   });
 
   const images = await step.run("save-screenshot", async () => {
@@ -325,7 +279,7 @@ ${screenshotAnalysis.description}
         ? screenshot
         : images.ogImageUrl;
 
-    await updateBookmark({
+    await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PAGE,
       title: pageMetadata.title,
