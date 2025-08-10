@@ -15,6 +15,44 @@ import {
 } from "./search-helpers";
 
 /**
+ * Fetches tags for given bookmark IDs
+ */
+async function getBookmarkTags(bookmarkIds: string[]) {
+  if (bookmarkIds.length === 0) return [];
+  
+  return prisma.bookmarkTag.findMany({
+    where: {
+      bookmarkId: {
+        in: bookmarkIds,
+      },
+    },
+    select: {
+      bookmarkId: true,
+      tag: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Groups bookmark tags by bookmark ID
+ */
+function groupTagsByBookmarkId(bookmarkTags: { bookmarkId: string; tag: { id: string; name: string; type: string } }[]) {
+  return bookmarkTags.reduce((acc, bt) => {
+    if (!acc.has(bt.bookmarkId)) {
+      acc.set(bt.bookmarkId, []);
+    }
+    acc.get(bt.bookmarkId)!.push(bt);
+    return acc;
+  }, new Map<string, { tag: { id: string; name: string; type: string } }[]>());
+}
+
+/**
  * Searches bookmarks by domain
  */
 export async function searchByDomain({
