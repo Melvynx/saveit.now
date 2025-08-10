@@ -71,15 +71,34 @@ export function TagSelector({
     new Map(allTags.map((tag: InfiniteTag) => [tag.id, tag])).values(),
   );
 
-  const selectedTagObjects = uniqueTags.filter((tag) =>
-    selectedTags.some((selectedTag) =>
+  // Create selected tag objects - include all selected tags, even if not fetched yet
+  const selectedTagObjects = selectedTags.map((selectedTag) => {
+    const tagName = typeof selectedTag === "string" ? selectedTag : selectedTag.name;
+    const tagType = typeof selectedTag === "string" ? "USER" : selectedTag.type;
+    const tagId = typeof selectedTag === "string" ? tagName : selectedTag.id;
+    
+    // Try to find the tag in fetched data first
+    const fetchedTag = uniqueTags.find(tag => tag.name === tagName);
+    
+    // If found in fetched data, use that; otherwise create a minimal object
+    return fetchedTag || {
+      id: tagId,
+      name: tagName,
+      type: tagType as TagType,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userId: "",
+    };
+  });
+
+  // Filter available tags to exclude selected ones
+  const filteredNonSelectedTags = availableTags.filter((tag) =>
+    !selectedTags.some((selectedTag) =>
       typeof selectedTag === "string"
         ? selectedTag === tag.name
         : selectedTag.name === tag.name,
     ),
   );
-
-  const filteredNonSelectedTags = availableTags;
 
   const handleTagSelect = (tagName: string) => {
     console.log("handleTagSelect called with:", tagName);
