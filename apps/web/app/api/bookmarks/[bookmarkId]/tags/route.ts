@@ -62,9 +62,14 @@ export const PATCH = userRoute
       );
     }
 
+    // Clean and deduplicate tags
+    const cleanTags = Array.from(
+      new Set(body.tags.filter((tag) => tag && tag.trim().length > 0).map((tag) => tag.trim()))
+    );
+
     const currentTags = bookmark.tags.map((t) => t.tag.name);
-    const tagsToAdd = body.tags.filter((tag) => !currentTags.includes(tag));
-    const tagsToRemove = currentTags.filter((tag) => !body.tags.includes(tag));
+    const tagsToAdd = cleanTags.filter((tag) => !currentTags.includes(tag));
+    const tagsToRemove = currentTags.filter((tag) => !cleanTags.includes(tag));
 
     // Remove tags
     await Promise.all(
