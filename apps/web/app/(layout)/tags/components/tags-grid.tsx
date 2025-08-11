@@ -4,9 +4,19 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Typography } from "@workspace/ui/components/typography";
-import { Bot, Hash } from "lucide-react";
+import { Bot, Hash, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@workspace/ui/components/context-menu";
+import { useAction } from "next-safe-action/hooks";
+import { bulkDeleteTagsAction } from "../../../tags/tags.action";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   useTagsManagement,
   type TagWithCount,
@@ -112,20 +122,65 @@ interface TagCompactCardProps {
 function TagCompactCard({ tag, onClick }: TagCompactCardProps) {
   const isAI = tag.type === "IA";
   const bookmarkCount = tag._count.bookmarks;
+  const queryClient = useQueryClient();
+
+  const { execute: deleteTags, isExecuting: isDeleting } = useAction(
+    bulkDeleteTagsAction,
+    {
+      onSuccess: ({ data }) => {
+        if (!data) return;
+        void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
+        void queryClient.invalidateQueries({ queryKey: ["tags-infinite"] });
+        void queryClient.invalidateQueries({ queryKey: ["tags"] });
+        const deletedName =
+          data.deletedTags.find((t) => t.id === tag.id)?.name ?? tag.name;
+        toast.success(`Deleted tag "${deletedName}"`);
+      },
+      onError: () => {
+        toast.error("Failed to delete tag");
+      },
+    },
+  );
+
+  const handleDelete = () => {
+    deleteTags({ tagIds: [tag.id] });
+  };
 
   return (
-    <Badge variant="outline" className="rounded-full">
-      {isAI ? (
-        <Bot className="h-4 w-4 mr-1" />
-      ) : (
-        <Hash className="h-4 w-4 mr-1" />
-      )}
-      <Typography as="span" variant="small">
-        {tag.name}
-      </Typography>
-      <Typography as="span" variant="muted">
-        {bookmarkCount}
-      </Typography>
-    </Badge>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          className="appearance-none bg-transparent p-0"
+        >
+          <Badge variant="outline" className="rounded-full">
+            {isAI ? (
+              <Bot className="h-4 w-4 mr-1" />
+            ) : (
+              <Hash className="h-4 w-4 mr-1" />
+            )}
+            <Typography as="span" variant="small">
+              {tag.name}
+            </Typography>
+            <Typography as="span" variant="muted">
+              {bookmarkCount}
+            </Typography>
+          </Badge>
+        </button>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          variant="destructive"
+          onSelect={(e) => {
+            e.preventDefault();
+            handleDelete();
+          }}
+          disabled={isDeleting}
+        >
+          <Trash2 className="h-4 w-4" /> Delete tag
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
