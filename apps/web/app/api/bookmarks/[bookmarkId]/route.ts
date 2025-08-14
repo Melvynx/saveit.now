@@ -1,3 +1,4 @@
+import { deleteBookmark } from "@/lib/database/delete-bookmark";
 import { getUserBookmark } from "@/lib/database/get-bookmark";
 import { userRoute } from "@/lib/safe-route";
 import { prisma } from "@workspace/database";
@@ -86,30 +87,10 @@ export const PATCH = userRoute
 export const DELETE = userRoute
   .params(z.object({ bookmarkId: z.string() }))
   .handler(async (req, { params, ctx }) => {
-    // First, verify the bookmark exists and belongs to the user
-    const existingBookmark = await prisma.bookmark.findUnique({
-      where: {
-        id: params.bookmarkId,
-        userId: ctx.user.id,
-      },
-      select: {
-        id: true,
-      },
+    const result = await deleteBookmark({
+      id: params.bookmarkId,
+      userId: ctx.user.id,
     });
 
-    if (!existingBookmark) {
-      return NextResponse.json(
-        { error: "Bookmark not found" },
-        { status: 404 },
-      );
-    }
-
-    // Delete the bookmark
-    await prisma.bookmark.delete({
-      where: {
-        id: params.bookmarkId,
-      },
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, bookmark: result });
   });

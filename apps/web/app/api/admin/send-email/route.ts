@@ -10,13 +10,13 @@ const sendEmailSchema = z.object({
 
 export const POST = adminRoute
   .body(sendEmailSchema)
-  .handler(async (req, { body }) => {
+  .handler(async (_, { body }) => {
     await inngest.send({
       name: "marketing/batch-email",
       data: {
         subject: body.subject.trim(),
         subheadline: body.preview.trim(),
-        markdown: body.markdown.trim(),/
+        markdown: body.markdown.trim(),
       },
     });
 
