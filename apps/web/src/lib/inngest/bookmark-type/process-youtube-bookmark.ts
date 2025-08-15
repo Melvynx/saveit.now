@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookmarkType, prisma } from "@workspace/database";
-import { logger } from "../../logger";
 import { embedMany } from "ai";
 import { z } from "zod";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { env } from "../../env";
+import { logger } from "../../logger";
 import { OPENAI_MODELS } from "../../openai";
 import { getServerUrl } from "../../server-url";
 import { upfetch } from "../../up-fetch";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  generateContentSummary,
   generateAndCreateTags,
+  generateContentSummary,
   updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
@@ -21,7 +21,7 @@ import {
   YOUTUBE_VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
 
-function getVideoId(url: string): string {
+export function getVideoId(url: string): string {
   const regex =
     /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
@@ -41,121 +41,6 @@ export async function processYouTubeBookmark(
 ): Promise<void> {
   const youtubeId = getVideoId(context.url);
 
-  // Check if this YouTube video has already been processed
-  const existingBookmarkWithSameVideo = await step.run("check-existing-youtube-video", async () => {
-    return await prisma.bookmark.findFirst({
-      where: {
-        type: BookmarkType.YOUTUBE,
-        metadata: {
-          path: ["youtubeId"],
-          equals: youtubeId,
-        },
-        status: "READY",
-      },
-      select: {
-        id: true,
-        title: true,
-        summary: true,
-        vectorSummary: true,
-        preview: true,
-        faviconUrl: true,
-        metadata: true,
-        tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  });
-
-  // If we found an existing processed bookmark with the same YouTube video, copy its data
-  if (existingBookmarkWithSameVideo) {
-    await publish({
-      channel: `bookmark:${context.bookmarkId}`,
-      topic: "status",
-      data: {
-        id: BOOKMARK_STEP_ID_TO_ID["saving"],
-        order: 8,
-      },
-    });
-
-    await step.run("copy-existing-youtube-data", async () => {
-      // Copy all the processed data from the existing bookmark
-      const metadata = existingBookmarkWithSameVideo.metadata as Record<string, any> || {};
-      
-      await updateBookmarkWithMetadata({
-        bookmarkId: context.bookmarkId,
-        type: BookmarkType.YOUTUBE,
-        title: existingBookmarkWithSameVideo.title || context.url,
-        summary: existingBookmarkWithSameVideo.summary || "",
-        vectorSummary: existingBookmarkWithSameVideo.vectorSummary || "",
-        preview: existingBookmarkWithSameVideo.preview,
-        faviconUrl: existingBookmarkWithSameVideo.faviconUrl || `${getServerUrl()}/favicon/youtube.svg`,
-        tags: existingBookmarkWithSameVideo.tags.map(bt => bt.tag),
-        metadata: {
-          ...metadata,
-          youtubeId,
-          dataCopiedFrom: existingBookmarkWithSameVideo.id,
-          dataCopiedAt: new Date().toISOString(),
-        },
-      });
-    });
-
-    // Generate embeddings for the new bookmark based on copied data
-    await step.run("update-embedding", async () => {
-      const title = existingBookmarkWithSameVideo.title || context.url;
-      const vectorSummary = existingBookmarkWithSameVideo.vectorSummary || "";
-
-      if (!vectorSummary) {
-        const embedding = await embedMany({
-          model: OPENAI_MODELS.embedding,
-          values: [title],
-        });
-        const [titleEmbedding] = embedding.embeddings;
-
-        await prisma.$executeRaw`
-          UPDATE "Bookmark"
-          SET 
-            "titleEmbedding" = ${titleEmbedding}::vector
-          WHERE id = ${context.bookmarkId}
-        `;
-        return;
-      }
-
-      const embedding = await embedMany({
-        model: OPENAI_MODELS.embedding,
-        values: [title, vectorSummary],
-      });
-      const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
-
-      await prisma.$executeRaw`
-        UPDATE "Bookmark"
-        SET 
-          "titleEmbedding" = ${titleEmbedding}::vector,
-          "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
-        WHERE id = ${context.bookmarkId}
-      `;
-    });
-
-    await publish({
-      channel: `bookmark:${context.bookmarkId}`,
-      topic: "finish",
-      data: {
-        id: BOOKMARK_STEP_ID_TO_ID["finish"],
-        order: 9,
-      },
-    });
-
-    return; // Early return - we've successfully copied data from existing bookmark
-  }
-
-  // If no existing bookmark found, proceed with normal processing
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
@@ -310,7 +195,10 @@ export async function processYouTubeBookmark(
     if (!videoInfo.transcript) {
       return "";
     }
-    return await generateContentSummary(YOUTUBE_SUMMARY_PROMPT, videoInfo.transcript);
+    return await generateContentSummary(
+      YOUTUBE_SUMMARY_PROMPT,
+      `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
+    );
   });
 
   const vectorSummary = await step.run("get-vector-summary", async () => {
@@ -319,7 +207,7 @@ export async function processYouTubeBookmark(
     }
     return await generateContentSummary(
       YOUTUBE_VECTOR_SUMMARY_PROMPT,
-      videoInfo.transcript,
+      `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
     );
   });
 

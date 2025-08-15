@@ -1,7 +1,7 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import { upfetch } from "@/lib/up-fetch";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Form,
@@ -57,14 +57,9 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
           preview: data.preview.trim(),
           markdown: data.markdown.trim(),
         }),
+        schema: z.object({ success: z.boolean() }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to start email campaign");
-      }
-
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       toast.success(
