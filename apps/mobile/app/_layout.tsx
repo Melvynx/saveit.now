@@ -8,13 +8,13 @@ import { TamaguiProvider, Theme } from "@tamagui/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ShareIntentProvider } from "expo-share-intent";
 import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments, usePathname, useGlobalSearchParams } from "expo-router";
+import { Stack, useSegments, usePathname, useGlobalSearchParams } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState, createContext, useContext } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "../components/useColorScheme";
-import { AuthProvider } from "../src/contexts/AuthContext";
+import { AuthProvider, useAuth } from "../src/contexts/AuthContext";
 import config from "../tamagui.config";
 
 // Theme context for managing theme state across the app
@@ -100,6 +100,7 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const { currentTheme } = useAppTheme();
+  const { user, isLoading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
   const globalParams = useGlobalSearchParams();
@@ -111,11 +112,24 @@ function RootLayoutNav() {
     console.log("🚀 Navigation - All search params:", JSON.stringify(globalParams));
   }, [pathname, segments, globalParams]);
 
+  const isSignInScreen = pathname === "/sign-in";
+
+  if (!isLoading && !user && !isSignInScreen) {
+    return (
+      <ThemeProvider value={currentTheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        </Stack>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider value={currentTheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen 
           name="bookmark/[id]" 
