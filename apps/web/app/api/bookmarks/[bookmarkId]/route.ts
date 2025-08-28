@@ -87,10 +87,20 @@ export const PATCH = userRoute
 export const DELETE = userRoute
   .params(z.object({ bookmarkId: z.string() }))
   .handler(async (req, { params, ctx }) => {
-    const result = await deleteBookmark({
-      id: params.bookmarkId,
-      userId: ctx.user.id,
-    });
+    try {
+      const result = await deleteBookmark({
+        id: params.bookmarkId,
+        userId: ctx.user.id,
+      });
 
-    return NextResponse.json({ success: true, bookmark: result });
+      return NextResponse.json({ success: true, bookmark: result });
+    } catch (error: any) {
+      if (error.message === "Bookmark not found") {
+        return NextResponse.json(
+          { error: "Bookmark not found" },
+          { status: 404 },
+        );
+      }
+      throw error;
+    }
   });

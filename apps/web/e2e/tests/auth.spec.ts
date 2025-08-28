@@ -53,11 +53,8 @@ test.describe("Authentication Flow - Simple Tests", () => {
     // Should not be redirected to signin immediately
     expect(currentURL).not.toMatch(/\/signin/);
 
-    // Should have some way to sign in - try multiple selector patterns
-
-    await page
-      .locator('button:has-text("Sign in")')
-      .isVisible({ timeout: 5000 });
+    // Should have some way to sign in - check for the Sign In button
+    await expect(page.locator('a:has-text("Sign In")')).toBeVisible();
   });
 
   test("email form progresses to OTP step", async ({ page }) => {

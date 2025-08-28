@@ -77,7 +77,8 @@ test.describe("API Keys Management", () => {
     await page.fill('input[placeholder*="My Mobile App"]', apiKeyName);
     await page.click("button:has-text('Create Key')");
 
-    // Close the success dialog
+    // Wait for the success dialog to appear and then close it
+    await page.waitForSelector("text=API Key Created Successfully!", { timeout: 10000 });
     await page.click("button:has-text('Close')");
 
     // Wait for the key to appear
