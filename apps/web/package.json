@@ -42,6 +42,7 @@
     "@types/mime-types": "^2.1.4",
     "@types/sharp": "^0.32.0",
     "@upstash/redis": "^1.35.1",
+    "@vercel/og": "^0.8.5",
     "@workspace/database": "workspace:*",
     "@workspace/ui": "workspace:*",
     "ai": "^5.0.8",
