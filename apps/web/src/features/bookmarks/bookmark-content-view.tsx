@@ -6,10 +6,10 @@ import { Typography } from "@workspace/ui/components/typography";
 import { LucideIcon, Sparkle, TagIcon } from "lucide-react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
+import { BookmarkTagSelector } from "app/app/bookmark-card/bookmark-tag-selector";
 import { BookmarkFavicon } from "app/app/bookmark-favicon";
 import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
 import { ExternalLinkTracker } from "app/app/external-link-tracker";
-import { BookmarkTagSelector } from "app/app/bookmark-card/bookmark-tag-selector";
 import { BookmarkPreview } from "./bookmark-preview";
 import { TranscriptViewer } from "./transcript-viewer";
 
@@ -26,15 +26,15 @@ export const BookmarkContentView = ({
   const transcript = metadata?.transcript as string | undefined;
   return (
     <main className="flex flex-col gap-4">
-      <Card className="p-0 h-24 overflow-hidden flex flex-row items-center">
-        <div className="flex items-start gap-2 p-4">
+      <Card className="p-0 min-h-24 overflow-hidden flex flex-row items-center">
+        <div className="flex items-start gap-2 p-4 flex-1">
           <div className="flex size-8 items-center justify-center rounded border shrink-0">
             <BookmarkFavicon
               faviconUrl={bookmark.faviconUrl ?? undefined}
               bookmarkType={bookmark.type ?? "BLOG"}
             />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
             <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
               <Typography
                 variant="large"
@@ -47,12 +47,12 @@ export const BookmarkContentView = ({
           </div>
         </div>
         {bookmark.ogImageUrl && (
-          <div className="h-full ml-auto">
+          <div className="flex-shrink-0 ml-auto h-24">
             <img
               src={bookmark.ogImageUrl}
               alt="og-image"
-              className="rounded-md h-full max-h-24 w-auto"
-              width={200}
+              className="rounded-md h-full w-full object-cover"
+              width={128}
               height={96}
             />
           </div>
