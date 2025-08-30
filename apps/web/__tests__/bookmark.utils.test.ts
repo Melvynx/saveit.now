@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { chunkMarkdown } from "../src/lib/inngest/bookmark.utils";
+import { splitMarkdownIntoChunks as chunkMarkdown } from "../src/lib/inngest/bookmark.utils";
 
 describe("bookmark.utils", () => {
   describe("chunkMarkdown", () => {
