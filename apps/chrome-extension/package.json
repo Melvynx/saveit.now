@@ -1,6 +1,6 @@
 {
   "name": "chrome-extension",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "scripts": {
     "dev": "tsc --watch && node scripts/copy-assets.js --dev",
@@ -9,7 +9,9 @@
     "build:prod": "rm -rf dist && node scripts/copy-assets.js",
     "package": "npm run build:prod && node scripts/package-extension.js",
     "package:dev": "npm run build:dev && node scripts/package-extension.js",
-    "publish": "bunx changeset version && npm run package",
+    "version:patch": "bunx bumpp patch package.json public/manifest.json && npm run package",
+    "version:minor": "bunx bumpp minor package.json public/manifest.json && npm run package",
+    "version:major": "bunx bumpp major package.json public/manifest.json && npm run package",
     "clean": "rm -rf dist package"
   },
   "dependencies": {
