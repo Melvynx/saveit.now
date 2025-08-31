@@ -1,5 +1,8 @@
 import { SafeRouteError } from "@/lib/errors";
 import { routeClient } from "@/lib/safe-route";
+import { getPostHogClient } from "@/lib/posthog";
+import { getPosthogId } from "@/lib/posthog-id";
+import { ANALYTICS } from "@/lib/analytics";
 import * as cheerio from "cheerio";
 import { 
   extractFaviconsRequestSchema, 
@@ -114,8 +117,13 @@ function categorizeFaviconType(rel: string, href: string): FaviconInfo["type"] {
 
 export const POST = routeClient
   .body(extractFaviconsRequestSchema)
-  .handler(async (_, { body }): Promise<ExtractFaviconsResponse> => {
+  .handler(async (req, { body }): Promise<ExtractFaviconsResponse> => {
     const { url } = body;
+    const posthog = getPostHogClient();
+    
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const distinctId = getPosthogId(ip, userAgent);
 
     try {
       const response = await fetch(url, {
@@ -250,7 +258,7 @@ export const POST = routeClient
       const androidIcon = androidIcons.sort((a, b) => (b.width || 0) - (a.width || 0))[0];
       const largestIcon = validFavicons.sort((a, b) => (b.width || 0) - (a.width || 0))[0];
 
-      return {
+      const result = {
         url,
         favicons,
         metadata: {
@@ -265,8 +273,29 @@ export const POST = routeClient
           largestIcon,
         },
       };
+
+      // Track successful usage
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-favicons",
+        },
+      });
+
+      return result;
     } catch (error) {
       console.error("Error extracting favicons:", error);
+      
+      // Track error
+      posthog.capture({
+        distinctId,
+        event: ANALYTICS.TOOL_USED,
+        properties: {
+          tool_name: "extract-favicons",
+        },
+      });
+
       throw new SafeRouteError(
         error instanceof Error ? error.message : "Failed to extract favicons",
         400

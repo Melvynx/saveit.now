@@ -1,5 +1,6 @@
 import { AlertExtensions } from "@/features/extensions/alert-extensions";
 import { useSession } from "@/lib/auth-client";
+import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -29,7 +30,7 @@ export function BookmarksPage() {
   });
 
   if (!session.isPending && !session.data?.user) {
-    console.log("redirecting to signin", session);
+    logger.debug("Redirecting unauthenticated user to signin");
     toast.error("You need to be logged in to access this page");
     router.push("/signin");
   }

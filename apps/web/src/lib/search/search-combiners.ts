@@ -76,7 +76,7 @@ export class SearchResultCombiner {
    */
   async getFinalResults(userId: string): Promise<SearchResult[]> {
     const allResults = Array.from(this.resultMap.values());
-    
+
     if (allResults.length === 0) {
       return [];
     }
@@ -131,14 +131,24 @@ export async function performMultiLevelSearch({
 
   // Level 1: Search by tags if provided
   if (tags && tags.length > 0) {
-    const tagResults = await searchByTags({ userId, tags, types, specialFilters });
+    const tagResults = await searchByTags({
+      userId,
+      tags,
+      types,
+      specialFilters,
+    });
     combiner.addTagResults(tagResults);
   }
 
   // Level 2: Check if query is a domain search
   if (isDomainQuery(query)) {
     const domain = extractDomain(query);
-    const domainResults = await searchByDomain({ userId, domain, types, specialFilters });
+    const domainResults = await searchByDomain({
+      userId,
+      domain,
+      types,
+      specialFilters,
+    });
     combiner.addDomainResults(domainResults);
   }
 

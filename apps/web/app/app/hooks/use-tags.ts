@@ -13,10 +13,8 @@ const TagSchema = z.object({
 
 export type Tag = z.infer<typeof TagSchema>;
 
-const TagsResponseSchema = z.array(TagSchema);
-
 const TagsPageResponseSchema = z.object({
-  tags: TagsResponseSchema,
+  tags: z.array(TagSchema),
   nextCursor: z.string().nullable(),
   hasNextPage: z.boolean(),
 });
@@ -46,12 +44,12 @@ export const useTags = (query?: string) => {
         if (query) {
           searchParams.append("q", query);
         }
-        
-        const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+        const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         const result = await upfetch(url, {
-          schema: TagsResponseSchema,
+          schema: TagsPageResponseSchema,
         });
-        return result;
+        return result.tags;
       } catch (err) {
         console.error("Failed to fetch tags:", err);
         throw new Error("Failed to load tags. Please try again.");
@@ -63,24 +61,28 @@ export const useTags = (query?: string) => {
 
   // Filter out already selected tags (client-side)
   const filteredTags = useMemo(() => {
-    return userTags.filter(
-      (tag) => !selectedTags.includes(tag.name)
-    );
+    return userTags.filter((tag) => !selectedTags.includes(tag.name));
   }, [userTags, selectedTags]);
 
   const addTag = useCallback(
-    (tagName: string, inputQuery?: string, onInputChange?: (query: string) => void) => {
+    (
+      tagName: string,
+      inputQuery?: string,
+      onInputChange?: (query: string) => void,
+    ) => {
       if (!selectedTags.includes(tagName)) {
         setSelectedTags([...selectedTags, tagName]);
       }
-      
+
       // Clean the input if callback is provided
       if (onInputChange && inputQuery) {
         // Remove any #tagName mentions from the input
-        const cleanedQuery = inputQuery.replace(new RegExp(`#${tagName}\\s*`, 'g'), '').trim();
+        const cleanedQuery = inputQuery
+          .replace(new RegExp(`#${tagName}\\s*`, "g"), "")
+          .trim();
         onInputChange(cleanedQuery);
       }
-      
+
       setShowTagList(false);
       setTagFilter("");
     },
@@ -139,7 +141,9 @@ export const useInfiniteTags = (query?: string) => {
     isRefetching,
   } = useInfiniteQuery({
     queryKey: ["tags-infinite", query],
-    queryFn: async ({ pageParam }): Promise<z.infer<typeof TagsPageResponseSchema>> => {
+    queryFn: async ({
+      pageParam,
+    }): Promise<z.infer<typeof TagsPageResponseSchema>> => {
       try {
         const searchParams = new URLSearchParams();
         if (query) {
@@ -149,8 +153,8 @@ export const useInfiniteTags = (query?: string) => {
           searchParams.append("cursor", pageParam);
         }
         searchParams.append("limit", "10");
-        
-        const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+        const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         const result = await upfetch(url, {
           schema: TagsPageResponseSchema,
         });
@@ -168,29 +172,33 @@ export const useInfiniteTags = (query?: string) => {
 
   // Flatten all pages into a single array
   const allTags = useMemo(() => {
-    return data?.pages.flatMap(page => page.tags) ?? [];
+    return data?.pages.flatMap((page) => page.tags) ?? [];
   }, [data]);
 
   // Filter out already selected tags (client-side)
   const filteredTags = useMemo(() => {
-    return allTags.filter(
-      (tag) => !selectedTags.includes(tag.name)
-    );
+    return allTags.filter((tag) => !selectedTags.includes(tag.name));
   }, [allTags, selectedTags]);
 
   const addTag = useCallback(
-    (tagName: string, inputQuery?: string, onInputChange?: (query: string) => void) => {
+    (
+      tagName: string,
+      inputQuery?: string,
+      onInputChange?: (query: string) => void,
+    ) => {
       if (!selectedTags.includes(tagName)) {
         setSelectedTags([...selectedTags, tagName]);
       }
-      
+
       // Clean the input if callback is provided
       if (onInputChange && inputQuery) {
         // Remove any #tagName mentions from the input
-        const cleanedQuery = inputQuery.replace(new RegExp(`#${tagName}\\s*`, 'g'), '').trim();
+        const cleanedQuery = inputQuery
+          .replace(new RegExp(`#${tagName}\\s*`, "g"), "")
+          .trim();
         onInputChange(cleanedQuery);
       }
-      
+
       setShowTagList(false);
       setTagFilter("");
     },

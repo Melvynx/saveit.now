@@ -2,6 +2,7 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
 import { logger } from "../logger";
+import { copyBookmarkData, findExistingBookmark } from "./bookmark-reuse.utils";
 import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
@@ -126,6 +127,48 @@ export const processBookmarkJob = inngest.createFunction(
         throw new NonRetriableError("Bookmark limits exceeded");
       }
     });
+
+    // Check for existing bookmark with same content before processing
+    const existingBookmarkId = await step.run(
+      "check-existing-bookmark",
+      async () => {
+        return await findExistingBookmark({
+          url: bookmark.url,
+          bookmarkId,
+        });
+      },
+    );
+
+    // If we found an existing processed bookmark, copy its data
+    if (existingBookmarkId) {
+      await publish({
+        channel: `bookmark:${bookmarkId}`,
+        topic: "status",
+        data: {
+          id: BOOKMARK_STEP_ID_TO_ID["saving"],
+          order: 8,
+        },
+      });
+
+      await step.run("copy-existing-bookmark-data", async () => {
+        await copyBookmarkData({
+          fromBookmarkId: existingBookmarkId,
+          toBookmarkId: bookmarkId,
+          url: bookmark.url,
+        });
+      });
+
+      await publish({
+        channel: `bookmark:${bookmarkId}`,
+        topic: "finish",
+        data: {
+          id: BOOKMARK_STEP_ID_TO_ID["finish"],
+          order: 9,
+        },
+      });
+
+      return;
+    }
 
     await publish({
       channel: `bookmark:${bookmarkId}`,

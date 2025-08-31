@@ -124,7 +124,6 @@ export const BookmarkCardContainer = ({
         bookmark={{
           id: bookmark.id,
           title: bookmark.title || null,
-          tags: bookmark.tags,
         }}
       />
     </>

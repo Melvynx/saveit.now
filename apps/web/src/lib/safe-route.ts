@@ -33,6 +33,17 @@ export const userRoute = routeClient.use(async ({ next }) => {
   return next({ ctx: { user } });
 });
 
+export const adminRoute = routeClient.use(async ({ next }) => {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+  if (user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+  return next({ ctx: { user } });
+});
+
 export const apiRoute = routeClient.use(async ({ next, request }) => {
   const validation = await validateApiKey(request as NextRequest);
 

@@ -7,9 +7,9 @@ import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  getAISummary,
-  getAITags,
-  updateBookmark,
+  generateContentSummary,
+  generateAndCreateTags,
+  updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
   IMAGE_SUMMARY_PROMPT,
@@ -88,17 +88,17 @@ export async function handleImageStep(
       return "";
     }
 
-    return await getAISummary(IMAGE_TITLE_PROMPT, imageAnalysis);
+    return await generateContentSummary(IMAGE_TITLE_PROMPT, imageAnalysis);
   });
 
   // Generate a summary of the image
   const summary = await step.run("get-summary", async () => {
-    return await getAISummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
+    return await generateContentSummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
   });
 
   // Generate vector summary for search
   const vectorSummary = await step.run("get-vector-summary", async () => {
-    return await getAISummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
+    return await generateContentSummary(IMAGE_SUMMARY_PROMPT, imageAnalysis);
   });
 
   await publish({
@@ -113,7 +113,7 @@ export async function handleImageStep(
   // Generate tags for the image
   const tags = await step.run("get-tags", async () => {
     try {
-      return await getAITags(TAGS_PROMPT, context.userId, summary);
+      return await generateAndCreateTags(TAGS_PROMPT, summary, context.userId);
     } catch (error) {
       console.error(
         "Error generating tags for image bookmark",
@@ -146,7 +146,7 @@ export async function handleImageStep(
 
   // Update the bookmark with the analysis, summary, tags, and image URL
   await step.run("update-bookmark", async () => {
-    await updateBookmark({
+    await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.IMAGE,
       title: title,

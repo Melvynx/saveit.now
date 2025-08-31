@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "ios:release": "expo run:ios --configuration Release",
     "web": "expo start --web",
-    "build": "eas build",
+    "build": "expo run:ios --configuration Release",
     "build:dev": "eas build --profile development",
     "test": "jest --watchAll",
     "lint": "expo lint",

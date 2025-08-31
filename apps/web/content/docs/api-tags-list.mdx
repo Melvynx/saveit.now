@@ -1,0 +1,215 @@
+---
+title: List Tags
+description: Retrieve tags from your SaveIt.now account using the API
+method: GET
+order: 4
+category: API
+subcategory: Tags
+tags: [api, tags, list]
+published: true
+---
+
+# List Tags
+
+Retrieve all tags from your SaveIt.now account with pagination support.
+
+## API Reference
+
+**Method:** `GET`  
+**Endpoint:** `/api/v1/tags`
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | integer | No | Number of results per page (default: 20, max: 100) |
+| `cursor` | string | No | Cursor for pagination (used for fetching next page) |
+
+## Examples
+
+### Bash (cURL)
+
+```bash
+curl -X GET "https://saveit.now/api/v1/tags?limit=50" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://saveit.now/api/v1/tags?limit=50', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+## Results
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "tags": [
+    {
+      "id": "cljk1234567890abcdef",
+      "name": "javascript",
+      "type": "IA",
+      "bookmarkCount": 25
+    },
+    {
+      "id": "cljk0987654321fedcba",
+      "name": "programming",
+      "type": "IA",
+      "bookmarkCount": 45
+    },
+    {
+      "id": "cljk5555555555555555",
+      "name": "tutorial",
+      "type": "USER",
+      "bookmarkCount": 12
+    }
+  ],
+  "hasMore": true,
+  "nextCursor": "cljk5555555555555555"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Indicates if the request was successful |
+| `tags` | array | Array of tag objects |
+| `tags[].id` | string | Unique identifier for the tag |
+| `tags[].name` | string | Display name of the tag |
+| `tags[].type` | string | Tag type: `USER` (manually created) or `IA` (AI-generated) |
+| `tags[].bookmarkCount` | integer | Number of bookmarks associated with this tag |
+| `hasMore` | boolean | Indicates if there are more results available |
+| `nextCursor` | string | Cursor for fetching the next page (null if no more results) |
+
+### Error Responses
+
+**401 Unauthorized** - Invalid or missing API key
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+
+**400 Bad Request** - Invalid query parameters
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "Invalid limit parameter. Must be between 1 and 100"
+  }
+}
+```
+
+## Pagination
+
+Use cursor-based pagination with `limit` and `cursor` parameters:
+
+```bash
+# Get first 20 tags
+curl -X GET "https://saveit.now/api/v1/tags?limit=20" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+# Get next 20 tags using cursor from previous response
+curl -X GET "https://saveit.now/api/v1/tags?limit=20&cursor=cljk5555555555555555" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Pagination Example
+
+```javascript
+let allTags = [];
+let cursor = null;
+let hasMore = true;
+
+while (hasMore) {
+  const url = cursor 
+    ? `https://saveit.now/api/v1/tags?limit=50&cursor=${cursor}`
+    : 'https://saveit.now/api/v1/tags?limit=50';
+    
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  const data = await response.json();
+  
+  allTags.push(...data.tags);
+  cursor = data.nextCursor;
+  hasMore = data.hasMore;
+}
+
+console.log(`Retrieved ${allTags.length} tags total`);
+```
+
+## Tag Types
+
+SaveIt.now uses two types of tags:
+
+- **IA** (AI-generated): Tags automatically created by AI when processing bookmarks
+- **USER**: Tags manually created by users
+
+Both types are returned in the API response and can be identified by the `type` field.
+
+## Use Cases
+
+### Get Most Popular Tags
+
+```bash
+# Get tags sorted by bookmark count (most used first)
+curl -X GET "https://saveit.now/api/v1/tags?limit=10" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Build a Tag Cloud
+
+```javascript
+const response = await fetch('https://saveit.now/api/v1/tags?limit=100', {
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+});
+
+const data = await response.json();
+
+// Create a tag cloud based on bookmark count
+const tagCloud = data.tags.map(tag => ({
+  text: tag.name,
+  value: tag.bookmarkCount,
+  id: tag.id
+}));
+```
+
+## Notes
+
+- Tags are sorted by ID in ascending order for consistent pagination
+- Empty tag lists are valid responses (returns empty array)
+- The `bookmarkCount` field shows the total number of bookmarks associated with each tag
+- AI-generated tags (`type: "IA"`) are created automatically during bookmark processing
+- User tags (`type: "USER"`) are created manually by users
+
+## Next Steps
+
+- [List Bookmarks API](/docs/api-bookmarks-list)
+- [API Overview](/docs/api-overview)

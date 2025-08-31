@@ -1,40 +1,59 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { EmbeddingModel, LanguageModelV1 } from "ai";
-import { MockEmbeddingModelV1, MockLanguageModelV1 } from "ai/test";
+import { EmbeddingModel, LanguageModel } from "ai";
+import { MockEmbeddingModelV2, MockLanguageModelV2 } from "ai/test";
 import { env } from "./env";
 
 const openai = createOpenAI({});
 
 export const OPENAI_MODELS: {
-  cheap: LanguageModelV1;
-  normal: LanguageModelV1;
+  cheap: LanguageModel;
+  normal: LanguageModel;
   embedding: EmbeddingModel<string>;
 } = env.CI
   ? {
-      cheap: new MockLanguageModelV1({
-        doGenerate: async () => ({
+      cheap: new MockLanguageModelV2({
+        doGenerate: async (_options) => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
-          usage: { promptTokens: 10, completionTokens: 20 },
-          text: `OPENAI CHEAP MODEL`,
+          usage: {
+            inputTokens: 10,
+            outputTokens: 20,
+            totalTokens: 30,
+            promptTokens: 10,
+            completionTokens: 20,
+          },
+          content: [{ type: "text", text: "OPENAI CHEAP MODEL" }],
+          warnings: [],
         }),
       }),
-      normal: new MockLanguageModelV1({
-        doGenerate: async () => ({
+      normal: new MockLanguageModelV2({
+        doGenerate: async (_options) => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
-          usage: { promptTokens: 10, completionTokens: 20 },
-          text: `OPENAI NORMAL MODEL`,
+          usage: {
+            inputTokens: 10,
+            outputTokens: 20,
+            totalTokens: 30,
+            promptTokens: 10,
+            completionTokens: 20,
+          },
+          content: [{ type: "text", text: "OPENAI NORMAL MODEL" }],
+          warnings: [],
         }),
       }),
-      embedding: new MockEmbeddingModelV1({
+      embedding: new MockEmbeddingModelV2({
         doEmbed: async (options) => ({
-          embeddings: options.values.map(() => Array.from({length: 1536}, (_, i) => Math.random() * 0.01 + i * 0.0001)),
+          embeddings: options.values.map(() =>
+            Array.from(
+              { length: 1536 },
+              (_, i) => Math.random() * 0.01 + i * 0.0001,
+            ),
+          ),
         }),
       }),
     }
   : {
-      cheap: openai("gpt-4o-mini"),
-      normal: openai("gpt-4o"),
+      cheap: openai("gpt-5-mini"),
+      normal: openai("gpt-5"),
       embedding: openai.embedding("text-embedding-3-small"),
     };

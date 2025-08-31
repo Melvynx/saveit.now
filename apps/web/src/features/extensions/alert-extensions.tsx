@@ -1,6 +1,7 @@
 "use client";
 
 import { APP_LINKS } from "@/lib/app-links";
+import { logger } from "@/lib/logger";
 import {
   Alert,
   AlertDescription,
@@ -28,7 +29,7 @@ export const AlertExtensions = () => {
       const container = document.querySelector("#saveit-now-container");
 
       setState(!container ? "installed" : "not-installed");
-      console.log("container", container);
+      logger.debug("Extension container check:", { found: !!container });
     }, 2000);
   }, [state]);
 

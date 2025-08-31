@@ -16,56 +16,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { toast } from "sonner";
 
-function SignInForm() {
+function SignInPageContent() {
   const router = useRouter();
   const session = useSession();
   const searchParams = useSearchParams();
 
-  return (
-    <Card className="mx-auto h-fit flex-1 @container w-full">
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>
-          We just need a few details to get you started.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-        <OtpForm
-          sendOtp={async (email) => {
-            const result = await authClient.emailOtp.sendVerificationOtp({
-              email,
-              type: "sign-in",
-            });
-            if (result.error) throw new Error(result.error.message);
-          }}
-          verifyOtp={async (email, otp) => {
-            const result = await authClient.signIn.emailOtp({ email, otp });
-            if (result.error) throw new Error(result.error.message);
-
-            return result.data.user;
-          }}
-          onSuccess={() => {
-            router.push(searchParams.get("redirectUrl") || "/app");
-            session.refetch();
-          }}
-          onError={(error) => toast.error(error)}
-        />
-
-        <div className="before:bg-border after:bg-border flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1">
-          <span className="text-muted-foreground text-xs">Or</span>
-        </div>
-
-        <div className="@sm:flex-row flex-col flex items-center gap-2">
-          <SignInWith className="w-full" type="github" buttonProps={{}} />
-          <SignInWith className="w-full" type="google" buttonProps={{}} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-export default function SignInPage() {
   return (
     <MaxWidthContainer
       spacing="sm"
@@ -140,24 +95,84 @@ export default function SignInPage() {
           </li>
         </ul>
       </div>
-      <Suspense fallback={
-        <Card className="mx-auto h-fit flex-1 @container w-full">
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              We just need a few details to get you started.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="h-10 bg-muted rounded animate-pulse" />
-              <div className="h-10 bg-muted rounded animate-pulse" />
-            </div>
-          </CardContent>
-        </Card>
-      }>
-        <SignInForm />
-      </Suspense>
+      <Card className="mx-auto h-fit flex-1 @container w-full">
+        <CardHeader>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>
+            We just need a few details to get you started.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <OtpForm
+            sendOtp={async (email) => {
+              const result = await authClient.emailOtp.sendVerificationOtp({
+                email,
+                type: "sign-in",
+              });
+              if (result.error) throw new Error(result.error.message);
+            }}
+            verifyOtp={async (email, otp) => {
+              const result = await authClient.signIn.emailOtp({ email, otp });
+              if (result.error) throw new Error(result.error.message);
+
+              return result.data.user;
+            }}
+            onSuccess={() => {
+              router.push(searchParams.get("redirectUrl") || "/app");
+              session.refetch();
+            }}
+            onError={(error) => toast.error(error)}
+          />
+
+          <div className="before:bg-border after:bg-border flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1">
+            <span className="text-muted-foreground text-xs">Or</span>
+          </div>
+
+          <div className="@sm:flex-row flex-col flex items-center gap-2">
+            <SignInWith className="w-full" type="github" buttonProps={{}} />
+            <SignInWith className="w-full" type="google" buttonProps={{}} />
+          </div>
+        </CardContent>
+      </Card>
     </MaxWidthContainer>
+  );
+}
+
+function SignInPageSkeleton() {
+  return (
+    <MaxWidthContainer
+      spacing="sm"
+      className="flex h-full w-full min-h-fit items-start flex-col lg:flex-row gap-8 lg:gap-12"
+    >
+      <div className="ml-auto flex lg:flex-1 flex-col gap-6">
+        <div className="h-10 bg-muted rounded animate-pulse" />
+        <div className="h-6 bg-muted rounded animate-pulse" />
+      </div>
+      <Card className="mx-auto h-fit flex-1 @container w-full">
+        <CardHeader>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>
+            We just need a few details to get you started.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="h-20 bg-muted rounded animate-pulse" />
+          <div className="h-px bg-muted" />
+          <div className="flex gap-2">
+            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
+            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
+          </div>
+        </CardContent>
+      </Card>
+    </MaxWidthContainer>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInPageSkeleton />}>
+      <SignInPageContent />
+    </Suspense>
   );
 }

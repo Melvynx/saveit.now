@@ -5,77 +5,54 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { Hash, Plus } from "lucide-react";
 import { useState } from "react";
-import { TagSelector } from "@/features/tags/tag-selector";
-import { useAction } from "next-safe-action/hooks";
-import { updateBookmarkCardTagsAction } from "./bookmarks-card.action";
-import { useRefreshBookmarks } from "../use-bookmarks";
-import { toast } from "sonner";
+import { BookmarkTagSelector } from "./bookmark-tag-selector";
+import { useBookmarkTags } from "../hooks/use-bookmark-tags";
 
-type Tag = {
-  id: string;
-  name: string;
-  type: "USER" | "IA";
-};
-
-type BookmarkCardTagsProps = {
+interface BookmarkCardTagsProps {
   bookmarkId: string;
-  tags: Tag[];
-  onTagsUpdate?: (tags: string[]) => void;
   disabled?: boolean;
   className?: string;
-};
+  onEditComplete?: () => void;
+}
 
 export function BookmarkCardTags({
   bookmarkId,
-  tags,
-  onTagsUpdate,
   disabled,
   className,
+  onEditComplete,
 }: BookmarkCardTagsProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const refreshBookmarks = useRefreshBookmarks();
+  const { tags, isLoading } = useBookmarkTags(bookmarkId);
 
-  const { execute: updateTags, isExecuting } = useAction(
-    updateBookmarkCardTagsAction,
-    {
-      onSuccess: () => {
-        toast.success("Tags updated");
-        refreshBookmarks();
-        setIsEditing(false);
-      },
-      onError: (error) => {
-        toast.error(
-          error.error.serverError?.message || "Failed to update tags",
-        );
-      },
-    },
-  );
+  const handleEditComplete = () => {
+    setIsEditing(false);
+    onEditComplete?.();
+  };
 
   const userTags = tags.filter((tag) => tag.type === "USER");
   const aiTags = tags.filter((tag) => tag.type === "IA");
-
-  const handleTagsChange = (newTagNames: string[]) => {
-    if (onTagsUpdate) {
-      onTagsUpdate(newTagNames);
-    } else {
-      updateTags({ bookmarkId, tags: newTagNames });
-    }
-  };
 
   if (isEditing && !disabled) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
         <div className="flex-1">
-          <TagSelector
-            selectedTags={tags}
-            onTagsChange={handleTagsChange}
+          <BookmarkTagSelector
+            bookmarkId={bookmarkId}
             placeholder="Select tags..."
-            disabled={disabled || isExecuting}
+            disabled={disabled}
           />
         </div>
-        <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+        <Button size="sm" variant="ghost" onClick={handleEditComplete}>
           Done
         </Button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={cn("flex items-center gap-1.5", className)}>
+        <div className="h-5 w-16 bg-muted animate-pulse rounded"></div>
       </div>
     );
   }

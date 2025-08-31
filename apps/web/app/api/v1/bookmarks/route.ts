@@ -12,9 +12,9 @@ export const POST = apiRoute
       url: z.string().url("Invalid URL format"),
       transcript: z.string().optional(),
       metadata: z.record(z.any()).optional(),
-    })
+    }),
   )
-  .handler(async (req, { body, ctx }) => {
+  .handler(async (_, { body, ctx }) => {
     try {
       const bookmark = await createBookmark({
         url: body.url,
@@ -42,7 +42,7 @@ export const POST = apiRoute
       if (error instanceof BookmarkValidationError) {
         return NextResponse.json(
           { error: error.message, success: false },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -59,16 +59,16 @@ export const GET = apiRoute
       special: z.enum(["READ", "UNREAD", "STAR"]).optional(),
       limit: z.coerce.number().min(1).max(100).optional().default(20),
       cursor: z.string().optional(),
-    })
+    }),
   )
-  .handler(async (req, { ctx, query }) => {
+  .handler(async (_, { ctx, query }) => {
     const validBookmarkTypes = Object.values(BookmarkType);
     const types = query.types
       ? query.types
           .split(",")
           .filter(Boolean)
           .filter((type): type is BookmarkType =>
-            validBookmarkTypes.includes(type as BookmarkType)
+            validBookmarkTypes.includes(type as BookmarkType),
           )
       : [];
 
@@ -86,7 +86,7 @@ export const GET = apiRoute
 
     return {
       success: true,
-      bookmarks: result.bookmarks.map(bookmark => ({
+      bookmarks: result.bookmarks.map((bookmark) => ({
         id: bookmark.id,
         url: bookmark.url,
         title: bookmark.title,

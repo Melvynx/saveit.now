@@ -3,6 +3,7 @@ export interface ChangelogEntry {
   date: string;
   type: "feature" | "improvement" | "fix" | "major";
   title: string;
+  url?: string;
   description: string;
   changes: Array<{
     type: "new" | "improvement" | "fix" | "security";
@@ -12,6 +13,48 @@ export interface ChangelogEntry {
 }
 
 export const changelogEntries: ChangelogEntry[] = [
+  {
+    version: "1.7.0",
+    date: "2025-01-10",
+    type: "improvement",
+    title: "Enhanced AI Summary System",
+    description: "We've upgrade the AI models to GPT-5 for better summary.",
+    changes: [
+      {
+        type: "improvement",
+        text: "Faster bookmark processing with optimized AI models",
+      },
+      {
+        type: "improvement",
+        text: "Enhanced screenshot analysis for better content understanding",
+      },
+      {
+        type: "improvement",
+        text: "More accurate tag generation and content categorization",
+      },
+      {
+        type: "improvement",
+        text: "Adding GPT-5 for summary.",
+      },
+    ],
+    image:
+      "https://codelynx.mlvcdn.com/images/2025-08-10/clipboard_image_1754804046.png",
+  },
+  {
+    version: "1.6.0",
+    date: "2025-08-02",
+    type: "improvement",
+    title: "iOS App",
+    description: "Download the iOS application now",
+    url: "https://saveit.now/ios",
+    changes: [
+      {
+        type: "new",
+        text: "Application for iOS is now available",
+      },
+    ],
+    image: "https://codelynx.mlvcdn.com/images/2025-08-02/saveit-ios.png",
+  },
   {
     version: "1.5.0",
     date: "2025-07-25",

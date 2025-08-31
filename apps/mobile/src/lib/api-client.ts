@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authClient } from "./auth-client";
 import { getServerUrl } from "./server-url";
 
@@ -14,6 +15,7 @@ interface Bookmark {
   summary?: string;
   type?: string;
   faviconUrl?: string;
+  status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
   tags: Array<{
     tag: {
       id: string;
@@ -150,6 +152,25 @@ class ApiClient {
 
     if (!response.ok) {
       throw new Error(`Failed to delete bookmark: ${response.statusText}`);
+    }
+  }
+
+  async submitBugReport(data: {
+    description: string;
+    deviceInfo?: string;
+    appVersion?: string;
+  }): Promise<void> {
+    const headers = await this.getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/api/bug-report`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to submit bug report: ${response.statusText}`);
     }
   }
 }

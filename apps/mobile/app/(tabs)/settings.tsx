@@ -1,5 +1,6 @@
 import {
   Book,
+  Bug,
   HelpCircle,
   LogOut,
   Moon,
@@ -9,6 +10,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { useMutation } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
+import { router } from "expo-router";
 import { Alert } from "react-native";
 import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
@@ -60,6 +62,10 @@ export default function TabTwoScreen() {
 
   const openHelp = async () => {
     await WebBrowser.openBrowserAsync("https://saveit.now/help");
+  };
+
+  const openBugReport = () => {
+    router.push("/bug-report-modal");
   };
 
   const handleSignOut = async () => {
@@ -189,6 +195,22 @@ export default function TabTwoScreen() {
             <HelpCircle size={20} color="$gray10" />
             <Text fontSize="$4" color="$color">
               Help
+            </Text>
+          </XStack>
+        </Button>
+
+        <Button
+          onPress={openBugReport}
+          size="$4"
+          backgroundColor="$backgroundTransparent"
+          borderWidth={1}
+          borderColor="$borderColor"
+          justifyContent="flex-start"
+        >
+          <XStack alignItems="center" gap="$3">
+            <Bug size={20} color="$gray10" />
+            <Text fontSize="$4" color="$color">
+              Report Bug
             </Text>
           </XStack>
         </Button>

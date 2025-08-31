@@ -7,6 +7,7 @@ import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { upfetch } from "@/lib/up-fetch";
 import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@workspace/ui/components/badge";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 
 import {
@@ -19,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { FileDownIcon, FileUpIcon, Gem, Menu, Moon, Sun } from "lucide-react";
+import { FileDownIcon, FileUpIcon, Gem, Hash, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useMedia } from "react-use";
@@ -47,6 +48,10 @@ export const BookmarkHeader = () => {
           <HeaderAppNameExtension />
         </span>
       </Link>
+
+      <Badge asChild variant="outline" className="rounded-full">
+        <Link href="/ios">📱 New iOS App !</Link>
+      </Badge>
       <div className="flex-1"></div>
       {!isMobile ? (
         <>
@@ -97,6 +102,11 @@ export const BookmarkHeader = () => {
           <DropdownMenuItem asChild>
             <Link href={APP_LINKS.exports}>
               <FileUpIcon className="size-4 mr-2" /> Exports
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={APP_LINKS.tags}>
+              <Hash className="size-4 mr-2" /> Tags
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>

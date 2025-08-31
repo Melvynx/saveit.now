@@ -45,6 +45,13 @@ export function Footer() {
                   >
                     <Link href="/changelog">Changelog</Link>
                   </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0"
+                  >
+                    <Link href="/ios">iOS app</Link>
+                  </Button>
                 </nav>
               </div>
 
@@ -137,28 +144,36 @@ export function Footer() {
                     variant="link"
                     className="h-auto justify-start p-0"
                   >
-                    <Link href="/posts/saveit-vs-pocket-comparison">vs Pocket</Link>
+                    <Link href="/posts/saveit-vs-pocket-comparison">
+                      vs Pocket
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     variant="link"
                     className="h-auto justify-start p-0"
                   >
-                    <Link href="/posts/saveit-vs-mymind-comparison">vs MyMind</Link>
+                    <Link href="/posts/saveit-vs-mymind-comparison">
+                      vs MyMind
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     variant="link"
                     className="h-auto justify-start p-0"
                   >
-                    <Link href="/posts/saveit-vs-raindrop-comparison">vs Raindrop.io</Link>
+                    <Link href="/posts/saveit-vs-raindrop-comparison">
+                      vs Raindrop.io
+                    </Link>
                   </Button>
                   <Button
                     asChild
                     variant="link"
                     className="h-auto justify-start p-0"
                   >
-                    <Link href="/posts/best-bookmark-managers-2024-complete-guide">All Tools</Link>
+                    <Link href="/posts/best-bookmark-managers-2024-complete-guide">
+                      All Tools
+                    </Link>
                   </Button>
                 </nav>
               </div>

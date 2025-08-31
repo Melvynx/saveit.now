@@ -12,6 +12,48 @@ import { config } from "./config";
 
 const BASE_URL = config.BASE_URL;
 
+// URL detection utilities for screenshot exclusion
+function isTwitterXUrl(url: string): boolean {
+  return url.includes("twitter.com") || url.startsWith("https://x.com/");
+}
+
+function isImageUrl(url: string): boolean {
+  // Check for common image file extensions
+  const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)(\?|$)/i;
+  if (imageExtensions.test(url)) {
+    return true;
+  }
+  
+  // Check for common image hosting domains
+  const imageHosts = [
+    'pbs.twimg.com',
+    'imgur.com',
+    'i.imgur.com',
+    'media.giphy.com',
+    'images.unsplash.com',
+    'cdn.pixabay.com'
+  ];
+  
+  try {
+    const urlObj = new URL(url);
+    return imageHosts.some(host => urlObj.hostname.includes(host));
+  } catch {
+    return false;
+  }
+}
+
+function isImageSaveContext(): boolean {
+  // Check if we're saving via "Save this image" context menu
+  return currentSaveType === SaveType.IMAGE;
+}
+
+function shouldSkipScreenshot(): boolean {
+  return isYouTubeVideoPage() || 
+         isTwitterXUrl(currentUrl) || 
+         isImageUrl(currentUrl) || 
+         isImageSaveContext();
+}
+
 // Types de contenu à sauvegarder
 enum SaveType {
   PAGE = "page",
@@ -403,8 +445,8 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
     );
 
     if (result.success) {
-      // Étape 2: Capturer et envoyer la capture d'écran (sauf pour YouTube)
-      if (result.bookmarkId && !isYouTubeVideoPage()) {
+      // Étape 2: Capturer et envoyer la capture d'écran (sauf pour YouTube, Twitter/X.com, et images)
+      if (result.bookmarkId && !shouldSkipScreenshot()) {
         try {
           // Hide extension UI before capturing screenshot to avoid it appearing in the image
           setState(SaverState.HIDDEN);

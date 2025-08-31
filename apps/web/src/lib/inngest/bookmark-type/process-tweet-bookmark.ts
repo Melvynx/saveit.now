@@ -1,25 +1,22 @@
 import { BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateText, tool } from "ai";
+import { embedMany } from "ai";
 import { NonRetriableError } from "inngest";
 import { getTweet } from "react-tweet/api";
-import { z } from "zod";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
-import { GEMINI_MODELS } from "../../gemini";
 import { OPENAI_MODELS } from "../../openai";
-import { getImageUrlToBase64 } from "../bookmark.utils";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  getAISummary,
-  getAITags,
-  updateBookmark,
+  generateContentSummary,
+  generateAndCreateTags,
+  updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
-  IMAGE_ANALYSIS_PROMPT,
   TAGS_PROMPT,
   TWEET_SUMMARY_PROMPT,
   TWEET_VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
+import { analyzeScreenshot } from "../screenshot-analysis.utils";
 
 function getTweetId(url: string): string | undefined {
   const urlObj = new URL(url);
@@ -94,41 +91,13 @@ export async function processTweetBookmark(
         return null;
       }
 
-      const screenshotBase64 = await getImageUrlToBase64(data.medias[0].url);
-
-      const result = await generateText({
-        model: GEMINI_MODELS.cheap,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: IMAGE_ANALYSIS_PROMPT,
-              },
-              {
-                type: "image",
-                image: screenshotBase64,
-              },
-            ],
-          },
-        ],
-        tools: {
-          "invalid-image": tool({
-            description: "The image is black, invalid, you see nothing on it.",
-            parameters: z.object({
-              reason: z.string(),
-            }),
-          }),
-        },
-        toolChoice: "auto",
-      });
-
-      if (result.toolCalls?.[0]?.toolName === "invalid-image") {
+      const result = await analyzeScreenshot(data.medias[0].url);
+      
+      if (result.isInvalid) {
         return null;
       }
 
-      return result.text;
+      return result.description;
     },
   );
 
@@ -166,7 +135,7 @@ ${tweetImageDescription}
       return "";
     }
 
-    return await getAISummary(TWEET_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(TWEET_SUMMARY_PROMPT, userInput);
   });
 
   const vectorSummary = await step.run("get-big-summary", async () => {
@@ -174,7 +143,7 @@ ${tweetImageDescription}
       return "";
     }
 
-    return await getAISummary(TWEET_VECTOR_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(TWEET_VECTOR_SUMMARY_PROMPT, userInput);
   });
 
   await publish({
@@ -191,7 +160,7 @@ ${tweetImageDescription}
       return [];
     }
 
-    return await getAITags(TAGS_PROMPT, vectorSummary, context.userId);
+    return await generateAndCreateTags(TAGS_PROMPT, vectorSummary, context.userId);
   });
 
   const images = await step.run("save-screenshot", async () => {
@@ -224,7 +193,7 @@ ${tweetImageDescription}
   });
 
   await step.run("update-bookmark", async () => {
-    await updateBookmark({
+    await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
       type: BookmarkType.TWEET,
       title: data.title,

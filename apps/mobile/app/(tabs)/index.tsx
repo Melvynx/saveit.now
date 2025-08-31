@@ -1,21 +1,19 @@
-import { useNavigation } from '@react-navigation/native';
-import { useLayoutEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
-
-import { Text, View } from '../../components/Themed';
-import { useAuth } from '../../src/contexts/AuthContext';
-import SignInScreen from '../../src/screens/SignInScreen';
-import BookmarksScreen from '../../src/screens/bookmarks-screen';
+import { useNavigation } from "@react-navigation/native";
+import { useLayoutEffect, useState } from "react";
+import { Text, YStack } from "tamagui";
+import { useAuth } from "../../src/contexts/AuthContext";
+import SignInScreen from "../../src/screens/SignInScreen";
+import BookmarksScreen from "../../src/screens/bookmarks-screen";
 
 export default function TabOneScreen() {
   const { user, isLoading } = useAuth();
   const navigation = useNavigation();
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerSearchBarOptions: {
-        placeholder: 'Search bookmarks...',
+        placeholder: "Search bookmarks...",
         onChangeText: (event: any) => {
           setSearchText(event.nativeEvent.text);
         },
@@ -23,7 +21,7 @@ export default function TabOneScreen() {
           setSearchText(event.nativeEvent.text);
         },
         onCancelButtonPress: () => {
-          setSearchText('');
+          setSearchText("");
         },
       },
     });
@@ -31,9 +29,9 @@ export default function TabOneScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Loading...</Text>
-      </View>
+      <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
+        <Text fontSize="$8" fontWeight="bold" marginBottom="$2">Loading...</Text>
+      </YStack>
     );
   }
 
@@ -44,31 +42,3 @@ export default function TabOneScreen() {
   return <BookmarksScreen searchQuery={searchText} />;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#333',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});

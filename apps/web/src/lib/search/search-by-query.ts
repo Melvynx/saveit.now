@@ -15,6 +15,44 @@ import {
 } from "./search-helpers";
 
 /**
+ * Fetches tags for given bookmark IDs
+ */
+async function getBookmarkTags(bookmarkIds: string[]) {
+  if (bookmarkIds.length === 0) return [];
+  
+  return prisma.bookmarkTag.findMany({
+    where: {
+      bookmarkId: {
+        in: bookmarkIds,
+      },
+    },
+    select: {
+      bookmarkId: true,
+      tag: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Groups bookmark tags by bookmark ID
+ */
+function groupTagsByBookmarkId(bookmarkTags: { bookmarkId: string; tag: { id: string; name: string; type: string } }[]) {
+  return bookmarkTags.reduce((acc, bt) => {
+    if (!acc.has(bt.bookmarkId)) {
+      acc.set(bt.bookmarkId, []);
+    }
+    acc.get(bt.bookmarkId)!.push(bt);
+    return acc;
+  }, new Map<string, { tag: { id: string; name: string; type: string } }[]>());
+}
+
+/**
  * Searches bookmarks by domain
  */
 export async function searchByDomain({
@@ -242,7 +280,6 @@ export async function searchByVector({
       ogDescription: string | null;
       faviconUrl: string | null;
       distance: number;
-      tagNames?: string;
       createdAt: Date;
       metadata?: Prisma.JsonValue;
       starred?: boolean;
@@ -250,7 +287,7 @@ export async function searchByVector({
     }[]
   >(
     `
-    WITH distances AS (
+    WITH bookmark_distances AS (
       SELECT 
         id,
         url,
@@ -275,19 +312,13 @@ export async function searchByVector({
       ${tagsCondition}
       ${typesCondition}
       ${specialFiltersCondition}
-    ),
-    min_distance AS (
-      SELECT MIN(distance) as min_dist
-      FROM distances
     )
-    SELECT 
-      d.*,
-      string_agg(t.name, ',') as "tagNames"
-    FROM distances d
-    LEFT JOIN "BookmarkTag" bt ON d.id = bt."bookmarkId"
-    LEFT JOIN "Tag" t ON bt."tagId" = t.id
-    WHERE d.distance <= (SELECT min_dist + $3 FROM min_distance)
-    GROUP BY d.id, d.url, d.title, d.summary, d.preview, d.type, d.status, d."ogImageUrl", d."ogDescription", d."faviconUrl", d."createdAt", d.metadata, d.starred, d.read, d.distance
+    SELECT *
+    FROM bookmark_distances
+    WHERE distance <= (
+      SELECT MIN(distance) + $3 
+      FROM bookmark_distances
+    )
     ORDER BY distance ASC
     LIMIT 50
   `,
@@ -304,21 +335,35 @@ export async function searchByVector({
     })),
   );
 
-  // Get open counts for all bookmarks
+  // Get both tags and open counts in parallel for better performance
   const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
-  const openCounts = await getBookmarkOpenCounts(userId, bookmarkIds);
+  
+  const [bookmarkTags, openCounts] = await Promise.all([
+    getBookmarkTags(bookmarkIds),
+    getBookmarkOpenCounts(userId, bookmarkIds),
+  ]);
+
+  // Group tags by bookmark ID
+  const tagsMap = groupTagsByBookmarkId(bookmarkTags);
 
   return bookmarks.map((bookmark) => {
     const baseScore = Math.max(0, 100 * (1 - bookmark.distance));
-    const bookmarkTags = bookmark.tagNames ? bookmark.tagNames.split(",") : [];
-    const matchedTags = bookmarkTags.filter((tag) => tags.includes(tag));
+    const bookmarkTagsList = tagsMap.get(bookmark.id) || [];
+    const bookmarkTagNames = bookmarkTagsList.map(bt => bt.tag.name);
+    const matchedTags = bookmarkTagNames.filter((tag) => tags.includes(tag));
 
     // Apply open frequency boost
     const openCount = openCounts.get(bookmark.id) || 0;
     const score = applyOpenFrequencyBoost(baseScore, openCount);
 
+    // Create bookmark object with complete tag structure
+    const bookmarkWithTags = {
+      ...bookmark,
+      tags: bookmarkTagsList,
+    };
+
     return bookmarkToSearchResult(
-      bookmark,
+      bookmarkWithTags,
       score,
       "vector",
       matchedTags.length > 0 ? matchedTags : undefined,

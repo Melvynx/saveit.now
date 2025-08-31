@@ -132,6 +132,13 @@ function RootLayoutNav() {
           }} 
         />
         <Stack.Screen 
+          name="bug-report-modal" 
+          options={{ 
+            presentation: "modal",
+            headerShown: false 
+          }} 
+        />
+        <Stack.Screen 
           name="[...slug]" 
           options={{ headerShown: false }} 
         />

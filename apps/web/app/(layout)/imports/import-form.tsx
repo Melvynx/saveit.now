@@ -58,7 +58,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const posthog = usePostHog();
 
   const form = useZodForm({
-    schema: Schema,
+    schema: Schema as any,
     defaultValues: {
       text: "",
     },
@@ -228,7 +228,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form form={form} onSubmit={async (data) => execute(data)}>
+          <Form form={form} onSubmit={async (data) => execute(data as any)}>
             <div
               className={cn(
                 "relative border-2 border-dashed rounded-lg transition-all duration-200",

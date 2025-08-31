@@ -1,5 +1,5 @@
 import { Check, Circle, Star } from "@tamagui/lucide-icons";
-import { Button, Card, Image, Text, XStack, YStack } from "tamagui";
+import { Button, Card, Image, Spinner, Text, XStack, YStack } from "tamagui";
 import { type Bookmark } from "../lib/api-client";
 
 interface BookmarkItemProps {
@@ -46,6 +46,21 @@ export function BookmarkItem({
             borderTopRightRadius="$4"
             resizeMode="cover"
           />
+          {/* Loading overlay for pending status */}
+          {bookmark.status === "PENDING" && (
+            <XStack
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              backgroundColor="rgba(0,0,0,0.5)"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Spinner size="large" color="$white" />
+            </XStack>
+          )}
           {/* Actions overlay */}
           <XStack
             position="absolute"

@@ -8,13 +8,15 @@ import { useEffect, useState } from "react";
 import { Alert, FlatList, RefreshControl } from "react-native";
 import { Button, Text, YStack } from "tamagui";
 import { BookmarkItem } from "../components/bookmark-item";
-import { apiClient, type Bookmark } from "../lib/api-client";
+import { apiClient, BookmarksResponse, type Bookmark } from "../lib/api-client";
 
 interface BookmarksScreenProps {
   searchQuery?: string;
 }
 
-export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenProps) {
+export default function BookmarksScreen({
+  searchQuery = "",
+}: BookmarksScreenProps) {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -33,7 +35,6 @@ export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenPro
     error,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
     isLoading,
     refetch,
@@ -41,7 +42,6 @@ export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenPro
   } = useInfiniteQuery({
     queryKey: ["bookmarks", debouncedSearchQuery],
     queryFn: async ({ pageParam }) => {
-      console.log("OLALALA TU ES SUPER !", pageParam);
       return await apiClient.getBookmarks({
         query: debouncedSearchQuery || undefined,
         cursor: pageParam,
@@ -67,12 +67,12 @@ export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenPro
       // Update the bookmark in all pages of the cache
       queryClient.setQueryData(
         ["bookmarks", debouncedSearchQuery],
-        (oldData: any) => {
+        (oldData: { pages: BookmarksResponse[] }) => {
           if (!oldData) return oldData;
 
           return {
             ...oldData,
-            pages: oldData.pages.map((page: any) => ({
+            pages: oldData.pages.map((page) => ({
               ...page,
               bookmarks: page.bookmarks.map((bookmark: Bookmark) =>
                 bookmark.id === updatedBookmark.id ? updatedBookmark : bookmark,
@@ -98,7 +98,6 @@ export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenPro
       fetchNextPage();
     }
   };
-
 
   const handleBookmarkPress = (bookmark: Bookmark) => {
     router.push(`/bookmark/${bookmark.id}`);
@@ -146,7 +145,6 @@ export default function BookmarksScreen({ searchQuery = '' }: BookmarksScreenPro
 
   return (
     <YStack flex={1} paddingTop="$2">
-
       {isLoading ? (
         <YStack flex={1} justifyContent="center" alignItems="center">
           <Text color="$gray10">Loading bookmarks...</Text>

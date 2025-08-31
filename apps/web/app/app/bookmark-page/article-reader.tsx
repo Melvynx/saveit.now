@@ -1,8 +1,8 @@
 "use client";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { MDXRemote } from "next-mdx-remote-client/rsc";
 import { BookOpen } from "lucide-react";
+import { MDXRemote } from "next-mdx-remote-client/rsc";
 
 export const ArticleReader = ({ content }: { content: string }) => {
   return (
