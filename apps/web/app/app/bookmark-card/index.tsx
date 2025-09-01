@@ -48,6 +48,7 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
   }
 };
 
+
 // Re-export individual components for direct usage if needed
 export { BookmarkCardBase } from "./bookmark-card-base";
 export { BookmarkCardError } from "./bookmark-card-error";

@@ -13,8 +13,8 @@ import {
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { Suspense } from "react";
+import { toast } from "sonner";
 
 function SignInPageContent() {
   const router = useRouter();
@@ -31,7 +31,7 @@ function SignInPageContent() {
           Never lose an important link again.
         </Typography>
         <Typography variant="lead">
-          Save it now—find it in seconds, whether it’s an article, video, post,
+          Save it now—find it in seconds, whether it's an article, video, post,
           or tool.
         </Typography>
         <ul className="hidden lg:flex flex-col gap-4">

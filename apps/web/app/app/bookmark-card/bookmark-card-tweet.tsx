@@ -37,3 +37,4 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
     </BookmarkCardContainer>
   );
 };
+

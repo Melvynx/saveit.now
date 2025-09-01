@@ -10,7 +10,7 @@ export default async function RouteLayout(props: { children: ReactNode }) {
       }}
       className={cn(
         "flex flex-col gap-4 h-full min-h-fit",
-        "bg-background flex-1 flex flex-col bg-opacity-80 [background-image:linear-gradient(var(--box-color)_1px,transparent_1px),linear-gradient(to_right,var(--box-color)_1px,transparent_1px)] [background-size:20px_20px] border-b border-border/30",
+        "bg-background flex-1 flex flex-col bg-opacity-80",
       )}
     >
       <div className="flex max-w-full items-center gap-2">{props.children}</div>
