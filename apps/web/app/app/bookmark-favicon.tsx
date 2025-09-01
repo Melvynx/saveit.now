@@ -1,5 +1,5 @@
+import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { BookmarkStatus, BookmarkType } from "@workspace/database";
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
 import { CircleDashed, CircleX, File, Image } from "lucide-react";
 import { DEFAULT_FAVICON } from "./bookmark.default";
 

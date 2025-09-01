@@ -13,6 +13,19 @@ const nextConfig = {
   experimental: {
     authInterrupts: true,
   },
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "saveit.mlvcdn.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+    minimumCacheTTL: 31536000,
+  },
+
   redirects: async () => {
     return [
       {
