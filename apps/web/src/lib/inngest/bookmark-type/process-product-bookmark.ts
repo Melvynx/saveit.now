@@ -161,23 +161,54 @@ export function extractProductMetadata(html: string): ProductMetadata {
   // 3. Try JavaScript product data extraction (e-commerce platforms)
   const scripts = $('script:not([src])').map((i, el) => $(el).html()).get();
   for (const script of scripts) {
-    if (script && script.includes('product') && script.includes('price')) {
-      // Look for common patterns in JavaScript
-      const productMatch = script.match(/product["\s]*:["\s]*\{([^}]+)\}/i);
-      if (productMatch) {
+    if (script && script.includes('product')) {
+      // Look for Shopify product data (enhanced)
+      const shopifyProductMatch = script.match(/"product"\s*:\s*(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/i);
+      if (shopifyProductMatch) {
         try {
-          const priceMatch = productMatch[1]?.match(/price["\s]*:["\s]*([0-9.]+)/i);
-          const titleMatch = script.match(/title["\s]*:["\s]*["']([^"']+)["']/i);
+          const productData = JSON.parse(shopifyProductMatch[1]);
           
-          if (priceMatch?.[1]) {
+          // Look for variants with pricing
+          let price = productData.price;
+          if (productData.variants && Array.isArray(productData.variants)) {
+            const firstVariant = productData.variants[0];
+            if (firstVariant && firstVariant.price) {
+              price = firstVariant.price;
+            }
+          }
+          
+          if (price) {
             return {
-              name: titleMatch?.[1],
-              price: parseFloat(priceMatch[1]),
-              currency: 'USD', // Default, could be enhanced to detect currency
+              name: productData.title,
+              price: typeof price === 'number' ? price / 100 : parseFloat(price), // Shopify stores in cents
+              currency: 'USD',
+              brand: productData.vendor,
+              image: productData.featured_image,
             };
           }
         } catch (e) {
-          logger.warn('Error parsing JS product data:', e);
+          logger.warn('Error parsing Shopify data:', e);
+        }
+      }
+      
+      // Look for price patterns in any script containing product
+      if (script.includes('price')) {
+        const productMatch = script.match(/product["\s]*:["\s]*\{([^}]+)\}/i);
+        if (productMatch) {
+          try {
+            const priceMatch = productMatch[1]?.match(/price["\s]*:["\s]*([0-9.]+)/i);
+            const titleMatch = script.match(/title["\s]*:["\s]*["']([^"']+)["']/i);
+            
+            if (priceMatch?.[1]) {
+              return {
+                name: titleMatch?.[1],
+                price: parseFloat(priceMatch[1]),
+                currency: 'USD',
+              };
+            }
+          } catch (e) {
+            logger.warn('Error parsing JS product data:', e);
+          }
         }
       }
     }
