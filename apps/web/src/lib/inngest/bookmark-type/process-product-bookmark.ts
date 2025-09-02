@@ -1,11 +1,6 @@
 import { Bookmark, BookmarkType } from "@workspace/database";
 import { logger } from "../../logger";
 import * as cheerio from "cheerio";
-import metascraper from "metascraper";
-import metascraperTitle from "metascraper-title";
-import metascraperDescription from "metascraper-description";
-import metascraperImage from "metascraper-image";
-import metascraperUrl from "metascraper-url";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -18,13 +13,6 @@ import {
   TAGS_PROMPT,
 } from "../prompt.const";
 
-const scraper = metascraper([
-  metascraperTitle(),
-  metascraperDescription(),
-  metascraperImage(),
-  metascraperUrl(),
-]);
-
 interface ProductMetadata {
   name?: string;
   price?: number;
@@ -33,6 +21,57 @@ interface ProductMetadata {
   image?: string;
   availability?: string;
   description?: string;
+}
+
+interface BasicMetadata {
+  title?: string;
+  description?: string;
+  image?: string;
+  url: string;
+}
+
+function extractBasicMetadata(html: string, url: string): BasicMetadata {
+  const $ = cheerio.load(html);
+  
+  // Extract title (prefer OpenGraph, then meta title, then h1, then page title)
+  const title = 
+    $('meta[property="og:title"]').attr('content') ||
+    $('meta[name="twitter:title"]').attr('content') ||
+    $('meta[name="title"]').attr('content') ||
+    $('h1').first().text() ||
+    $('title').text() ||
+    '';
+  
+  // Extract description (prefer OpenGraph, then meta description)
+  const description = 
+    $('meta[property="og:description"]').attr('content') ||
+    $('meta[name="twitter:description"]').attr('content') ||
+    $('meta[name="description"]').attr('content') ||
+    '';
+  
+  // Extract image (prefer OpenGraph, then Twitter, then first img)
+  let image = 
+    $('meta[property="og:image"]').attr('content') ||
+    $('meta[name="twitter:image"]').attr('content') ||
+    $('img').first().attr('src') ||
+    '';
+  
+  // Make image URL absolute if it's relative
+  if (image && !image.startsWith('http')) {
+    const baseUrl = new URL(url);
+    if (image.startsWith('/')) {
+      image = `${baseUrl.origin}${image}`;
+    } else {
+      image = `${baseUrl.origin}/${image}`;
+    }
+  }
+  
+  return {
+    title: title.trim(),
+    description: description.trim(),
+    image,
+    url
+  };
 }
 
 export function isProductPage(url: string, html: string): boolean {
@@ -162,9 +201,9 @@ export async function processProductBookmark(
   step: InngestStep,
   publish: InngestPublish,
 ): Promise<void> {
-  // Extract basic metadata using metascraper
+  // Extract basic metadata using cheerio
   const basicMetadata = await step.run("extract-basic-metadata", async () => {
-    return await scraper({ url: context.url, html: context.content });
+    return extractBasicMetadata(context.content, context.url);
   });
 
   // Extract product-specific metadata
