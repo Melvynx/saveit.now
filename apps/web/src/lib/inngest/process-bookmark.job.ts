@@ -7,7 +7,10 @@ import { processArticleBookmark } from "./bookmark-type/process-article-bookmark
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
 import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
-import { isProductPage, processProductBookmark } from "./bookmark-type/process-product-bookmark";
+import {
+  isProductPage,
+  processProductBookmark,
+} from "./bookmark-type/process-product-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
 import { inngest } from "./client";
@@ -238,6 +241,10 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.PDF;
         }
 
+        if (isProductPage(bookmark.url, urlContent.content)) {
+          type = BookmarkType.PRODUCT;
+        }
+
         const result = {
           ok: response.ok,
           status: response.status,
@@ -279,13 +286,8 @@ export const processBookmarkJob = inngest.createFunction(
       return;
     }
 
-    if (
-      urlContent.type === BookmarkType.PAGE &&
-      typeof urlContent.content === "string" &&
-      (urlContent.content.includes("<article") ||
-        urlContent.content.includes('property="og:type" content="article"'))
-    ) {
-      await processArticleBookmark(
+    if (urlContent.type === BookmarkType.PRODUCT) {
+      await processProductBookmark(
         {
           bookmarkId,
           content: urlContent.content,
@@ -306,9 +308,10 @@ export const processBookmarkJob = inngest.createFunction(
     if (
       urlContent.type === BookmarkType.PAGE &&
       typeof urlContent.content === "string" &&
-      isProductPage(bookmark.url, urlContent.content)
+      (urlContent.content.includes("<article") ||
+        urlContent.content.includes('property="og:type" content="article"'))
     ) {
-      await processProductBookmark(
+      await processArticleBookmark(
         {
           bookmarkId,
           content: urlContent.content,

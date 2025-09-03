@@ -10,8 +10,8 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
-import { LinkWithQuery } from "./link-with-query";
 import { BookmarkCardData } from "./bookmark.types";
+import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardProductProps {
   bookmark: BookmarkCardData;
@@ -53,14 +53,14 @@ export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
             className="h-full w-full object-cover object-center mx-auto"
             alt={bookmark.title ?? "Product"}
           />
-          
+
           {/* Price overlay - positioned like YouTube duration */}
           {metadata?.price && metadata.price > 0 && (
             <div className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm font-medium">
               {formatPrice(metadata.price, metadata.currency)}
             </div>
           )}
-          
+
           {/* Brand badge - positioned in top left */}
           {metadata?.brand && (
             <div className="absolute top-2 left-2 bg-white/90 text-black px-2 py-1 rounded text-xs font-medium max-w-24 truncate">
@@ -79,8 +79,10 @@ export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>
-        <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
-        <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
+        <BookmarkCardTitle className="line-clamp-1">
+          {bookmark.title}
+        </BookmarkCardTitle>
+        <BookmarkCardDescription>{domainName}</BookmarkCardDescription>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );
