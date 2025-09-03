@@ -83,6 +83,8 @@ The application requires extensive environment variables (35+ variables) for var
 
 ## Commands usage
 
-IMPORTANT - When the users write `cmd-<some-name>` you SHOULD always try to find a commands inside the folder `.claude/commands` that match `<some-name>` then read the file and strictly follow the instructions. You can also search in `~/.claude/commands` for user globals commands.
+IMPORTANT - When the users write `#<some-name>` you SHOULD always try to find a commands inside the folder `.claude/commands` that match `#<some-name>` then read the file and strictly follow the instructions. You can also search in `~/.claude/commands` for user globals commands.
 
 You SHOULD STRICTLY follow the commands of the commands at any cost.
+
+You SHOULD ALWAYS trigger the commands usage when the query start with `#`

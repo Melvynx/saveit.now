@@ -12,6 +12,7 @@ import {
 } from "./bookmark-card-base";
 import { BookmarkCardData } from "./bookmark.types";
 import { LinkWithQuery } from "./link-with-query";
+import { formatPrice } from "@workspace/ui/lib/format";
 
 interface BookmarkCardProductProps {
   bookmark: BookmarkCardData;
@@ -28,17 +29,7 @@ export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
   const domainName = new URL(bookmark.url).hostname;
   const metadata = bookmark.metadata as ProductMetadata;
 
-  const formatPrice = (price: number, currency: string = "USD") => {
-    try {
-      return new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: currency,
-      }).format(price);
-    } catch {
-      // Fallback if currency code is invalid
-      return `${price} ${currency}`;
-    }
-  };
+  
 
   return (
     <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-product">
