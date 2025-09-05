@@ -83,8 +83,17 @@ The application requires extensive environment variables (35+ variables) for var
 
 ## Commands usage
 
-IMPORTANT - When the users write `#<some-name>` you SHOULD always try to find a commands inside the folder `.claude/commands` that match `#<some-name>` then read the file and strictly follow the instructions. You can also search in `~/.claude/commands` for user globals commands.
+IMPORTANT - When the users write `#<some-name>` you SHOULD always try to find a commands inside the folder `.claude/commands` that match `<some-name>` then read the file and strictly follow the instructions. You can also search in `~/.claude/commands` for user globals commands.
 
 You SHOULD STRICTLY follow the commands of the commands at any cost.
 
-You SHOULD ALWAYS trigger the commands usage when the query start with `#`
+You SHOULD ALWAYS trigger the commands usage when the query start with `#`.
+But you SHOULD NEVER do it if the query DOESN'T START with `#` !
+
+## Agent usage
+
+You can adopt a fan-out pattern where you spawn subagents to perform parallel isolated tasks, and then fan-in the results.
+
+```
+codex exec "something to do" -m gpt-5 -c model_reasoning_effort="high" --yolo
+```

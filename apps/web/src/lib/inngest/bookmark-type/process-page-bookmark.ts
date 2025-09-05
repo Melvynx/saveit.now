@@ -129,6 +129,11 @@ export async function processStandardWebpage(
       return freshBookmark.preview;
     }
 
+    // Skip screenshot for Playwright tests - return placeholder
+    if (context.url.includes("isPlaywrightTest=true")) {
+      return "https://via.placeholder.com/1200x630/f0f0f0/333333?text=Playwright+Test+Placeholder";
+    }
+
     try {
       const url = new URL(env.SCREENSHOT_WORKER_URL);
       url.searchParams.set("url", context.url);
@@ -321,7 +326,7 @@ ${screenshotAnalysis.description}
     // Update embeddings in database
     await prisma.$executeRaw`
       UPDATE "Bookmark"
-      SET 
+      SET
         "titleEmbedding" = ${titleEmbedding}::vector,
         "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}

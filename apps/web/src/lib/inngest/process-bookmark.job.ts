@@ -241,7 +241,7 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.PDF;
         }
 
-        if (isProductPage(bookmark.url, urlContent.content)) {
+        if (isProductPage(bookmark.url, content)) {
           type = BookmarkType.PRODUCT;
         }
 
