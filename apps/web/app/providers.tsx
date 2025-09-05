@@ -34,6 +34,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
             {children}
             <Toaster />
             <DialogManagerRenderer />
+            <ChatSnippet />
           </NuqsAdapter>
         </ThemeProvider>
       </QueryClientProvider>
