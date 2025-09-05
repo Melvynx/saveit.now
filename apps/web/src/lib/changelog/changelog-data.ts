@@ -32,7 +32,8 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Processing pipeline and database updated to support products",
       },
     ],
-    image: "https://codelynx.mlvcdn.com/images/2025-07-25/changelog.png",
+    image:
+      "https://codelynx.mlvcdn.com/images/2025-09-05/clipboard_image_1757041881.png",
   },
   {
     version: "1.7.0",
