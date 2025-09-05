@@ -17,11 +17,11 @@ import { AdminFilters } from "./admin-filters";
 import { searchParamsCache } from "./search-params";
 import { UserTable } from "./user-table";
 
-type PageProps = {
+export default async function AdminPage({
+  searchParams,
+}: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function AdminPage({ searchParams }: PageProps) {
+}) {
   const user = await getRequiredUser();
 
   if (user.role !== "admin") {
