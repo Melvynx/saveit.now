@@ -58,6 +58,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const posthog = usePostHog();
 
   const form = useZodForm({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     schema: Schema as any,
     defaultValues: {
       text: "",
@@ -228,7 +229,10 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form form={form} onSubmit={async (data) => execute(data as any)}>
+          <Form
+            form={form}
+            onSubmit={async (data: z.infer<typeof Schema>) => execute(data)}
+          >
             <div
               className={cn(
                 "relative border-2 border-dashed rounded-lg transition-all duration-200",

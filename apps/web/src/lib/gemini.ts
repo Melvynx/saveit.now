@@ -14,7 +14,7 @@ export const GEMINI_MODELS: {
 } = env.CI
   ? {
       cheap: new MockLanguageModelV2({
-        doGenerate: async (_options) => ({
+        doGenerate: async () => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
           usage: { 
@@ -29,7 +29,7 @@ export const GEMINI_MODELS: {
         }),
       }),
       normal: new MockLanguageModelV2({
-        doGenerate: async (_options) => ({
+        doGenerate: async () => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
           usage: { 
