@@ -68,7 +68,7 @@ export async function analyzeScreenshot(
     });
 
     if (result.toolCalls?.[0]?.toolName === "invalid-image") {
-      const invalidReason = (result.toolCalls[0] as any).args.reason;
+      const invalidReason = (result.toolCalls[0] as { input: { reason: string } }).input.reason;
       return { description: null, isInvalid: true, invalidReason };
     }
 
@@ -134,7 +134,7 @@ export async function analyzeScreenshotWithPrompt(
     });
 
     if (result.toolCalls?.[0]?.toolName === "invalid-image") {
-      const invalidReason = (result.toolCalls[0] as any).args.reason;
+      const invalidReason = (result.toolCalls[0] as { input: { reason: string } }).input.reason;
       return { description: null, isInvalid: true, invalidReason };
     }
 

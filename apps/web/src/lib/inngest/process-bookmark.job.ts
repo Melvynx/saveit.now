@@ -7,6 +7,10 @@ import { processArticleBookmark } from "./bookmark-type/process-article-bookmark
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
 import { processStandardWebpage as processPageBookmark } from "./bookmark-type/process-page-bookmark";
 import { processPDFBookmark } from "./bookmark-type/process-pdf-bookmark";
+import {
+  isProductPage,
+  processProductBookmark,
+} from "./bookmark-type/process-product-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
 import { inngest } from "./client";
@@ -237,6 +241,10 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.PDF;
         }
 
+        if (isProductPage(bookmark.url, content)) {
+          type = BookmarkType.PRODUCT;
+        }
+
         const result = {
           ok: response.ok,
           status: response.status,
@@ -271,6 +279,25 @@ export const processBookmarkJob = inngest.createFunction(
           url: bookmark.url,
           userId: bookmark.userId,
           content: urlContent.content,
+        },
+        step,
+        publish,
+      );
+      return;
+    }
+
+    if (urlContent.type === BookmarkType.PRODUCT) {
+      await processProductBookmark(
+        {
+          bookmarkId,
+          content: urlContent.content,
+          url: bookmark.url,
+          userId: bookmark.userId,
+          bookmark: {
+            ...bookmark,
+            createdAt: new Date(bookmark.createdAt),
+            updatedAt: new Date(bookmark.updatedAt),
+          },
         },
         step,
         publish,

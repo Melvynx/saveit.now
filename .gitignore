@@ -16,6 +16,7 @@ node_modules
 coverage
 test-results/
 debug-logs/
+test-product-detection.*
 
 # Turbo
 .turbo

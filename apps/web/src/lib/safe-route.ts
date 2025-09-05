@@ -14,7 +14,7 @@ export const routeClient = createZodRoute({
     }
 
     if (error instanceof ApplicationError) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     console.error(error);
