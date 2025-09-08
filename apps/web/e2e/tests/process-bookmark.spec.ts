@@ -8,47 +8,48 @@ test.describe("Process bookmarks tests", () => {
   test("should process bookmark", async ({ page }) => {
     await signInWithEmail({ email: getUserEmail(), page });
 
-    // after creating an account, check that a pending card with "SaveIt.now" is visible
-    await expect(
-      page
-        .locator(
-          '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
-        )
-        .first(),
-    ).toBeVisible();
+    await page
+      .getByRole("textbox", { name: "Search bookmarks or type @" })
+      .fill(`https://resend.com?a=${nanoid(2)}&isPlaywrightTest=true`);
+    await page.getByRole("button", { name: "Add" }).click();
 
-    // wait for all pending cards with "SaveIt.now" to disappear (processing done)
-    // hard refresh page every 30 seconds to check status, maximum 3 minutes
-    const startTime = Date.now();
-    const maxWaitTime = 180000; // 3 minutes
-    const refreshInterval = 30000; // 30 seconds
+    // Wait for network to settle after adding bookmark
+    await page.waitForLoadState("networkidle");
 
-    while (Date.now() - startTime < maxWaitTime) {
-      const pendingCards = page.locator(
-        '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
-      );
+    // Check if bookmark is already processed or wait for pending state
+    const processedCards = page
+      .locator('[data-testid="bookmark-card-page"] [data-slot="card-title"]')
+      .filter({ hasText: /^resend\.com.*/ });
 
-      const pendingCount = await pendingCards.count();
-      if (pendingCount === 0) {
-        break; // Processing is done
-      }
+    const isAlreadyProcessed = (await processedCards.count()) > 0;
 
-      // Wait 30 seconds before hard refreshing
-      await page.waitForTimeout(refreshInterval);
-      await page.reload({ waitUntil: "networkidle" });
+    if (!isAlreadyProcessed) {
+      // Wait for pending card to appear if not already processed
+      await expect(
+        page
+          .locator(
+            '[data-testid="bookmark-card-pending"] [data-slot="card-title"]',
+          )
+          .filter({ hasText: /^resend\.com/ })
+          .first(),
+      ).toBeVisible({ timeout: 10000 });
     }
 
-    // Final check that processing is complete
-    await expect(
-      page.locator(
-        '[data-testid="bookmark-card-pending"] [data-slot="card-title"]:has-text("SaveIt.now")',
-      ),
-    ).toHaveCount(0);
+    // Wait for processing to complete if not already processed
+    if (!isAlreadyProcessed) {
+      await expect(
+        page
+          .locator(
+            '[data-testid="bookmark-card-pending"] [data-slot="card-title"]',
+          )
+          .filter({ hasText: /^resend\.com/ }),
+      ).toHaveCount(0, { timeout: 180000 });
+    }
 
     // now check for processed card
-    const bookmarkCardPage = page.locator(
-      '[data-testid="bookmark-card-page"] [data-slot="card-title"]:has-text("SaveIt.now")',
-    );
+    const bookmarkCardPage = page
+      .locator('[data-testid="bookmark-card-page"] [data-slot="card-title"]')
+      .filter({ hasText: /^resend\.com.*/ });
     await expect(bookmarkCardPage.first()).toBeVisible();
     await bookmarkCardPage.first().click();
 

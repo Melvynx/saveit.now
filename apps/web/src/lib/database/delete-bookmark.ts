@@ -1,6 +1,6 @@
 import { prisma } from "@workspace/database";
 import { deleteFileFromS3 } from "../aws-s3/aws-s3-delete-files";
-import { ApplicationError } from "../errors";
+import { SafeRouteError } from "../errors";
 
 export const deleteBookmark = async (body: { id: string; userId: string }) => {
   // First, verify the bookmark exists and belongs to the user
@@ -15,7 +15,7 @@ export const deleteBookmark = async (body: { id: string; userId: string }) => {
   });
 
   if (!existingBookmark) {
-    throw new ApplicationError("Bookmark not found");
+    throw new SafeRouteError("Bookmark not found", 404);
   }
 
   const bookmark = await prisma.bookmark.delete({

@@ -153,6 +153,7 @@ enum BookmarkType {
   YOUTUBE
   TWEET
   PDF
+  PRODUCT
 }
 
 enum BookmarkStatus {

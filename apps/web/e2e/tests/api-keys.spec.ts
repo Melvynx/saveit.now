@@ -69,7 +69,7 @@ test.describe("API Keys Management", () => {
     await page.goto("/account/keys");
     await page.waitForLoadState("networkidle");
 
-    const apiKeyName = `${faker.location.city()}-${faker.location.country()}-delete-keys`;
+    const apiKeyName = `${faker.location.city()}-dk`;
 
     // Create an API key first
     await page.click("button:has-text('Create API Key')");
