@@ -64,3 +64,4 @@ export const BookmarkCardPDF = ({ bookmark }: BookmarkCardPDFProps) => {
     </BookmarkCardContainer>
   );
 };
+
