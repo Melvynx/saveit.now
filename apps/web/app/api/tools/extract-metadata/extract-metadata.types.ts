@@ -26,7 +26,7 @@ export const pageAnalysisSchema = z.object({
 export const technicalMetaSchema = z.object({
   viewport: z.string().optional(),
   charset: z.string().optional(),
-  httpEquiv: z.record(z.string()).optional(),
+  httpEquiv: z.record(z.string(), z.string()).optional(),
   robots: z.string().optional(),
   canonical: z.string().optional(),
   ampHtml: z.string().optional(),

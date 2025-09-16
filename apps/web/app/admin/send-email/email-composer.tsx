@@ -36,6 +36,7 @@ export function EmailComposer({ eligibleUsersCount }: EmailComposerProps) {
   const [showPreview, setShowPreview] = useState(false);
 
   const form = useZodForm({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     schema: emailSchema as any,
     defaultValues: {
       subject: "",

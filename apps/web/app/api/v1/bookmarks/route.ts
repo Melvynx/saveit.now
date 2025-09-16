@@ -9,9 +9,9 @@ import { z } from "zod";
 export const POST = apiRoute
   .body(
     z.object({
-      url: z.string().url("Invalid URL format"),
+      url: z.url("Invalid URL format"),
       transcript: z.string().optional(),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     }),
   )
   .handler(async (_, { body, ctx }) => {
