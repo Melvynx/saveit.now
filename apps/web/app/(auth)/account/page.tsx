@@ -1,4 +1,5 @@
 import { EmailChangeForm } from "@/features/auth/email-change-form";
+import { AvatarSection } from "@/features/auth/avatar-section";
 import { SubmitButton } from "@/features/form/loading-button";
 import { DeleteAccountButton } from "@/components/delete-account-button";
 import { MaxWidthContainer } from "@/features/page/page";
@@ -25,6 +26,7 @@ export default async function AuthPage() {
   return (
     <MaxWidthContainer className="my-8 flex flex-col gap-6 lg:gap-10">
       <Typography variant="h1">Hello {user?.name || "you"} 👋</Typography>
+      {user && <AvatarSection user={user} />}
       <form
         action={async (formData) => {
           "use server";
