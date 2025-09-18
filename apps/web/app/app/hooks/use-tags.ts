@@ -1,3 +1,4 @@
+import { useDebounce } from "@/hooks/use-debounce";
 import { upfetch } from "@/lib/up-fetch";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
@@ -29,6 +30,9 @@ export const useTags = (query?: string) => {
   const [showTagList, setShowTagList] = useState(false);
   const [tagFilter, setTagFilter] = useState("");
 
+  // Debounce the query to avoid API calls on every keystroke
+  const debouncedQuery = useDebounce(query, 300);
+
   // Fetch user's tags with server-side filtering
   const {
     data: userTags = [],
@@ -37,12 +41,12 @@ export const useTags = (query?: string) => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["tags", query],
+    queryKey: ["tags", debouncedQuery],
     queryFn: async (): Promise<Tag[]> => {
       try {
         const searchParams = new URLSearchParams();
-        if (query) {
-          searchParams.append("q", query);
+        if (debouncedQuery) {
+          searchParams.append("q", debouncedQuery);
         }
 
         const url = `/api/tags${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
@@ -130,6 +134,9 @@ export const useInfiniteTags = (query?: string) => {
   const [showTagList, setShowTagList] = useState(false);
   const [tagFilter, setTagFilter] = useState("");
 
+  // Debounce the query to avoid API calls on every keystroke
+  const debouncedQuery = useDebounce(query, 300);
+
   const {
     data,
     fetchNextPage,
@@ -140,14 +147,14 @@ export const useInfiniteTags = (query?: string) => {
     refetch,
     isRefetching,
   } = useInfiniteQuery({
-    queryKey: ["tags-infinite", query],
+    queryKey: ["tags-infinite", debouncedQuery],
     queryFn: async ({
       pageParam,
     }): Promise<z.infer<typeof TagsPageResponseSchema>> => {
       try {
         const searchParams = new URLSearchParams();
-        if (query) {
-          searchParams.append("q", query);
+        if (debouncedQuery) {
+          searchParams.append("q", debouncedQuery);
         }
         if (pageParam) {
           searchParams.append("cursor", pageParam);
