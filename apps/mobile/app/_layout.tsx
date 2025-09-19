@@ -5,6 +5,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { TamaguiProvider, Theme } from "@tamagui/core";
+import { PortalProvider } from "tamagui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ShareIntentProvider } from "expo-share-intent";
 import { useFonts } from "expo-font";
@@ -85,13 +86,15 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ShareIntentProvider>
         <TamaguiProvider config={config}>
-          <AppThemeContext.Provider value={{ currentTheme, toggleTheme }}>
-            <Theme name={currentTheme}>
-              <AuthProvider>
-                <RootLayoutNav />
-              </AuthProvider>
-            </Theme>
-          </AppThemeContext.Provider>
+          <PortalProvider>
+            <AppThemeContext.Provider value={{ currentTheme, toggleTheme }}>
+              <Theme name={currentTheme}>
+                <AuthProvider>
+                  <RootLayoutNav />
+                </AuthProvider>
+              </Theme>
+            </AppThemeContext.Provider>
+          </PortalProvider>
         </TamaguiProvider>
       </ShareIntentProvider>
     </QueryClientProvider>
