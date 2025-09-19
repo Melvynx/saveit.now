@@ -206,7 +206,7 @@ export const processBookmarkJob = inngest.createFunction(
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
           },
         });
-        logger.debug("Response", { ok: response.ok });
+
         if (!response.ok) {
           throw new Error("No response");
         }
