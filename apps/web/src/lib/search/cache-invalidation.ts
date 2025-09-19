@@ -13,20 +13,20 @@ export class CacheInvalidation {
    * Invalidate search cache when bookmark is updated
    */
   static async onBookmarkUpdated(bookmark: Bookmark): Promise<void> {
-    await SearchCache.invalidateBookmarkUpdate(bookmark.userId, bookmark.id);
+    await SearchCache.invalidateBookmarkUpdate(bookmark.userId);
   }
 
   /**
    * Invalidate search cache when bookmark is deleted
    */
-  static async onBookmarkDeleted(userId: string, bookmarkId: string): Promise<void> {
-    await SearchCache.invalidateBookmarkUpdate(userId, bookmarkId);
+  static async onBookmarkDeleted(userId: string): Promise<void> {
+    await SearchCache.invalidateBookmarkUpdate(userId);
   }
 
   /**
    * Invalidate search cache when tags are updated
    */
-  static async onBookmarkTagsUpdated(userId: string, _bookmarkId: string): Promise<void> {
+  static async onBookmarkTagsUpdated(userId: string): Promise<void> {
     await SearchCache.invalidateUserSearches(userId);
   }
 

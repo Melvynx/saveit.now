@@ -103,7 +103,7 @@ export function OtpForm<T>({
               initial="initial"
               animate="active"
               exit="exit"
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
               custom={direction}
             >
               <form
@@ -135,22 +135,13 @@ export function OtpForm<T>({
               initial="initial"
               animate="active"
               exit="exit"
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.15 }}
               custom={direction}
             >
-              <div className="flex flex-col text-center items-center gap-4 w-full">
+              <div className="flex w-full flex-col items-start gap-4">
                 <p className="text-muted-foreground text-sm">
-                  Enter the code sent to your email{" "}
-                  <span className="font-bold">{email}</span>
-                </p>
-
-                <OtpInput
-                  key={otpResetKey}
-                  onVerify={handleVerifyOtp}
-                  isLoading={isLoading}
-                />
-
-                <div className="flex items-center gap-2">
+                  A one-time password has been sent to{" "}
+                  <span className="font-bold">{email}</span>{" "}
                   <button
                     onClick={handleBack}
                     className="underline text-muted-foreground text-sm hover:text-foreground"
@@ -158,6 +149,14 @@ export function OtpForm<T>({
                   >
                     Edit email
                   </button>
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <OtpInput
+                    key={otpResetKey}
+                    onVerify={handleVerifyOtp}
+                    isLoading={isLoading}
+                  />
 
                   <ResendButton
                     onResend={handleResendOtp}
@@ -176,11 +175,11 @@ export function OtpForm<T>({
 
 const variants = {
   initial: (direction: number) => {
-    return { x: `${100 * direction}px`, opacity: 0 };
+    return { x: `${20 * direction}px`, opacity: 0 };
   },
   active: { x: "0%", opacity: 1 },
   exit: (direction: number) => {
-    return { x: `${-100 * direction}px`, opacity: 0 };
+    return { x: `${-20 * direction}px`, opacity: 0 };
   },
 };
 

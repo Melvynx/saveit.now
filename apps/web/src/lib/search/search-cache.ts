@@ -159,7 +159,7 @@ export class SearchCache {
     }
   }
 
-  static async invalidateBookmarkUpdate(userId: string, _bookmarkId: string): Promise<void> {
+  static async invalidateBookmarkUpdate(userId: string): Promise<void> {
     // For now, invalidate all user searches when a bookmark is updated
     // TODO: More granular invalidation based on bookmark content
     await this.invalidateUserSearches(userId);
