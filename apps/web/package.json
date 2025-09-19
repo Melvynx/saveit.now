@@ -18,7 +18,13 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "test:e2e": "HEADLESS=false playwright test --ui",
-    "test:e2e:ci": "HEADLESS=true playwright test --reporter=list"
+    "test:e2e:ci": "HEADLESS=true playwright test --reporter=list",
+    "test:search-performance": "tsx scripts/test-search-performance.ts",
+    "test:database-queries": "tsx scripts/monitor-database-queries.ts",
+    "test:search-simple": "tsx scripts/simple-search-test.ts",
+    "test:search-neon": "tsx scripts/test-with-neon-db.ts",
+    "test:search-direct": "tsx scripts/direct-performance-test.ts",
+    "benchmark:search": "npm run test:search-direct"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.3",

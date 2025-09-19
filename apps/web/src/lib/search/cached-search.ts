@@ -1,6 +1,7 @@
 import { SearchCache } from './search-cache';
-import { advancedSearch } from './advanced-search';
+import { optimizedSearch } from './optimized-search';
 import type { SearchOptions, SearchResponse } from './search-helpers';
+import { isDomainQuery } from './search-helpers';
 
 export async function cachedAdvancedSearch(params: SearchOptions): Promise<SearchResponse> {
   const startTime = performance.now();
@@ -20,7 +21,7 @@ export async function cachedAdvancedSearch(params: SearchOptions): Promise<Searc
 
   // Cache miss - perform actual search
   console.log(`Cache miss for search query: ${params.query || 'default'}`);
-  const result = await advancedSearch(params);
+  const result = await optimizedSearch(params);
   const queryTime = performance.now() - startTime;
 
   // Determine query type for appropriate caching strategy
@@ -44,6 +45,3 @@ function getQueryType(params: SearchOptions): 'default' | 'tag' | 'domain' | 've
   return 'combined';
 }
 
-function isDomainQuery(query: string): boolean {
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(query);
-}
