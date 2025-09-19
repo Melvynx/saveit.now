@@ -30,6 +30,7 @@ model User {
   banExpires             DateTime?
   onboarding             Boolean                 @default(false)
   unsubscribed           Boolean                 @default(false)
+  metadata               Json?
   sessions               Session[]
   accounts               Account[]
   apikeys                Apikey[]
