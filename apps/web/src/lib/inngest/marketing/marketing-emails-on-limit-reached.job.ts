@@ -88,6 +88,11 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
       });
     });
 
+    await step.run("mark-email-sent", async () => {
+      const { setLimitEmailSent } = await import("../../database/user-metadata.utils");
+      await setLimitEmailSent(userId);
+    });
+
     await step.sleep("wait-1-day-after-discount", "1d");
 
     await step.run("send-discount-reminder", async () => {
