@@ -275,3 +275,66 @@ It should describe the PDF in a way that is easy to understand.
 Return only the title, 4-5 words maximum, no quotes, no explanation. No formatting.
 </output>
 `;
+
+export const PRODUCT_SUMMARY_PROMPT = `<context>
+Create a comprehensive summary of this e-commerce product page. This summary will be shown in a "bookmark" page. The user saved this product, and we will create the best detailed summary that captures the product's essence, purpose, and value proposition.
+</context>
+
+<goal>
+The summary must explain:
+- What the product is and what it does
+- Who it's designed for and what problems it solves
+- Key features and benefits that make it valuable
+- The product category and use cases
+- Why someone would want to buy or use this product
+
+Focus on the product's utility, functionality, and target audience rather than just listing specifications.
+</goal>
+
+<input>
+The user will provide product information including title, description, price, category, and other metadata.
+</input>
+
+<output>
+PLAIN TEXT without any formatting.
+It should be 3-4 sentences maximum.
+Start by describing what the product is and its main purpose.
+</output>
+
+Here are examples of PERFECT product summaries:
+
+<examples>
+1. It's a wireless noise-cancelling headphone designed for professionals and commuters who need to focus in noisy environments. The headphones feature advanced active noise cancellation technology, 30-hour battery life, and premium sound quality for music, calls, and productivity. Perfect for remote workers, travelers, and audiophiles who value both comfort and performance during long listening sessions.
+
+2. It's a smart fitness tracker designed for health-conscious individuals who want to monitor their daily activity, sleep, and wellness metrics. The device features heart rate monitoring, GPS tracking, water resistance, and a week-long battery life to help users maintain their fitness goals. Ideal for runners, gym enthusiasts, and anyone looking to improve their overall health and lifestyle habits.
+
+3. It's a premium kitchen knife set designed for home cooks and culinary enthusiasts who demand professional-grade cutting performance. The set includes essential knives made from high-carbon steel with ergonomic handles, providing precision, durability, and comfort for all cooking tasks. Perfect for anyone who loves cooking and wants to elevate their kitchen skills with restaurant-quality tools.
+</examples>
+`;
+
+export const PRODUCT_VECTOR_SUMMARY_PROMPT = `<context>
+You are generating a comprehensive, keyword-rich summary of an e-commerce product that will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
+</context>
+
+<goal>
+Write a dense, 3-4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **product keywords, brand names, categories, features, use cases, target audiences, and technical specifications** as possible. Focus on what the product is, who it's for, what problems it solves, how it's used, and what makes it valuable. Be specific about the product category, intended users, and key benefits.
+</goal>
+
+<input>
+You will receive product information including name, description, price, brand, category, and other metadata.
+</input>
+
+<output>
+Return **only plain text in English** (no formatting). Limit the output to 3-4 sentences, packed with relevant searchable terms related to the product, its features, category, use cases, and target market.
+</output>
+
+Here are examples of PERFECT product vector summaries:
+
+<examples>
+1. Sony WH-1000XM4 wireless noise-cancelling over-ear headphones designed for professionals, travelers, audiophiles, commuters, and remote workers requiring premium audio quality and active noise cancellation. Features industry-leading ANC technology, 30-hour battery life, touch controls, quick charge, LDAC codec support, and comfortable ergonomic design for music listening, calls, podcasts, and productivity. Ideal for frequent flyers, office workers, students, musicians, and content creators who need superior sound isolation and wireless convenience for work, travel, gaming, and entertainment.
+
+2. Fitbit Charge 5 advanced fitness tracker smartwatch for health monitoring, exercise tracking, sleep analysis, and wellness management targeting fitness enthusiasts, athletes, runners, and health-conscious individuals. Includes built-in GPS, heart rate monitoring, stress management, ECG readings, skin temperature sensors, 7-day battery life, water resistance, and smartphone notifications for comprehensive health and activity tracking. Perfect for gym workouts, running, cycling, swimming, yoga, and daily wellness monitoring for weight loss, fitness goals, and healthy lifestyle maintenance.
+
+3. Wüsthof Classic 8-piece German kitchen knife set featuring high-carbon steel blades, ergonomic handles, and precision forging for professional cooking, meal preparation, and culinary tasks. Includes chef's knife, paring knife, utility knife, bread knife, and kitchen shears designed for home cooks, professional chefs, culinary students, and cooking enthusiasts. Essential for food preparation, vegetable chopping, meat cutting, bread slicing, and all kitchen tasks requiring sharp, durable, restaurant-quality cutlery tools.
+</examples>
+`;

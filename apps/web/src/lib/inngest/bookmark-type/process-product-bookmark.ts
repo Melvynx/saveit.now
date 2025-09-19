@@ -12,7 +12,7 @@ import {
   generateContentSummary,
   updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
-import { TAGS_PROMPT, USER_SUMMARY_PROMPT } from "../prompt.const";
+import { TAGS_PROMPT, PRODUCT_SUMMARY_PROMPT } from "../prompt.const";
 
 interface ProductMetadata {
   name?: string;
@@ -380,7 +380,7 @@ export async function processProductBookmark(
 
   const summary = await step.run("get-summary", async () => {
     if (!contentForSummary) return "";
-    return await generateContentSummary(USER_SUMMARY_PROMPT, contentForSummary);
+    return await generateContentSummary(PRODUCT_SUMMARY_PROMPT, contentForSummary);
   });
 
   // Generate tags for the product
