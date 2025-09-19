@@ -1,7 +1,7 @@
 import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
-import { advancedSearch } from "@/lib/search/advanced-search";
+import { cachedAdvancedSearch } from "@/lib/search/cached-search";
 import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -70,7 +70,7 @@ export const GET = userRoute
           )
       : [];
 
-    const searchResults = await advancedSearch({
+    const searchResults = await cachedAdvancedSearch({
       userId: ctx.user.id,
       query: query.query,
       tags,

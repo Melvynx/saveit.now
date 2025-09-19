@@ -38,6 +38,9 @@ export type SearchResponse = {
   bookmarks: SearchResult[];
   nextCursor?: string;
   hasMore: boolean;
+  totalCount?: number;
+  queryTime?: number;
+  fromCache?: boolean;
 };
 
 // Search options types
