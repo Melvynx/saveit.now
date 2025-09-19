@@ -204,9 +204,9 @@ export const processBookmarkJob = inngest.createFunction(
         const response = await fetch(bookmark.url, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            Accept: "text/html",
           },
         });
+        logger.debug("Response", { ok: response.ok });
         if (!response.ok) {
           throw new Error("No response");
         }
@@ -241,7 +241,16 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.PDF;
         }
 
-        if (isProductPage(bookmark.url, content)) {
+        if (
+          (
+            [
+              null,
+              BookmarkType.PAGE,
+              BookmarkType.ARTICLE,
+            ] as (BookmarkType | null)[]
+          ).includes(type) &&
+          isProductPage(bookmark.url, content)
+        ) {
           type = BookmarkType.PRODUCT;
         }
 
