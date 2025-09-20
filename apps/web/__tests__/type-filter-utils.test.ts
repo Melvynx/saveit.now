@@ -353,9 +353,7 @@ describe("type-filter-utils", () => {
   describe("getTypeDisplayName", () => {
     it("should return correct display names for all types", () => {
       expect(getTypeDisplayName(BookmarkType.VIDEO)).toBe("Video");
-      expect(getTypeDisplayName(BookmarkType.BLOG)).toBe("Blog");
       expect(getTypeDisplayName(BookmarkType.PAGE)).toBe("Page");
-      expect(getTypeDisplayName(BookmarkType.POST)).toBe("Post");
       expect(getTypeDisplayName(BookmarkType.IMAGE)).toBe("Image");
       expect(getTypeDisplayName(BookmarkType.YOUTUBE)).toBe("YouTube");
       expect(getTypeDisplayName(BookmarkType.TWEET)).toBe("Tweet");
@@ -372,9 +370,7 @@ describe("type-filter-utils", () => {
   describe("getTypeColor", () => {
     it("should return color classes for all types", () => {
       expect(getTypeColor(BookmarkType.VIDEO)).toContain("bg-red-100");
-      expect(getTypeColor(BookmarkType.BLOG)).toContain("bg-blue-100");
       expect(getTypeColor(BookmarkType.PAGE)).toContain("bg-gray-100");
-      expect(getTypeColor(BookmarkType.POST)).toContain("bg-green-100");
       expect(getTypeColor(BookmarkType.IMAGE)).toContain("bg-purple-100");
       expect(getTypeColor(BookmarkType.YOUTUBE)).toContain("bg-red-100");
       expect(getTypeColor(BookmarkType.TWEET)).toContain("bg-blue-100");
