@@ -84,7 +84,7 @@ describe("type-filter-utils", () => {
     it("should handle cursor in middle of word", () => {
       const result = parseAtMention("Search @PAGE more", 10);
       expect(result).toEqual({
-        mention: "BL",
+        mention: "PA",
         startIndex: 7,
         endIndex: 10,
         type: "type",
