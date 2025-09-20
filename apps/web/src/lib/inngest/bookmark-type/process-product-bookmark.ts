@@ -339,25 +339,21 @@ export async function processProductBookmark(
   // Extract product-specific metadata
   const productData = await step.run("extract-product-metadata", async () => {
     const traditionalData = extractProductMetadata(context.content);
+    let aiData: ProductMetadata = {};
 
-    // If we got critical data (price), use traditional extraction
-    if (traditionalData.price && traditionalData.price > 0) {
+    // If we don't have critical data (price), use AI as fallback
+    if (!traditionalData.price || traditionalData.price <= 0) {
+      logger.info("Using AI fallback extraction for missing data");
+      aiData = await extractProductMetadataWithAI(context.content, context.url);
+    } else {
       logger.info("Traditional extraction successful with price data");
-      return traditionalData;
     }
 
-    // Otherwise use AI as fallback to fill missing data
-    logger.info("Using AI fallback extraction for missing data");
-    const aiData = await extractProductMetadataWithAI(
-      context.content,
-      context.url,
-    );
-
-    const url = traditionalData.image || aiData.image;
-
-    const screenshotUrl = url
+    // Always upload the image to S3 if available
+    const imageUrl = traditionalData.image || aiData.image;
+    const uploadedImageUrl = imageUrl
       ? await uploadFileFromURLToS3({
-          url: url,
+          url: imageUrl,
           prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
           fileName: "products",
         })
@@ -368,7 +364,7 @@ export async function processProductBookmark(
       price: traditionalData.price || aiData.price,
       currency: traditionalData.currency || aiData.currency,
       brand: traditionalData.brand || aiData.brand,
-      image: screenshotUrl,
+      image: uploadedImageUrl,
       availability: traditionalData.availability || aiData.availability,
       description: traditionalData.description || aiData.description,
       category: aiData.category, // AI is better at categorization
@@ -380,7 +376,10 @@ export async function processProductBookmark(
 
   const summary = await step.run("get-summary", async () => {
     if (!contentForSummary) return "";
-    return await generateContentSummary(PRODUCT_SUMMARY_PROMPT, contentForSummary);
+    return await generateContentSummary(
+      PRODUCT_SUMMARY_PROMPT,
+      contentForSummary,
+    );
   });
 
   // Generate tags for the product

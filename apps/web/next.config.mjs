@@ -10,6 +10,14 @@ const nextConfig = {
       }
     : undefined,
   transpilePackages: ["@workspace/ui"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "saveit.mlvcdn.com",
+      },
+    ],
+  },
   experimental: {
     authInterrupts: true,
   },

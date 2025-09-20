@@ -62,10 +62,11 @@ export function BookmarksPage() {
       <SearchInput ref={searchInputRef} />
       <div
         className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:w-full place-items-start"
-        style={{
-          // @ts-expect-error CSS Variable not typed
-          "--card-height": "calc(var(--spacing) * 64)",
-        }}
+        style={
+          {
+            // "--card-height": "calc(var(--spacing) * 64)",
+          }
+        }
       >
         {isPending ? (
           <>

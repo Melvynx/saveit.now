@@ -6,6 +6,6 @@
       "@workspace/ui/*": ["./src/*"]
     }
   },
-  "include": ["."],
+  "include": [".", "../../apps/web/src/components/image-with-placeholder.tsx"],
   "exclude": ["node_modules", "dist"]
 }

@@ -4,7 +4,7 @@ import { CardHeader } from "@workspace/ui/components/card";
 import { ReactNode } from "react";
 import useMeasure from "react-use-measure";
 
-const HEADER_HEIGHT = 180;
+const HEADER_HEIGHT = 213;
 
 interface BookmarkCardHeaderProps {
   children:

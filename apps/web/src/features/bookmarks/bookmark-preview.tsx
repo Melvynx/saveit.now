@@ -2,7 +2,7 @@
 
 import { YouTubeEmbed } from "@next/third-parties/google";
 import { Card } from "@workspace/ui/components/card";
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
+import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { Image } from "lucide-react";
 import { useState } from "react";
 import { Tweet } from "react-tweet";

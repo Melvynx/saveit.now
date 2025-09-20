@@ -24,7 +24,8 @@
     "test:search-simple": "tsx scripts/simple-search-test.ts",
     "test:search-neon": "tsx scripts/test-with-neon-db.ts",
     "test:search-direct": "tsx scripts/direct-performance-test.ts",
-    "benchmark:search": "npm run test:search-direct"
+    "benchmark:search": "npm run test:search-direct",
+    "migrate:preview-urls": "tsx scripts/migrate-preview-urls.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.3",

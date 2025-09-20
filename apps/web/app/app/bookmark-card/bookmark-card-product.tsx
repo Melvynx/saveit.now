@@ -1,7 +1,7 @@
 "use client";
 
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
-
+import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
+import { formatPrice } from "@workspace/ui/lib/format";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -12,7 +12,6 @@ import {
 } from "./bookmark-card-base";
 import { BookmarkCardData } from "./bookmark.types";
 import { LinkWithQuery } from "./link-with-query";
-import { formatPrice } from "@workspace/ui/lib/format";
 
 interface BookmarkCardProductProps {
   bookmark: BookmarkCardData;
@@ -28,8 +27,6 @@ interface ProductMetadata {
 export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
   const domainName = new URL(bookmark.url).hostname;
   const metadata = bookmark.metadata as ProductMetadata;
-
-  
 
   return (
     <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-product">

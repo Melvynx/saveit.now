@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageWithPlaceholder } from "@workspace/ui/components/image-with-placeholder";
+import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 
 import {
   BookmarkCardActions,
@@ -10,8 +10,8 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
-import { LinkWithQuery } from "./link-with-query";
 import { BookmarkCardData } from "./bookmark.types";
+import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardPageProps {
   bookmark: BookmarkCardData;

@@ -3,6 +3,7 @@
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { cn } from "@workspace/ui/lib/utils";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 function useIsClient() {
@@ -74,10 +75,15 @@ export const ImageWithPlaceholder = ({
     );
   }
 
+  const ImageComp = src.includes("saveit.mlvcdn.com") ? Image : "img";
+
   if (!isLoading) {
     return (
-      <img
+      <ImageComp
         {...props}
+        width={380}
+        height={380 * 0.5625}
+        alt="image"
         src={src}
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
@@ -93,8 +99,12 @@ export const ImageWithPlaceholder = ({
       {isLoading && (
         <Skeleton className={cn("absolute inset-0 h-full w-full", className)} />
       )}
-      <img
+
+      <ImageComp
         {...props}
+        width={380}
+        height={380 * 0.5625}
+        alt="image"
         src={src}
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
