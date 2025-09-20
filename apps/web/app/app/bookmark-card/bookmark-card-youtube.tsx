@@ -44,11 +44,13 @@ export const BookmarkCardYouTube = ({ bookmark }: BookmarkCardYouTubeProps) => {
       </BookmarkCardHeader>
 
       <BookmarkCardContent bookmark={bookmark}>
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <BookmarkCardTitle>{bookmark.title}</BookmarkCardTitle>
-            <BookmarkCardDescription>{domainName}</BookmarkCardDescription>
-          </div>
+        <div className="flex flex-col gap-1">
+          <BookmarkCardTitle className="line-clamp-1">
+            {bookmark.title}
+          </BookmarkCardTitle>
+          <BookmarkCardDescription className="line-clamp-1">
+            {domainName}
+          </BookmarkCardDescription>
         </div>
       </BookmarkCardContent>
     </BookmarkCardContainer>
