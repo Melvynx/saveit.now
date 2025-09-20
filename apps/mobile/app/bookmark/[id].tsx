@@ -199,7 +199,10 @@ export default function BookmarkDetailScreen() {
         </Button>
       </XStack>
 
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         <YStack padding="$4" gap="$4">
           {/* Preview Image */}
           {preview && (
@@ -265,81 +268,88 @@ export default function BookmarkDetailScreen() {
         </YStack>
       </ScrollView>
 
-      {/* Action Buttons */}
-      <YStack
-        padding="$4"
+      {/* Floating Action Toolbar */}
+      <XStack
+        position="absolute"
+        bottom="$4"
+        alignSelf="center"
+        backgroundColor="$background"
+        borderRadius="$8"
+        padding="$3"
         gap="$3"
-        borderTopWidth={1}
-        borderTopColor="$borderColor"
+        justifyContent="center"
+        alignItems="center"
+        borderWidth={1}
+        borderColor="$borderColor"
+        shadowColor="$shadowColor"
+        shadowOffset={{ width: 0, height: 4 }}
+        shadowOpacity={0.1}
+        shadowRadius={8}
+        elevation={8}
       >
-        {/* Action Row 1 */}
-        <XStack gap="$2" justifyContent="space-between">
+        <Button
+          circular
+          size="$3"
+          backgroundColor="transparent"
+          onPress={handleToggleStar}
+          theme={bookmark.starred ? "yellow" : undefined}
+          disabled={updateBookmarkMutation.isPending}
+        >
+          <Star
+            size={20}
+            color={bookmark.starred ? "$yellow10" : "$gray10"}
+            fill={bookmark.starred ? "$yellow10" : "transparent"}
+          />
+        </Button>
+
+        {(bookmark.type === "ARTICLE" || bookmark.type === "YOUTUBE") && (
           <Button
-            flex={1}
-            variant="outlined"
-            onPress={handleToggleStar}
-            theme={bookmark.starred ? "yellow" : undefined}
+            circular
+            size="$3"
+            backgroundColor="transparent"
+            onPress={handleToggleRead}
+            theme={bookmark.read ? "green" : undefined}
             disabled={updateBookmarkMutation.isPending}
           >
-            <Star
-              size={16}
-              color={bookmark.starred ? "yellow" : "gray"}
-              fill={bookmark.starred ? "$yellow10" : "transparent"}
-            />
-            <Text>{bookmark.starred ? "Starred" : "Star"}</Text>
+            {bookmark.read ? (
+              <Check size={20} color="$green10" />
+            ) : (
+              <Circle size={20} color="$gray10" />
+            )}
           </Button>
+        )}
 
-          {(bookmark.type === "ARTICLE" || bookmark.type === "YOUTUBE") && (
-            <Button
-              flex={1}
-              variant="outlined"
-              onPress={handleToggleRead}
-              theme={bookmark.read ? "green" : undefined}
-              disabled={updateBookmarkMutation.isPending}
-            >
-              {bookmark.read ? (
-                <Check size={16} color="$green10" />
-              ) : (
-                <Circle size={16} color="$gray10" />
-              )}
-              <Text>{bookmark.read ? "Read" : "Mark Read"}</Text>
-            </Button>
-          )}
+        <Button
+          circular
+          size="$3"
+          backgroundColor="transparent"
+          onPress={handleCopyLink}
+          disabled={copying}
+        >
+          <Copy size={20} color="$gray10" />
+        </Button>
 
-          <Button
-            flex={1}
-            variant="outlined"
-            onPress={handleCopyLink}
-            disabled={copying}
-          >
-            <Copy size={16} />
-            <Text>{copying ? "Copied!" : "Copy"}</Text>
-          </Button>
-        </XStack>
+        <Button
+          circular
+          size="$3"
+          backgroundColor="transparent"
+          onPress={handleOpenLink}
+          theme="blue"
+        >
+          <ExternalLink size={20} />
+        </Button>
 
-        {/* Action Row 2 */}
-        <XStack gap="$2" justifyContent="space-between">
-          <Button flex={1} onPress={handleOpenLink} theme="blue" size="$4">
-            <ExternalLink size={20} />
-            <Text fontSize="$4" fontWeight="600">
-              Open Link
-            </Text>
-          </Button>
-
-          <Button
-            variant="outlined"
-            onPress={handleDeleteBookmark}
-            theme="red"
-            size="$4"
-            disabled={deleteBookmarkMutation.isPending}
-          >
-            <Trash2 size={20} />
-            <Text fontSize="$4" fontWeight="600">
-              {deleteBookmarkMutation.isPending ? "Deleting..." : "Delete"}
-            </Text>
-          </Button>
-        </XStack>
-      </YStack>
+        <Button
+          circular
+          size="$3"
+          backgroundColor="transparent"
+          onPress={handleDeleteBookmark}
+          theme="red"
+          disabled={deleteBookmarkMutation.isPending}
+        >
+          <Trash2 size={20} color="$red10" />
+        </Button>
+      </XStack>
     </YStack>
   );
 }

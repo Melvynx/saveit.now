@@ -2,6 +2,7 @@ import { OPENAI_MODELS } from "@/lib/openai";
 import { logger } from "@/lib/logger";
 import { BookmarkStatus, BookmarkType, prisma, Prisma } from "@workspace/database";
 import { embed } from "ai";
+import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchByDomainOptions,
   SearchByTagsOptions,
@@ -391,10 +392,23 @@ export async function searchByText({
   matchingDistance: number;
 }): Promise<SearchResult[]> {
   try {
-    const { embedding } = await embed({
-      model: OPENAI_MODELS.embedding,
-      value: query.trim(),
-    });
+    const trimmedQuery = query.trim();
+
+    // Try to get embedding from cache first
+    let embedding = await EmbeddingCache.get(trimmedQuery, 'text-embedding-3-small');
+
+    if (!embedding) {
+      // Cache miss - generate new embedding
+      const { embedding: newEmbedding } = await embed({
+        model: OPENAI_MODELS.embedding,
+        value: trimmedQuery,
+      });
+
+      embedding = newEmbedding;
+
+      // Cache for future use (fire and forget)
+      EmbeddingCache.set(trimmedQuery, embedding, 'text-embedding-3-small').catch(console.error);
+    }
 
     return await searchByVector({
       userId,

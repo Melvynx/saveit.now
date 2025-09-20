@@ -1,5 +1,6 @@
 import { prisma } from "@workspace/database";
 import { z } from "zod";
+import type { Prisma } from "@workspace/database";
 
 const UserMetadataSchema = z.object({
   limitEmailSentAt: z.string().optional(),
@@ -30,7 +31,7 @@ export const updateUserMetadata = async (
 
   await prisma.user.update({
     where: { id: userId },
-    data: { metadata: updatedMetadata as any },
+    data: { metadata: updatedMetadata as Prisma.InputJsonValue },
   });
 };
 

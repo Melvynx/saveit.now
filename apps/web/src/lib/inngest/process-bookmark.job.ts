@@ -2,6 +2,7 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
 import { logger } from "../logger";
+import { CacheInvalidation } from "../search/cache-invalidation";
 import { copyBookmarkData, findExistingBookmark } from "./bookmark-reuse.utils";
 import { processArticleBookmark } from "./bookmark-type/process-article-bookmark";
 import { handleImageStep as processImageBookmark } from "./bookmark-type/process-image-bookmark";
@@ -162,6 +163,15 @@ export const processBookmarkJob = inngest.createFunction(
         });
       });
 
+      // Invalidate search cache after bookmark update
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       await publish({
         channel: `bookmark:${bookmarkId}`,
         topic: "finish",
@@ -196,6 +206,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -204,9 +224,9 @@ export const processBookmarkJob = inngest.createFunction(
         const response = await fetch(bookmark.url, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            Accept: "text/html",
           },
         });
+
         if (!response.ok) {
           throw new Error("No response");
         }
@@ -241,7 +261,16 @@ export const processBookmarkJob = inngest.createFunction(
           type = BookmarkType.PDF;
         }
 
-        if (isProductPage(bookmark.url, content)) {
+        if (
+          (
+            [
+              null,
+              BookmarkType.PAGE,
+              BookmarkType.ARTICLE,
+            ] as (BookmarkType | null)[]
+          ).includes(type) &&
+          isProductPage(bookmark.url, content)
+        ) {
           type = BookmarkType.PRODUCT;
         }
 
@@ -283,6 +312,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -302,6 +341,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -326,6 +375,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -339,6 +398,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -353,6 +422,16 @@ export const processBookmarkJob = inngest.createFunction(
         step,
         publish,
       );
+
+      // Invalidate search cache after bookmark processing
+      await step.run("invalidate-search-cache", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
       return;
     }
 
@@ -371,5 +450,14 @@ export const processBookmarkJob = inngest.createFunction(
       step,
       publish,
     );
+
+    // Invalidate search cache after bookmark processing
+    await step.run("invalidate-search-cache", async () => {
+      await CacheInvalidation.onBookmarkUpdated({
+        ...bookmark,
+        createdAt: new Date(bookmark.createdAt),
+        updatedAt: new Date(bookmark.updatedAt),
+      });
+    });
   },
 );
