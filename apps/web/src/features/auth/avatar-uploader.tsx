@@ -5,7 +5,10 @@ import { Button } from "@workspace/ui/components/button";
 import { useFileUpload } from "@workspace/ui/hooks/use-file-upload";
 import { CircleUserRoundIcon, XIcon } from "lucide-react";
 
-export function AvatarUploader(props: { onImageChange: (file: File) => void }) {
+export function AvatarUploader(props: {
+  onImageChange: (file: File) => void;
+  currentAvatar?: string | null;
+}) {
   const [
     { files, isDragging },
     {
@@ -27,7 +30,7 @@ export function AvatarUploader(props: { onImageChange: (file: File) => void }) {
     },
   });
 
-  const previewUrl = files[0]?.preview || null;
+  const previewUrl = files[0]?.preview || props.currentAvatar || null;
 
   return (
     <div className="flex flex-col items-center gap-2">

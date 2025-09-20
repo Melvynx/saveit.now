@@ -4,13 +4,12 @@ import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { env } from "../../env";
-import { analyzeScreenshot } from "../screenshot-analysis.utils";
 import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
-  generateContentSummary,
   generateAndCreateTags,
+  generateContentSummary,
   updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
 import {
@@ -18,6 +17,7 @@ import {
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
+import { analyzeScreenshot } from "../screenshot-analysis.utils";
 
 export async function processStandardWebpage(
   context: {
@@ -129,6 +129,11 @@ export async function processStandardWebpage(
       return freshBookmark.preview;
     }
 
+    // Skip screenshot for Playwright tests - return placeholder
+    if (context.url.includes("isPlaywrightTest=true")) {
+      return "https://via.placeholder.com/1200x630/f0f0f0/333333?text=Playwright+Test+Placeholder";
+    }
+
     try {
       const url = new URL(env.SCREENSHOT_WORKER_URL);
       url.searchParams.set("url", context.url);
@@ -228,7 +233,11 @@ ${screenshotAnalysis.description}
       return [];
     }
 
-    return await generateAndCreateTags(TAGS_PROMPT, vectorSummary, context.userId);
+    return await generateAndCreateTags(
+      TAGS_PROMPT,
+      vectorSummary,
+      context.userId,
+    );
   });
 
   const images = await step.run("save-screenshot", async () => {
@@ -317,7 +326,7 @@ ${screenshotAnalysis.description}
     // Update embeddings in database
     await prisma.$executeRaw`
       UPDATE "Bookmark"
-      SET 
+      SET
         "titleEmbedding" = ${titleEmbedding}::vector,
         "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
       WHERE id = ${context.bookmarkId}

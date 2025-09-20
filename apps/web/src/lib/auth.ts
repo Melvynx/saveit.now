@@ -16,6 +16,10 @@ export const auth = betterAuth({
     "http://localhost:8081",
     "http://localhost:8081/*",
   ],
+  session: {
+    expiresIn: 60 * 60 * 24 * 20, // 20 days
+    updateAge: 60 * 60 * 24 * 7, // Refresh session every 7 days
+  },
   databaseHooks: {
     user: {
       create: {

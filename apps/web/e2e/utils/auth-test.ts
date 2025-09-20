@@ -30,7 +30,7 @@ export async function signInMainAccount(page: Page, callbackURL?: string) {
 
   // Wait for OTP step to appear
   await expect(
-    page.locator("text=Enter the code sent to your email"),
+    page.locator("text=A one-time password has been sent to"),
   ).toBeVisible();
 
   // For testing purposes, we would need to implement OTP bypass or mock
@@ -65,7 +65,7 @@ export async function createTestAccount(
 
   // Wait for OTP step to appear
   await expect(
-    page.locator("text=Enter the code sent to your email"),
+    page.locator("text=A one-time password has been sent to"),
   ).toBeVisible();
 
   console.log(`Test account creation flow initiated for ${testUserData.email}`);
@@ -172,18 +172,11 @@ export async function signInWithOAuth(
 export async function fillOTPCode(page: Page, code: string) {
   console.log(`Filling OTP code: ${code}`);
 
-  // Wait for OTP input slots to be visible
-  await expect(page.locator('input[data-slot="0"]')).toBeVisible();
+  // Wait for OTP input to be visible
+  await expect(page.locator('input[inputmode="numeric"]').first()).toBeVisible();
 
-  // Fill each OTP slot
-  for (let i = 0; i < code.length; i++) {
-    const digit = code[i];
-    if (digit) {
-      await page.fill(`input[data-slot="${i}"]`, digit);
-      // Small delay between inputs to simulate real user behavior
-      await page.waitForTimeout(100);
-    }
-  }
+  // Use the InputOTP component directly - it's a single input that handles the OTP
+  await page.locator('input[inputmode="numeric"]').first().fill(code);
 
   // The form should auto-submit when all 6 digits are entered
   console.log("OTP filled, waiting for authentication success...");
@@ -204,12 +197,12 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
 
   // Should progress to OTP step
   await expect(
-    page.locator("text=Enter the code sent to your email"),
+    page.locator("text=A one-time password has been sent to"),
   ).toBeVisible({ timeout: 10000 });
   await expect(page.locator(`text=${testEmail}`)).toBeVisible();
 
   // Verify OTP input elements exist
-  const otpInputs = page.locator("input[data-slot]");
+  const otpInputs = page.locator("input[inputmode='numeric']");
   await expect(otpInputs.first()).toBeVisible();
 
   const otpCode = await getOTPCodeFromDatabase(`sign-in-otp-${testEmail}`);
@@ -221,7 +214,12 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
   await page.getByRole("textbox").fill(otpCode);
 
   await page.waitForTimeout(1000);
-  await page.waitForLoadState("networkidle");
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch (error) {
+    // If networkidle times out, just continue - page might be loaded enough
+    console.log("Network idle timeout - continuing anyway");
+  }
 
   const currentUrl = page.url();
   if (currentUrl.includes("/start")) {

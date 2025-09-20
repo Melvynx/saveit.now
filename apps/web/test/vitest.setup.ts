@@ -142,14 +142,13 @@ vi.mock("@workspace/database", () => ({
   prisma: mockDeep(),
   BookmarkType: {
     VIDEO: "VIDEO",
-    BLOG: "BLOG",
     PAGE: "PAGE",
-    POST: "POST",
     IMAGE: "IMAGE",
     YOUTUBE: "YOUTUBE",
     TWEET: "TWEET",
     ARTICLE: "ARTICLE",
     PDF: "PDF",
+    PRODUCT: "PRODUCT",
   },
   BookmarkStatus: {
     PROCESSING: "PROCESSING",

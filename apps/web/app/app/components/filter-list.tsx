@@ -38,8 +38,6 @@ export const FilterList = ({ query }: { query?: string }) => {
       {showTypeList &&
         filteredTypes.map((type) => {
           if (type === "VIDEO") return null;
-          if (type === "BLOG") return null;
-          if (type === "POST") return null;
           return (
             <Badge
               key={`type-${type}`}

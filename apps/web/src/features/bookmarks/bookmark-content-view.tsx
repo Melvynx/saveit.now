@@ -1,9 +1,9 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { Card } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { LucideIcon, Sparkle, TagIcon } from "lucide-react";
+import { LucideIcon, ShoppingBag, Sparkle, TagIcon } from "lucide-react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { BookmarkTagSelector } from "app/app/bookmark-card/bookmark-tag-selector";
@@ -31,24 +31,26 @@ export const BookmarkContentView = ({
           <div className="flex size-8 items-center justify-center rounded border shrink-0">
             <BookmarkFavicon
               faviconUrl={bookmark.faviconUrl ?? undefined}
-              bookmarkType={bookmark.type ?? "BLOG"}
+              bookmarkType={bookmark.type ?? "PAGE"}
             />
           </div>
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            {bookmark.type === "YOUTUBE" ? (
+            {["PRODUCT", "YOUTUBE"].includes(bookmark.type ?? "PAGE") ? (
               <>
+                <Typography variant="large" className="line-clamp-1">
+                  {bookmark.title}
+                </Typography>
                 <ExternalLinkTracker
                   bookmarkId={bookmark.id}
                   url={bookmark.url}
                 >
                   <Typography
-                    variant="large"
+                    variant="muted"
                     className="line-clamp-1 cursor-pointer hover:underline"
                   >
-                    {bookmark.title}
+                    {bookmark.url}
                   </Typography>
                 </ExternalLinkTracker>
-                <Typography variant="muted">{bookmark.url}</Typography>
               </>
             ) : (
               <>
@@ -93,6 +95,33 @@ export const BookmarkContentView = ({
       {bookmark.type === "YOUTUBE" && transcript && (
         <TranscriptViewer transcript={transcript} />
       )}
+
+      {bookmark.type === "PRODUCT" && metadata && (
+        <Card className="p-4">
+          <BookmarkSectionTitle icon={ShoppingBag} text="Product" />
+          <CardContent>
+            {metadata.brand && (
+              <div className="flex items-center gap-8">
+                <Typography className="max-w-24 w-full" variant="muted">
+                  Brand
+                </Typography>
+                <Typography variant="small">{metadata.brand}</Typography>
+              </div>
+            )}
+            {metadata.price && (
+              <div className="flex items-center gap-8">
+                <Typography variant="muted" className="w-full max-w-24">
+                  Price
+                </Typography>
+                <Typography variant="small">
+                  {metadata.currency || "USD"} {metadata.price}
+                </Typography>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <BookmarkPreview bookmark={bookmark} isPublic={isPublic} />
       <Card className="p-4">
         <div className="flex items-center justify-between mb-2">

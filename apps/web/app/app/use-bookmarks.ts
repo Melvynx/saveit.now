@@ -44,6 +44,7 @@ export const useBookmarks = () => {
       tags,
       special,
       matchingDistance,
+      Boolean(query),
     ],
     refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
@@ -84,6 +85,9 @@ export const useBookmarks = () => {
 
   const bookmarks = data.data?.pages.flatMap((page) => page.bookmarks) ?? [];
 
+  // Detect if user is typing (query changed but debounced hasn't caught up)
+  const isTyping = query !== "" && query !== debouncedQuery;
+
   return {
     ...data,
     bookmarks,
@@ -92,6 +96,7 @@ export const useBookmarks = () => {
     tags,
     special,
     matchingDistance,
+    isTyping,
   };
 };
 

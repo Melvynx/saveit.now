@@ -82,18 +82,12 @@
       "persistent": true
     },
     "build:mobile": {
-      "env": [
-        "EXPO_PUBLIC_AUTH_URL",
-        "EXPO_PUBLIC_API_URL"
-      ],
+      "env": ["EXPO_PUBLIC_AUTH_URL", "EXPO_PUBLIC_API_URL"],
       "cache": false,
       "outputs": []
     },
     "build:mobile:dev": {
-      "env": [
-        "EXPO_PUBLIC_AUTH_URL",
-        "EXPO_PUBLIC_API_URL"
-      ],
+      "env": ["EXPO_PUBLIC_AUTH_URL", "EXPO_PUBLIC_API_URL"],
       "cache": false,
       "outputs": []
     },

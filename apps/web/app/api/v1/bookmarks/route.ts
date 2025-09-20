@@ -1,7 +1,7 @@
 import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { apiRoute } from "@/lib/safe-route";
-import { advancedSearch } from "@/lib/search/advanced-search";
+import { cachedAdvancedSearch } from "@/lib/search/cached-search";
 import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,9 +9,9 @@ import { z } from "zod";
 export const POST = apiRoute
   .body(
     z.object({
-      url: z.string().url("Invalid URL format"),
+      url: z.url("Invalid URL format"),
       transcript: z.string().optional(),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     }),
   )
   .handler(async (_, { body, ctx }) => {
@@ -74,7 +74,7 @@ export const GET = apiRoute
 
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
 
-    const result = await advancedSearch({
+    const result = await cachedAdvancedSearch({
       userId: ctx.user.id,
       query: query.query,
       tags,

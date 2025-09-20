@@ -14,6 +14,28 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.8.0",
+    date: "2025-09-03",
+    type: "feature",
+    title: "Product Bookmarks",
+    description:
+      "Save product pages with automatic price, brand and image extraction, plus a dedicated Product card in your library.",
+    changes: [
+      { type: "new", text: "Automatic detection of e-commerce product pages" },
+      { type: "new", text: "New Product bookmark type with dedicated card UI" },
+      {
+        type: "improvement",
+        text: "Price and brand extracted and displayed directly on cards",
+      },
+      {
+        type: "improvement",
+        text: "Processing pipeline and database updated to support products",
+      },
+    ],
+    image:
+      "https://codelynx.mlvcdn.com/images/2025-09-05/clipboard_image_1757041881.png",
+  },
+  {
     version: "1.7.0",
     date: "2025-01-10",
     type: "improvement",

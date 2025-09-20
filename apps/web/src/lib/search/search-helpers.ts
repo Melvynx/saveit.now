@@ -38,6 +38,9 @@ export type SearchResponse = {
   bookmarks: SearchResult[];
   nextCursor?: string;
   hasMore: boolean;
+  totalCount?: number;
+  queryTime?: number;
+  fromCache?: boolean;
 };
 
 // Search options types
@@ -163,7 +166,6 @@ export function isSearchQuery(query?: string): boolean {
 
 const READABLE_BOOKMARK = [
   "ARTICLE",
-  "BLOG",
   "YOUTUBE",
 ] satisfies BookmarkType[];
 

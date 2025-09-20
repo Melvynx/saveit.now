@@ -12,7 +12,7 @@ export const OPENAI_MODELS: {
 } = env.CI
   ? {
       cheap: new MockLanguageModelV2({
-        doGenerate: async (_options) => ({
+        doGenerate: async () => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
           usage: {
@@ -27,7 +27,7 @@ export const OPENAI_MODELS: {
         }),
       }),
       normal: new MockLanguageModelV2({
-        doGenerate: async (_options) => ({
+        doGenerate: async () => ({
           rawCall: { rawPrompt: null, rawSettings: {} },
           finishReason: "stop",
           usage: {

@@ -40,13 +40,20 @@ export const validateBookmarkLimits = async (
   });
 
   if (plan === "free" && totalBookmarks >= 19) {
-    logger.info("Sending email to user", { userId });
-    inngest.send({
-      name: "marketing/email-on-limit-reached",
-      data: {
-        userId,
-      },
-    });
+    const { hasLimitEmailBeenSent } = await import("./user-metadata.utils");
+    const emailAlreadySent = await hasLimitEmailBeenSent(userId);
+
+    if (!emailAlreadySent) {
+      logger.info("Sending limit reached email to user", { userId });
+      inngest.send({
+        name: "marketing/email-on-limit-reached",
+        data: {
+          userId,
+        },
+      });
+    } else {
+      logger.info("Limit email already sent", { userId });
+    }
   }
 
   if (totalBookmarks >= limits.bookmarks) {

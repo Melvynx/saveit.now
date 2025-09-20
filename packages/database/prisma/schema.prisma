@@ -30,6 +30,7 @@ model User {
   banExpires             DateTime?
   onboarding             Boolean                 @default(false)
   unsubscribed           Boolean                 @default(false)
+  metadata               Json?
   sessions               Session[]
   accounts               Account[]
   apikeys                Apikey[]
@@ -141,18 +142,18 @@ model BookmarkTag {
   tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([bookmarkId, tagId])
+  @@index([bookmarkId, tagId], name: "idx_bookmark_tag_bookmark")
 }
 
 enum BookmarkType {
   VIDEO
-  BLOG
   ARTICLE
   PAGE
-  POST
   IMAGE
   YOUTUBE
   TWEET
   PDF
+  PRODUCT
 }
 
 enum BookmarkStatus {
@@ -208,6 +209,11 @@ model Bookmark {
 
   BookmarkChunk  BookmarkChunk[]
   processingRuns BookmarkProcessingRun[]
+
+  @@index([userId, type, starred, read, status], name: "idx_bookmark_user_filters")
+  @@index([userId, createdAt(sort: Desc)], name: "idx_bookmark_user_created")
+  @@index([userId, starred, createdAt(sort: Desc)], name: "idx_bookmark_starred")
+  @@index([userId, read, createdAt(sort: Desc)], name: "idx_bookmark_unread")
 }
 
 model BookmarkProcessingRun {

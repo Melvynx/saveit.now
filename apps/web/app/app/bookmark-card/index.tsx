@@ -7,6 +7,7 @@ import { BookmarkCardImage } from "./bookmark-card-image";
 import { BookmarkCardPage } from "./bookmark-card-page";
 import { BookmarkCardPDF } from "./bookmark-card-pdf";
 import { BookmarkCardPending } from "./bookmark-card-pending";
+import { BookmarkCardProduct } from "./bookmark-card-product";
 import { BookmarkCardTweet } from "./bookmark-card-tweet";
 import { BookmarkCardYouTube } from "./bookmark-card-youtube";
 
@@ -40,8 +41,10 @@ export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {
     case "PDF":
       return <BookmarkCardPDF bookmark={bookmark} />;
 
+    case "PRODUCT":
+      return <BookmarkCardProduct bookmark={bookmark} />;
+
     case "PAGE":
-    case "BLOG":
     case "ARTICLE":
     default:
       return <BookmarkCardPage bookmark={bookmark} />;
@@ -59,5 +62,6 @@ export { BookmarkCardPage } from "./bookmark-card-page";
 export { BookmarkCardPDF } from "./bookmark-card-pdf";
 export { BookmarkCardPending } from "./bookmark-card-pending";
 export { BookmarkCardPricing } from "./bookmark-card-pricing";
+export { BookmarkCardProduct } from "./bookmark-card-product";
 export { BookmarkCardTweet } from "./bookmark-card-tweet";
 export { BookmarkCardYouTube } from "./bookmark-card-youtube";

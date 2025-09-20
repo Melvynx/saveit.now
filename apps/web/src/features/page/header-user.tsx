@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { APP_LINKS } from "@/lib/app-links";
@@ -54,7 +55,28 @@ export const HeaderUser = () => {
               {plan.name === "pro" ? (
                 <Gem className="size-4 text-primary" />
               ) : null}
-              {isMobile ? <User className="size-4" /> : user.name || user.email}
+              {isMobile ? (
+                user?.image ? (
+                  <img
+                    src={user.image}
+                    alt="Avatar"
+                    className="size-4 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="size-4" />
+                )
+              ) : (
+                <div className="flex items-center gap-2">
+                  {user?.image && (
+                    <img
+                      src={user.image}
+                      alt="Avatar"
+                      className="size-4 rounded-full object-cover"
+                    />
+                  )}
+                  {user.name || user.email}
+                </div>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
