@@ -73,12 +73,12 @@ test.describe("Authentication Flow - Simple Tests", () => {
 
     // Should progress to OTP step
     await expect(
-      page.locator("text=Enter the code sent to your email"),
+      page.locator("text=A one-time password has been sent to"),
     ).toBeVisible({ timeout: 10000 });
     await expect(page.locator(`text=${testEmail}`)).toBeVisible();
 
     // Verify OTP input elements exist
-    const otpInputs = page.locator("input[data-slot]");
+    const otpInputs = page.locator("input[inputmode='numeric']");
     await expect(otpInputs.first()).toBeVisible();
 
     const otpCode = await getOTPCodeFromDatabase(`sign-in-otp-${testEmail}`);
