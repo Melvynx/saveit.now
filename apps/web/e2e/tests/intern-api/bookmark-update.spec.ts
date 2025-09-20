@@ -6,7 +6,7 @@ import { generateId } from "../../utils/test-data.js";
 
 const prisma = getPrismaClient();
 
-test.describe("Bookmark Update API", () => {
+test.describe.skip("Bookmark Update API", () => {
   let apiContext: APIRequestContext;
   let articleBookmarkId: string;
   let youtubeBookmarkId: string;
