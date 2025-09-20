@@ -18,6 +18,7 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
       key: "event.data.email",
       limit: 1,
     },
+    idempotency: "event.data.email",
     onFailure: async ({ event, runId }) => {
       const data = event.data.event.data;
       const email = data.email;
@@ -89,7 +90,9 @@ export const marketingEmailsOnLimitReachedJob = inngest.createFunction(
     });
 
     await step.run("mark-email-sent", async () => {
-      const { setLimitEmailSent } = await import("../../database/user-metadata.utils");
+      const { setLimitEmailSent } = await import(
+        "../../database/user-metadata.utils"
+      );
       await setLimitEmailSent(userId);
     });
 
