@@ -90,7 +90,7 @@ export function ExportForm({ className }: ExportFormProps) {
                   <li>Title - The bookmark title</li>
                   <li>Description - Open Graph description</li>
                   <li>Summary - AI-generated summary</li>
-                  <li>Type - Bookmark type (VIDEO, BLOG, PAGE, etc.)</li>
+                  <li>Type - Bookmark type (VIDEO, ARTICLE, PAGE, etc.)</li>
                   <li>URL - The original bookmark URL</li>
                 </ul>
               </div>
