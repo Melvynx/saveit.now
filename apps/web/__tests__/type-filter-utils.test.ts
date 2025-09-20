@@ -17,9 +17,9 @@ import {
 describe("type-filter-utils", () => {
   describe("parseAtMention", () => {
     it("should parse @ mention at cursor position", () => {
-      const result = parseAtMention("Search @BLOG", 12);
+      const result = parseAtMention("Search @PAGE", 12);
       expect(result).toEqual({
-        mention: "BLOG",
+        mention: "PAGE",
         startIndex: 7,
         endIndex: 12,
         type: "type",
@@ -39,19 +39,19 @@ describe("type-filter-utils", () => {
     });
 
     it("should return null if no @ found", () => {
-      const result = parseAtMention("Search BLOG", 11);
+      const result = parseAtMention("Search PAGE", 11);
       expect(result).toBeNull();
     });
 
     it("should return null if space after @", () => {
-      const result = parseAtMention("Search @ BLOG", 13);
+      const result = parseAtMention("Search @ PAGE", 13);
       expect(result).toBeNull();
     });
 
     it("should handle @ at beginning", () => {
-      const result = parseAtMention("@BLOG", 5);
+      const result = parseAtMention("@PAGE", 5);
       expect(result).toEqual({
-        mention: "BLOG",
+        mention: "PAGE",
         startIndex: 0,
         endIndex: 5,
         type: "type",
@@ -71,7 +71,7 @@ describe("type-filter-utils", () => {
     });
 
     it("should use last @ if multiple", () => {
-      const result = parseAtMention("@BLOG @ARTICLE", 14);
+      const result = parseAtMention("@PAGE @ARTICLE", 14);
       expect(result).toEqual({
         mention: "ARTICLE",
         startIndex: 6,
@@ -82,9 +82,9 @@ describe("type-filter-utils", () => {
     });
 
     it("should handle cursor in middle of word", () => {
-      const result = parseAtMention("Search @BLOG more", 10);
+      const result = parseAtMention("Search @PAGE more", 10);
       expect(result).toEqual({
-        mention: "BL",
+        mention: "PA",
         startIndex: 7,
         endIndex: 10,
         type: "type",
@@ -93,7 +93,7 @@ describe("type-filter-utils", () => {
     });
 
     it("should handle cursor position 0", () => {
-      const result = parseAtMention("@BLOG", 0);
+      const result = parseAtMention("@PAGE", 0);
       expect(result).toBeNull();
     });
   });
@@ -303,17 +303,17 @@ describe("type-filter-utils", () => {
 
   describe("removeAtMention", () => {
     it("should remove @ mention from string", () => {
-      const result = removeAtMention("Search @BLOG content", 7, 12);
+      const result = removeAtMention("Search @PAGE content", 7, 12);
       expect(result).toBe("Search  content");
     });
 
     it("should remove @ mention at beginning", () => {
-      const result = removeAtMention("@BLOG content", 0, 5);
+      const result = removeAtMention("@PAGE content", 0, 5);
       expect(result).toBe(" content");
     });
 
     it("should remove @ mention at end", () => {
-      const result = removeAtMention("Search @BLOG", 7, 12);
+      const result = removeAtMention("Search @PAGE", 7, 12);
       expect(result).toBe("Search ");
     });
 
@@ -325,17 +325,17 @@ describe("type-filter-utils", () => {
 
   describe("removeMention", () => {
     it("should remove mention from string", () => {
-      const result = removeMention("Search @BLOG content", 7, 12);
+      const result = removeMention("Search @PAGE content", 7, 12);
       expect(result).toBe("Search  content");
     });
 
     it("should remove mention at beginning", () => {
-      const result = removeMention("@BLOG content", 0, 5);
+      const result = removeMention("@PAGE content", 0, 5);
       expect(result).toBe(" content");
     });
 
     it("should remove mention at end", () => {
-      const result = removeMention("Search @BLOG", 7, 12);
+      const result = removeMention("Search @PAGE", 7, 12);
       expect(result).toBe("Search ");
     });
 
@@ -345,7 +345,7 @@ describe("type-filter-utils", () => {
     });
 
     it("should handle full string removal", () => {
-      const result = removeMention("@BLOG", 0, 5);
+      const result = removeMention("@PAGE", 0, 5);
       expect(result).toBe("");
     });
   });
@@ -353,9 +353,7 @@ describe("type-filter-utils", () => {
   describe("getTypeDisplayName", () => {
     it("should return correct display names for all types", () => {
       expect(getTypeDisplayName(BookmarkType.VIDEO)).toBe("Video");
-      expect(getTypeDisplayName(BookmarkType.BLOG)).toBe("Blog");
       expect(getTypeDisplayName(BookmarkType.PAGE)).toBe("Page");
-      expect(getTypeDisplayName(BookmarkType.POST)).toBe("Post");
       expect(getTypeDisplayName(BookmarkType.IMAGE)).toBe("Image");
       expect(getTypeDisplayName(BookmarkType.YOUTUBE)).toBe("YouTube");
       expect(getTypeDisplayName(BookmarkType.TWEET)).toBe("Tweet");
@@ -372,9 +370,7 @@ describe("type-filter-utils", () => {
   describe("getTypeColor", () => {
     it("should return color classes for all types", () => {
       expect(getTypeColor(BookmarkType.VIDEO)).toContain("bg-red-100");
-      expect(getTypeColor(BookmarkType.BLOG)).toContain("bg-blue-100");
       expect(getTypeColor(BookmarkType.PAGE)).toContain("bg-gray-100");
-      expect(getTypeColor(BookmarkType.POST)).toContain("bg-green-100");
       expect(getTypeColor(BookmarkType.IMAGE)).toContain("bg-purple-100");
       expect(getTypeColor(BookmarkType.YOUTUBE)).toContain("bg-red-100");
       expect(getTypeColor(BookmarkType.TWEET)).toContain("bg-blue-100");

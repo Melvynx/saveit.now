@@ -147,10 +147,8 @@ model BookmarkTag {
 
 enum BookmarkType {
   VIDEO
-  BLOG
   ARTICLE
   PAGE
-  POST
   IMAGE
   YOUTUBE
   TWEET

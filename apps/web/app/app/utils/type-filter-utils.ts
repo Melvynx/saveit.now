@@ -111,9 +111,7 @@ export const removeMention = (
 export const getTypeDisplayName = (type: BookmarkType): string => {
   const displayNames: Record<BookmarkType, string> = {
     VIDEO: "Video",
-    BLOG: "Blog",
     PAGE: "Page",
-    POST: "Post",
     IMAGE: "Image",
     YOUTUBE: "YouTube",
     TWEET: "Tweet",
@@ -127,9 +125,7 @@ export const getTypeColor = (type: BookmarkType): string => {
   const colors: Record<BookmarkType, string> = {
     VIDEO:
       "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-    BLOG: "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30",
     PAGE: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
-    POST: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
     IMAGE:
       "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30",
     YOUTUBE:

@@ -166,7 +166,6 @@ export function isSearchQuery(query?: string): boolean {
 
 const READABLE_BOOKMARK = [
   "ARTICLE",
-  "BLOG",
   "YOUTUBE",
 ] satisfies BookmarkType[];
 
