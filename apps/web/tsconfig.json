@@ -26,6 +26,7 @@
     "**/*.spec.*",
     "vitest.config.ts",
     "playwright.config.ts",
-    ".next/*/**"
+    ".next/*/**",
+    "scripts/**/*"
   ]
 }
