@@ -43,6 +43,7 @@ export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
             fallbackImage={bookmark.ogImageUrl ?? null}
             className="h-full w-full object-cover object-center mx-auto"
             alt={bookmark.title ?? "Product"}
+            onError={() => {}}
           />
 
           {/* Price overlay - positioned like YouTube duration */}

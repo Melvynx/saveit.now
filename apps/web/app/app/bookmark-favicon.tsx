@@ -44,6 +44,7 @@ export const BookmarkFavicon = (props: BookmarkFaviconProps) => {
       fallbackImage={DEFAULT_FAVICON}
       alt="favicon"
       className="size-4"
+      onError={() => {}}
     />
   );
 };
