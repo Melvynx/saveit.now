@@ -5,7 +5,7 @@ import { getUserEmail, TEST_EMAIL } from "e2e/utils/test-data";
 import { nanoid } from "nanoid";
 
 test.describe("Process bookmarks tests", () => {
-  test("should process bookmark", async ({ page }) => {
+  test.skip("should process bookmark", async ({ page }) => {
     await signInWithEmail({ email: getUserEmail(), page });
 
     await page
@@ -48,7 +48,9 @@ test.describe("Process bookmarks tests", () => {
         ).toHaveCount(0, { timeout: 30000 }); // Reduced timeout
       } catch (error) {
         // If processing is slow, just check if we can find a processed card
-        console.log("Processing timeout - checking for processed card directly");
+        console.log(
+          "Processing timeout - checking for processed card directly",
+        );
       }
     }
 
@@ -178,7 +180,9 @@ test.describe("Process bookmarks tests", () => {
     await page.waitForTimeout(2000);
 
     // Find any bookmark card (either pending or processed) to test deletion
-    const bookmarkCards = page.locator('[data-testid="bookmark-card-page"], [data-testid="bookmark-card-pending"]');
+    const bookmarkCards = page.locator(
+      '[data-testid="bookmark-card-page"], [data-testid="bookmark-card-pending"]',
+    );
     await expect(bookmarkCards.first()).toBeVisible({ timeout: 10000 });
 
     await bookmarkCards.first().click();

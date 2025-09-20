@@ -12,6 +12,8 @@ export default function IndexPage() {
   const { hasShareIntent } = useShareIntent();
   const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
+  const numberAsString: string = 123;
+  console.log(numberAsString);
 
   console.log("🏠 Index - Params:", params);
   console.log("🏠 Index - hasShareIntent:", hasShareIntent);
@@ -40,7 +42,7 @@ export default function IndexPage() {
       // Petit délai pour laisser le temps au Root Layout de se monter
       const timer = setTimeout(handleNavigation, 100);
       return () => clearTimeout(timer);
-    }, [hasShareIntent, params.dataUrl, isNavigating, isLoading, user, router])
+    }, [hasShareIntent, params.dataUrl, isNavigating, isLoading, user, router]),
   );
 
   // Show loading state while checking authentication
@@ -48,7 +50,9 @@ export default function IndexPage() {
     return (
       <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
         <ActivityIndicator size="large" />
-        <Text fontSize="$6" marginTop="$4">Loading...</Text>
+        <Text fontSize="$6" marginTop="$4">
+          Loading...
+        </Text>
       </YStack>
     );
   }
@@ -60,7 +64,7 @@ export default function IndexPage() {
 
   // Show loading indicator while navigating
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="large" />
     </View>
   );
