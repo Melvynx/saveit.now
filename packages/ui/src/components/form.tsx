@@ -21,7 +21,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type * as z from "zod";
-import { Label } from "./label.js";
+import { Label } from "./label";
 
 export type FormProps<T extends FieldValues> = Omit<
   React.ComponentProps<"form">,
