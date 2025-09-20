@@ -1,6 +1,7 @@
 import { prisma } from "@workspace/database";
 import { deleteFileFromS3 } from "../aws-s3/aws-s3-delete-files";
 import { SafeRouteError } from "../errors";
+import { SearchCache } from "../search/search-cache";
 
 export const deleteBookmark = async (body: { id: string; userId: string }) => {
   // First, verify the bookmark exists and belongs to the user
@@ -28,6 +29,9 @@ export const deleteBookmark = async (body: { id: string; userId: string }) => {
   await deleteFileFromS3({
     key: `users/${body.userId}/bookmarks/${body.id}`,
   });
+
+  // Invalidate search cache for the user
+  await SearchCache.invalidateBookmarkUpdate(body.userId);
 
   return bookmark;
 };

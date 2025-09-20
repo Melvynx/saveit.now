@@ -1,6 +1,7 @@
 import { deleteBookmark } from "@/lib/database/delete-bookmark";
 import { getUserBookmark } from "@/lib/database/get-bookmark";
 import { userRoute } from "@/lib/safe-route";
+import { SearchCache } from "@/lib/search/search-cache";
 import { prisma } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -80,6 +81,9 @@ export const PATCH = userRoute
         },
       },
     });
+
+    // Invalidate search cache after bookmark update
+    await SearchCache.invalidateBookmarkUpdate(ctx.user.id);
 
     return NextResponse.json({ bookmark: updatedBookmark });
   });

@@ -1,14 +1,19 @@
-import { prisma, BookmarkType, BookmarkStatus, Prisma } from '@workspace/database';
-import { embed } from 'ai';
-import { OPENAI_MODELS } from '@/lib/openai';
-import { EmbeddingCache } from './embedding-cache';
+import {
+  prisma,
+  BookmarkType,
+  BookmarkStatus,
+  Prisma,
+} from "@workspace/database";
+import { embed } from "ai";
+import { OPENAI_MODELS } from "@/lib/openai";
+import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchOptions,
   SearchResponse,
   SearchResult,
   isDomainQuery,
-  extractDomain
-} from './search-helpers';
+  extractDomain,
+} from "./search-helpers";
 
 interface UnifiedSearchParams {
   userId: string;
@@ -19,7 +24,8 @@ interface UnifiedSearchParams {
   limit: number;
   offset: number;
   types?: BookmarkType[];
-  specialFilters?: ('READ' | 'UNREAD' | 'STAR')[];
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[];
+  isSearchQuery?: boolean;
 }
 
 interface QueryResult {
@@ -38,7 +44,7 @@ interface QueryResult {
   starred: boolean;
   read: boolean;
   final_score: number;
-  strategy: 'tag' | 'domain' | 'vector';
+  strategy: "tag" | "domain" | "vector";
   open_count: number;
 }
 
@@ -60,9 +66,9 @@ class OptimizedSearchQuery {
       JOIN "Tag" t ON bt."tagId" = t.id
       WHERE b."userId" = $1
         AND t.name = ANY($2::text[])
-        AND b.status = 'COMPLETE'
-        ${this.buildTypeFilter('b')}
-        ${this.buildSpecialFilters('b')}
+        ${this.buildStatusFilter("b")}
+        ${this.buildTypeFilter("b")}
+        ${this.buildSpecialFilters("b")}
       GROUP BY b.id, b."userId", b.url, b.type, b.title, b."titleEmbedding",
                b.summary, b."vectorSummary", b."vectorSummaryEmbedding",
                b.preview, b."ogDescription", b.metadata, b.status,
@@ -73,7 +79,7 @@ class OptimizedSearchQuery {
   }
 
   private buildDomainSearchCTE(domain: string): string {
-    const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const domainRegex = `^https?://([^/]*\\.)?${escapedDomain}(/.*)?$`;
 
     return `
@@ -87,9 +93,9 @@ class OptimizedSearchQuery {
       FROM "Bookmark" b
       WHERE b."userId" = $1
         AND (b.url ILIKE '%' || '${domain}' || '%')
-        AND b.status = 'COMPLETE'
-        ${this.buildTypeFilter('b')}
-        ${this.buildSpecialFilters('b')}
+        ${this.buildStatusFilter("b")}
+        ${this.buildTypeFilter("b")}
+        ${this.buildSpecialFilters("b")}
     `;
   }
 
@@ -104,7 +110,7 @@ class OptimizedSearchQuery {
         ) * 100)) * 0.6 as base_score
       FROM "Bookmark" b
       WHERE b."userId" = $1
-        AND b.status = 'COMPLETE'
+        ${this.buildStatusFilter("b")}
         AND (
           LEAST(
             COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1),
@@ -115,41 +121,56 @@ class OptimizedSearchQuery {
               COALESCE("vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)
             )) + $${paramIndex + 1}
             FROM "Bookmark"
-            WHERE "userId" = $1 AND status = 'COMPLETE'
+            WHERE "userId" = $1
           )
         )
-        ${this.buildTypeFilter('b')}
-        ${this.buildSpecialFilters('b')}
+        ${this.buildTypeFilter("b")}
+        ${this.buildSpecialFilters("b")}
     `;
   }
 
+  private buildStatusFilter(alias: string): string {
+    // If it's a search query, only return COMPLETE bookmarks
+    // If it's browsing (no query), return all statuses
+    if (this.params.isSearchQuery) {
+      return `AND ${alias}.status = 'COMPLETE'`;
+    }
+    return "";
+  }
+
   private buildTypeFilter(alias: string): string {
-    if (!this.params.types || this.params.types.length === 0) return '';
-    const typeList = this.params.types.map(t => `'${t}'`).join(',');
+    if (!this.params.types || this.params.types.length === 0) return "";
+    const typeList = this.params.types.map((t) => `'${t}'`).join(",");
     return `AND ${alias}.type IN (${typeList})`;
   }
 
   private buildSpecialFilters(alias: string): string {
-    if (!this.params.specialFilters || this.params.specialFilters.length === 0) return '';
+    if (!this.params.specialFilters || this.params.specialFilters.length === 0)
+      return "";
 
     const conditions: string[] = [];
 
-    if (this.params.specialFilters.includes('READ')) {
+    if (this.params.specialFilters.includes("READ")) {
       conditions.push(`${alias}.read = true`);
     }
-    if (this.params.specialFilters.includes('UNREAD')) {
+    if (this.params.specialFilters.includes("UNREAD")) {
       conditions.push(`${alias}.read = false`);
     }
-    if (this.params.specialFilters.includes('STAR')) {
+    if (this.params.specialFilters.includes("STAR")) {
       conditions.push(`${alias}.starred = true`);
     }
 
-    return conditions.length > 0 ? `AND (${conditions.join(' OR ')})` : '';
+    return conditions.length > 0 ? `AND (${conditions.join(" OR ")})` : "";
   }
 
-  build(): { query: string; values: (string | number | string[] | number[])[] } {
+  build(): {
+    query: string;
+    values: (string | number | string[] | number[])[];
+  } {
     const strategies: string[] = [];
-    const values: (string | number | string[] | number[])[] = [this.params.userId];
+    const values: (string | number | string[] | number[])[] = [
+      this.params.userId,
+    ];
     let paramIndex = 2;
 
     // Add tag search strategy
@@ -173,12 +194,12 @@ class OptimizedSearchQuery {
     }
 
     if (strategies.length === 0) {
-      throw new Error('At least one search strategy must be provided');
+      throw new Error("At least one search strategy must be provided");
     }
 
     const query = `
       WITH search_strategies AS (
-        ${strategies.join('\n        UNION ALL\n')}
+        ${strategies.join("\n        UNION ALL\n")}
       ),
       enriched_results AS (
         SELECT
@@ -212,17 +233,25 @@ class OptimizedSearchQuery {
   }
 }
 
-export async function optimizedSearch(params: SearchOptions): Promise<SearchResponse> {
+export async function optimizedSearch(
+  params: SearchOptions,
+): Promise<SearchResponse> {
   const startTime = performance.now();
 
   try {
+    // Determine if this is a search query or not
+    const hasQuery = params.query && params.query.trim() !== "";
+    const hasSearchCriteria =
+      hasQuery || (params.tags && params.tags.length > 0);
+
     // Prepare search parameters
     const unifiedParams: UnifiedSearchParams = {
       userId: params.userId,
       limit: params.limit || 20,
       offset: params.cursor ? parseInt(params.cursor) || 0 : 0,
       types: params.types,
-      specialFilters: params.specialFilters
+      specialFilters: params.specialFilters,
+      isSearchQuery: hasSearchCriteria,
     };
 
     // Determine search strategies based on query
@@ -239,7 +268,10 @@ export async function optimizedSearch(params: SearchOptions): Promise<SearchResp
         const trimmedQuery = params.query.trim();
 
         // Try to get embedding from cache first
-        let embedding = await EmbeddingCache.get(trimmedQuery, 'text-embedding-3-small');
+        let embedding = await EmbeddingCache.get(
+          trimmedQuery,
+          "text-embedding-3-small",
+        );
 
         if (!embedding) {
           // Cache miss - generate new embedding
@@ -251,7 +283,11 @@ export async function optimizedSearch(params: SearchOptions): Promise<SearchResp
           embedding = newEmbedding;
 
           // Cache for future use (fire and forget)
-          EmbeddingCache.set(trimmedQuery, embedding, 'text-embedding-3-small').catch(console.error);
+          EmbeddingCache.set(
+            trimmedQuery,
+            embedding,
+            "text-embedding-3-small",
+          ).catch(console.error);
         }
 
         unifiedParams.embedding = embedding;
@@ -260,7 +296,11 @@ export async function optimizedSearch(params: SearchOptions): Promise<SearchResp
     }
 
     // If no search strategies are available, fall back to default browsing
-    if (!unifiedParams.tags && !unifiedParams.domain && !unifiedParams.embedding) {
+    if (
+      !unifiedParams.tags &&
+      !unifiedParams.domain &&
+      !unifiedParams.embedding
+    ) {
       return await defaultBrowsing(params);
     }
 
@@ -268,19 +308,22 @@ export async function optimizedSearch(params: SearchOptions): Promise<SearchResp
     const queryBuilder = new OptimizedSearchQuery(unifiedParams);
     const { query, values } = queryBuilder.build();
 
-    console.log('Executing optimized search query:', {
+    console.log("Executing optimized search query:", {
       strategies: {
         tags: !!unifiedParams.tags,
         domain: !!unifiedParams.domain,
-        vector: !!unifiedParams.embedding
+        vector: !!unifiedParams.embedding,
       },
-      paramCount: values.length
+      paramCount: values.length,
     });
 
-    const results = await prisma.$queryRawUnsafe(query, ...values) as QueryResult[];
+    const results = (await prisma.$queryRawUnsafe(
+      query,
+      ...values,
+    )) as QueryResult[];
 
     // Transform results to SearchResult format
-    const bookmarks: SearchResult[] = results.map(row => ({
+    const bookmarks: SearchResult[] = results.map((row) => ({
       id: row.id,
       url: row.url,
       title: row.title,
@@ -292,38 +335,40 @@ export async function optimizedSearch(params: SearchOptions): Promise<SearchResp
       ogDescription: row.ogDescription,
       faviconUrl: row.faviconUrl,
       score: row.final_score,
-      matchType: row.strategy === 'domain' ? 'tag' : row.strategy as 'tag' | 'vector',
+      matchType:
+        row.strategy === "domain" ? "tag" : (row.strategy as "tag" | "vector"),
       openCount: row.open_count,
       starred: row.starred,
       read: row.read,
       createdAt: row.createdAt,
-      metadata: row.metadata
+      metadata: row.metadata,
     }));
 
     const queryTime = performance.now() - startTime;
 
     // Check if there are more results
     const hasMore = bookmarks.length === unifiedParams.limit;
-    const nextCursor = hasMore ? String(unifiedParams.offset + unifiedParams.limit) : undefined;
+    const nextCursor = hasMore
+      ? String(unifiedParams.offset + unifiedParams.limit)
+      : undefined;
 
     return {
       bookmarks,
       hasMore,
       nextCursor,
       queryTime,
-      totalCount: undefined // Not computed in optimized query for performance
+      totalCount: undefined, // Not computed in optimized query for performance
     };
-
   } catch (error) {
-    console.error('Optimized search error:', error);
+    console.error("Optimized search error:", error);
 
     // Fallback to original search implementation
-    const { advancedSearch } = await import('./advanced-search');
+    const { advancedSearch } = await import("./advanced-search");
     return await advancedSearch(params);
   }
 }
 
 async function defaultBrowsing(params: SearchOptions): Promise<SearchResponse> {
-  const { advancedSearch } = await import('./advanced-search');
+  const { advancedSearch } = await import("./advanced-search");
   return await advancedSearch(params);
 }

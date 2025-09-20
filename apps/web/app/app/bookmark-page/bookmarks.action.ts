@@ -4,6 +4,7 @@ import { deleteBookmark } from "@/lib/database/delete-bookmark";
 import { SafeActionError } from "@/lib/errors";
 import { inngest } from "@/lib/inngest/client";
 import { userAction } from "@/lib/safe-action";
+import { SearchCache } from "@/lib/search/search-cache";
 import { prisma } from "@workspace/database";
 import { z } from "zod";
 
@@ -78,6 +79,9 @@ export const updateBookmarkTagsAction = userAction
       }),
     );
 
+    // Invalidate search cache after tag update
+    await SearchCache.invalidateBookmarkUpdate(user.id);
+
     // Return updated bookmark with new tags
     return {
       ...bookmark,
@@ -125,6 +129,9 @@ export const reBookmarkAction = userAction
       },
     });
 
+    // Invalidate search cache after status change
+    await SearchCache.invalidateBookmarkUpdate(user.id);
+
     return {
       success: true,
     };
@@ -152,6 +159,9 @@ export const toggleStarBookmarkAction = userAction
         starred: true,
       },
     });
+
+    // Invalidate search cache after star toggle
+    await SearchCache.invalidateBookmarkUpdate(user.id);
 
     return {
       bookmarkId: updatedBookmark.id,
@@ -185,6 +195,9 @@ export const toggleReadBookmarkAction = userAction
         read: true,
       },
     });
+
+    // Invalidate search cache after read toggle
+    await SearchCache.invalidateBookmarkUpdate(user.id);
 
     return {
       bookmarkId: updatedBookmark.id,

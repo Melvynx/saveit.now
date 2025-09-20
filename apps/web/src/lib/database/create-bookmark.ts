@@ -2,6 +2,7 @@
 import { prisma } from "@workspace/database";
 import { inngest } from "../inngest/client";
 import { getPostHogClient } from "../posthog";
+import { SearchCache } from "../search/search-cache";
 import { cleanUrl } from "../utils/url-cleaner";
 import { validateBookmarkLimits } from "./bookmark-validation";
 
@@ -61,6 +62,9 @@ export const createBookmark = async (body: {
       transcriptSource: body.transcript ? "extension" : undefined,
     },
   });
+
+  // Invalidate search cache after creating a new bookmark
+  await SearchCache.invalidateBookmarkUpdate(body.userId);
 
   return bookmark;
 };
