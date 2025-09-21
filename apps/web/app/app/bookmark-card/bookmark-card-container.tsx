@@ -13,13 +13,13 @@ import {
 } from "@workspace/ui/components/context-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import { Check, CircleAlert, Copy, Tags, Trash } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { ComponentProps, useState } from "react";
 import { useDeleteBookmark } from "../bookmark-page/delete-button";
 import { usePrefetchBookmark } from "../bookmark-page/use-bookmark";
 import { BookmarkTagDialog } from "./bookmark-tag-dialog";
 import { BookmarkTag } from "./bookmark.types";
 
-interface BookmarkCardContainerProps {
+type BookmarkCardContainerProps = {
   bookmark: {
     id: string;
     url: string;
@@ -27,12 +27,9 @@ interface BookmarkCardContainerProps {
     title?: string | null;
     tags?: BookmarkTag[];
   };
-  children: ReactNode;
-  className?: string;
   onMouseEnter?: () => void;
-  ref?: React.RefObject<HTMLDivElement | null>;
   testId?: string;
-}
+} & ComponentProps<"div">;
 
 export const BookmarkCardContainer = ({
   bookmark,
@@ -41,6 +38,7 @@ export const BookmarkCardContainer = ({
   onMouseEnter,
   ref,
   testId,
+  ...props
 }: BookmarkCardContainerProps) => {
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const prefetch = usePrefetchBookmark();
@@ -68,6 +66,7 @@ export const BookmarkCardContainer = ({
             )}
             onMouseEnter={handleMouseEnter}
             data-testid={testId}
+            {...props}
           >
             {children}
           </Card>

@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -12,7 +13,8 @@ const google = createGoogleGenerativeAI({
   // custom settings
 });
 
-config({ path: join(__dirname, "..", ".env") });
+config({ path: join(process.cwd(), ".env") });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const openai = createOpenAI({});
 
 async function testPrompt() {
@@ -29,6 +31,7 @@ async function testPrompt() {
 
   const [bookmarkId, type] = args;
 
+  // @ts-expect-error doesn't care
   if (!["vector", "user"].includes(type)) {
     console.error("Type must be 'vector' or 'user'");
     process.exit(1);
@@ -39,7 +42,7 @@ async function testPrompt() {
       process.cwd(),
       "debug",
       "process-bookmark",
-      bookmarkId,
+      String(bookmarkId),
     );
 
     // Read the system prompt and user prompt

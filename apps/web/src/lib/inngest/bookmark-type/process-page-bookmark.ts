@@ -119,7 +119,6 @@ export async function processStandardWebpage(
 
   const screenshot = await step.run("get-screenshot-v2", async () => {
     // Check for fresh data from database in case extension already uploaded a screenshot
-
     const freshBookmark = await prisma.bookmark.findUnique({
       where: { id: context.bookmarkId },
       select: { preview: true },
@@ -208,7 +207,10 @@ ${screenshotAnalysis.description}
       return "";
     }
 
-    return await generateContentSummary(USER_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(USER_SUMMARY_PROMPT, userInput, {
+      bookmarkId: context.bookmarkId,
+      type: "user",
+    });
   });
 
   const vectorSummary = await step.run("get-big-summary", async () => {
@@ -216,7 +218,10 @@ ${screenshotAnalysis.description}
       return "";
     }
 
-    return await generateContentSummary(VECTOR_SUMMARY_PROMPT, userInput);
+    return await generateContentSummary(VECTOR_SUMMARY_PROMPT, userInput, {
+      bookmarkId: context.bookmarkId,
+      type: "vector",
+    });
   });
 
   await publish({

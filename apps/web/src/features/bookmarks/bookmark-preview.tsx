@@ -1,8 +1,8 @@
 "use client";
 
+import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { YouTubeEmbed } from "@next/third-parties/google";
 import { Card } from "@workspace/ui/components/card";
-import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { Image } from "lucide-react";
 import { useState } from "react";
 import { Tweet } from "react-tweet";
@@ -65,6 +65,7 @@ export const BookmarkPreview = ({
           src={currentPreview ?? ""}
           fallbackImage={bookmark.ogImageUrl ?? ""}
           alt="screenshot"
+          width={916}
           className="rounded-md"
         />
         {!isPublic && (

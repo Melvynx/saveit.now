@@ -98,7 +98,7 @@ export async function generateContentSummary(
   const result = summary.text || "";
 
   // Save debug files if debug info is provided
-  if (debugInfo) {
+  if (debugInfo && process.env.NODE_ENV === "development") {
     try {
       const fs = await import("fs/promises");
       const path = await import("path");

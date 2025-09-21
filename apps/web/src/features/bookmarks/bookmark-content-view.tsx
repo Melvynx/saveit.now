@@ -34,24 +34,28 @@ export const BookmarkContentView = ({
               bookmarkType={bookmark.type ?? "PAGE"}
             />
           </div>
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            {["PRODUCT", "YOUTUBE"].includes(bookmark.type ?? "PAGE") ? (
+          <div className="flex flex-col gap-1 min-w-0 flex-1  ">
+            {["PRODUCT", "YOUTUBE", "IMAGE"].includes(
+              bookmark.type ?? "PAGE",
+            ) ? (
               <>
                 <Typography variant="large" className="line-clamp-1">
                   {bookmark.title}
                 </Typography>
 
-                <ExternalLinkTracker
-                  bookmarkId={bookmark.id}
-                  url={bookmark.url}
-                >
-                  <Typography
-                    variant="muted"
-                    className="line-clamp-1 cursor-pointer hover:underline"
+                {bookmark.url.startsWith("http") && (
+                  <ExternalLinkTracker
+                    bookmarkId={bookmark.id}
+                    url={bookmark.url}
                   >
-                    {bookmark.url}
-                  </Typography>
-                </ExternalLinkTracker>
+                    <Typography
+                      variant="muted"
+                      className="line-clamp-1 cursor-pointer hover:underline"
+                    >
+                      {bookmark.url}
+                    </Typography>
+                  </ExternalLinkTracker>
+                )}
               </>
             ) : (
               <>

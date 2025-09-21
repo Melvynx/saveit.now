@@ -296,11 +296,20 @@ export async function extractProductMetadataWithAI(
 
     const prompt = `Extract product information from this e-commerce page:
 
-URL: ${url}
-Title: ${title}
-Description: ${description}
-Price elements: ${priceElements}
-Content: ${contentText}
+<url>${url}</url>
+
+<page-metadata>
+<title>${title}</title>
+<description>${description}</description>
+</page-metadata>
+
+<price-elements>
+${priceElements}
+</price-elements>
+
+<page-content>
+${contentText}
+</page-content>
 
 Focus on finding the main product being sold, its price, brand, and other key details.`;
 
@@ -522,35 +531,37 @@ export async function processProductBookmark(
   });
 
   // Prepare content for summaries with markdown content
-  const contentForSummary = `Title: ${productData.name || basicMetadata.title || ""}
-Description: ${productData.description || basicMetadata.description || ""}${
+  const contentForSummary = `<product-metadata>
+<title>${productData.name || basicMetadata.title || ""}</title>
+<description>${productData.description || basicMetadata.description || ""}</description>${
     productData.price
       ? `
-Price: ${productData.price} ${productData.currency || "USD"}`
+<price>${productData.price} ${productData.currency || "USD"}</price>`
       : ""
   }${
     productData.brand
       ? `
-Brand: ${productData.brand}`
+<brand>${productData.brand}</brand>`
       : ""
   }${
     productData.category
       ? `
-Category: ${productData.category}`
+<category>${productData.category}</category>`
       : ""
   }
+</product-metadata>
 
 ${
   imageAnalysis?.description
-    ? `
+    ? `<product-image-description>
+${imageAnalysis.description}
+</product-image-description>
 
-Product Image Description:
-${imageAnalysis.description}`
+`
     : ""
-}
-
-Website Content:
-${markdown.substring(0, 2500)}`; // Reduced to 2500 to make room for image analysis
+}<website-content>
+${markdown.substring(0, 2500)}
+</website-content>`; // Reduced to 2500 to make room for image analysis
 
   // Generate user-facing display summary (short and clean)
   const displaySummary = await step.run("get-display-summary", async () => {

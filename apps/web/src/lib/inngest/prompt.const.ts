@@ -108,8 +108,46 @@ You are generating a short, keyword-rich summary that captures the full purpose 
 </context>
 
 <goal>
-Write a dense, 3–4 sentence summary in **English only**, even if the input page is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
-Precise WHAT is the purpose of the website. Example : A landing page for selling a courses, for capturing leads... A portfolio, a documentation, a blog...
+Write a dense, 3–4 sentence summary in **English only**, even if the input page is in another language.
+The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+The summary must include as many relevant keywords, tools and use cases that is necessary to understand the full purpose of the page.
+
+**AVOID technical specifications, measurements, dimensions, weights, prices, detailed numerical values, compliance certifications, specific customer company names, specific technology names, platform names, hosting location details, and infrastructure details.** Focus on functionality, purpose, design philosophy, and target audience instead.
+**AVOID to replicate what the page say**, we focus only on useful and searchable informations.
+**AVOID listing specific company names, platform names, or technology names as examples** - use general descriptions like "web platforms", "development frameworks", or "popular tools".
+**AVOID mentioning hosting details, geographic locations, or technical implementation specifics** - focus purely on the purpose and value proposition.
+
+Precise WHAT is the purpose of the page :
+
+<examples>
+- A user blog that shows the latest posts, mainly about web development frameworks.
+- A landing page to capture leads for a SaaS product.
+- A landing page to present courses about creating viral short videos on social media platforms.
+</examples>
+
+Precise WHAT is the page about :
+
+<examples>
+- An email plateform to send email and transactional marketing at scale.
+- A chrome extensions to copy the content of the page in a markdown format, so it's easier to send to LLM.
+- A software to send e-mail marketing for SaaS, focus on workflow and automation.
+</examples>
+
+Precise WHAT is the "target" :
+
+<examples>
+- Target web developers in big companies looking for email services.
+- Target new developers that want to learn programming languages.
+</examples>
+
+Precise KEYWORD, competitor, example compagny :
+
+<examples>
+- It's a competitor to traditional email service providers.
+- It's a competitor to popular programming courses and learning platforms.
+- It's a template for modern web development with popular frameworks and services.
+</examples>
+
 </goal>
 
 <input>
@@ -123,10 +161,10 @@ Return **only plain text in English** (no formatting). Limit the output to 3–4
 Here are some examples of a PERFECT summary that you SHOULD follow :
 
 <examples>
-1. A landing page for selling a courses named BeginJavaScript is a comprehensive online course designed to help individuals master JavaScript through hands-on exercises, projects, and workshops. It offers a structured learning path, covering fundamental concepts to advanced topics like algorithms, DOM manipulation, asynchronous programming, and clean code practices. The course includes bonus content on TypeScript, AI-assisted learning, and access to a private Discord community for support. With a focus on practical application and real-world scenarios, BeginJavaScript aims to equip learners with the skills to excel in web development and launch their careers.
-2. A landing page for a software product named Lumail.io is an AI-powered email marketing platform designed for creators and small businesses who prioritize simplicity and speed. It offers a frictionless editor, built-in AI for content improvement, transparent pricing, and essential features without unnecessary bloat, unlike Mailchimp and MailerLite. Lumail focuses on helping users create effective email campaigns, automate basic workflows, and connect with subscribers, especially targeting indie creators and solopreneurs. It provides a generous free plan and affordable paid options, emphasizing user-friendly design and efficient email marketing tools
-</examples>
-`;
+1. Resend is an email platform for sending transactional and marketing email. It's for developers that need to send email with a simple developer experience. It offers email template functionality and competes with traditional email service providers.
+2. AI Builder Club is a community and learning platform focused on AI coding, AI agents and LLM applications. It offers courses, tools and resources to help developers launch AI products faster with SaaS development resources. It targets those seeking to build AI-powered applications and offers resources for both beginners and experienced developers.
+3. Mintlify is an AI-powered documentation platform designed for collaboration and ease of use, targeting startups and enterprises. It enables self-updating knowledge management with a context-aware writer and offers intelligent assistance to users through an AI assistant. It integrates with enterprise knowledge systems, providing compliance and access control features. It helps companies scale their documentation and improve developer experience.
+</examples>`;
 
 export const TAGS_PROMPT = `<context>
 You are generating exactly 3 tags for a webpage to categorize it in a bookmark database. You must follow strict rules about tag selection and format.
@@ -320,7 +358,7 @@ You are generating a short, keyword-rich summary that captures the full purpose 
 </context>
 
 <goal>
-Write a dense, 3–4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+Write a dense, 3–4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the product is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
 
 **AVOID technical specifications, measurements, dimensions, weights, prices, and detailed numerical values.** Focus on functionality, purpose, materials, design philosophy, and target audience instead.
 
