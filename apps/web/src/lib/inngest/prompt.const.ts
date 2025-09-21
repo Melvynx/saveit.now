@@ -276,65 +276,83 @@ Return only the title, 4-5 words maximum, no quotes, no explanation. No formatti
 </output>
 `;
 
-export const PRODUCT_SUMMARY_PROMPT = `<context>
-Create a comprehensive summary of this e-commerce product page. This summary will be shown in a "bookmark" page. The user saved this product, and we will create the best detailed summary that captures the product's essence, purpose, and value proposition.
+export const PRODUCT_DISPLAY_SUMMARY_PROMPT = `<context>
+Create a simple, memorable summary of what this product DOES for easy reading and quick understanding.
 </context>
 
 <goal>
-The summary must explain:
-- What the product is and what it does
-- Who it's designed for and what problems it solves
-- Key features and benefits that make it valuable
-- The product category and use cases
-- Why someone would want to buy or use this product
+Write a concise 1-2 sentence summary in **English only**. Focus on the core purpose, target users, and main value proposition using simple, everyday language.
 
-Focus on the product's utility, functionality, and target audience rather than just listing specifications.
+**AVOID technical specifications, measurements, dimensions, weights, prices, and detailed numerical values.** Focus on functionality, purpose, and who it's for.
+
+Focus on:
+1. The MAIN PURPOSE - what problem does it solve?
+2. WHO uses it and WHY they need it
+3. KEY concepts and use cases that matter
+
+Be simple and clear. Imagine explaining it to a friend who asks "what's that thing you bookmarked?"
 </goal>
 
 <input>
-The user will provide product information including title, description, price, category, and other metadata.
+Product information including title, description, price, and metadata.
 </input>
 
 <output>
-PLAIN TEXT without any formatting.
-It should be 3-4 sentences maximum.
-Start by describing what the product is and its main purpose.
+PLAIN TEXT without formatting.
+1-2 sentences maximum.
+Start with "It's..."
+Use everyday language and relevant keywords.
 </output>
 
-Here are examples of PERFECT product summaries:
-
 <examples>
-1. It's a wireless noise-cancelling headphone designed for professionals and commuters who need to focus in noisy environments. The headphones feature advanced active noise cancellation technology, 30-hour battery life, and premium sound quality for music, calls, and productivity. Perfect for remote workers, travelers, and audiophiles who value both comfort and performance during long listening sessions.
+1. It's a card holder that keeps your task cards organized and visible on your desk. Perfect for people who use analog planning systems to stay productive.
 
-2. It's a smart fitness tracker designed for health-conscious individuals who want to monitor their daily activity, sleep, and wellness metrics. The device features heart rate monitoring, GPS tracking, water resistance, and a week-long battery life to help users maintain their fitness goals. Ideal for runners, gym enthusiasts, and anyone looking to improve their overall health and lifestyle habits.
+2. It's a camera gear organizer that keeps your batteries and memory cards in one place. Made for photographers who need quick access to their accessories.
 
-3. It's a premium kitchen knife set designed for home cooks and culinary enthusiasts who demand professional-grade cutting performance. The set includes essential knives made from high-carbon steel with ergonomic handles, providing precision, durability, and comfort for all cooking tasks. Perfect for anyone who loves cooking and wants to elevate their kitchen skills with restaurant-quality tools.
+3. It's noise-canceling headphones for blocking out distractions. Great for anyone who needs to focus while working or traveling.
+
+4. It's a fitness tracker that monitors your daily activity and sleep. Helps health-conscious people stay on top of their wellness goals.
 </examples>
 `;
 
-export const PRODUCT_VECTOR_SUMMARY_PROMPT = `<context>
-You are generating a comprehensive, keyword-rich summary of an e-commerce product that will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
+export const PRODUCT_SEARCH_SUMMARY_PROMPT = `<context>
+You are generating a short, keyword-rich summary that captures the full purpose of a product. This summary will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
 </context>
 
 <goal>
-Write a dense, 3-4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **product keywords, brand names, categories, features, use cases, target audiences, and technical specifications** as possible. Focus on what the product is, who it's for, what problems it solves, how it's used, and what makes it valuable. Be specific about the product category, intended users, and key benefits.
-</goal>
+Write a dense, 3–4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+
+**AVOID technical specifications, measurements, dimensions, weights, prices, and detailed numerical values.** Focus on functionality, purpose, materials, design philosophy, and target audience instead.
+
+Precise WHAT is the purpose of the product :
+
+- A bag specifically designed for carrying laptops and tech gear
+- A todo list analog planner for productivity enthusiasts
+
+Precise WHAT is the product :
+
+- It's a wood and leather backpack with brass hardware and minimalist design
+- It's a physical notebook with dated pages, space for goals, and habit tracking with clean aesthetics
+
+Precise WHAT is the "target" :
+
+- It's a premium alternative to high-end laptop bags like Nomatic, Peak Design, and Bellroy
+- It's a quality alternative to mainstream earbuds like Apple AirPods
+  </goal>
 
 <input>
-You will receive product information including name, description, price, brand, category, and other metadata.
+You will receive the Markdown content of a web page.
 </input>
 
 <output>
-Return **only plain text in English** (no formatting). Limit the output to 3-4 sentences, packed with relevant searchable terms related to the product, its features, category, use cases, and target market.
+Return **only plain text in English** (no formatting). Limit the output to 3–4 sentences, packed with relevant searchable terms.
 </output>
 
-Here are examples of PERFECT product vector summaries:
+Here are some examples of a PERFECT summary that you SHOULD follow :
 
 <examples>
-1. Sony WH-1000XM4 wireless noise-cancelling over-ear headphones designed for professionals, travelers, audiophiles, commuters, and remote workers requiring premium audio quality and active noise cancellation. Features industry-leading ANC technology, 30-hour battery life, touch controls, quick charge, LDAC codec support, and comfortable ergonomic design for music listening, calls, podcasts, and productivity. Ideal for frequent flyers, office workers, students, musicians, and content creators who need superior sound isolation and wireless convenience for work, travel, gaming, and entertainment.
-
-2. Fitbit Charge 5 advanced fitness tracker smartwatch for health monitoring, exercise tracking, sleep analysis, and wellness management targeting fitness enthusiasts, athletes, runners, and health-conscious individuals. Includes built-in GPS, heart rate monitoring, stress management, ECG readings, skin temperature sensors, 7-day battery life, water resistance, and smartphone notifications for comprehensive health and activity tracking. Perfect for gym workouts, running, cycling, swimming, yoga, and daily wellness monitoring for weight loss, fitness goals, and healthy lifestyle maintenance.
-
-3. Wüsthof Classic 8-piece German kitchen knife set featuring high-carbon steel blades, ergonomic handles, and precision forging for professional cooking, meal preparation, and culinary tasks. Includes chef's knife, paring knife, utility knife, bread knife, and kitchen shears designed for home cooks, professional chefs, culinary students, and cooking enthusiasts. Essential for food preparation, vegetable chopping, meat cutting, bread slicing, and all kitchen tasks requiring sharp, durable, restaurant-quality cutlery tools.
+1. This is a minimalist white analog notebook that combines daily dated pages, goal-setting space, and habit tracking for productivity enthusiasts, students, and professionals. Designed as a physical alternative to digital todo list apps like Notion, Todoist, and Trello, it helps users plan work, track progress, and stay focused. With premium paper quality and structured layouts, it functions as a hybrid productivity system for journaling, time management, and self-improvement. Ideal for those who want a tactile, distraction-free planning tool.
+2. This is a pair of premium wireless earbuds that deliver immersive spatial audio, world-class active noise cancellation, and crystal-clear call quality for music lovers, frequent travelers, and professionals. With Bluetooth 5.3, multipoint pairing, and customizable EQ through a companion app, they offer deep bass, crisp highs, and adaptive sound tailored to any environment. Built with an ergonomic fit and up to 24 hours of battery life including the charging case, they rival high-end alternatives like Apple AirPods Pro, Sony WF-1000XM5, and Sennheiser Momentum True Wireless. Perfect for commuting, flights, workouts, and office use, they combine luxury design with cutting-edge audio performance.
 </examples>
+
 `;

@@ -10,7 +10,10 @@ export interface ParsedMention {
   symbol: "@" | "#" | "$";
 }
 
-export const parseAtMention = (input: string, cursorPosition: number): ParsedMention | null => {
+export const parseAtMention = (
+  input: string,
+  cursorPosition: number,
+): ParsedMention | null => {
   const beforeCursor = input.substring(0, cursorPosition);
   const atIndex = beforeCursor.lastIndexOf("@");
 
@@ -30,7 +33,10 @@ export const parseAtMention = (input: string, cursorPosition: number): ParsedMen
   };
 };
 
-export const parseHashMention = (input: string, cursorPosition: number): ParsedMention | null => {
+export const parseHashMention = (
+  input: string,
+  cursorPosition: number,
+): ParsedMention | null => {
   const beforeCursor = input.substring(0, cursorPosition);
   const hashIndex = beforeCursor.lastIndexOf("#");
 
@@ -50,7 +56,10 @@ export const parseHashMention = (input: string, cursorPosition: number): ParsedM
   };
 };
 
-export const parseSpecialMention = (input: string, cursorPosition: number): ParsedMention | null => {
+export const parseSpecialMention = (
+  input: string,
+  cursorPosition: number,
+): ParsedMention | null => {
   const beforeCursor = input.substring(0, cursorPosition);
   const dollarIndex = beforeCursor.lastIndexOf("$");
 
@@ -64,8 +73,8 @@ export const parseSpecialMention = (input: string, cursorPosition: number): Pars
   // Only allow specific special filters
   const validSpecialFilters = ["READ", "UNREAD", "STAR"];
   const upperMention = afterDollar.toUpperCase();
-  
-  if (!validSpecialFilters.some(filter => filter.startsWith(upperMention))) {
+
+  if (!validSpecialFilters.some((filter) => filter.startsWith(upperMention))) {
     return null;
   }
 
@@ -78,17 +87,20 @@ export const parseSpecialMention = (input: string, cursorPosition: number): Pars
   };
 };
 
-export const parseMention = (input: string, cursorPosition: number): ParsedMention | null => {
+export const parseMention = (
+  input: string,
+  cursorPosition: number,
+): ParsedMention | null => {
   // Check for $ first, then #, then @
   const specialMention = parseSpecialMention(input, cursorPosition);
   if (specialMention) return specialMention;
-  
+
   const hashMention = parseHashMention(input, cursorPosition);
   if (hashMention) return hashMention;
-  
+
   const atMention = parseAtMention(input, cursorPosition);
   if (atMention) return atMention;
-  
+
   return null;
 };
 
@@ -117,7 +129,7 @@ export const getTypeDisplayName = (type: BookmarkType): string => {
     TWEET: "Tweet",
     ARTICLE: "Article",
     PDF: "PDF",
-    PRODUCT: "Produit",
+    PRODUCT: "Product",
   };
   return displayNames[type] || type;
 };
@@ -135,7 +147,8 @@ export const getTypeColor = (type: BookmarkType): string => {
     ARTICLE:
       "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30",
     PDF: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-    PRODUCT: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
+    PRODUCT:
+      "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
   };
   return (
     colors[type] ||
@@ -155,7 +168,8 @@ export const getSpecialFilterDisplayName = (filter: string): string => {
 export const getSpecialFilterColor = (filter: string): string => {
   const colors: Record<string, string> = {
     READ: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
-    UNREAD: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30",
+    UNREAD:
+      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30",
     STAR: "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30",
   };
   return (

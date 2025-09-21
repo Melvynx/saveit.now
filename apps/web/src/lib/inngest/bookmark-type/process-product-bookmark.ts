@@ -2,6 +2,7 @@ import { uploadFileFromURLToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
 import { embedMany, generateObject } from "ai";
 import * as cheerio from "cheerio";
+import TurndownService from "turndown";
 import { z } from "zod";
 import { logger } from "../../logger";
 import { OPENAI_MODELS } from "../../openai";
@@ -12,7 +13,12 @@ import {
   generateContentSummary,
   updateBookmarkWithMetadata,
 } from "../process-bookmark.utils";
-import { TAGS_PROMPT, PRODUCT_SUMMARY_PROMPT } from "../prompt.const";
+import {
+  PRODUCT_DISPLAY_SUMMARY_PROMPT,
+  PRODUCT_SEARCH_SUMMARY_PROMPT,
+  TAGS_PROMPT,
+} from "../prompt.const";
+import { analyzeScreenshot } from "../screenshot-analysis.utils";
 
 interface ProductMetadata {
   name?: string;
@@ -289,7 +295,7 @@ export async function extractProductMetadataWithAI(
       .join(" ");
 
     const prompt = `Extract product information from this e-commerce page:
-    
+
 URL: ${url}
 Title: ${title}
 Description: ${description}
@@ -331,6 +337,127 @@ export async function processProductBookmark(
   step: InngestStep,
   publish: InngestPublish,
 ): Promise<void> {
+  // Convert HTML to markdown for better content analysis
+  const markdown = await step.run("convert-to-markdown", async () => {
+    const $ = cheerio.load(context.content);
+
+    // Remove noise elements
+    $("script, style, link, meta, noscript, iframe, svg").remove();
+    $("nav, header, footer, aside, .nav, .header, .footer, .sidebar").remove();
+    $(
+      "[class*='menu'], [class*='navigation'], [id*='menu'], [id*='nav']",
+    ).remove();
+    $("[class*='advertisement'], [class*='ads'], [class*='banner']").remove();
+
+    // Remove ALL images, videos and links completely
+    $("img, picture, video, a").remove();
+
+    // Try to find main content areas (in order of preference)
+    let contentElement = null;
+    const contentSelectors = [
+      "article", // Most semantic
+      "main",
+      "[role='main']",
+      ".main-content",
+      ".content",
+      "#main",
+      "#content",
+      ".product",
+      ".product-detail",
+      ".product-info",
+      "[itemtype*='Product']", // Schema.org Product
+      ".container", // Fallback
+    ];
+
+    for (const selector of contentSelectors) {
+      const element = $(selector).first();
+      if (element.length > 0 && element.text().trim().length > 100) {
+        contentElement = element;
+        break;
+      }
+    }
+
+    // If no main content found, use body but clean it more
+    if (!contentElement) {
+      contentElement = $("body");
+      // Remove more noise from body
+      contentElement.find("ul, ol").each(function () {
+        const linkCount = $(this).find("a").length;
+        const itemCount = $(this).find("li").length;
+        // Remove lists that are mostly links (likely navigation)
+        if (linkCount > 3 && linkCount / itemCount > 0.7) {
+          $(this).remove();
+        }
+      });
+    }
+
+    const turndown = new TurndownService({
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+      bulletListMarker: "-",
+    });
+
+    // Remove links but keep the text content
+    turndown.addRule("removeLinks", {
+      filter: "a",
+      replacement: function (content) {
+        // Keep the text content but remove the link
+        return content;
+      },
+    });
+
+    let markdown = turndown.turndown(contentElement.html() || "");
+
+    // Clean up the markdown to remove noise and get actual content
+    const lines = markdown.split("\n");
+    const cleanedLines = lines.filter((line) => {
+      const trimmed = line.trim();
+
+      // Skip empty lines
+      if (trimmed.length === 0) return false;
+
+      // Skip very short lines (likely noise)
+      if (trimmed.length < 5) return false;
+
+      // Skip markdown images ![...](...)
+      if (/^!\[.*\]\(.*\)$/.test(trimmed)) return false;
+
+      // Skip markdown links that are just URLs [text](url)
+      if (/^\[.*\]\(.*\)$/.test(trimmed)) return false;
+
+      // Skip lines that are mostly symbols or repeated characters
+      if (/^[-•*\s#]{3,}$/.test(trimmed)) return false;
+
+      // Skip lines that look like breadcrumbs or navigation
+      if (/^(Home|Back|Next|Previous|←|→|»|«)(\s|$)/i.test(trimmed))
+        return false;
+
+      // Skip lines that are just URLs or image paths
+      if (/^(https?:\/\/|\/\/|\.\/|\/)/.test(trimmed)) return false;
+
+      // Skip lines with only dimensions or model numbers
+      if (/^\d+"\s*(x\s*\d+")?\s*(Black|White|Silver)?\s*$/.test(trimmed))
+        return false;
+
+      return true;
+    });
+
+    // Remove markdown image syntax from remaining lines
+    const textOnlyLines = cleanedLines
+      .map((line) => {
+        // Remove inline image markdown ![alt](url)
+        return line
+          .replace(/!\[.*?\]\(.*?\)/g, "")
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Keep link text, remove URL
+          .trim();
+      })
+      .filter((line) => line.length > 0);
+
+    markdown = textOnlyLines.join("\n").trim();
+
+    return markdown;
+  });
+
   // Extract basic metadata using cheerio
   const basicMetadata = await step.run("extract-basic-metadata", async () => {
     return extractBasicMetadata(context.content, context.url);
@@ -339,14 +466,16 @@ export async function processProductBookmark(
   // Extract product-specific metadata
   const productData = await step.run("extract-product-metadata", async () => {
     const traditionalData = extractProductMetadata(context.content);
+
     let aiData: ProductMetadata = {};
 
     // If we don't have critical data (price), use AI as fallback
     if (!traditionalData.price || traditionalData.price <= 0) {
-      logger.info("Using AI fallback extraction for missing data");
       aiData = await extractProductMetadataWithAI(context.content, context.url);
     } else {
-      logger.info("Traditional extraction successful with price data");
+      logger.info(
+        `Traditional extraction sufficient for ${context.bookmarkId}, skipping AI extraction.`,
+      );
     }
 
     // Always upload the image to S3 if available
@@ -359,7 +488,7 @@ export async function processProductBookmark(
         })
       : undefined;
 
-    return {
+    const finalProductData = {
       name: traditionalData.name || aiData.name,
       price: traditionalData.price || aiData.price,
       currency: traditionalData.currency || aiData.currency,
@@ -369,16 +498,85 @@ export async function processProductBookmark(
       description: traditionalData.description || aiData.description,
       category: aiData.category, // AI is better at categorization
     };
+
+    return finalProductData;
   });
 
-  // Generate content summary for the product description
-  const contentForSummary = `Title: ${productData.name || basicMetadata.title || ""}\nDescription: ${productData.description || basicMetadata.description || ""}${productData.price ? `\nPrice: ${productData.price} ${productData.currency || "USD"}` : ""}`;
+  // Analyze product image if available
+  const imageAnalysis = await step.run("analyze-product-image", async () => {
+    const imageUrl = productData.image || basicMetadata.image;
+    if (!imageUrl) {
+      return null;
+    }
 
-  const summary = await step.run("get-summary", async () => {
+    try {
+      const analysis = await analyzeScreenshot(imageUrl);
+      return analysis;
+    } catch (error) {
+      logger.warn(
+        `Product image analysis failed for ${context.bookmarkId}:`,
+        error,
+      );
+      return null;
+    }
+  });
+
+  // Prepare content for summaries with markdown content
+  const contentForSummary = `Title: ${productData.name || basicMetadata.title || ""}
+Description: ${productData.description || basicMetadata.description || ""}${
+    productData.price
+      ? `
+Price: ${productData.price} ${productData.currency || "USD"}`
+      : ""
+  }${
+    productData.brand
+      ? `
+Brand: ${productData.brand}`
+      : ""
+  }${
+    productData.category
+      ? `
+Category: ${productData.category}`
+      : ""
+  }
+
+${
+  imageAnalysis?.description
+    ? `
+
+Product Image Description:
+${imageAnalysis.description}`
+    : ""
+}
+
+Website Content:
+${markdown.substring(0, 2500)}`; // Reduced to 2500 to make room for image analysis
+
+  // Generate user-facing display summary (short and clean)
+  const displaySummary = await step.run("get-display-summary", async () => {
     if (!contentForSummary) return "";
+
     return await generateContentSummary(
-      PRODUCT_SUMMARY_PROMPT,
+      PRODUCT_DISPLAY_SUMMARY_PROMPT,
       contentForSummary,
+      {
+        bookmarkId: context.bookmarkId,
+        type: "user",
+      },
+    );
+  });
+
+  // Generate search-optimized summary (keyword-rich for vector search)
+  const searchSummary = await step.run("get-search-summary", async () => {
+    if (!contentForSummary) return "";
+
+    return await generateContentSummary(
+      PRODUCT_SEARCH_SUMMARY_PROMPT,
+      contentForSummary,
+      {
+        bookmarkId: context.bookmarkId,
+        type: "vector",
+      },
     );
   });
 
@@ -398,7 +596,8 @@ export async function processProductBookmark(
       bookmarkId: context.bookmarkId,
       type: BookmarkType.PRODUCT,
       title: productData.name || basicMetadata.title || "Product",
-      summary: summary || "",
+      summary: displaySummary || "", // Use display summary for UI
+      vectorSummary: searchSummary || "", // Use search summary for vector search
       // Use product image instead of screenshot for preview
       preview: productData.image || basicMetadata.image || null,
       ogImageUrl: productData.image || basicMetadata.image || null,
@@ -424,23 +623,33 @@ export async function processProductBookmark(
   });
 
   await step.run("update-embedding", async () => {
-    if (!summary || !productData.name) return;
+    // Use product name or fallback to title
+    const titleForEmbedding =
+      productData.name || basicMetadata.title || "Product";
 
-    const embedding = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [summary || "", productData.name || ""],
-    });
-    const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
+    if (!searchSummary || !titleForEmbedding) {
+      if (!searchSummary) return;
+    }
 
-    // Update embeddings in database
-    await prisma.$executeRaw`
-      UPDATE "Bookmark"
-      SET 
-        "titleEmbedding" = ${titleEmbedding}::vector,
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
-      WHERE id = ${context.bookmarkId}
-    `;
+    try {
+      // Use the search-optimized summary for embeddings
+      const embedding = await embedMany({
+        model: OPENAI_MODELS.embedding,
+        values: [searchSummary, titleForEmbedding],
+      });
+      const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
+
+      // Update embeddings in database
+      await prisma.$executeRaw`
+        UPDATE "Bookmark"
+        SET
+          "titleEmbedding" = ${titleEmbedding}::vector,
+          "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        WHERE id = ${context.bookmarkId}
+      `;
+    } catch (error) {
+      logger.error(`💃 EMBEDDING ERROR for ${context.bookmarkId}:`, error);
+      throw error;
+    }
   });
-
-  logger.info(`Product bookmark processed: ${context.bookmarkId}`);
 }

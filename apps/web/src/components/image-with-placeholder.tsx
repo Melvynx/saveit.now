@@ -27,6 +27,7 @@ export const ImageWithPlaceholder = ({
   className,
   fallbackImage,
   onError,
+  width,
   ...props
 }: ImageWithPlaceholderProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -102,8 +103,8 @@ export const ImageWithPlaceholder = ({
 
       <ImageComp
         {...props}
-        width={380}
-        height={380 * 0.5625}
+        width={width ? Number(width) : 380}
+        height={(width ? Number(width) : 380) * 0.5625}
         alt="image"
         src={src}
         className={cn(

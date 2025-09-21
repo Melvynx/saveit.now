@@ -1,18 +1,18 @@
+import { OPENAI_MODELS } from "@/lib/openai";
 import {
-  prisma,
-  BookmarkType,
   BookmarkStatus,
+  BookmarkType,
   Prisma,
+  prisma,
 } from "@workspace/database";
 import { embed } from "ai";
-import { OPENAI_MODELS } from "@/lib/openai";
 import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchOptions,
   SearchResponse,
   SearchResult,
-  isDomainQuery,
   extractDomain,
+  isDomainQuery,
 } from "./search-helpers";
 
 interface UnifiedSearchParams {
@@ -130,10 +130,10 @@ class OptimizedSearchQuery {
   }
 
   private buildStatusFilter(alias: string): string {
-    // If it's a search query, only return COMPLETE bookmarks
+    // If it's a search query, only return READY bookmarks
     // If it's browsing (no query), return all statuses
     if (this.params.isSearchQuery) {
-      return `AND ${alias}.status = 'COMPLETE'`;
+      return `AND ${alias}.status = 'READY'`;
     }
     return "";
   }

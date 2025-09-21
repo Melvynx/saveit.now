@@ -1,6 +1,7 @@
 import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
+import { GEMINI_MODELS } from "../gemini";
 import { OPENAI_MODELS } from "../openai";
 
 /**
@@ -21,12 +22,13 @@ export async function generateAndCreateTags(
     select: { name: true },
   });
 
-  const existingTagNames = existingTags.map(tag => tag.name);
-  
+  const existingTagNames = existingTags.map((tag) => tag.name);
+
   // Include existing tags in the system prompt to encourage reuse
-  const enhancedSystemPrompt = existingTagNames.length > 0 
-    ? `${systemPrompt}\n\nExisting user tags: ${existingTagNames.join(', ')}\nPrioritize reusing these existing tags when appropriate before creating new ones.`
-    : systemPrompt;
+  const enhancedSystemPrompt =
+    existingTagNames.length > 0
+      ? `${systemPrompt}\n\nExisting user tags: ${existingTagNames.join(", ")}\nPrioritize reusing these existing tags when appropriate before creating new ones.`
+      : systemPrompt;
 
   const { object } = await generateObject({
     model: OPENAI_MODELS.cheap,
@@ -73,22 +75,62 @@ export async function generateAndCreateTags(
 }
 
 /**
- * Generates AI-powered content summary
+ * Generates AI-powered content summary with optional debug file saving
  * @param systemPrompt System instructions for the AI model
  * @param prompt Content to summarize
+ * @param debugInfo Optional debug information for file saving
  * @returns Generated summary text
  */
 export async function generateContentSummary(
   systemPrompt: string,
   prompt: string,
+  debugInfo?: {
+    bookmarkId: string;
+    type: "user" | "vector";
+  },
 ): Promise<string> {
   const summary = await generateText({
-    model: OPENAI_MODELS.cheap,
+    model: GEMINI_MODELS.cheap,
     system: systemPrompt,
     prompt,
   });
 
-  return summary.text || "";
+  const result = summary.text || "";
+
+  // Save debug files if debug info is provided
+  if (debugInfo) {
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+
+      const debugDir = path.join(
+        process.cwd(),
+        "debug",
+        "process-bookmark",
+        debugInfo.bookmarkId,
+      );
+      await fs.mkdir(debugDir, { recursive: true });
+
+      await fs.writeFile(
+        path.join(debugDir, `${debugInfo.type}-system.md`),
+        systemPrompt,
+      );
+
+      await fs.writeFile(
+        path.join(debugDir, `${debugInfo.type}-prompt.md`),
+        prompt,
+      );
+
+      await fs.writeFile(
+        path.join(debugDir, `${debugInfo.type}-result.md`),
+        result,
+      );
+    } catch {
+      // Silently ignore debug file errors
+    }
+  }
+
+  return result;
 }
 
 /**
