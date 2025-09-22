@@ -97,8 +97,8 @@ export default function ShareHandler() {
       // File content (images, etc.)
       const file = shareIntent.files[0];
       if (file && file.mimeType?.startsWith("image/")) {
-        // For images, we'll upload the file instead of using path as URL
-        url = `shared-image-${Date.now()}`;
+        // For images, we'll upload the file - URL will be replaced by S3 URL
+        url = `placeholder-image-upload-${Date.now()}`;
         metadata = {
           type: "image",
           fileName: file.fileName || "Shared image",

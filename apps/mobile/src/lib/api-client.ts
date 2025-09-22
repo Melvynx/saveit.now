@@ -122,7 +122,7 @@ class ApiClient {
       body = JSON.stringify(data);
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/bookmarks`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers,
       credentials: "include",
