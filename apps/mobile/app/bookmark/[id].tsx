@@ -53,18 +53,21 @@ export default function BookmarkDetailScreen() {
       queryClient.setQueryData(["bookmark", id], updatedBookmark);
 
       // Update bookmarks list cache
-      queryClient.setQueryData(["bookmarks"], (oldData: any) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page: any) => ({
-            ...page,
-            bookmarks: page.bookmarks.map((b: Bookmark) =>
-              b.id === updatedBookmark.id ? updatedBookmark : b,
-            ),
-          })),
-        };
-      });
+      queryClient.setQueryData(
+        ["bookmarks"],
+        (oldData: { pages: Array<{ bookmarks: Bookmark[] }> }) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              bookmarks: page.bookmarks.map((b: Bookmark) =>
+                b.id === updatedBookmark.id ? updatedBookmark : b,
+              ),
+            })),
+          };
+        },
+      );
     },
     onError: () => {
       Alert.alert("Error", "Failed to update bookmark");
@@ -113,8 +116,6 @@ export default function BookmarkDetailScreen() {
       // Note: In React Native, you'd typically use @react-native-clipboard/clipboard
       // For now, we'll show an alert
       Alert.alert("Link Copied", bookmark.url);
-    } catch (error) {
-      Alert.alert("Error", "Failed to copy link");
     } finally {
       setCopying(false);
     }
@@ -129,7 +130,7 @@ export default function BookmarkDetailScreen() {
       } else {
         Alert.alert("Error", "Cannot open this URL");
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to open link");
     }
   };
@@ -248,19 +249,20 @@ export default function BookmarkDetailScreen() {
               <H4>Tags</H4>
               <XStack flexWrap="wrap" gap="$2">
                 {bookmark.tags.map((tagWrapper) => (
-                  <Button
+                  <XStack
                     key={tagWrapper.tag.id}
-                    size="$2"
-                    icon={<Tag size={14} />}
                     backgroundColor="$blue4"
-                    color="$blue11"
-                    fontSize="$2"
                     borderRadius="$3"
                     paddingHorizontal="$3"
                     paddingVertical="$2"
+                    alignItems="center"
+                    gap="$1.5"
                   >
-                    {tagWrapper.tag.name}
-                  </Button>
+                    <Tag size={14} color="$blue11" />
+                    <Text fontSize="$2" color="$blue11">
+                      {tagWrapper.tag.name}
+                    </Text>
+                  </XStack>
                 ))}
               </XStack>
             </Card>

@@ -12,8 +12,6 @@ export default function IndexPage() {
   const { hasShareIntent } = useShareIntent();
   const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
-  const numberAsString: string = 123;
-  console.log(numberAsString);
 
   console.log("🏠 Index - Params:", params);
   console.log("🏠 Index - hasShareIntent:", hasShareIntent);
