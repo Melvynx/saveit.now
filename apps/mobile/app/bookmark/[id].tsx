@@ -249,20 +249,19 @@ export default function BookmarkDetailScreen() {
               <H4>Tags</H4>
               <XStack flexWrap="wrap" gap="$2">
                 {bookmark.tags.map((tagWrapper) => (
-                  <XStack
+                  <Button
                     key={tagWrapper.tag.id}
+                    size="$2"
+                    icon={<Tag size={14} />}
                     backgroundColor="$blue4"
+                    color="$blue12"
+                    fontSize="$2"
                     borderRadius="$3"
                     paddingHorizontal="$3"
                     paddingVertical="$2"
-                    alignItems="center"
-                    gap="$1.5"
                   >
-                    <Tag size={14} color="$blue11" />
-                    <Text fontSize="$2" color="$blue11">
-                      {tagWrapper.tag.name}
-                    </Text>
-                  </XStack>
+                    {tagWrapper.tag.name}
+                  </Button>
                 ))}
               </XStack>
             </Card>
