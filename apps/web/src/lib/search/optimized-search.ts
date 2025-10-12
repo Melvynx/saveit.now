@@ -104,22 +104,18 @@ class OptimizedSearchQuery {
       SELECT
         b.*,
         'vector'::text as strategy,
-        (100 - (LEAST(
-          COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1),
-          COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)
-        ) * 100)) * 0.6 as base_score
+        (100 - ((0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
+                  0.8 * COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)) * 100)) * 0.6 as base_score
       FROM "Bookmark" b
       WHERE b."userId" = $1
         ${this.buildStatusFilter("b")}
         AND (
-          LEAST(
-            COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1),
-            COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)
-          ) <= (
-            SELECT MIN(LEAST(
-              COALESCE("titleEmbedding" <=> $${paramIndex}::vector, 1),
-              COALESCE("vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)
-            )) + $${paramIndex + 1}
+          (0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
+           0.8 * COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)) <= (
+            SELECT MIN(
+              0.2 * COALESCE("titleEmbedding" <=> $${paramIndex}::vector, 1) +
+              0.8 * COALESCE("vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)
+            ) + $${paramIndex + 1}
             FROM "Bookmark"
             WHERE "userId" = $1
           )

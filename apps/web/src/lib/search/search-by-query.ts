@@ -1,6 +1,11 @@
 import { OPENAI_MODELS } from "@/lib/openai";
 import { logger } from "@/lib/logger";
-import { BookmarkStatus, BookmarkType, prisma, Prisma } from "@workspace/database";
+import {
+  BookmarkStatus,
+  BookmarkType,
+  prisma,
+  Prisma,
+} from "@workspace/database";
 import { embed } from "ai";
 import { EmbeddingCache } from "./embedding-cache";
 import {
@@ -20,7 +25,7 @@ import {
  */
 async function getBookmarkTags(bookmarkIds: string[]) {
   if (bookmarkIds.length === 0) return [];
-  
+
   return prisma.bookmarkTag.findMany({
     where: {
       bookmarkId: {
@@ -43,7 +48,12 @@ async function getBookmarkTags(bookmarkIds: string[]) {
 /**
  * Groups bookmark tags by bookmark ID
  */
-function groupTagsByBookmarkId(bookmarkTags: { bookmarkId: string; tag: { id: string; name: string; type: string } }[]) {
+function groupTagsByBookmarkId(
+  bookmarkTags: {
+    bookmarkId: string;
+    tag: { id: string; name: string; type: string };
+  }[],
+) {
   return bookmarkTags.reduce((acc, bt) => {
     if (!acc.has(bt.bookmarkId)) {
       acc.set(bt.bookmarkId, []);
@@ -250,15 +260,15 @@ export async function searchByVector({
 
   if (specialFilters && specialFilters.length > 0) {
     const conditions: string[] = [];
-    
+
     if (specialFilters.includes("READ")) {
       conditions.push("b.read = true");
     }
-    
+
     if (specialFilters.includes("UNREAD")) {
       conditions.push("b.read = false");
     }
-    
+
     if (specialFilters.includes("STAR")) {
       conditions.push("b.starred = true");
     }
@@ -304,10 +314,8 @@ export async function searchByVector({
         metadata,
         starred,
         read,
-        LEAST(
-          COALESCE("titleEmbedding" <=> $1::vector, 1),
-          COALESCE("vectorSummaryEmbedding" <=> $1::vector, 1)
-        ) as distance
+        (0.2 * COALESCE("titleEmbedding" <=> $1::vector, 1) +
+         0.8 * COALESCE("vectorSummaryEmbedding" <=> $1::vector, 1)) as distance
       FROM "Bookmark" b
       WHERE "userId" = $2
       ${tagsCondition}
@@ -338,7 +346,7 @@ export async function searchByVector({
 
   // Get both tags and open counts in parallel for better performance
   const bookmarkIds = bookmarks.map((bookmark) => bookmark.id);
-  
+
   const [bookmarkTags, openCounts] = await Promise.all([
     getBookmarkTags(bookmarkIds),
     getBookmarkOpenCounts(userId, bookmarkIds),
@@ -350,7 +358,7 @@ export async function searchByVector({
   return bookmarks.map((bookmark) => {
     const baseScore = Math.max(0, 100 * (1 - bookmark.distance));
     const bookmarkTagsList = tagsMap.get(bookmark.id) || [];
-    const bookmarkTagNames = bookmarkTagsList.map(bt => bt.tag.name);
+    const bookmarkTagNames = bookmarkTagsList.map((bt) => bt.tag.name);
     const matchedTags = bookmarkTagNames.filter((tag) => tags.includes(tag));
 
     // Apply open frequency boost
@@ -395,7 +403,10 @@ export async function searchByText({
     const trimmedQuery = query.trim();
 
     // Try to get embedding from cache first
-    let embedding = await EmbeddingCache.get(trimmedQuery, 'text-embedding-3-small');
+    let embedding = await EmbeddingCache.get(
+      trimmedQuery,
+      "text-embedding-3-small",
+    );
 
     if (!embedding) {
       // Cache miss - generate new embedding
@@ -407,7 +418,11 @@ export async function searchByText({
       embedding = newEmbedding;
 
       // Cache for future use (fire and forget)
-      EmbeddingCache.set(trimmedQuery, embedding, 'text-embedding-3-small').catch(console.error);
+      EmbeddingCache.set(
+        trimmedQuery,
+        embedding,
+        "text-embedding-3-small",
+      ).catch(console.error);
     }
 
     return await searchByVector({
