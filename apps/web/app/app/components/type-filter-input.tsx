@@ -1,6 +1,10 @@
-import { inputVariants } from "@workspace/ui/components/input";
-import { cn } from "@workspace/ui/lib/utils";
-import { Plus, Search } from "lucide-react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@workspace/ui/components/input-group";
+import { Plus, Search, X } from "lucide-react";
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useSearchInput } from "../contexts/search-input-context";
@@ -18,7 +22,10 @@ export interface MentionFilterInputRef {
 }
 
 // Helper function to handle cursor focus after mention selection
-const focusCursor = (inputRef: React.RefObject<HTMLInputElement | null>, startIndex: number) => {
+const focusCursor = (
+  inputRef: React.RefObject<HTMLInputElement | null>,
+  startIndex: number,
+) => {
   setTimeout(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -27,140 +34,162 @@ const focusCursor = (inputRef: React.RefObject<HTMLInputElement | null>, startIn
   }, 0);
 };
 
-export const MentionFilterInput = forwardRef<MentionFilterInputRef, MentionFilterInputProps>(
-  ({ query, onQueryChange, isUrl, onEnterPress }, ref) => {
-    const {
-      showLists,
-      hideLists,
-      addType,
-      addTag,
-      addSpecialFilter,
-      filteredTypes,
-      filteredTags,
-      filteredSpecialFilters,
-    } = useSearchInput();
-    const inputRef = useRef<HTMLInputElement>(null);
+export const MentionFilterInput = forwardRef<
+  MentionFilterInputRef,
+  MentionFilterInputProps
+>(({ query, onQueryChange, isUrl, onEnterPress }, ref) => {
+  const {
+    showLists,
+    hideLists,
+    addType,
+    addTag,
+    addSpecialFilter,
+    filteredTypes,
+    filteredTags,
+    filteredSpecialFilters,
+  } = useSearchInput();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-    useImperativeHandle(ref, () => ({
-      focus: () => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.select();
-        }
-      },
-    }));
-
-    useHotkeys("mod+k", (event) => {
-      event.preventDefault();
+  useImperativeHandle(ref, () => ({
+    focus: () => {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.select();
       }
-    });
+    },
+  }));
 
-    const handleInputChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        const cursor = e.target.selectionStart || 0;
+  useHotkeys("mod+k", (event) => {
+    event.preventDefault();
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  });
 
-        onQueryChange(value);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const cursor = e.target.selectionStart || 0;
 
-        const mention = parseMention(value, cursor);
-        if (mention) {
-          showLists(mention.type, mention.mention);
-        } else {
-          hideLists();
-        }
-      },
-      [onQueryChange, showLists, hideLists],
-    );
+      onQueryChange(value);
 
-    // Helper function to handle mention selection
-    const handleMentionSelection = useCallback(
-      (mention: ReturnType<typeof parseMention>) => {
-        if (!mention) return false;
+      const mention = parseMention(value, cursor);
+      if (mention) {
+        showLists(mention.type, mention.mention);
+      } else {
+        hideLists();
+      }
+    },
+    [onQueryChange, showLists, hideLists],
+  );
 
-        const actions = {
-          type: () => {
-            const firstType = filteredTypes[0];
-            if (firstType) {
-              addType(firstType);
-              return true;
-            }
-            return false;
-          },
-          tag: () => {
-            const firstTag = filteredTags[0];
-            if (firstTag) {
-              addTag(firstTag.name, query);
-              return true;
-            }
-            return false;
-          },
-          special: () => {
-            const firstFilter = filteredSpecialFilters[0];
-            if (firstFilter) {
-              addSpecialFilter(firstFilter, query);
-              return true;
-            }
-            return false;
-          },
-        };
+  // Helper function to handle mention selection
+  const handleMentionSelection = useCallback(
+    (mention: ReturnType<typeof parseMention>) => {
+      if (!mention) return false;
 
-        const action = actions[mention.type];
-        if (action?.()) {
-          const newQuery = removeMention(query, mention.startIndex, mention.endIndex);
-          onQueryChange(newQuery);
-          focusCursor(inputRef, mention.startIndex);
-          return true;
-        }
-        return false;
-      },
-      [query, filteredTypes, filteredTags, filteredSpecialFilters, addType, addTag, addSpecialFilter, onQueryChange],
-    );
-
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLInputElement>) => {
-        const cursor = inputRef.current?.selectionStart || 0;
-        const mention = parseMention(query, cursor);
-
-        if (e.key === "Enter") {
-          if (mention) {
-            e.preventDefault();
-            handleMentionSelection(mention);
-          } else if (isUrl) {
-            onEnterPress();
+      const actions = {
+        type: () => {
+          const firstType = filteredTypes[0];
+          if (firstType) {
+            addType(firstType);
+            return true;
           }
-        } else if (e.key === "Escape" && mention) {
-          hideLists();
-        }
-      },
-      [query, handleMentionSelection, isUrl, onEnterPress, hideLists],
-    );
+          return false;
+        },
+        tag: () => {
+          const firstTag = filteredTags[0];
+          if (firstTag) {
+            addTag(firstTag.name, query);
+            return true;
+          }
+          return false;
+        },
+        special: () => {
+          const firstFilter = filteredSpecialFilters[0];
+          if (firstFilter) {
+            addSpecialFilter(firstFilter, query);
+            return true;
+          }
+          return false;
+        },
+      };
 
-    return (
-      <div
-        className={cn(
-          inputVariants({}),
-          "flex-1 flex items-center gap-2 relative lg:h-16 bg-background focus-within:ring-2 focus-within:ring-ring/50 lg:rounded-lg",
-        )}
-      >
+      const action = actions[mention.type];
+      if (action?.()) {
+        const newQuery = removeMention(
+          query,
+          mention.startIndex,
+          mention.endIndex,
+        );
+        onQueryChange(newQuery);
+        focusCursor(inputRef, mention.startIndex);
+        return true;
+      }
+      return false;
+    },
+    [
+      query,
+      filteredTypes,
+      filteredTags,
+      filteredSpecialFilters,
+      addType,
+      addTag,
+      addSpecialFilter,
+      onQueryChange,
+    ],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      const cursor = inputRef.current?.selectionStart || 0;
+      const mention = parseMention(query, cursor);
+
+      if (e.key === "Enter") {
+        if (mention) {
+          e.preventDefault();
+          handleMentionSelection(mention);
+        } else if (isUrl) {
+          onEnterPress();
+        }
+      } else if (e.key === "Escape" && mention) {
+        hideLists();
+      }
+    },
+    [query, handleMentionSelection, isUrl, onEnterPress, hideLists],
+  );
+
+  return (
+    <InputGroup className="flex-1 lg:h-16 lg:rounded-xl">
+      <InputGroupAddon>
         {isUrl ? (
-          <Plus className="pointer-events-none" />
+          <Plus className="size-3 lg:size-6" />
         ) : (
-          <Search className="pointer-events-none" />
+          <Search className="size-3 lg:size-6" />
         )}
-        <input
-          ref={inputRef}
-          value={query}
-          className="lg:h-16 lg:text-2xl flex-1 focus:outline-none"
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Search bookmarks or type @ for types, # for tags, $ for filters"
-        />
-      </div>
-    );
-  },
-);
+      </InputGroupAddon>
+      <InputGroupInput
+        ref={inputRef}
+        value={query}
+        className=" lg:text-2xl"
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        placeholder="Search bookmarks or type @ for types, # for tags, $ for filters"
+      />
+      {query && (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            className="size-3 lg:size-6"
+            onClick={() => onQueryChange("")}
+            aria-label="Clear search"
+          >
+            <X />
+          </InputGroupButton>
+        </InputGroupAddon>
+      )}
+    </InputGroup>
+  );
+});
 
 MentionFilterInput.displayName = "MentionFilterInput";

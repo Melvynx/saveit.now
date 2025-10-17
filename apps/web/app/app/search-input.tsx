@@ -1,10 +1,15 @@
 import { Button } from "@workspace/ui/components/button";
+import { ButtonGroup } from "@workspace/ui/components/button-group";
 import { useQueryState } from "nuqs";
 import { forwardRef } from "react";
 import { toast } from "sonner";
 import { FilterList } from "./components/filter-list";
 import { SelectedFiltersBadges } from "./components/selected-filters-badges";
-import { MentionFilterInput, MentionFilterInputRef } from "./components/type-filter-input";
+import {
+  MentionFilterInput,
+  MentionFilterInputRef,
+} from "./components/type-filter-input";
+
 import { SearchInputProvider } from "./contexts/search-input-context";
 import { URL_SCHEMA } from "./schema";
 import { useCreateBookmarkAction } from "./use-create-bookmark";
@@ -32,7 +37,7 @@ const SearchInputContent = forwardRef<
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
+      <ButtonGroup className="w-full">
         <MentionFilterInput
           ref={ref}
           query={query}
@@ -46,12 +51,12 @@ const SearchInputContent = forwardRef<
               action.execute({ url: query });
             }}
             variant="outline"
-            className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl"
+            className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl lg:rounded-xl"
           >
             Add
           </Button>
         ) : null}
-      </div>
+      </ButtonGroup>
 
       <SelectedFiltersBadges />
 
