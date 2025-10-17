@@ -2,6 +2,7 @@ import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view"
 import { hasMarkdownContent } from "@/lib/bookmark-content";
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { Button } from "@workspace/ui/components/button";
+import { ButtonGroup } from "@workspace/ui/components/button-group";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
@@ -80,38 +81,39 @@ export function BookmarkPage() {
               <ExternalLink className="text-muted-foreground size-4" />
             </Button>
           </ExternalLinkTracker>
+          <ButtonGroup>
+            <CopyLinkButton url={bookmark.url} />
+            <ShareButton bookmarkId={bookmark.id} />
 
-          <CopyLinkButton url={bookmark.url} />
-          <ShareButton bookmarkId={bookmark.id} />
-
-          <StarButton
-            bookmarkId={bookmark.id}
-            starred={bookmark.starred || false}
-          />
-          {bookmark.type === "ARTICLE" && (
-            <>
-              <ReadButton
-                bookmarkId={bookmark.id}
-                read={bookmark.read || false}
-              />
-              {hasMarkdownContent(bookmark.metadata) && (
-                <InlineTooltip title="Read Article">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="size-8"
-                    asChild
-                  >
-                    <Link href={`/p/${bookmark.id}/read`} target="_blank">
-                      <BookOpen className="text-muted-foreground size-4" />
-                    </Link>
-                  </Button>
-                </InlineTooltip>
-              )}
-            </>
-          )}
-          <ReBookmarkButton bookmarkId={bookmark.id} />
-          <BackButton />
+            <StarButton
+              bookmarkId={bookmark.id}
+              starred={bookmark.starred || false}
+            />
+            {bookmark.type === "ARTICLE" && (
+              <>
+                <ReadButton
+                  bookmarkId={bookmark.id}
+                  read={bookmark.read || false}
+                />
+                {hasMarkdownContent(bookmark.metadata) && (
+                  <InlineTooltip title="Read Article">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="size-8"
+                      asChild
+                    >
+                      <Link href={`/p/${bookmark.id}/read`} target="_blank">
+                        <BookOpen className="text-muted-foreground size-4" />
+                      </Link>
+                    </Button>
+                  </InlineTooltip>
+                )}
+              </>
+            )}
+            <ReBookmarkButton bookmarkId={bookmark.id} />
+            <BackButton />
+          </ButtonGroup>
         </header>
         <div className="px-6 py-4">
           <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
