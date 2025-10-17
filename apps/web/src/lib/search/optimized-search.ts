@@ -26,6 +26,7 @@ interface UnifiedSearchParams {
   types?: BookmarkType[];
   specialFilters?: ("READ" | "UNREAD" | "STAR")[];
   isSearchQuery?: boolean;
+  skipDistanceFilter?: boolean;
 }
 
 interface QueryResult {
@@ -99,7 +100,30 @@ class OptimizedSearchQuery {
     `;
   }
 
-  private buildVectorSearchCTE(paramIndex: number): string {
+  private buildVectorSearchCTE(paramIndex: number, skipDistanceFilter: boolean = false): string {
+    // Build filter conditions for the MIN subquery
+    const statusFilter = this.buildStatusFilter("").replace("AND ", "AND ");
+    const typeFilter = this.buildTypeFilter("").replace("AND ", "AND ");
+    const specialFilter = this.buildSpecialFilters("").replace("AND ", "AND ");
+
+    if (skipDistanceFilter) {
+      // Return top results by distance without threshold filtering
+      return `
+        SELECT
+          b.*,
+          'vector'::text as strategy,
+          (100 - ((0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
+                    0.8 * COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)) * 100)) * 0.6 as base_score
+        FROM "Bookmark" b
+        WHERE b."userId" = $1
+          ${this.buildStatusFilter("b")}
+          ${this.buildTypeFilter("b")}
+          ${this.buildSpecialFilters("b")}
+        ORDER BY (0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
+                  0.8 * COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)) ASC
+      `;
+    }
+
     return `
       SELECT
         b.*,
@@ -118,6 +142,9 @@ class OptimizedSearchQuery {
             ) + $${paramIndex + 1}
             FROM "Bookmark"
             WHERE "userId" = $1
+              ${statusFilter}
+              ${typeFilter}
+              ${specialFilter}
           )
         )
         ${this.buildTypeFilter("b")}
@@ -183,10 +210,14 @@ class OptimizedSearchQuery {
 
     // Add vector search strategy
     if (this.params.embedding) {
-      strategies.push(this.buildVectorSearchCTE(paramIndex));
+      strategies.push(this.buildVectorSearchCTE(paramIndex, this.params.skipDistanceFilter));
       values.push(this.params.embedding);
-      values.push(this.params.matchingDistance || 0.1);
-      paramIndex += 2;
+      if (!this.params.skipDistanceFilter) {
+        values.push(this.params.matchingDistance || 0.1);
+        paramIndex += 2;
+      } else {
+        paramIndex += 1;
+      }
     }
 
     if (strategies.length === 0) {
@@ -313,10 +344,46 @@ export async function optimizedSearch(
       paramCount: values.length,
     });
 
-    const results = (await prisma.$queryRawUnsafe(
+    let results = (await prisma.$queryRawUnsafe(
       query,
       ...values,
     )) as QueryResult[];
+
+    // Fallback 1: If no results and it's a vector search, retry with larger matchingDistance
+    if (
+      results.length === 0 &&
+      unifiedParams.embedding &&
+      unifiedParams.matchingDistance &&
+      !unifiedParams.skipDistanceFilter
+    ) {
+      console.log(
+        `No results found with matchingDistance ${unifiedParams.matchingDistance}, retrying with 1.0`,
+      );
+      unifiedParams.matchingDistance = 1.0;
+      const retryBuilder = new OptimizedSearchQuery(unifiedParams);
+      const { query: retryQuery, values: retryValues } = retryBuilder.build();
+
+      results = (await prisma.$queryRawUnsafe(
+        retryQuery,
+        ...retryValues,
+      )) as QueryResult[];
+
+      // Fallback 2: If still no results, skip distance filter and return top matches
+      if (results.length === 0) {
+        console.log(
+          "No results found with matchingDistance 1.0, returning top matches without distance filter",
+        );
+        unifiedParams.skipDistanceFilter = true;
+        const finalRetryBuilder = new OptimizedSearchQuery(unifiedParams);
+        const { query: finalRetryQuery, values: finalRetryValues } =
+          finalRetryBuilder.build();
+
+        results = (await prisma.$queryRawUnsafe(
+          finalRetryQuery,
+          ...finalRetryValues,
+        )) as QueryResult[];
+      }
+    }
 
     // Transform results to SearchResult format
     const bookmarks: SearchResult[] = results.map((row) => ({

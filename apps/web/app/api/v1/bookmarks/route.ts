@@ -59,6 +59,7 @@ export const GET = apiRoute
       special: z.enum(["READ", "UNREAD", "STAR"]).optional(),
       limit: z.coerce.number().min(1).max(100).optional().default(20),
       cursor: z.string().optional(),
+      matchingDistance: z.coerce.number().min(0.1).max(2).optional(),
     }),
   )
   .handler(async (_, { ctx, query }) => {
@@ -82,6 +83,7 @@ export const GET = apiRoute
       specialFilters: query.special ? [query.special] : [],
       limit: query.limit,
       cursor: query.cursor,
+      matchingDistance: query.matchingDistance || 0.3,
     });
 
     return {
