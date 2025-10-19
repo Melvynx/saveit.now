@@ -1,6 +1,7 @@
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany, generateText } from "ai";
 import { uploadBufferToS3 } from "../../aws-s3/aws-s3-upload-files";
+import { capturePDFScreenshot } from "../../cloudflare/screenshot";
 import { env } from "../../env";
 import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
@@ -164,31 +165,13 @@ export async function processPDFBookmark(
   // Generate PDF screenshot/thumbnail
   const screenshotUrl = await step.run("generate-screenshot", async () => {
     try {
-      const workerUrl = env.SCREENSHOT_WORKER_URL;
-      if (!workerUrl) {
-        throw new Error("Worker URL not configured");
-      }
-
-      const screenshotResponse = await fetch(
-        `${workerUrl}/pdf?url=${encodeURIComponent(context.url)}`,
-        {
-          headers: {
-            "User-Agent": "SaveIt.now PDF Processor",
-          },
-        },
-      );
-
-      if (!screenshotResponse.ok) {
-        throw new Error(`Screenshot failed: ${screenshotResponse.statusText}`);
-      }
-
-      const screenshotBuffer = await screenshotResponse.arrayBuffer();
-      const fileName = `pdf-screenshot-${context.bookmarkId}-${Date.now()}.jpg`;
+      const screenshotBuffer = await capturePDFScreenshot(context.url);
+      const fileName = `pdf-screenshot-${context.bookmarkId}-${Date.now()}.png`;
 
       const uploadResult = await uploadBufferToS3({
-        buffer: Buffer.from(screenshotBuffer),
+        buffer: screenshotBuffer,
         fileName,
-        contentType: "image/jpeg",
+        contentType: "image/png",
         prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
       });
 

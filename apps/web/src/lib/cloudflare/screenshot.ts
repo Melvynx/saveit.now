@@ -14,17 +14,6 @@ export async function captureScreenshot(
   const token = env.CLOUDFLARE_API_TOKEN;
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
 
-  console.log("[Cloudflare Screenshot] Config check:");
-  console.log("  - Account ID:", accountId);
-  console.log(
-    "  - Token (first 10 chars):",
-    token ? token.substring(0, 10) + "..." : "MISSING",
-  );
-  console.log(
-    "  - Token length:",
-    token ? token.length : 0,
-  );
-
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/screenshot`,
     {
