@@ -224,6 +224,9 @@ importers:
       '@better-auth/stripe':
         specifier: 1.2.8
         version: 1.2.8
+      '@danielxceron/youtube-transcript':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@heyo.so/js':
         specifier: ^1.0.11
         version: 1.0.11

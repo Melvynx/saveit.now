@@ -2,8 +2,12 @@ import { Bookmark, BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
-import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
-import { env } from "../../env";
+import {
+  uploadBufferToS3,
+  uploadFileFromURLToS3,
+} from "../../aws-s3/aws-s3-upload-files";
+import { captureScreenshot } from "../../cloudflare/screenshot";
+import { logger } from "../../logger";
 import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
@@ -134,22 +138,42 @@ export async function processStandardWebpage(
     }
 
     try {
-      const url = new URL(env.SCREENSHOT_WORKER_URL);
-      url.searchParams.set("url", context.url);
+      logger.info(
+        `[Screenshot] Starting screenshot capture for URL: ${context.url}`,
+      );
 
-      const screenshotUrl = await uploadFileFromURLToS3({
-        url: url.toString(),
-        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
-        fileName: "screenshot",
+      const screenshotBuffer = await captureScreenshot({
+        url: context.url,
+        viewport: { width: 1920, height: 1080 },
+        waitUntil: "networkidle0",
+        timeout: 30000,
       });
 
-      // Vérifier si la capture d'écran est utilisable (pas noire ou trop petite)
+      logger.info(
+        `[Screenshot] Successfully captured screenshot, buffer size: ${screenshotBuffer.length} bytes`,
+      );
+
+      const screenshotUrl = await uploadBufferToS3({
+        buffer: screenshotBuffer,
+        fileName: "screenshot",
+        contentType: "image/png",
+        prefix: `users/${context.userId}/bookmarks/${context.bookmarkId}`,
+      });
+
       if (!screenshotUrl) {
+        logger.error(
+          `[Screenshot] uploadBufferToS3 returned null for bookmark ${context.bookmarkId}`,
+        );
         return null;
       }
 
+      logger.info(`[Screenshot] Successfully uploaded to S3: ${screenshotUrl}`);
       return screenshotUrl;
-    } catch {
+    } catch (error) {
+      logger.error(
+        `[Screenshot] Failed to capture/upload screenshot for ${context.url}:`,
+        error,
+      );
       return null;
     }
   });
