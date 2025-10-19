@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany } from "ai";
-import { z } from "zod";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
-import { env } from "../../env";
 import { logger } from "../../logger";
 import { OPENAI_MODELS } from "../../openai";
 import { getServerUrl } from "../../server-url";
-import { upfetch } from "../../up-fetch";
+import { getYouTubeMetadata } from "../../youtube/metadata";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -76,64 +74,32 @@ export async function processYouTubeBookmark(
       title: string;
       thumbnail: string;
       transcript?: string;
-      transcriptSource: "extension" | "worker" | "none";
+      transcriptSource: "extension" | "api" | "none";
     }> => {
-      // If we don't have extension transcript, try to get from worker
-      if (!extensionTranscript) {
-        try {
-          const data = await upfetch(
-            `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
-            {
-              schema: z.object({
-                title: z.string(),
-                thumbnail: z.string(),
-                transcript: z.string().optional(),
-              }),
-            },
-          );
-          return {
-            ...data,
-            transcript: data.transcript,
-            transcriptSource: "worker" as const,
-          };
-        } catch (error) {
-          logger.debug("Failed to get video info from worker:", error);
-          // Return minimal info if worker fails
-          return {
-            title: context.url,
-            thumbnail: "",
-            transcript: undefined,
-            transcriptSource: "none" as const,
-          };
-        }
-      } else {
-        // Use extension transcript, but still get video metadata
-        try {
-          const data = await upfetch(
-            `${env.SCREENSHOT_WORKER_URL}/youtube?videoId=${youtubeId}`,
-            {
-              schema: z.object({
-                title: z.string(),
-                thumbnail: z.string(),
-                transcript: z.string().optional(),
-              }),
-            },
-          );
-          return {
-            ...data,
-            transcript: extensionTranscript,
-            transcriptSource: "extension" as const,
-          };
-        } catch (error) {
-          logger.debug("Failed to get video metadata from worker:", error);
-          // Fallback to using just extension transcript with basic info
-          return {
-            title: context.url,
-            thumbnail: "",
-            transcript: extensionTranscript,
-            transcriptSource: "extension" as const,
-          };
-        }
+      try {
+        const metadata = await getYouTubeMetadata(
+          youtubeId,
+          !extensionTranscript,
+        );
+
+        return {
+          title: metadata.title,
+          thumbnail: metadata.thumbnail,
+          transcript: extensionTranscript || metadata.transcript,
+          transcriptSource: extensionTranscript
+            ? "extension"
+            : metadata.transcript
+              ? "api"
+              : "none",
+        };
+      } catch (error) {
+        logger.debug("Failed to get video info from YouTube API:", error);
+        return {
+          title: context.url,
+          thumbnail: "",
+          transcript: extensionTranscript || undefined,
+          transcriptSource: extensionTranscript ? "extension" : "none",
+        };
       }
     },
   );

@@ -14,10 +14,13 @@ export const env = createEnv({
     AWS_S3_BUCKET_NAME: z.string().min(1).default("ci-placeholder"),
     AWS_ENDPOINT: z.string().min(1).default("https://ci-placeholder.com"),
     R2_URL: z.string().min(1).default("https://ci-placeholder.com"),
+    CLOUDFLARE_API_TOKEN: z.string().min(1),
+    CLOUDFLARE_ACCOUNT_ID: z.string().min(1),
     SCREENSHOT_WORKER_URL: z
       .string()
       .min(1)
-      .default("https://ci-placeholder.com"),
+      .default("https://ci-placeholder.com")
+      .optional(),
     NODE_ENV: z.enum(["development", "production", "test"]).default("test"),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
