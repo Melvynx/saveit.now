@@ -129,7 +129,9 @@
         "CI",
         "HEADLESS",
         "UPSTASH_REDIS_REST_URL",
-        "UPSTASH_REDIS_REST_TOKEN"
+        "UPSTASH_REDIS_REST_TOKEN",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN"
       ],
       "cache": false
     }
