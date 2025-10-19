@@ -2,7 +2,6 @@ import { BookmarkType, prisma } from "@workspace/database";
 import { embedMany, generateText } from "ai";
 import { uploadBufferToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { capturePDFScreenshot } from "../../cloudflare/screenshot";
-import { env } from "../../env";
 import { OPENAI_MODELS } from "../../openai";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
