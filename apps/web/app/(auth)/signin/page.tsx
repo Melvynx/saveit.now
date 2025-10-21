@@ -129,7 +129,7 @@ function SignInPageContent() {
             <span className="text-muted-foreground text-xs">Or</span>
           </div>
 
-          <div className="@sm:flex-row flex-col flex items-center gap-2">
+          <div className="flex-col flex items-center gap-2">
             <SignInWith className="w-full" type="github" buttonProps={{}} />
             <SignInWith className="w-full" type="google" buttonProps={{}} />
           </div>
@@ -159,9 +159,9 @@ function SignInPageSkeleton() {
         <CardContent className="space-y-6">
           <div className="h-20 bg-muted rounded animate-pulse" />
           <div className="h-px bg-muted" />
-          <div className="flex gap-2">
-            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
-            <div className="h-10 bg-muted rounded animate-pulse flex-1" />
+          <div className="flex flex-col gap-2">
+            <div className="h-10 bg-muted rounded animate-pulse w-full" />
+            <div className="h-10 bg-muted rounded animate-pulse w-full" />
           </div>
         </CardContent>
       </Card>
