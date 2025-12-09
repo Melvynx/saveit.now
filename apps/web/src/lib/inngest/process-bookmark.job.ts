@@ -17,6 +17,8 @@ import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 
+import { isUserOverLimits } from "./user-limits-check";
+
 export const processBookmarkJob = inngest.createFunction(
   {
     id: "process-bookmark",
@@ -75,9 +77,40 @@ export const processBookmarkJob = inngest.createFunction(
   { event: "bookmark/process" },
   async ({ event, step, runId, publish }) => {
     const bookmarkId = event.data.bookmarkId;
+    const userId = event.data.userId;
 
     if (!bookmarkId) {
       throw new Error("Bookmark ID is required");
+    }
+
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    // CRITICAL: Check if user is over limits BEFORE any processing
+    // This prevents any Inngest work for users who have exceeded their plan limits
+    const overLimits = await step.run("check-user-limits", async () => {
+      return isUserOverLimits(userId);
+    });
+
+    if (overLimits.isOverLimit) {
+      logger.info("User is over limits, skipping bookmark processing", {
+        userId,
+        bookmarkId,
+        reason: overLimits.reason,
+      });
+      await prisma.bookmark.update({
+        where: { id: bookmarkId },
+        data: {
+          status: "ERROR",
+          metadata: {
+            error: `Limit exceeded: ${overLimits.reason}`,
+          },
+        },
+      });
+      throw new NonRetriableError(
+        `User over limits: ${overLimits.reason}. Upgrade your plan to continue.`,
+      );
     }
 
     await publish({
@@ -99,8 +132,8 @@ export const processBookmarkJob = inngest.createFunction(
       throw new Error("Bookmark not found");
     }
 
-    // Extract bookmark properties to avoid null assertions
-    const { userId, url } = bookmark;
+    // Extract URL from bookmark (userId already extracted from event)
+    const { url } = bookmark;
 
     await step.run("update-bookmark-status", async () => {
       await Promise.all([
