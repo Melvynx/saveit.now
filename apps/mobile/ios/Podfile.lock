@@ -280,6 +280,8 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (14.1.4):
     - ExpoModulesCore
+  - ExpoLinearGradient (15.0.8):
+    - ExpoModulesCore
   - ExpoLinking (7.1.7):
     - ExpoModulesCore
   - ExpoModulesCore (2.5.0):
@@ -1725,6 +1727,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-webview (13.16.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - React-NativeModulesApple (0.79.5):
     - glog
     - hermes-engine
@@ -2301,28 +2327,29 @@ PODS:
 DEPENDENCIES:
   - "boost (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/boost.podspec`)"
   - "DoubleConversion (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)"
-  - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@17.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_be9241d243f6087ff6fc3747f8b57021/node_modules/expo-constants/ios`)"
+  - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@17.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_e0b4ad360dadb82da235df9bca20baec/node_modules/expo-constants/ios`)"
   - "EXJSONUtils (from `../../../node_modules/.pnpm/expo-json-utils@0.15.0/node_modules/expo-json-utils/ios`)"
-  - "EXManifests (from `../../../node_modules/.pnpm/expo-manifests@0.16.6_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_40f4ef159df79faea0b8803d6754b76e/node_modules/expo-manifests/ios`)"
-  - "Expo (from `../../../node_modules/.pnpm/expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native@0.79.5_@babel+co_eadb9ad713d5279608a768d7d3032939/node_modules/expo`)"
-  - "expo-dev-client (from `../../../node_modules/.pnpm/expo-dev-client@5.2.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_b8f2f71a6d4a6a113b32a4a521c34522/node_modules/expo-dev-client/ios`)"
-  - "expo-dev-launcher (from `../../../node_modules/.pnpm/expo-dev-launcher@5.1.16_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_71911aceb7ecc5a1953ee00b3e6eb9c8/node_modules/expo-dev-launcher`)"
-  - "expo-dev-menu (from `../../../node_modules/.pnpm/expo-dev-menu@6.1.14_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-na_ffbf1d4edcca4d1d6b277efd0f1f52b6/node_modules/expo-dev-menu`)"
-  - "expo-dev-menu-interface (from `../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._f3d35a00d7cf81d721c52ae89f8f7b7d/node_modules/expo-dev-menu-interface/ios`)"
-  - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_d444e14168708267bda8e71085b07e5c/node_modules/expo-asset/ios`)"
-  - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_ae1a052e730b1b9f261bbfa25813dfaf/node_modules/expo-crypto/ios`)"
-  - "ExpoFileSystem (from `../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_b4705424e787d94ed2961c1938c93bef/node_modules/expo-file-system/ios`)"
-  - "ExpoFont (from `../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_bd513817ba6936659094ce3546c772e4/node_modules/expo-font/ios`)"
-  - "ExpoHead (from `../../../node_modules/.pnpm/expo-router@5.1.4_134d64c80ead12ae054001f2d627cf99/node_modules/expo-router/ios`)"
-  - "ExpoKeepAwake (from `../../../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-_4021bb761c6a17ea1d21008113a3a769/node_modules/expo-keep-awake/ios`)"
-  - "ExpoLinking (from `../../../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_e9b8ad7679fe3476cb3900981b32ebe4/node_modules/expo-linking/ios`)"
+  - "EXManifests (from `../../../node_modules/.pnpm/expo-manifests@0.16.6_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_a33b4cf7430abf12aed845b3208506e9/node_modules/expo-manifests/ios`)"
+  - "Expo (from `../../../node_modules/.pnpm/expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native@0.79.5_@babel+co_7f6f1bcfcbab14e80de2ea94af7a236d/node_modules/expo`)"
+  - "expo-dev-client (from `../../../node_modules/.pnpm/expo-dev-client@5.2.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_064a06420c163b9953969d042b4de150/node_modules/expo-dev-client/ios`)"
+  - "expo-dev-launcher (from `../../../node_modules/.pnpm/expo-dev-launcher@5.1.16_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_36799f4c799631705be3176bc31cc935/node_modules/expo-dev-launcher`)"
+  - "expo-dev-menu (from `../../../node_modules/.pnpm/expo-dev-menu@6.1.14_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-na_e2d670f54ebcefa268870d3f1f3e5fcb/node_modules/expo-dev-menu`)"
+  - "expo-dev-menu-interface (from `../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._737280ce9d6e9739a064a9176a0474fa/node_modules/expo-dev-menu-interface/ios`)"
+  - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_1b6e63d9d5ddd463465cb93de9f87047/node_modules/expo-asset/ios`)"
+  - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_49229a057119edece20b555db465f2f6/node_modules/expo-crypto/ios`)"
+  - "ExpoFileSystem (from `../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_54cdda2f500f05cea9cf70080feaa8e0/node_modules/expo-file-system/ios`)"
+  - "ExpoFont (from `../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_453480a736dc35d06580bca215fe9a14/node_modules/expo-font/ios`)"
+  - "ExpoHead (from `../../../node_modules/.pnpm/expo-router@5.1.4_505e4b63de21956aadbf2816594ccb21/node_modules/expo-router/ios`)"
+  - "ExpoKeepAwake (from `../../../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-_50883a4874ac79760c00e24866fb63cd/node_modules/expo-keep-awake/ios`)"
+  - "ExpoLinearGradient (from `../../../node_modules/.pnpm/expo-linear-gradient@15.0.8_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_r_db4961d827f2be3e11ec2e71b87e35e4/node_modules/expo-linear-gradient/ios`)"
+  - "ExpoLinking (from `../../../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_33b7a539429ec9b24a234f1c02343421/node_modules/expo-linking/ios`)"
   - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core`)"
-  - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_1785911fb1116c481df1459176bc00b3/node_modules/expo-secure-store/ios`)"
-  - "ExpoShareIntentModule (from `../../../node_modules/.pnpm/expo-share-intent@4.1.2_54e3dd997d12bc8e66e52d697972811a/node_modules/expo-share-intent/ios`)"
-  - "ExpoSplashScreen (from `../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_f79d397945c2354475bee917f7e0a014/node_modules/expo-splash-screen/ios`)"
-  - "ExpoSystemUI (from `../../../node_modules/.pnpm/expo-system-ui@5.0.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_e74078d669d582a3cbe9ccbf4243d022/node_modules/expo-system-ui/ios`)"
-  - "ExpoWebBrowser (from `../../../node_modules/.pnpm/expo-web-browser@14.2.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react_5d6aec9f96747ecee43f47f51335dabe/node_modules/expo-web-browser/ios`)"
-  - "EXUpdatesInterface (from `../../../node_modules/.pnpm/expo-updates-interface@1.1.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4__d81377aff6c63898fb86e9f344f9a27a/node_modules/expo-updates-interface/ios`)"
+  - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_b09219206827be32e6ae116eb02b3033/node_modules/expo-secure-store/ios`)"
+  - "ExpoShareIntentModule (from `../../../node_modules/.pnpm/expo-share-intent@4.1.2_5af6ba3f4f1cb464710cd3391ebcd803/node_modules/expo-share-intent/ios`)"
+  - "ExpoSplashScreen (from `../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_0e1e41ec3626aae55e980c00a1473caf/node_modules/expo-splash-screen/ios`)"
+  - "ExpoSystemUI (from `../../../node_modules/.pnpm/expo-system-ui@5.0.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_89756a90265f2c44544ba5cd80b1d8f0/node_modules/expo-system-ui/ios`)"
+  - "ExpoWebBrowser (from `../../../node_modules/.pnpm/expo-web-browser@14.2.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react_4c6c0e5e426299cde26519ce4edd5441/node_modules/expo-web-browser/ios`)"
+  - "EXUpdatesInterface (from `../../../node_modules/.pnpm/expo-updates-interface@1.1.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4__cb17682ae9a64aa81cf2ff2dd40f1f14/node_modules/expo-updates-interface/ios`)"
   - "fast_float (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/fast_float.podspec`)"
   - "FBLazyVector (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/Libraries/FBLazyVector`)"
   - "fmt (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/fmt.podspec`)"
@@ -2362,6 +2389,7 @@ DEPENDENCIES:
   - "React-Mapbuffer (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon`)"
   - "React-microtasksnativemodule (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-webview (from `../node_modules/react-native-webview`)
   - "React-NativeModulesApple (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)"
   - "React-oscompat (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/oscompat`)"
   - "React-perflogger (from `../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/reactperflogger`)"
@@ -2409,49 +2437,51 @@ EXTERNAL SOURCES:
   DoubleConversion:
     :podspec: "../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/DoubleConversion.podspec"
   EXConstants:
-    :path: "../../../node_modules/.pnpm/expo-constants@17.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_be9241d243f6087ff6fc3747f8b57021/node_modules/expo-constants/ios"
+    :path: "../../../node_modules/.pnpm/expo-constants@17.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_e0b4ad360dadb82da235df9bca20baec/node_modules/expo-constants/ios"
   EXJSONUtils:
     :path: "../../../node_modules/.pnpm/expo-json-utils@0.15.0/node_modules/expo-json-utils/ios"
   EXManifests:
-    :path: "../../../node_modules/.pnpm/expo-manifests@0.16.6_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_40f4ef159df79faea0b8803d6754b76e/node_modules/expo-manifests/ios"
+    :path: "../../../node_modules/.pnpm/expo-manifests@0.16.6_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_a33b4cf7430abf12aed845b3208506e9/node_modules/expo-manifests/ios"
   Expo:
-    :path: "../../../node_modules/.pnpm/expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native@0.79.5_@babel+co_eadb9ad713d5279608a768d7d3032939/node_modules/expo"
+    :path: "../../../node_modules/.pnpm/expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native@0.79.5_@babel+co_7f6f1bcfcbab14e80de2ea94af7a236d/node_modules/expo"
   expo-dev-client:
-    :path: "../../../node_modules/.pnpm/expo-dev-client@5.2.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_b8f2f71a6d4a6a113b32a4a521c34522/node_modules/expo-dev-client/ios"
+    :path: "../../../node_modules/.pnpm/expo-dev-client@5.2.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_064a06420c163b9953969d042b4de150/node_modules/expo-dev-client/ios"
   expo-dev-launcher:
-    :path: "../../../node_modules/.pnpm/expo-dev-launcher@5.1.16_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_71911aceb7ecc5a1953ee00b3e6eb9c8/node_modules/expo-dev-launcher"
+    :path: "../../../node_modules/.pnpm/expo-dev-launcher@5.1.16_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_36799f4c799631705be3176bc31cc935/node_modules/expo-dev-launcher"
   expo-dev-menu:
-    :path: "../../../node_modules/.pnpm/expo-dev-menu@6.1.14_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-na_ffbf1d4edcca4d1d6b277efd0f1f52b6/node_modules/expo-dev-menu"
+    :path: "../../../node_modules/.pnpm/expo-dev-menu@6.1.14_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-na_e2d670f54ebcefa268870d3f1f3e5fcb/node_modules/expo-dev-menu"
   expo-dev-menu-interface:
-    :path: "../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._f3d35a00d7cf81d721c52ae89f8f7b7d/node_modules/expo-dev-menu-interface/ios"
+    :path: "../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._737280ce9d6e9739a064a9176a0474fa/node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
-    :path: "../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_d444e14168708267bda8e71085b07e5c/node_modules/expo-asset/ios"
+    :path: "../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_1b6e63d9d5ddd463465cb93de9f87047/node_modules/expo-asset/ios"
   ExpoCrypto:
-    :path: "../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_ae1a052e730b1b9f261bbfa25813dfaf/node_modules/expo-crypto/ios"
+    :path: "../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_49229a057119edece20b555db465f2f6/node_modules/expo-crypto/ios"
   ExpoFileSystem:
-    :path: "../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_b4705424e787d94ed2961c1938c93bef/node_modules/expo-file-system/ios"
+    :path: "../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_54cdda2f500f05cea9cf70080feaa8e0/node_modules/expo-file-system/ios"
   ExpoFont:
-    :path: "../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_bd513817ba6936659094ce3546c772e4/node_modules/expo-font/ios"
+    :path: "../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_453480a736dc35d06580bca215fe9a14/node_modules/expo-font/ios"
   ExpoHead:
-    :path: "../../../node_modules/.pnpm/expo-router@5.1.4_134d64c80ead12ae054001f2d627cf99/node_modules/expo-router/ios"
+    :path: "../../../node_modules/.pnpm/expo-router@5.1.4_505e4b63de21956aadbf2816594ccb21/node_modules/expo-router/ios"
   ExpoKeepAwake:
-    :path: "../../../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-_4021bb761c6a17ea1d21008113a3a769/node_modules/expo-keep-awake/ios"
+    :path: "../../../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-_50883a4874ac79760c00e24866fb63cd/node_modules/expo-keep-awake/ios"
+  ExpoLinearGradient:
+    :path: "../../../node_modules/.pnpm/expo-linear-gradient@15.0.8_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_r_db4961d827f2be3e11ec2e71b87e35e4/node_modules/expo-linear-gradient/ios"
   ExpoLinking:
-    :path: "../../../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_e9b8ad7679fe3476cb3900981b32ebe4/node_modules/expo-linking/ios"
+    :path: "../../../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_33b7a539429ec9b24a234f1c02343421/node_modules/expo-linking/ios"
   ExpoModulesCore:
     :path: "../../../node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core"
   ExpoSecureStore:
-    :path: "../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_1785911fb1116c481df1459176bc00b3/node_modules/expo-secure-store/ios"
+    :path: "../../../node_modules/.pnpm/expo-secure-store@14.0.1_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_b09219206827be32e6ae116eb02b3033/node_modules/expo-secure-store/ios"
   ExpoShareIntentModule:
-    :path: "../../../node_modules/.pnpm/expo-share-intent@4.1.2_54e3dd997d12bc8e66e52d697972811a/node_modules/expo-share-intent/ios"
+    :path: "../../../node_modules/.pnpm/expo-share-intent@4.1.2_5af6ba3f4f1cb464710cd3391ebcd803/node_modules/expo-share-intent/ios"
   ExpoSplashScreen:
-    :path: "../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_f79d397945c2354475bee917f7e0a014/node_modules/expo-splash-screen/ios"
+    :path: "../../../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_re_0e1e41ec3626aae55e980c00a1473caf/node_modules/expo-splash-screen/ios"
   ExpoSystemUI:
-    :path: "../../../node_modules/.pnpm/expo-system-ui@5.0.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_e74078d669d582a3cbe9ccbf4243d022/node_modules/expo-system-ui/ios"
+    :path: "../../../node_modules/.pnpm/expo-system-ui@5.0.10_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-n_89756a90265f2c44544ba5cd80b1d8f0/node_modules/expo-system-ui/ios"
   ExpoWebBrowser:
-    :path: "../../../node_modules/.pnpm/expo-web-browser@14.2.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react_5d6aec9f96747ecee43f47f51335dabe/node_modules/expo-web-browser/ios"
+    :path: "../../../node_modules/.pnpm/expo-web-browser@14.2.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react_4c6c0e5e426299cde26519ce4edd5441/node_modules/expo-web-browser/ios"
   EXUpdatesInterface:
-    :path: "../../../node_modules/.pnpm/expo-updates-interface@1.1.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4__d81377aff6c63898fb86e9f344f9a27a/node_modules/expo-updates-interface/ios"
+    :path: "../../../node_modules/.pnpm/expo-updates-interface@1.1.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4__cb17682ae9a64aa81cf2ff2dd40f1f14/node_modules/expo-updates-interface/ios"
   fast_float:
     :podspec: "../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/third-party-podspecs/fast_float.podspec"
   FBLazyVector:
@@ -2527,6 +2557,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-webview:
+    :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
     :path: "../../../node_modules/.pnpm/react-native@0.79.5_@babel+core@7.28.0_@react-native-community+cli@20.0.2_typescript@5._3d7a0c8821cfbd6787136db31c76af0c/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-oscompat:
@@ -2617,6 +2649,7 @@ SPEC CHECKSUMS:
   ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
   ExpoHead: a7b66cbaeeb51f4a85338d335a0f5467e29a2c90
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
+  ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58
   ExpoLinking: d5c183998ca6ada66ff45e407e0f965b398a8902
   ExpoModulesCore: 00a1b5c73248465bd0b93f59f8538c4573dac579
   ExpoSecureStore: 9a3665d7161dd1031be386e278bffd623658f316
@@ -2662,6 +2695,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: bda561d2648e1e52bd9e5a87f8889836bdbde2e2
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
+  react-native-webview: 1d8659a52cb8b8504f6c965555d1b27bdd313880
   React-NativeModulesApple: 1ecb83880dd11baf2228f8dd89d8419c387e03ad
   React-oscompat: 0592889a9fcf0eacb205532028e4a364e22907dd
   React-perflogger: c584fa50e422a46f37404d083fad12eb289d5de4

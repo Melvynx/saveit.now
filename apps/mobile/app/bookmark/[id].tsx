@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, ScrollView } from "react-native";
+import YoutubePlayer from "react-native-youtube-iframe";
 import { Button, Card, H3, H4, Image, Text, XStack, YStack } from "tamagui";
 import { apiClient, type Bookmark } from "../../src/lib/api-client";
 
@@ -205,33 +206,11 @@ export default function BookmarkDetailScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <YStack padding="$4" gap="$4">
-          {/* Preview Image */}
-          {preview && (
-            <Card padding="$0" overflow="hidden">
-              <Image source={{ uri: preview }} height={200} width="100%" />
-            </Card>
-          )}
-
-          {/* URL and Basic Info */}
-          <Card padding="$4" gap="$3">
-            <XStack alignItems="flex-start" gap="$2">
-              {/* Favicon placeholder */}
-              <Image
-                source={{ uri: faviconUrl }}
-                width={24}
-                height={24}
-                borderRadius="$3"
-              />
-              <YStack flex={1}>
-                <Text fontSize="$5" fontWeight="600" numberOfLines={2}>
-                  {bookmark.title || "Untitled"}
-                </Text>
-                <Text color="$gray10" fontSize="$3" numberOfLines={1}>
-                  {bookmark.url}
-                </Text>
-              </YStack>
-            </XStack>
-          </Card>
+          <BookmarkDetailContent
+            bookmark={bookmark}
+            preview={preview}
+            faviconUrl={faviconUrl}
+          />
 
           {/* Summary */}
           {bookmark.summary && (
@@ -352,5 +331,213 @@ export default function BookmarkDetailScreen() {
         </Button>
       </XStack>
     </YStack>
+  );
+}
+
+function BookmarkDetailContent({
+  bookmark,
+  preview,
+  faviconUrl,
+}: {
+  bookmark: Bookmark;
+  preview: string;
+  faviconUrl: string;
+}) {
+  if (bookmark.type === "TWEET") {
+    return <TweetDetailContent bookmark={bookmark} faviconUrl={faviconUrl} />;
+  }
+
+  if (bookmark.type === "YOUTUBE" && bookmark.metadata?.youtubeId) {
+    return <YoutubeDetailContent bookmark={bookmark} />;
+  }
+
+  return (
+    <DefaultDetailContent
+      bookmark={bookmark}
+      preview={preview}
+      faviconUrl={faviconUrl}
+    />
+  );
+}
+
+function TweetDetailContent({
+  bookmark,
+  faviconUrl,
+}: {
+  bookmark: Bookmark;
+  faviconUrl: string;
+}) {
+  const metadata = bookmark.metadata;
+  const user = metadata?.user;
+  const tweetText = metadata?.text || bookmark.summary;
+  const media = metadata?.mediaDetails?.[0];
+
+  return (
+    <>
+      <Card padding="$4" gap="$4">
+        <XStack gap="$3" alignItems="center">
+          <Image
+            source={{
+              uri:
+                user?.profile_image_url_https ||
+                faviconUrl ||
+                "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+            }}
+            width={56}
+            height={56}
+            borderRadius={28}
+          />
+          <YStack flex={1}>
+            <Text fontWeight="700" fontSize="$5">
+              {user?.name || bookmark.title || "Twitter User"}
+            </Text>
+            <Text color="$gray10" fontSize="$4">
+              @{user?.screen_name || "user"}
+            </Text>
+          </YStack>
+          <YStack
+            width={28}
+            height={28}
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Text fontSize="$6" fontWeight="900">
+              𝕏
+            </Text>
+          </YStack>
+        </XStack>
+
+        {tweetText && (
+          <Text
+            fontSize="$3"
+            lineHeight="$4"
+            color="$gray11"
+            numberOfLines={8}
+            letterSpacing={-0.2}
+          >
+            {tweetText}
+          </Text>
+        )}
+
+        {media && (
+          <Image
+            source={{ uri: media.media_url_https }}
+            width="100%"
+            height={250}
+            borderRadius="$4"
+            resizeMode="cover"
+          />
+        )}
+
+        <Text color="$gray9" fontSize="$3">
+          {new Date(bookmark.createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </Text>
+      </Card>
+
+      <Card padding="$4" gap="$3">
+        <XStack alignItems="center" gap="$2">
+          <Image
+            source={{ uri: faviconUrl }}
+            width={24}
+            height={24}
+            borderRadius="$3"
+          />
+          <YStack flex={1}>
+            <Text fontSize="$4" fontWeight="600">
+              {user?.name || bookmark.title}
+            </Text>
+            <Text color="$gray10" fontSize="$3" numberOfLines={1}>
+              {bookmark.url}
+            </Text>
+          </YStack>
+        </XStack>
+      </Card>
+    </>
+  );
+}
+
+function YoutubeDetailContent({ bookmark }: { bookmark: Bookmark }) {
+  const youtubeId = bookmark.metadata?.youtubeId;
+
+  if (!youtubeId) return null;
+
+  return (
+    <>
+      <Card padding="$0" overflow="hidden" borderRadius="$4">
+        <YoutubePlayer
+          height={220}
+          videoId={youtubeId}
+          webViewProps={{
+            scrollEnabled: false,
+            showsVerticalScrollIndicator: false,
+            showsHorizontalScrollIndicator: false,
+          }}
+        />
+      </Card>
+
+      <Card padding="$4" gap="$3">
+        <XStack alignItems="center" gap="$2">
+          <Image
+            source={{ uri: "https://www.youtube.com/favicon.ico" }}
+            width={24}
+            height={24}
+            borderRadius="$3"
+          />
+          <YStack flex={1}>
+            <Text fontSize="$4" fontWeight="600" numberOfLines={2}>
+              {bookmark.title || "YouTube Video"}
+            </Text>
+            <Text color="$gray10" fontSize="$3">
+              youtube.com
+            </Text>
+          </YStack>
+        </XStack>
+      </Card>
+    </>
+  );
+}
+
+function DefaultDetailContent({
+  bookmark,
+  preview,
+  faviconUrl,
+}: {
+  bookmark: Bookmark;
+  preview: string;
+  faviconUrl: string;
+}) {
+  const domainName = new URL(bookmark.url).hostname;
+
+  return (
+    <>
+      {preview && (
+        <Card padding="$0" overflow="hidden">
+          <Image source={{ uri: preview }} height={200} width="100%" />
+        </Card>
+      )}
+
+      <Card padding="$4" gap="$3">
+        <XStack alignItems="flex-start" gap="$2">
+          <Image
+            source={{ uri: faviconUrl }}
+            width={24}
+            height={24}
+            borderRadius="$3"
+          />
+          <YStack flex={1}>
+            <Text fontSize="$5" fontWeight="600" numberOfLines={2}>
+              {bookmark.title || "Untitled"}
+            </Text>
+            <Text color="$gray10" fontSize="$3" numberOfLines={1}>
+              {domainName}
+            </Text>
+          </YStack>
+        </XStack>
+      </Card>
+    </>
   );
 }
