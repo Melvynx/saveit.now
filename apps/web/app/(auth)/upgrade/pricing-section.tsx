@@ -1,7 +1,6 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { authClient } from "@/lib/auth-client";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
 import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
@@ -12,6 +11,7 @@ import { Typography } from "@workspace/ui/components/typography";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { upgradeSubscriptionAction } from "./upgrade.action";
 
 const freeFeatures = [
   `${AUTH_LIMITS.free?.bookmarks ?? 20} bookmarks`,
@@ -34,15 +34,19 @@ export function PricingSection() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const client = await authClient.subscription.upgrade({
+      const result = await upgradeSubscriptionAction({
         plan: "pro",
         successUrl: "/upgrade/success",
         cancelUrl: "/upgrade?error=true",
         annual: !monthly,
       });
 
-      if (client.error) {
-        throw new Error(client.error.message);
+      if (result?.serverError) {
+        throw new Error(result.serverError.message);
+      }
+
+      if (result?.data?.url) {
+        window.location.href = result.data.url;
       }
     },
     onError: (error) => {

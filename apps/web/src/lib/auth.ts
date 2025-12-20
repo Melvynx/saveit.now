@@ -4,6 +4,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AUTH_PARAMS } from "./auth-params";
 import { createBookmark } from "./database/create-bookmark";
 import { inngest } from "./inngest/client";
+import { logger } from "./logger";
+import { stripeClient } from "./stripe";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -24,13 +26,40 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
+          // Create Stripe customer
+          try {
+            const stripeCustomer = await stripeClient.customers.create({
+              email: user.email,
+              name: user.name,
+              metadata: {
+                userId: user.id,
+              },
+            });
+
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { stripeCustomerId: stripeCustomer.id },
+            });
+
+            logger.info(
+              `Created Stripe customer ${stripeCustomer.id} for user ${user.id}`,
+            );
+          } catch (error) {
+            logger.error(
+              "Failed to create Stripe customer for user:",
+              user.id,
+              error,
+            );
+          }
+
+          // Create welcome bookmark
           try {
             await createBookmark({
               url: "https://saveit.now",
               userId: user.id,
             });
           } catch (error) {
-            console.error(
+            logger.error(
               "Failed to create welcome bookmark for user:",
               user.id,
               error,

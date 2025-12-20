@@ -476,7 +476,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "/Users/melvynx/Developer/saas/saveit.now-mono/apps/mobile/ios/ShareExtension/ShareExtension.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
@@ -506,7 +506,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "/Users/melvynx/Developer/saas/saveit.now-mono/apps/mobile/ios/ShareExtension/ShareExtension.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;

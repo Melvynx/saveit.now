@@ -13,7 +13,7 @@ interface UpgradeButtonProps {
 }
 
 export function UpgradeButton({ annual = false }: UpgradeButtonProps) {
-  const { refreshPlan } = useAuth();
+  const { refreshPlanWithRetry } = useAuth();
   const [isOpening, setIsOpening] = useState(false);
 
   const checkoutMutation = useMutation({
@@ -35,10 +35,18 @@ export function UpgradeButton({ annual = false }: UpgradeButtonProps) {
       setIsOpening(true);
       try {
         await WebBrowser.openBrowserAsync(checkoutUrl);
-        refreshPlan();
       } finally {
         setIsOpening(false);
       }
+
+      refreshPlanWithRetry("pro").then((upgraded) => {
+        if (upgraded) {
+          Alert.alert(
+            "Welcome to Pro!",
+            "Your account has been upgraded. Enjoy unlimited bookmarks!",
+          );
+        }
+      });
     },
     onError: (error: Error) => {
       Alert.alert("Error", error.message || "Failed to start checkout");

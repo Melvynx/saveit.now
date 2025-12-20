@@ -43,12 +43,21 @@ export default async function RoutePage() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-row gap-2 justify-end">
-          <Link className={buttonVariants({ variant: "default" })} href="/app">
+        <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Link
+            className={buttonVariants({
+              variant: "default",
+              className: "w-full sm:w-auto",
+            })}
+            href="/app"
+          >
             Go to dashboard
           </Link>
           <Link
-            className={buttonVariants({ variant: "outline" })}
+            className={buttonVariants({
+              variant: "outline",
+              className: "w-full sm:w-auto",
+            })}
             href="/join-discord"
           >
             Join Discord

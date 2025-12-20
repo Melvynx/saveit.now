@@ -22,7 +22,7 @@ import { authClient } from "../../src/lib/auth-client";
 import { useAppTheme } from "../_layout";
 
 export default function TabTwoScreen() {
-  const { user, plan, signOut } = useAuth();
+  const { user, plan, signOutWithNavigation } = useAuth();
   const { currentTheme, toggleTheme } = useAppTheme();
 
   const deleteAccountMutation = useMutation({
@@ -79,11 +79,9 @@ export default function TabTwoScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await signOut();
-            while (router.canGoBack()) {
-              router.back();
-            }
-            router.replace("/");
+            await signOutWithNavigation(() => {
+              router.replace("/");
+            });
           } catch (error) {
             console.error("Sign out failed:", error);
             Alert.alert("Error", "Failed to sign out. Please try again.");

@@ -1,14 +1,15 @@
 import { getAuthLimits } from "@/lib/auth-limits";
-import { auth } from "@/lib/auth";
 import { userRoute } from "@/lib/safe-route";
-import { headers } from "next/headers";
+import { prisma } from "@workspace/database";
 
-export const GET = userRoute.handler(async () => {
-  const subscriptions = await auth.api.listActiveSubscriptions({
-    headers: await headers(),
+export const GET = userRoute.handler(async (_, { ctx }) => {
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      referenceId: ctx.user.id,
+      status: { in: ["active", "trialing"] },
+    },
   });
 
-  const subscription = subscriptions[0];
   const limits = getAuthLimits(subscription);
   const plan = (subscription?.plan ?? "free") as "free" | "pro";
 

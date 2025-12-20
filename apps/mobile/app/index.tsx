@@ -1,5 +1,5 @@
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useShareIntent } from "expo-share-intent";
 import { View, ActivityIndicator, Modal, useColorScheme } from "react-native";
 import { Text, YStack } from "tamagui";
@@ -11,7 +11,7 @@ export default function IndexPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { hasShareIntent } = useShareIntent();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSigningOut } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const colorScheme = useColorScheme();
@@ -19,21 +19,13 @@ export default function IndexPage() {
 
   useFocusEffect(
     useCallback(() => {
-      if (isLoading) return;
-
-      // Reset navigation state when user is logged out
-      if (!user) {
-        setIsNavigating(false);
-        return;
-      }
-
-      if (isNavigating) return;
+      if (isLoading || !user || isNavigating || isSigningOut) return;
 
       const handleNavigation = () => {
         if (hasShareIntent || params.dataUrl) {
           setIsNavigating(true);
           router.replace("/share-handler");
-        } else if (user) {
+        } else {
           setIsNavigating(true);
           setShowSignIn(false);
           router.replace("/(tabs)");
@@ -42,21 +34,25 @@ export default function IndexPage() {
 
       const timer = setTimeout(handleNavigation, 100);
       return () => clearTimeout(timer);
-    }, [hasShareIntent, params.dataUrl, isNavigating, isLoading, user, router]),
+    }, [
+      hasShareIntent,
+      params.dataUrl,
+      isNavigating,
+      isLoading,
+      user,
+      router,
+      isSigningOut,
+    ]),
   );
 
-  if (isLoading) {
-    return (
-      <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
-        <ActivityIndicator size="large" />
-        <Text fontSize="$6" marginTop="$4">
-          Loading...
-        </Text>
-      </YStack>
-    );
-  }
+  useEffect(() => {
+    if (!user) {
+      setIsNavigating(false);
+    }
+  }, [user]);
 
-  if (!user && !isNavigating) {
+  // Show onboarding/sign-in when user is not authenticated
+  if (!user && !isLoading) {
     return (
       <>
         <OnboardingScreen onSignIn={() => setShowSignIn(true)} />
@@ -89,6 +85,18 @@ export default function IndexPage() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
+        <ActivityIndicator size="large" />
+        <Text fontSize="$6" marginTop="$4">
+          Loading...
+        </Text>
+      </YStack>
+    );
+  }
+
+  // Authenticated user navigating to tabs - show spinner
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="large" />
