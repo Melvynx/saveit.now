@@ -1,6 +1,7 @@
 import { getRequiredUser } from "@/lib/auth-session";
 import { getServerUrl } from "@/lib/server-url";
 import { stripeClient } from "@/lib/stripe";
+import { prisma } from "@workspace/database";
 import {
   Alert,
   AlertDescription,
@@ -11,7 +12,12 @@ import { redirect } from "next/navigation";
 export default async function RoutePage() {
   const user = await getRequiredUser();
 
-  if (!user.stripeCustomerId) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { stripeCustomerId: true },
+  });
+
+  if (!dbUser?.stripeCustomerId) {
     return (
       <Alert variant="destructive">
         <AlertTitle>No stripe customer id</AlertTitle>
@@ -23,7 +29,7 @@ export default async function RoutePage() {
   }
 
   const stripe = await stripeClient.billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
+    customer: dbUser.stripeCustomerId,
     return_url: `${getServerUrl()}/app`,
   });
 

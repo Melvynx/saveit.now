@@ -7,7 +7,5 @@ export {
   BookmarkProcessingRunStatus,
   TagType,
 } from "../generated/prisma";
-export type {
-  Bookmark,
-} from "../generated/prisma";
+export type { Bookmark, Subscription } from "../generated/prisma";
 export { prisma } from "./client"; // exports instance of prisma

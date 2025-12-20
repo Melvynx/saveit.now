@@ -1,11 +1,12 @@
+import { prisma } from "@workspace/database";
 import { headers } from "next/headers";
 import { unauthorized } from "next/navigation";
-import { auth } from "./auth"; // path to your Better Auth server instance
+import { auth } from "./auth";
 import { getAuthLimits } from "./auth-limits";
 
 export const getUser = async () => {
   const session = await auth.api.getSession({
-    headers: await headers(), // you need to pass the headers object.
+    headers: await headers(),
   });
 
   return session?.user;
@@ -22,10 +23,12 @@ export const getRequiredUser = async () => {
 export const getUserLimits = async () => {
   const user = await getRequiredUser();
 
-  const subscriptions = await auth.api.listActiveSubscriptions({
-    headers: await headers(),
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      referenceId: user.id,
+      status: { in: ["active", "trialing"] },
+    },
   });
-  const subscription = subscriptions[0];
 
   const limits = getAuthLimits(subscription);
 

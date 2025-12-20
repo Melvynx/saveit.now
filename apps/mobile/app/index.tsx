@@ -1,49 +1,90 @@
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useShareIntent } from "expo-share-intent";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Modal, useColorScheme } from "react-native";
 import { Text, YStack } from "tamagui";
 import { useAuth } from "../src/contexts/AuthContext";
+import OnboardingScreen from "../src/screens/OnboardingScreen";
 import SignInScreen from "../src/screens/SignInScreen";
 
 export default function IndexPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { hasShareIntent } = useShareIntent();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSigningOut } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
-
-  console.log("🏠 Index - Params:", params);
-  console.log("🏠 Index - hasShareIntent:", hasShareIntent);
-  console.log("🏠 Index - User:", user);
-  console.log("🏠 Index - isLoading:", isLoading);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   useFocusEffect(
     useCallback(() => {
-      if (isNavigating || isLoading) return;
+      if (isLoading || !user || isNavigating || isSigningOut) return;
 
       const handleNavigation = () => {
-        setIsNavigating(true);
-
-        // Si on a des données de partage, rediriger vers share-handler
         if (hasShareIntent || params.dataUrl) {
-          console.log("🏠 Index - Redirecting to share-handler");
+          setIsNavigating(true);
           router.replace("/share-handler");
-        } else if (user) {
-          // Si on est authentifié, aller vers les tabs
-          console.log("🏠 Index - User authenticated, redirecting to tabs");
+        } else {
+          setIsNavigating(true);
+          setShowSignIn(false);
           router.replace("/(tabs)");
         }
-        // Si on n'est pas authentifié, on reste sur cette page et on affiche SignInScreen
       };
 
-      // Petit délai pour laisser le temps au Root Layout de se monter
       const timer = setTimeout(handleNavigation, 100);
       return () => clearTimeout(timer);
-    }, [hasShareIntent, params.dataUrl, isNavigating, isLoading, user, router]),
+    }, [
+      hasShareIntent,
+      params.dataUrl,
+      isNavigating,
+      isLoading,
+      user,
+      router,
+      isSigningOut,
+    ]),
   );
 
-  // Show loading state while checking authentication
+  useEffect(() => {
+    if (!user) {
+      setIsNavigating(false);
+    }
+  }, [user]);
+
+  // Show onboarding/sign-in when user is not authenticated
+  if (!user && !isLoading) {
+    return (
+      <>
+        <OnboardingScreen onSignIn={() => setShowSignIn(true)} />
+        <Modal
+          visible={showSignIn}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowSignIn(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "flex-end",
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+          >
+            <View
+              style={{
+                height: "70%",
+                backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}
+            >
+              <SignInScreen onClose={() => setShowSignIn(false)} />
+            </View>
+          </View>
+        </Modal>
+      </>
+    );
+  }
+
   if (isLoading) {
     return (
       <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
@@ -55,12 +96,7 @@ export default function IndexPage() {
     );
   }
 
-  // Show sign in screen if not authenticated and not navigating
-  if (!user && !isNavigating) {
-    return <SignInScreen />;
-  }
-
-  // Show loading indicator while navigating
+  // Authenticated user navigating to tabs - show spinner
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="large" />

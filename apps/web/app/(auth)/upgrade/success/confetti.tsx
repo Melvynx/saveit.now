@@ -39,7 +39,7 @@ export default function ConfettiBurst() {
   }, []);
 
   return (
-    <Button onClick={fireConfetti} variant="ghost">
+    <Button onClick={fireConfetti} variant="ghost" className="w-full sm:w-auto">
       Add more confetti 🎉
     </Button>
   );

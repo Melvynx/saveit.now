@@ -1,6 +1,8 @@
 import { Check, Circle, Star } from "@tamagui/lucide-icons";
 import { Button, Card, Image, Spinner, Text, XStack, YStack } from "tamagui";
 import { type Bookmark } from "../lib/api-client";
+import { BookmarkItemYoutube } from "./bookmark-item-youtube";
+import { BookmarkItemTweet } from "./bookmark-item-tweet";
 
 interface BookmarkItemProps {
   bookmark: Bookmark;
@@ -10,6 +12,44 @@ interface BookmarkItemProps {
 }
 
 export function BookmarkItem({
+  bookmark,
+  onPress,
+  onToggleStar,
+  onToggleRead,
+}: BookmarkItemProps) {
+  if (bookmark.type === "YOUTUBE" && bookmark.metadata?.youtubeId) {
+    return (
+      <BookmarkItemYoutube
+        bookmark={bookmark}
+        onPress={onPress}
+        onToggleStar={onToggleStar}
+        onToggleRead={onToggleRead}
+      />
+    );
+  }
+
+  if (bookmark.type === "TWEET") {
+    return (
+      <BookmarkItemTweet
+        bookmark={bookmark}
+        onPress={onPress}
+        onToggleStar={onToggleStar}
+        onToggleRead={onToggleRead}
+      />
+    );
+  }
+
+  return (
+    <BookmarkItemPage
+      bookmark={bookmark}
+      onPress={onPress}
+      onToggleStar={onToggleStar}
+      onToggleRead={onToggleRead}
+    />
+  );
+}
+
+function BookmarkItemPage({
   bookmark,
   onPress,
   onToggleStar,
@@ -35,7 +75,6 @@ export function BookmarkItem({
       onPress={onPress}
       overflow="hidden"
     >
-      {/* Header with preview/thumbnail */}
       {preview && (
         <Card.Header padding="$0" position="relative">
           <Image
@@ -46,7 +85,6 @@ export function BookmarkItem({
             borderTopRightRadius="$4"
             resizeMode="cover"
           />
-          {/* Loading overlay for pending status */}
           {bookmark.status === "PENDING" && (
             <XStack
               position="absolute"
@@ -61,12 +99,11 @@ export function BookmarkItem({
               <Spinner size="large" color="$white" />
             </XStack>
           )}
-          {/* Actions overlay */}
           <XStack
             position="absolute"
             top="$2"
             right="$2"
-            space="$1"
+            gap="$1"
             opacity={0.9}
           >
             <Button
@@ -108,10 +145,8 @@ export function BookmarkItem({
         </Card.Header>
       )}
 
-      {/* Content */}
       <Card.Footer padding="$4">
-        <XStack alignItems="flex-start" space="$2">
-          {/* Favicon placeholder */}
+        <XStack alignItems="flex-start" gap="$2">
           <Image
             source={{ uri: faviconUrl }}
             width={24}
@@ -121,12 +156,9 @@ export function BookmarkItem({
             flexShrink={0}
           />
 
-          {/* Content */}
           <YStack gap="$1">
-            {/* Title */}
             <Text numberOfLines={1}>{domainName}</Text>
 
-            {/* URL */}
             <Text color="$gray10" fontSize="$2" numberOfLines={1}>
               {bookmark.title}
             </Text>

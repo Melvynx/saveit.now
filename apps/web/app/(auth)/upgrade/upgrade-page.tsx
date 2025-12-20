@@ -3,7 +3,6 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
-import { authClient } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -35,6 +34,7 @@ import { useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { upgradeSubscriptionAction } from "./upgrade.action";
 
 export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
@@ -49,15 +49,19 @@ export function UpgradePage() {
         plan: monthly ? "monthly" : "yearly",
       });
 
-      const client = await authClient.subscription.upgrade({
+      const result = await upgradeSubscriptionAction({
         plan: "pro",
         successUrl: "/upgrade/success",
         cancelUrl: "/upgrade?error=true",
         annual: !monthly,
       });
 
-      if (client.error) {
-        throw new Error(client.error.message);
+      if (result?.serverError) {
+        throw new Error(result.serverError.message);
+      }
+
+      if (result?.data?.url) {
+        window.location.href = result.data.url;
       }
     },
     onError: (error) => {

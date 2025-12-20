@@ -1,14 +1,10 @@
-import { stripe } from "@better-auth/stripe";
-
 import { BetterAuthOptions } from "better-auth";
-import { logger } from "./logger";
 import { nextCookies } from "better-auth/next-js";
 import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
-import { AUTH_LIMITS } from "./auth-limits";
-import { inngest } from "./inngest/client";
 import { sendEmail } from "./mail/send-email";
 import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
+import { logger } from "./logger";
 
 export const AUTH_PARAMS = {
   baseURL: getServerUrl(),
@@ -52,7 +48,10 @@ The SaveIt.now Team`,
           );
         } catch (error) {
           // If customer doesn't exist in Stripe, that's fine - just continue with deletion
-          logger.debug("Stripe customer not found during user deletion:", error);
+          logger.debug(
+            "Stripe customer not found during user deletion:",
+            error,
+          );
         }
       },
       afterDelete: async (user) => {
@@ -120,41 +119,6 @@ Melvyn`,
       },
       otpLength: 6,
       expiresIn: 300, // 5 minutes
-    }),
-    stripe({
-      stripeClient: stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-      createCustomerOnSignUp: true,
-      subscription: {
-        enabled: true,
-        async getCheckoutSessionParams() {
-          return {
-            params: {
-              allow_promotion_codes: true,
-            },
-          };
-        },
-        async onSubscriptionComplete(data) {
-          inngest.send({
-            name: "user/subscription",
-            data: {
-              userId: data.subscription.referenceId,
-            },
-          });
-        },
-        plans: [
-          {
-            name: "free",
-            limits: AUTH_LIMITS.free,
-          },
-          {
-            name: "pro",
-            priceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
-            annualDiscountPriceId: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
-            limits: AUTH_LIMITS.pro,
-          },
-        ],
-      },
     }),
     magicLink({
       async sendMagicLink(data) {

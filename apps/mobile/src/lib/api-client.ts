@@ -4,6 +4,72 @@ import { getServerUrl } from "./server-url";
 
 const API_BASE_URL = getServerUrl();
 
+export type BookmarkType =
+  | "VIDEO"
+  | "ARTICLE"
+  | "PAGE"
+  | "IMAGE"
+  | "YOUTUBE"
+  | "TWEET"
+  | "PDF"
+  | "PRODUCT";
+
+export const BOOKMARK_TYPES: BookmarkType[] = [
+  "PAGE",
+  "ARTICLE",
+  "YOUTUBE",
+  "TWEET",
+  "VIDEO",
+  "IMAGE",
+  "PDF",
+  "PRODUCT",
+];
+
+export interface UserLimits {
+  bookmarks: number;
+  monthlyBookmarkRuns: number;
+  canExport: number;
+  apiAccess: number;
+}
+
+export interface UserPlanResponse {
+  plan: "free" | "pro";
+  limits: UserLimits;
+  subscription: {
+    id: string;
+    status: string;
+    periodEnd: string;
+  } | null;
+}
+
+export interface CheckoutResponse {
+  checkoutUrl: string;
+}
+
+interface TweetUser {
+  name: string;
+  screen_name: string;
+  profile_image_url_https: string;
+}
+
+interface TweetMedia {
+  media_url_https: string;
+  type: string;
+}
+
+interface BookmarkMetadata {
+  youtubeId?: string;
+  tweetId?: string;
+  text?: string;
+  user?: TweetUser;
+  mediaDetails?: TweetMedia[];
+  width?: number;
+  height?: number;
+  price?: number;
+  currency?: string;
+  brand?: string;
+}
+
 interface Bookmark {
   id: string;
   url: string;
@@ -13,9 +79,10 @@ interface Bookmark {
   read: boolean;
   createdAt: string;
   summary?: string;
-  type?: string;
+  type?: BookmarkType;
   faviconUrl?: string;
   status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
+  metadata?: BookmarkMetadata;
   tags: Array<{
     tag: {
       id: string;
@@ -29,6 +96,18 @@ interface BookmarksResponse {
   bookmarks: Bookmark[];
   hasMore: boolean;
   nextCursor?: string;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  type: string;
+}
+
+interface TagsResponse {
+  tags: Tag[];
+  hasNextPage: boolean;
+  nextCursor: string | null;
 }
 
 class ApiClient {
@@ -56,6 +135,8 @@ class ApiClient {
     query?: string;
     cursor?: string;
     limit?: number;
+    types?: string[];
+    tags?: string[];
   }): Promise<BookmarksResponse> {
     const headers = await this.getAuthHeaders();
     const searchParams = new URLSearchParams();
@@ -63,6 +144,9 @@ class ApiClient {
     if (params?.query) searchParams.set("query", params.query);
     if (params?.cursor) searchParams.set("cursor", params.cursor);
     if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.types?.length)
+      searchParams.set("types", params.types.join(","));
+    if (params?.tags?.length) searchParams.set("tags", params.tags.join(","));
 
     const url = `${API_BASE_URL}/api/bookmarks?${searchParams.toString()}`;
 
@@ -74,6 +158,33 @@ class ApiClient {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch bookmarks: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getTags(params?: {
+    q?: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<TagsResponse> {
+    const headers = await this.getAuthHeaders();
+    const searchParams = new URLSearchParams();
+
+    if (params?.q) searchParams.set("q", params.q);
+    if (params?.cursor) searchParams.set("cursor", params.cursor);
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+
+    const url = `${API_BASE_URL}/api/tags?${searchParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tags: ${response.statusText}`);
     }
 
     return response.json();
@@ -173,7 +284,44 @@ class ApiClient {
       throw new Error(`Failed to submit bug report: ${response.statusText}`);
     }
   }
+
+  async getUserLimits(): Promise<UserPlanResponse> {
+    const headers = await this.getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/api/user/limits`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get user limits: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getCheckoutUrl(params: {
+    annual?: boolean;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<CheckoutResponse> {
+    const headers = await this.getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/api/mobile/checkout`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get checkout URL: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 export const apiClient = new ApiClient();
-export type { Bookmark, BookmarksResponse };
+export type { Bookmark, BookmarksResponse, Tag, TagsResponse };

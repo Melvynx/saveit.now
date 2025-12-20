@@ -21,6 +21,7 @@ const nextConfig = {
   experimental: {
     authInterrupts: true,
   },
+  turbopack: {},
   redirects: async () => {
     return [
       {
