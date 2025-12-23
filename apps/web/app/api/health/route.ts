@@ -1,9 +1,6 @@
 import { prisma } from "@workspace/database";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 type ServiceStatus = {
   status: "healthy" | "unhealthy";
   latency: number;
@@ -22,7 +19,7 @@ type HealthResponse = {
 async function checkDatabase(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.$connect();
     return {
       status: "healthy",
       latency: Date.now() - start,
