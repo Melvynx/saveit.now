@@ -1,4 +1,5 @@
 import path from "path";
+import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,12 +21,12 @@ const nextConfig = {
   },
   outputFileTracingRoot: path.join(import.meta.dirname, "../../"),
   outputFileTracingIncludes: {
-    "/*": ["./packages/database/generated/prisma/*.node"],
+    "/api/**/*": ["./node_modules/.prisma/**/*", "./packages/database/generated/prisma/**/*"],
+    "/app/**/*": ["./node_modules/.prisma/**/*", "./packages/database/generated/prisma/**/*"],
   },
   experimental: {
     authInterrupts: true,
   },
-  turbopack: {},
   redirects: async () => {
     return [
       {
