@@ -1,4 +1,4 @@
-import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
+import path from "path";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -17,6 +17,10 @@ const nextConfig = {
         hostname: "saveit.mlvcdn.com",
       },
     ],
+  },
+  outputFileTracingRoot: path.join(import.meta.dirname, "../../"),
+  outputFileTracingIncludes: {
+    "/*": ["./packages/database/generated/prisma/*.node"],
   },
   experimental: {
     authInterrupts: true,
