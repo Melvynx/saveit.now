@@ -15,6 +15,7 @@ export const useUserPlan = create<UserPlan>(() => ({
   limits: {
     bookmarks: 20,
     monthlyBookmarkRuns: 20,
+    monthlyChatQueries: 10,
     canExport: 0,
     apiAccess: 0,
   },
