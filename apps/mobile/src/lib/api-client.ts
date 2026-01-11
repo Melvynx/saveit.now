@@ -321,6 +321,31 @@ class ApiClient {
 
     return response.json();
   }
+
+  async sendChatMessage(params: {
+    messages: Array<{ role: string; content: string }>;
+    enableThinking?: boolean;
+    signal?: AbortSignal;
+  }): Promise<Response> {
+    const headers = await this.getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify({
+        messages: params.messages,
+        enableThinking: params.enableThinking ?? false,
+      }),
+      signal: params.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send chat message: ${response.statusText}`);
+    }
+
+    return response;
+  }
 }
 
 export const apiClient = new ApiClient();
