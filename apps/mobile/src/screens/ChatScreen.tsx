@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import { Button, Input, Text, XStack, YStack } from "tamagui";
+import { MessageList } from "../components/chat/MessageList";
 import { useChat } from "../hooks/useChat";
 
 export default function ChatScreen() {
@@ -38,39 +39,8 @@ export default function ChatScreen() {
         </YStack>
 
         {/* Message Area */}
-        <YStack flex={1} paddingHorizontal="$4" paddingVertical="$2">
-          {messages.length === 0 ? (
-            <YStack flex={1} justifyContent="center" alignItems="center">
-              <Text color="$gray10">Start a conversation...</Text>
-            </YStack>
-          ) : (
-            <YStack flex={1}>
-              {messages.map((msg) => (
-                <XStack
-                  key={msg.id}
-                  justifyContent={
-                    msg.role === "user" ? "flex-end" : "flex-start"
-                  }
-                  marginBottom="$2"
-                >
-                  <YStack
-                    backgroundColor={msg.role === "user" ? "$blue10" : "$gray4"}
-                    paddingHorizontal="$3"
-                    paddingVertical="$2"
-                    borderRadius="$4"
-                    maxWidth="80%"
-                  >
-                    <Text
-                      color={msg.role === "user" ? "white" : "$gray12"}
-                      fontSize="$3"
-                    >
-                      {msg.content || "..."}
-                    </Text>
-                  </YStack>
-                </XStack>
-              ))}
-            </YStack>
-          )}
+        <YStack flex={1}>
+          <MessageList messages={messages} isLoading={isGenerating} />
         </YStack>
 
         {/* Input Area */}
