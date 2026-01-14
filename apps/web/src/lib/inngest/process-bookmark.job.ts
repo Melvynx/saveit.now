@@ -284,9 +284,7 @@ export const processBookmarkJob = inngest.createFunction(
         }
 
         if (headers["content-type"]?.startsWith("video/")) {
-          // Handle direct video files
           type = BookmarkType.VIDEO;
-          // We don't need to fetch the content for direct video files
         }
 
         if (headers["content-type"]?.startsWith("application/pdf")) {
@@ -313,15 +311,72 @@ export const processBookmarkJob = inngest.createFunction(
           headers,
           content,
           type,
+          fetchFailed: false,
         };
 
         return result;
       } catch (error) {
-        throw new NonRetriableError(
-          `Failed to fetch ${bookmark.url}: ${error}`,
-        );
+        logger.warn("Failed to fetch URL, saving bookmark with minimal data", {
+          url: bookmark.url,
+          error: String(error),
+        });
+        return {
+          ok: false,
+          status: 0,
+          headers: {},
+          content: null,
+          type: BookmarkType.PAGE,
+          fetchFailed: true,
+        };
       }
     });
+
+    if (urlContent.fetchFailed) {
+      const urlObj = new URL(bookmark.url);
+      const fallbackTitle = urlObj.hostname + urlObj.pathname;
+
+      await step.run("save-bookmark-with-minimal-data", async () => {
+        await prisma.bookmark.update({
+          where: { id: bookmarkId },
+          data: {
+            status: "READY",
+            type: BookmarkType.PAGE,
+            title: fallbackTitle,
+            metadata: {
+              fetchFailed: true,
+              fetchError: "Could not retrieve content from URL",
+            },
+          },
+        });
+
+        await prisma.bookmarkProcessingRun.updateMany({
+          where: { inngestRunId: runId },
+          data: {
+            status: "COMPLETED",
+            completedAt: new Date(),
+          },
+        });
+      });
+
+      await step.run("invalidate-search-cache-minimal", async () => {
+        await CacheInvalidation.onBookmarkUpdated({
+          ...bookmark,
+          createdAt: new Date(bookmark.createdAt),
+          updatedAt: new Date(bookmark.updatedAt),
+        });
+      });
+
+      await publish({
+        channel: `bookmark:${bookmarkId}`,
+        topic: "finish",
+        data: {
+          id: BOOKMARK_STEP_ID_TO_ID["finish"],
+          order: 9,
+        },
+      });
+
+      return;
+    }
 
     // Check if it's a YouTube video URL (not channel or other pages)
     const isYouTubeVideo = (url: string): boolean => {

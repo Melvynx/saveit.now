@@ -29,6 +29,7 @@ model User {
   bookmarks              Bookmark[]
   bookmarkOpens          BookmarkOpen[]
   bookmarkProcessingRuns BookmarkProcessingRun[]
+  chatUsages             ChatUsage[]
   tags                   Tag[]
   accounts               Account[]
   apikeys                Apikey[]
@@ -201,6 +202,15 @@ model BookmarkOpen {
 
   @@index([bookmarkId, userId])
   @@index([userId, openedAt])
+}
+
+model ChatUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Subscription {
