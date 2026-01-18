@@ -23,6 +23,45 @@ import {
 } from "../prompt.const";
 import { analyzeScreenshot } from "../screenshot-analysis.utils";
 
+async function isScreenshotUrlValid(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      logger.info(
+        `[Screenshot] Extension screenshot URL invalid (status ${response.status}): ${url}`,
+      );
+      return false;
+    }
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) < 1000) {
+      logger.info(
+        `[Screenshot] Extension screenshot too small (${contentLength} bytes): ${url}`,
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      logger.info(`[Screenshot] Extension screenshot URL timeout: ${url}`);
+    } else {
+      logger.info(
+        `[Screenshot] Extension screenshot URL check failed: ${url}`,
+        error,
+      );
+    }
+    return false;
+  }
+}
+
 export async function processStandardWebpage(
   context: {
     bookmarkId: string;
@@ -122,24 +161,14 @@ export async function processStandardWebpage(
   });
 
   const screenshot = await step.run("get-screenshot-v2", async () => {
-    // Check for fresh data from database in case extension already uploaded a screenshot
-    const freshBookmark = await prisma.bookmark.findUnique({
-      where: { id: context.bookmarkId },
-      select: { preview: true },
-    });
-
-    if (freshBookmark?.preview) {
-      return freshBookmark.preview;
-    }
-
-    // Skip screenshot for Playwright tests - return placeholder
     if (context.url.includes("isPlaywrightTest=true")) {
       return "https://via.placeholder.com/1200x630/f0f0f0/333333?text=Playwright+Test+Placeholder";
     }
 
+    // Always try Cloudflare scraper first
     try {
       logger.info(
-        `[Screenshot] Starting screenshot capture for URL: ${context.url}`,
+        `[Screenshot] Starting Cloudflare screenshot capture for URL: ${context.url}`,
       );
 
       const screenshotBuffer = await captureScreenshot({
@@ -148,6 +177,12 @@ export async function processStandardWebpage(
         waitUntil: "networkidle0",
         timeout: 30000,
       });
+
+      if (screenshotBuffer.length < 1000) {
+        throw new Error(
+          `Screenshot too small (${screenshotBuffer.length} bytes)`,
+        );
+      }
 
       logger.info(
         `[Screenshot] Successfully captured screenshot, buffer size: ${screenshotBuffer.length} bytes`,
@@ -161,19 +196,36 @@ export async function processStandardWebpage(
       });
 
       if (!screenshotUrl) {
-        logger.error(
-          `[Screenshot] uploadBufferToS3 returned null for bookmark ${context.bookmarkId}`,
-        );
-        return null;
+        throw new Error("uploadBufferToS3 returned null");
       }
 
       logger.info(`[Screenshot] Successfully uploaded to S3: ${screenshotUrl}`);
       return screenshotUrl;
     } catch (error) {
       logger.error(
-        `[Screenshot] Failed to capture/upload screenshot for ${context.url}:`,
+        `[Screenshot] Cloudflare screenshot failed for ${context.url}:`,
         error,
       );
+
+      // Fallback to extension screenshot if Cloudflare fails
+      const freshBookmark = await prisma.bookmark.findUnique({
+        where: { id: context.bookmarkId },
+        select: { preview: true },
+      });
+
+      if (freshBookmark?.preview) {
+        const isValid = await isScreenshotUrlValid(freshBookmark.preview);
+        if (isValid) {
+          logger.info(
+            `[Screenshot] Using extension screenshot as fallback: ${freshBookmark.preview}`,
+          );
+          return freshBookmark.preview;
+        }
+        logger.info(
+          `[Screenshot] Extension screenshot also invalid, no screenshot available`,
+        );
+      }
+
       return null;
     }
   });
