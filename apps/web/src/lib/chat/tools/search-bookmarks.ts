@@ -5,7 +5,7 @@ import { z } from "zod";
 export const createSearchBookmarksTool = (userId: string) =>
   tool({
     description:
-      "Search through the user's bookmarks using semantic search. Returns matching bookmarks based on the query.",
+      "Internal search tool - search through bookmarks and return results for YOUR analysis. Results are NOT displayed to the user. Use this to find relevant bookmarks, then call showBookmarks to display them.",
     inputSchema: z.object({
       query: z.string().describe("The search query to find relevant bookmarks"),
       limit: z

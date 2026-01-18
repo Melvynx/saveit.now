@@ -10,8 +10,11 @@ import {
   BrainIcon,
   CornerDownLeftIcon,
   Loader2Icon,
+  SearchIcon,
+  SparklesIcon,
   SquareIcon,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { toast } from "sonner";
@@ -44,12 +47,99 @@ const chatUsageSchema = z.object({
   plan: z.string(),
 });
 
-function getDisplayUrl(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url || "Unknown";
-  }
+const AGENT_MESSAGES = [
+  "Searching through your bookmarks...",
+  "Analyzing results...",
+  "Looking for the best matches...",
+  "Exploring your collection...",
+];
+
+function AgentWorkingIndicator({ toolName }: { toolName: string }) {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (toolName !== "searchBookmarks") return;
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % AGENT_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [toolName]);
+
+  const isSearching = toolName === "searchBookmarks";
+  const isGettingDetails = toolName === "getBookmark";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex items-start gap-3 py-2"
+    >
+      <div className="bg-primary/10 flex size-8 shrink-0 items-center justify-center rounded-full">
+        {isSearching ? (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <SearchIcon className="text-primary size-4" />
+          </motion.div>
+        ) : isGettingDetails ? (
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <SparklesIcon className="text-primary size-4" />
+          </motion.div>
+        ) : (
+          <Loader2Icon className="text-primary size-4 animate-spin" />
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-foreground text-sm font-medium">
+            {isSearching
+              ? "Agent is searching"
+              : isGettingDetails
+                ? "Getting bookmark details"
+                : `Running ${toolName}`}
+          </span>
+          <motion.div
+            className="flex gap-0.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="bg-primary size-1.5 rounded-full"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                }}
+              />
+            ))}
+          </motion.div>
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={isSearching ? messageIndex : toolName}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="text-muted-foreground text-xs"
+          >
+            {isSearching
+              ? AGENT_MESSAGES[messageIndex]
+              : isGettingDetails
+                ? "Fetching full bookmark information..."
+                : "Processing..."}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
 }
 
 function BookmarkCardDisplay({ bookmark }: { bookmark: BookmarkData }) {
@@ -143,27 +233,6 @@ const MessageItem = memo(function MessageItem({
             }
 
             if (
-              toolName === "searchBookmarks" &&
-              tool.state === "output-available"
-            ) {
-              const output = tool.output as BookmarkData[];
-              if (Array.isArray(output) && output.length > 0) {
-                return (
-                  <BookmarkGridDisplay
-                    key={i}
-                    bookmarks={output}
-                    title={`Found ${output.length} bookmark${output.length > 1 ? "s" : ""}`}
-                  />
-                );
-              }
-              return (
-                <p key={i} className="text-muted-foreground text-sm">
-                  No bookmarks found.
-                </p>
-              );
-            }
-
-            if (
               toolName === "getBookmark" &&
               tool.state === "output-available"
             ) {
@@ -179,15 +248,7 @@ const MessageItem = memo(function MessageItem({
             }
 
             if (tool.state === "input-available") {
-              return (
-                <div
-                  key={i}
-                  className="text-muted-foreground flex items-center gap-2 text-xs"
-                >
-                  <Loader2Icon className="size-3 animate-spin" />
-                  Running {toolName}...
-                </div>
-              );
+              return <AgentWorkingIndicator key={i} toolName={toolName} />;
             }
 
             return null;
@@ -195,11 +256,12 @@ const MessageItem = memo(function MessageItem({
 
           if (part.type === "reasoning") {
             return (
-              <details key={i} className="mt-2">
-                <summary className="text-muted-foreground cursor-pointer text-xs">
-                  Thinking...
+              <details key={i} className="bg-muted/50 mt-2 rounded-lg border">
+                <summary className="text-muted-foreground flex cursor-pointer items-center gap-2 px-3 py-2 text-xs">
+                  <BrainIcon className="size-3" />
+                  <span>Thinking process</span>
                 </summary>
-                <p className="text-muted-foreground mt-1 text-xs">
+                <p className="text-muted-foreground border-t px-3 py-2 text-xs leading-relaxed">
                   {part.text}
                 </p>
               </details>
@@ -209,9 +271,24 @@ const MessageItem = memo(function MessageItem({
           return null;
         })}
         {!isUser && isLoading && isLast && (
-          <div className="flex items-center gap-2 pt-1">
-            <Loader2Icon className="text-muted-foreground size-4 animate-spin" />
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-1.5 pt-2"
+          >
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="bg-muted-foreground/50 size-1.5 rounded-full"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{
+                  duration: 0.8,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                }}
+              />
+            ))}
+          </motion.div>
         )}
       </div>
     </div>
