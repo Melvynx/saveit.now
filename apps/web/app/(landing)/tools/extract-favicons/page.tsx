@@ -31,21 +31,12 @@ export const metadata = {
     url: "/tools/extract-favicons",
     siteName: "SaveIt.now",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-images/tools/extract-favicons.png",
-        width: 1200,
-        height: 630,
-        alt: "Favicon Extractor Tool - Download all website icons and favicons",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free Favicon Extractor & Downloader Tool",
     description:
       "Extract and download all favicon variants from any website. Perfect for design research and icon collection.",
-    images: ["/og-images/tools/extract-favicons.png"],
   },
 };
 

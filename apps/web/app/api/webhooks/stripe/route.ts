@@ -1,4 +1,5 @@
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
+import { inngest } from "@/lib/inngest/client";
 import { logger } from "@/lib/logger";
 import { stripeClient } from "@/lib/stripe";
 import { prisma } from "@workspace/database";
@@ -199,6 +200,7 @@ const customerSubscriptionUpdated = async (
     return;
   }
 
+  const previousPlan = dbSubscription.plan;
   const plan = getPlanFromSubscription(subscription);
   const planName = plan?.name ?? dbSubscription.plan;
 
@@ -216,6 +218,45 @@ const customerSubscriptionUpdated = async (
   logger.info(
     `🔄 Subscription updated: ${subscription.id}, status: ${subscription.status}, plan: ${planName}`,
   );
+
+  const isUpgrade = previousPlan === "free" && planName !== "free";
+  if (isUpgrade) {
+    const userId = dbSubscription.referenceId;
+    const failedBookmarks = await prisma.bookmark.findMany({
+      where: {
+        userId,
+        status: "ERROR",
+        metadata: {
+          path: ["error"],
+          string_contains: "Limit exceeded",
+        },
+      },
+      select: { id: true },
+    });
+
+    if (failedBookmarks.length > 0) {
+      logger.info(
+        `♻️ Retrying ${failedBookmarks.length} failed bookmarks for user ${userId} after upgrade`,
+      );
+
+      await prisma.bookmark.updateMany({
+        where: {
+          id: { in: failedBookmarks.map((b) => b.id) },
+        },
+        data: { status: "PENDING" },
+      });
+
+      await inngest.send(
+        failedBookmarks.map((bookmark) => ({
+          name: "bookmark/process" as const,
+          data: {
+            bookmarkId: bookmark.id,
+            userId,
+          },
+        })),
+      );
+    }
+  }
 };
 
 const customerSubscriptionDeleted = async (

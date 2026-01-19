@@ -42,21 +42,12 @@ export const metadata = {
     url: "/tools/extract-content",
     siteName: "SaveIt.now",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-images/tools/extract-content.png",
-        width: 1200,
-        height: 630,
-        alt: "Website Content Extractor Tool - Extract clean text and markdown from any webpage",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free Website Content Extractor Tool",
     description:
       "Extract clean, readable content from websites. Perfect for research and content analysis.",
-    images: ["/og-images/tools/extract-content.png"],
   },
 };
 
@@ -123,8 +114,8 @@ export default function ExtractContentToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Content extraction is the process of automatically extracting the
-                main readable content from web pages, removing navigation,
+                Content extraction is the process of automatically extracting
+                the main readable content from web pages, removing navigation,
                 advertisements, and other clutter. Our tool focuses on the main
                 article or content area, providing clean text and markdown
                 formats perfect for reading, research, or archiving.
@@ -207,7 +198,9 @@ export default function ExtractContentToolPage() {
                 <li className="flex items-start gap-3">
                   <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                   <div>
-                    <Typography variant="small">Research & Analysis:</Typography>
+                    <Typography variant="small">
+                      Research & Analysis:
+                    </Typography>
                     <Typography variant="muted">
                       Extract content for academic research, market analysis, or
                       competitive intelligence
@@ -279,8 +272,8 @@ export default function ExtractContentToolPage() {
                   <div>
                     <Typography variant="small">Statistics:</Typography>
                     <Typography variant="muted">
-                      Word count, character count, paragraph count, and estimated
-                      reading time
+                      Word count, character count, paragraph count, and
+                      estimated reading time
                     </Typography>
                   </div>
                 </li>
