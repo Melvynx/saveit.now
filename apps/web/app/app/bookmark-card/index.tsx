@@ -64,3 +64,4 @@ export { BookmarkCardPricing } from "./bookmark-card-pricing";
 export { BookmarkCardProduct } from "./bookmark-card-product";
 export { BookmarkCardTweet } from "./bookmark-card-tweet";
 export { BookmarkCardYouTube } from "./bookmark-card-youtube";
+export { BookmarkCardAgenticSearch } from "./bookmark-card-agentic-search";

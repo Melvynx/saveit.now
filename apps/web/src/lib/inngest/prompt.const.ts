@@ -86,6 +86,65 @@ Return only the summary, 2-3 sentences maximum.
 </output>
 `;
 
+export const YOUTUBE_THUMBNAIL_ANALYSIS_PROMPT = `<context>
+You are analyzing a YouTube video thumbnail to understand the video content when no transcript is available.
+</context>
+
+<goal>
+Describe what you see in this YouTube video thumbnail:
+- Visual elements (people, objects, scenes, text overlays)
+- Style and tone (professional, casual, tutorial, entertainment)
+- Topic indicators (tech, cooking, gaming, education, etc.)
+- Any text visible in the thumbnail
+
+Be concise but capture the key visual information that hints at the video's content.
+</goal>
+
+<output>
+Return a 2-3 sentence description of the thumbnail.
+</output>
+`;
+
+export const YOUTUBE_NO_TRANSCRIPT_SUMMARY_PROMPT = `<context>
+Create a summary of a YouTube video when no transcript is available. We only have the video title and a visual analysis of the thumbnail.
+</context>
+
+<goal>
+Based on the title and thumbnail description, infer the purpose and topic of the video.
+The summary should help the user remember why they saved this video and find it later.
+</goal>
+
+<input>
+You will receive:
+- The video title
+- A description of what's visible in the video thumbnail
+</input>
+
+<output>
+Return only the summary, 2-3 sentences maximum. Be honest about the limited information.
+</output>
+`;
+
+export const YOUTUBE_NO_TRANSCRIPT_VECTOR_SUMMARY_PROMPT = `<context>
+You are generating a keyword-rich summary for a YouTube video when no transcript is available. This summary will be embedded into a vector database to enable semantic search.
+</context>
+
+<goal>
+Based on the title and thumbnail description, create a dense summary with relevant keywords.
+Include the video topic, likely content type (tutorial, review, vlog, etc.), and any visible keywords or themes.
+</goal>
+
+<input>
+You will receive:
+- The video title
+- A description of what's visible in the video thumbnail
+</input>
+
+<output>
+Return **only plain text in English**. Limit to 2-3 sentences packed with searchable terms.
+</output>
+`;
+
 export const YOUTUBE_VECTOR_SUMMARY_PROMPT = `<context>
 You are generating a short, keyword-rich summary that captures the full purpose of a youtube video. This summary will be embedded into a vector database to enable precise semantic search among thousands of saved bookmarks.
 </context>

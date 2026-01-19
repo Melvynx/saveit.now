@@ -15,9 +15,13 @@ import {
 } from "../process-bookmark.utils";
 import {
   TAGS_PROMPT,
+  YOUTUBE_NO_TRANSCRIPT_SUMMARY_PROMPT,
+  YOUTUBE_NO_TRANSCRIPT_VECTOR_SUMMARY_PROMPT,
   YOUTUBE_SUMMARY_PROMPT,
+  YOUTUBE_THUMBNAIL_ANALYSIS_PROMPT,
   YOUTUBE_VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
+import { analyzeScreenshotWithPrompt } from "../screenshot-analysis.utils";
 
 export function getVideoId(url: string): string {
   const regex =
@@ -113,6 +117,39 @@ export async function processYouTubeBookmark(
     },
   });
 
+  const thumbnailAnalysis = await step.run(
+    "analyze-thumbnail-fallback",
+    async () => {
+      if (videoInfo.transcript) {
+        return null;
+      }
+
+      const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+
+      try {
+        const testFetch = await fetch(thumbnailUrl, { method: "HEAD" });
+        const finalThumbnailUrl = testFetch.ok
+          ? thumbnailUrl
+          : `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+
+        const result = await analyzeScreenshotWithPrompt(
+          finalThumbnailUrl,
+          YOUTUBE_THUMBNAIL_ANALYSIS_PROMPT,
+        );
+
+        if (result.isInvalid || !result.description) {
+          logger.debug("Thumbnail analysis failed:", result.invalidReason);
+          return null;
+        }
+
+        return result.description;
+      } catch (error) {
+        logger.debug("Error analyzing thumbnail:", error);
+        return null;
+      }
+    },
+  );
+
   await publish({
     channel: `bookmark:${context.bookmarkId}`,
     topic: "status",
@@ -156,25 +193,41 @@ export async function processYouTubeBookmark(
     },
   });
 
-  // Generate a summary of the transcript
+  // Generate a summary of the transcript (or from thumbnail analysis if no transcript)
   const summary = await step.run("get-summary", async () => {
-    if (!videoInfo.transcript) {
-      return "";
+    if (videoInfo.transcript) {
+      return await generateContentSummary(
+        YOUTUBE_SUMMARY_PROMPT,
+        `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
+      );
     }
-    return await generateContentSummary(
-      YOUTUBE_SUMMARY_PROMPT,
-      `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
-    );
+
+    if (thumbnailAnalysis) {
+      return await generateContentSummary(
+        YOUTUBE_NO_TRANSCRIPT_SUMMARY_PROMPT,
+        `<title>${videoInfo.title}</title><thumbnail_description>${thumbnailAnalysis}</thumbnail_description>`,
+      );
+    }
+
+    return "";
   });
 
   const vectorSummary = await step.run("get-vector-summary", async () => {
-    if (!videoInfo.transcript) {
-      return "";
+    if (videoInfo.transcript) {
+      return await generateContentSummary(
+        YOUTUBE_VECTOR_SUMMARY_PROMPT,
+        `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
+      );
     }
-    return await generateContentSummary(
-      YOUTUBE_VECTOR_SUMMARY_PROMPT,
-      `<title>${videoInfo.title}</title><transcript>${videoInfo.transcript}</transcript>`,
-    );
+
+    if (thumbnailAnalysis) {
+      return await generateContentSummary(
+        YOUTUBE_NO_TRANSCRIPT_VECTOR_SUMMARY_PROMPT,
+        `<title>${videoInfo.title}</title><thumbnail_description>${thumbnailAnalysis}</thumbnail_description>`,
+      );
+    }
+
+    return "";
   });
 
   await publish({
@@ -214,6 +267,16 @@ export async function processYouTubeBookmark(
     if (videoInfo.transcript) {
       finalMetadata.transcript = videoInfo.transcript;
       finalMetadata.transcriptExtractedAt = new Date().toISOString();
+    }
+
+    // Track summary source for debugging and analytics
+    if (videoInfo.transcript) {
+      finalMetadata.summarySource = "transcript";
+    } else if (thumbnailAnalysis) {
+      finalMetadata.thumbnailAnalysis = thumbnailAnalysis;
+      finalMetadata.summarySource = "thumbnail";
+    } else {
+      finalMetadata.summarySource = "none";
     }
 
     await updateBookmarkWithMetadata({

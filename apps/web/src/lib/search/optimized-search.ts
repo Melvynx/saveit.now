@@ -100,7 +100,10 @@ class OptimizedSearchQuery {
     `;
   }
 
-  private buildVectorSearchCTE(paramIndex: number, skipDistanceFilter: boolean = false): string {
+  private buildVectorSearchCTE(
+    paramIndex: number,
+    skipDistanceFilter: boolean = false,
+  ): string {
     // Build filter conditions for the MIN subquery
     const statusFilter = this.buildStatusFilter("").replace("AND ", "AND ");
     const typeFilter = this.buildTypeFilter("").replace("AND ", "AND ");
@@ -156,31 +159,34 @@ class OptimizedSearchQuery {
     // If it's a search query, only return READY bookmarks
     // If it's browsing (no query), return all statuses
     if (this.params.isSearchQuery) {
-      return `AND ${alias}.status = 'READY'`;
+      const prefix = alias ? `${alias}.` : "";
+      return `AND ${prefix}status = 'READY'`;
     }
     return "";
   }
 
   private buildTypeFilter(alias: string): string {
     if (!this.params.types || this.params.types.length === 0) return "";
+    const prefix = alias ? `${alias}.` : "";
     const typeList = this.params.types.map((t) => `'${t}'`).join(",");
-    return `AND ${alias}.type IN (${typeList})`;
+    return `AND ${prefix}type IN (${typeList})`;
   }
 
   private buildSpecialFilters(alias: string): string {
     if (!this.params.specialFilters || this.params.specialFilters.length === 0)
       return "";
 
+    const prefix = alias ? `${alias}.` : "";
     const conditions: string[] = [];
 
     if (this.params.specialFilters.includes("READ")) {
-      conditions.push(`${alias}.read = true`);
+      conditions.push(`${prefix}read = true`);
     }
     if (this.params.specialFilters.includes("UNREAD")) {
-      conditions.push(`${alias}.read = false`);
+      conditions.push(`${prefix}read = false`);
     }
     if (this.params.specialFilters.includes("STAR")) {
-      conditions.push(`${alias}.starred = true`);
+      conditions.push(`${prefix}starred = true`);
     }
 
     return conditions.length > 0 ? `AND (${conditions.join(" OR ")})` : "";
@@ -210,7 +216,9 @@ class OptimizedSearchQuery {
 
     // Add vector search strategy
     if (this.params.embedding) {
-      strategies.push(this.buildVectorSearchCTE(paramIndex, this.params.skipDistanceFilter));
+      strategies.push(
+        this.buildVectorSearchCTE(paramIndex, this.params.skipDistanceFilter),
+      );
       values.push(this.params.embedding);
       if (!this.params.skipDistanceFilter) {
         values.push(this.params.matchingDistance || 0.1);

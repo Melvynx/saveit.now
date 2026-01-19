@@ -5,7 +5,7 @@ import { PosthogLink } from "@/components/posthog-link";
 import { ANALYTICS } from "@/lib/analytics";
 import { APP_LINKS } from "@/lib/app-links";
 import { Button } from "@workspace/ui/components/button";
-import { Check, Search } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { SignInWith } from "../auth/sign-in-with";
 
@@ -17,16 +17,16 @@ export const LandingHero = () => {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
               <h1 className="text-5xl font-semibold text-balance text-foreground sm:text-7xl leading-tight sm:leading-[1.2]">
-                Organize nothing.
-                <br className="mb-4 sm:mb-6" />
+                The First{" "}
                 <b className="bg-primary/10 border-primary text-primary -mx-2 rounded-lg inline-flex gap-2 items-center border px-2">
-                  <Search className="size-12" /> Find everything.
-                </b>
+                  Agentic
+                </b>{" "}
+                Bookmark Manager
               </h1>
               <p className="mt-8 text-lg font-medium text-pretty text-muted-foreground sm:text-xl/8">
-                Save it now—find it in seconds, whether it's an article, video,
-                post, or tool. AI-powered search that actually understands what
-                you're looking for.
+                Your bookmarks don't just sit there anymore. They watch. They
+                learn. They find. Save any link—your agent organizes,
+                summarizes, and retrieves instantly.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6 flex-col sm:flex-row gap-y-4">
                 <SignInWith
@@ -96,40 +96,40 @@ export const LandingHero = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-4">
-                      <span className="text-4xl">🤖</span>
+                      <span className="text-4xl">🧠</span>
                     </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      AI summaries
+                      Autonomous
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Get the key takeaways of articles and videos without
-                      reopening them.
+                      Your agent decides how to organize—no folders, no tags, no
+                      decisions required from you.
                     </p>
                   </div>
 
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-4">
-                      <span className="text-4xl">🔍</span>
+                      <span className="text-4xl">👁️</span>
                     </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Advanced AI Search
+                      Observant
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Type an idea; and our AI will always find the most
-                      relevant, guaranteed.
+                      Watches what you save, learns your patterns, and
+                      understands context automatically.
                     </p>
                   </div>
 
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-4">
-                      <span className="text-4xl">🖼️</span>
+                      <span className="text-4xl">⚡</span>
                     </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Visual previews
+                      Proactive
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Thumbnails and screenshots help you spot what you need at
-                      a glance.
+                      Retrieves content in milliseconds when you describe what
+                      you're looking for.
                     </p>
                   </div>
                 </div>

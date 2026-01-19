@@ -21,7 +21,11 @@ import {
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
-import { analyzeScreenshot } from "../screenshot-analysis.utils";
+import {
+  analyzeScreenshot,
+  analyzeScreenshotBuffer,
+  type ScreenshotAnalysisResult,
+} from "../screenshot-analysis.utils";
 
 async function isScreenshotUrlValid(url: string): Promise<boolean> {
   const controller = new AbortController();
@@ -160,9 +164,16 @@ export async function processStandardWebpage(
     },
   });
 
-  const screenshot = await step.run("get-screenshot-v2", async () => {
+  const screenshotResult = await step.run("get-screenshot-v2", async () => {
     if (context.url.includes("isPlaywrightTest=true")) {
-      return "https://via.placeholder.com/1200x630/f0f0f0/333333?text=Playwright+Test+Placeholder";
+      return {
+        url: "https://via.placeholder.com/1200x630/f0f0f0/333333?text=Playwright+Test+Placeholder",
+        analysis: {
+          description: "Placeholder image for Playwright test",
+          isInvalid: false,
+          invalidReason: null,
+        } as ScreenshotAnalysisResult,
+      };
     }
 
     // Always try Cloudflare scraper first
@@ -188,6 +199,14 @@ export async function processStandardWebpage(
         `[Screenshot] Successfully captured screenshot, buffer size: ${screenshotBuffer.length} bytes`,
       );
 
+      const analysis = await analyzeScreenshotBuffer(screenshotBuffer);
+      if (analysis.isInvalid) {
+        logger.info(
+          `[Screenshot] Screenshot invalid (${analysis.invalidReason}), skipping S3 upload`,
+        );
+        return { url: null, analysis };
+      }
+
       const screenshotUrl = await uploadBufferToS3({
         buffer: screenshotBuffer,
         fileName: "screenshot",
@@ -200,7 +219,7 @@ export async function processStandardWebpage(
       }
 
       logger.info(`[Screenshot] Successfully uploaded to S3: ${screenshotUrl}`);
-      return screenshotUrl;
+      return { url: screenshotUrl, analysis };
     } catch (error) {
       logger.error(
         `[Screenshot] Cloudflare screenshot failed for ${context.url}:`,
@@ -219,17 +238,18 @@ export async function processStandardWebpage(
           logger.info(
             `[Screenshot] Using extension screenshot as fallback: ${freshBookmark.preview}`,
           );
-          return freshBookmark.preview;
+          return { url: freshBookmark.preview, analysis: null };
         }
         logger.info(
           `[Screenshot] Extension screenshot also invalid, no screenshot available`,
         );
       }
 
-      return null;
+      return { url: null, analysis: null };
     }
   });
 
+  const screenshot = screenshotResult.url;
   const screenshotUrl = screenshot ?? pageMetadata.ogImageUrl;
 
   await publish({
@@ -244,6 +264,9 @@ export async function processStandardWebpage(
   const screenshotAnalysis = await step.run(
     "get-screenshot-description",
     async () => {
+      if (screenshotResult.analysis) {
+        return screenshotResult.analysis;
+      }
       return await analyzeScreenshot(screenshotUrl);
     },
   );

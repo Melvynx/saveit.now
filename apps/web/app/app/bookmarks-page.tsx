@@ -10,6 +10,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
   BookmarkCard,
+  BookmarkCardAgenticSearch,
   BookmarkCardInput,
   BookmarkCardLoadMore,
   BookmarkCardPricing,
@@ -76,10 +77,14 @@ export function BookmarksPage() {
                 className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
               />
             ))}
+            {query && <MoreResultsButton />}
           </>
         ) : (
           <>
             {!query && <BookmarkCardInput />}
+            {query && bookmarks.length > 0 && (
+              <BookmarkCardAgenticSearch query={query} />
+            )}
 
             {bookmarks.map((bookmark, i) => {
               if (query && i === 0) {

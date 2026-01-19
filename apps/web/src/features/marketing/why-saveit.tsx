@@ -12,46 +12,46 @@ interface Benefit {
 
 const benefits: Benefit[] = [
   {
-    id: "never-lose",
-    icon: "🧠",
-    title: "Never Lose Ideas Again",
-    description:
-      "Stop losing breakthrough ideas because you can't find that perfect resource from 3 months ago. Turn information chaos into instant insights.",
-  },
-  {
-    id: "instant-retrieval",
-    icon: "⚡",
-    title: "3-Second Retrieval",
-    description:
-      "Type what you remember and our AI finds it. No more scrolling through endless bookmark folders trying to find that one link.",
-  },
-  {
-    id: "creator-focused",
+    id: "autonomous-capture",
     icon: "🎯",
-    title: "Built for Creators",
+    title: "Autonomous Capture",
     description:
-      "500+ hours of real creator research went into building this. It just works the way your brain works, not like boring enterprise tools.",
+      "Paste any URL. Your agent screenshots, summarizes, and indexes—instantly. You do nothing but save.",
   },
   {
-    id: "zero-organization",
-    icon: "🗂️",
-    title: "Zero Organization Required",
+    id: "self-organization",
+    icon: "🧠",
+    title: "Self-Organization",
     description:
-      "Folders are the worst way to organize knowledge. Our AI does the organizing so you can focus on creating, not cataloging.",
+      "No folders. No tags. Your agent decides where things belong and how to find them later.",
   },
   {
-    id: "instant-context",
-    icon: "🚀",
-    title: "Instant Context",
-    description:
-      "AI summaries give you the key insights without re-reading everything. Perfect for busy creators who need information fast.",
-  },
-  {
-    id: "search-by-vibes",
+    id: "semantic-retrieval",
     icon: "🔍",
-    title: "Find What You Forgot",
+    title: "Semantic Retrieval",
     description:
-      "Describe what you remember and we'll find it. Even if you forgot the exact title or website. Search by vibes, not keywords.",
+      "Describe what you remember. 'That productivity article from last month'—found in milliseconds.",
+  },
+  {
+    id: "universal-understanding",
+    icon: "📚",
+    title: "Universal Understanding",
+    description:
+      "PDFs, videos, tweets, articles—your agent comprehends them all, searchable in one place.",
+  },
+  {
+    id: "continuous-learning",
+    icon: "⚡",
+    title: "Continuous Learning",
+    description:
+      "The more you save, the smarter your agent gets. Personalized retrieval that improves daily.",
+  },
+  {
+    id: "proactive-surfacing",
+    icon: "🔮",
+    title: "Proactive Surfacing",
+    description:
+      "Your agent notices patterns and surfaces relevant saved content—before you even search.",
   },
 ];
 
@@ -75,20 +75,17 @@ export function WhySaveIt() {
       className="bg-foreground/5 rounded-md py-8 shadow"
     >
       <div className="text-center mb-16 flex flex-col gap-2 items-center mx-auto max-w-2xl">
-        <Badge variant="outline">Why SaveIt.now?</Badge>
+        <Badge variant="outline">What Your Agent Does</Badge>
         <Typography variant="h2">
-          Already drowning in bookmarks and research?{" "}
-          <br className="hidden md:block" />
-          Let's turn that chaos into your{" "}
+          Your agent works{" "}
           <span className="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            Knowledge Superpower
+            while you create
           </span>
-          .
         </Typography>
         <Typography variant="lead">
-          You've saved thousands of links, but when inspiration strikes, you
-          can't find that perfect resource you saw months ago. Another brilliant
-          idea dies because your "system" failed you again.
+          Every other bookmark tool waits for you to organize and search. Your
+          SaveIt agent works autonomously—capturing, organizing, and retrieving
+          so you never lose an idea again.
         </Typography>
       </div>
 

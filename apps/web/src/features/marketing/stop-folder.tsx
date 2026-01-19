@@ -7,16 +7,17 @@ export const StopFolder = () => {
   return (
     <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
       <div>
-        <Typography variant="h2">Embrass the mess.</Typography>
-        <Typography variant="lead">And say goodbye to folder</Typography>
+        <Typography variant="h2">Folders are dead.</Typography>
+        <Typography variant="lead">Welcome to agentic bookmarking</Typography>
       </div>
       <div className="w-full flex flex-col lg:flex-row gap-4">
-        <div className="flex-1 flex flex-col border rounded-lg p-4">
-          <Typography variant="h3">
-            Organizing into folder ? For what ?
+        <div className="flex-1 flex flex-col border rounded-lg p-4 border-destructive/20 bg-destructive/5">
+          <Typography variant="h3" className="text-muted-foreground">
+            Traditional: You do all the work
           </Typography>
           <Typography variant="muted">
-            Never going to find anything, and you know it.
+            Organize into folders. Tag everything. Search with exact keywords.
+            Still can't find anything.
           </Typography>
           <div className="h-42 relative w-full">
             <img
@@ -60,35 +61,21 @@ export const StopFolder = () => {
             </svg>
           </div>
         </div>
-        <div className="flex-1 flex flex-col border rounded-lg p-4">
-          <Typography variant="h3">
-            Say welcome to <b>Intelligent Search™</b>
+        <div className="flex-1 flex flex-col border rounded-lg p-4 border-primary/20 bg-primary/5">
+          <Typography variant="h3" className="text-primary">
+            Agentic: Your agent does the work
           </Typography>
           <Typography variant="muted">
-            Just write what you remember about the website and I'll find it.
+            Just describe what you're looking for. Your agent finds it
+            instantly.
           </Typography>
           <div className="h-42 relative w-full mt-12">
             <Input
               className="text-2xl lg:text-xl h-12"
-              placeholder="The magic append ✨"
+              placeholder="That article about productivity..."
             />
           </div>
         </div>
-      </div>
-      <Typography variant="h2">30 secondes demo 👇</Typography>
-      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
-        <iframe
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            border: 0,
-          }}
-          src="https://www.tella.tv/video/cmbbtucsq00000bl78kz905hf/embed?b=0&title=1&a=1&loop=0&t=0&muted=0&wt=0"
-          allowFullScreen
-        />
       </div>
     </MaxWidthContainer>
   );

@@ -21,7 +21,11 @@ import {
   USER_SUMMARY_PROMPT,
   VECTOR_SUMMARY_PROMPT,
 } from "../prompt.const";
-import { analyzeScreenshot } from "../screenshot-analysis.utils";
+import {
+  analyzeScreenshot,
+  analyzeScreenshotBuffer,
+  type ScreenshotAnalysisResult,
+} from "../screenshot-analysis.utils";
 
 export async function processArticleBookmark(
   context: {
@@ -125,8 +129,10 @@ export async function processArticleBookmark(
     },
   });
 
-  const screenshot = await step.run("get-screenshot-v2", async () => {
-    if (context.bookmark.preview) return context.bookmark.preview;
+  const screenshotResult = await step.run("get-screenshot-v2", async () => {
+    if (context.bookmark.preview) {
+      return { url: context.bookmark.preview, analysis: null };
+    }
     try {
       const screenshotBuffer = await captureScreenshot({
         url: context.url,
@@ -134,6 +140,18 @@ export async function processArticleBookmark(
         waitUntil: "networkidle0",
         timeout: 30000,
       });
+
+      if (screenshotBuffer.length < 1000) {
+        return { url: null, analysis: null };
+      }
+
+      const analysis = await analyzeScreenshotBuffer(screenshotBuffer);
+      if (analysis.isInvalid) {
+        logger.info(
+          `[Screenshot] Screenshot invalid (${analysis.invalidReason}), skipping S3 upload`,
+        );
+        return { url: null, analysis };
+      }
 
       const screenshotUrl = await uploadBufferToS3({
         buffer: screenshotBuffer,
@@ -143,15 +161,16 @@ export async function processArticleBookmark(
       });
 
       if (!screenshotUrl) {
-        return null;
+        return { url: null, analysis: null };
       }
 
-      return screenshotUrl;
+      return { url: screenshotUrl, analysis };
     } catch {
-      return null;
+      return { url: null, analysis: null };
     }
   });
 
+  const screenshot = screenshotResult.url;
   const screenshotUrl = screenshot ?? pageMetadata.ogImageUrl;
 
   await publish({
@@ -166,13 +185,10 @@ export async function processArticleBookmark(
   const screenshotAnalysis = await step.run(
     "get-screenshot-description",
     async () => {
-      const result = await analyzeScreenshot(screenshotUrl);
-      
-      if (result.isInvalid && result.invalidReason) {
-        logger.debug(`Screenshot invalid for bookmark ${context.bookmarkId}: ${result.invalidReason}`);
+      if (screenshotResult.analysis) {
+        return screenshotResult.analysis;
       }
-      
-      return result;
+      return await analyzeScreenshot(screenshotUrl);
     },
   );
 
@@ -236,7 +252,11 @@ ${screenshotAnalysis.description}
       return [];
     }
 
-    return await generateAndCreateTags(TAGS_PROMPT, vectorSummary, context.userId);
+    return await generateAndCreateTags(
+      TAGS_PROMPT,
+      vectorSummary,
+      context.userId,
+    );
   });
 
   const images = await step.run("save-screenshot", async () => {
@@ -281,9 +301,11 @@ ${screenshotAnalysis.description}
 
   await step.run("update-bookmark", async () => {
     // Use og-image as fallback when screenshot is invalid
-    const finalPreview = screenshotAnalysis.isInvalid 
-      ? images.ogImageUrl 
-      : (screenshotAnalysis.description ? screenshot : images.ogImageUrl);
+    const finalPreview = screenshotAnalysis.isInvalid
+      ? images.ogImageUrl
+      : screenshotAnalysis.description
+        ? screenshot
+        : images.ogImageUrl;
 
     await updateBookmarkWithMetadata({
       bookmarkId: context.bookmarkId,
@@ -319,8 +341,7 @@ ${screenshotAnalysis.description}
       model: OPENAI_MODELS.embedding,
       values: [vectorSummary || "", pageMetadata.title || ""],
     });
-    const [vectorSummaryEmbedding, titleEmbedding] =
-      embedding.embeddings;
+    const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`

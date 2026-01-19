@@ -16,6 +16,23 @@ export const FAQ = () => {
 
       <div className="max-w-3xl mx-auto w-full">
         <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="agentic">
+            <AccordionTrigger>
+              <Typography variant="large">What does "agentic" mean?</Typography>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Typography>
+                Agentic AI doesn't just respond—it acts autonomously. While most
+                AI tools wait for you to give commands, agentic systems make
+                decisions and take action on their own. Your SaveIt agent
+                automatically organizes your bookmarks, learns your patterns,
+                and retrieves content before you even search. It's the
+                difference between a tool that helps and a tool that works for
+                you.
+              </Typography>
+            </AccordionContent>
+          </AccordionItem>
+
           <AccordionItem value="cancel">
             <AccordionTrigger>
               <Typography variant="large">Can I cancel any time?</Typography>

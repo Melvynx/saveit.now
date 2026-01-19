@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { Link as RouterLink } from "react-router";
 import { useMedia } from "react-use";
 import { z } from "zod";
 
@@ -50,20 +51,20 @@ export const BookmarkHeader = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <Link href="/app">
+      <RouterLink to="/app">
         SaveIt
         <span className="text-primary font-bold">
           <HeaderAppNameExtension />
         </span>
-      </Link>
+      </RouterLink>
 
-      <Link
-        href="/app/chat"
+      <RouterLink
+        to="/app/agents"
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <MessageSquareIcon className="mr-1.5 size-4" />
-        Chat
-      </Link>
+        Agents
+      </RouterLink>
       <div className="flex-1"></div>
       {!isMobile ? (
         <>
