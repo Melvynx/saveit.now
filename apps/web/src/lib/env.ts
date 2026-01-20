@@ -17,8 +17,11 @@ export const env = createEnv({
     CLOUDFLARE_API_TOKEN: z.string().min(1).default("ci-placeholder"),
     CLOUDFLARE_ACCOUNT_ID: z.string().min(1).default("ci-placeholder"),
     NODE_ENV: z.enum(["development", "production", "test"]).default("test"),
-    UPSTASH_REDIS_REST_URL: z.string().min(1),
-    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+    UPSTASH_REDIS_REST_URL: z
+      .string()
+      .min(1)
+      .default("https://placeholder.upstash.io"),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).default("placeholder-token"),
     RESEND_EMAIL_FROM: z
       .string()
       .default("Melvyn from SaveIt.now <help@re.saveit.now>"),
