@@ -213,6 +213,7 @@ export function ChatPage() {
     }),
     onFinish: () => {
       void refetchUsage();
+      setTimeout(() => textareaRef.current?.focus(), 0);
     },
     onError: (err) => {
       console.error("[Chat] Error:", err);
@@ -244,37 +245,35 @@ export function ChatPage() {
   }, []);
 
   useEffect(() => {
-    if (conversationId && messages.length > 0 && status === "ready") {
+    if (
+      conversationId &&
+      messages.length > 0 &&
+      status === "ready" &&
+      !isLoadingConversation
+    ) {
       saveMessagesMutation.mutate({ id: conversationId, messages });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, messages, status]);
+  }, [conversationId, messages, status, isLoadingConversation]);
 
   const isGenerating = status === "submitted" || status === "streaming";
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (!input.trim() || isGenerating) return;
 
     const messageText = input.trim();
     setInput("");
-    textareaRef.current?.focus();
 
-    // Create conversation first if needed, then send message
-    if (!conversationId) {
-      try {
-        const result =
-          await createConversationMutation.mutateAsync(messageText);
-        conversationIdRef.current = result.id;
-      } catch {
-        toast.error("Failed to create conversation");
-        return;
-      }
-    }
-
+    // Send message immediately for instant optimistic update
     void sendMessage({ text: messageText }).catch((error) => {
       console.error("Send failed:", error);
       toast.error("Failed to send message");
     });
+
+    // Create conversation in parallel if needed (non-blocking)
+    if (!conversationId) {
+      createConversationMutation.mutate(messageText);
+    }
   }, [
     input,
     isGenerating,
@@ -291,24 +290,19 @@ export function ChatPage() {
   };
 
   const handleSuggestionClick = useCallback(
-    async (s: string) => {
+    (s: string) => {
       textareaRef.current?.focus();
 
-      // Create conversation first if needed, then send message
-      if (!conversationId) {
-        try {
-          const result = await createConversationMutation.mutateAsync(s);
-          conversationIdRef.current = result.id;
-        } catch {
-          toast.error("Failed to create conversation");
-          return;
-        }
-      }
-
+      // Send message immediately for instant optimistic update
       void sendMessage({ text: s }).catch((error) => {
         console.error("Send failed:", error);
         toast.error("Failed to send message");
       });
+
+      // Create conversation in parallel if needed (non-blocking)
+      if (!conversationId) {
+        createConversationMutation.mutate(s);
+      }
     },
     [conversationId, createConversationMutation, sendMessage],
   );
@@ -384,90 +378,143 @@ export function ChatPage() {
   };
 
   return (
-    <div className="bg-muted fixed inset-0 flex flex-col">
+    <div className="bg-muted fixed inset-0 flex flex-col overflow-hidden">
       <ChatHeader
         conversationId={conversationId}
         onNewConversation={handleNewConversation}
         onSelectConversation={handleSelectConversation}
       />
 
-      <div className="flex min-h-0 flex-1 flex-col items-center overflow-hidden">
-        <div className="flex min-h-0 w-full max-w-3xl flex-1 flex-col">
-          {messages.length === 0 ? (
+      {messages.length === 0 ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center">
+          <div className="flex min-h-0 w-full max-w-3xl flex-1 flex-col">
             <EmptyState onSuggestionClick={handleSuggestionClick} />
-          ) : (
-            <StickToBottom
-              className="relative min-h-0 flex-1 overflow-y-auto"
-              initial="smooth"
-              resize="smooth"
-            >
-              <StickToBottom.Content className="flex flex-col gap-3 p-4">
-                {messages.map((m, i) => (
-                  <MessageItem
-                    key={m.id}
-                    message={m}
-                    isLast={i === messages.length - 1}
-                    isLoading={isGenerating}
-                    onEdit={handleEditMessage}
-                  />
-                ))}
-              </StickToBottom.Content>
-              <ScrollButton />
-            </StickToBottom>
-          )}
-
-          <div className="p-3">
-            <div
-              className={cn(
-                "rounded-2xl",
-                "border-2 border-primary",
-                "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
-                "flex items-center gap-1 p-1.5",
-              )}
-            >
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about your bookmarks..."
-                className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
-                rows={1}
-                disabled={isGenerating && status !== "streaming"}
-              />
-              <div className="flex items-center gap-1">
-                {input.trim() && !isGenerating && (
+            <div className="p-3">
+              <div
+                className={cn(
+                  "rounded-2xl",
+                  "border-2 border-primary",
+                  "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
+                  "flex items-center gap-1 p-1.5",
+                )}
+              >
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about your bookmarks..."
+                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
+                  rows={1}
+                  disabled={isGenerating && status !== "streaming"}
+                />
+                <div className="flex items-center gap-1">
+                  {input.trim() && !isGenerating && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8 rounded-lg"
+                      onClick={handleClearInput}
+                    >
+                      <XIcon className="size-4" />
+                    </Button>
+                  )}
                   <Button
                     size="icon"
-                    variant="ghost"
                     className="size-8 rounded-lg"
-                    onClick={handleClearInput}
+                    onClick={isGenerating ? () => stop() : handleSubmit}
+                    disabled={!isGenerating && !input.trim()}
                   >
-                    <XIcon className="size-4" />
+                    {isGenerating && status === "streaming" ? (
+                      <SquareIcon className="size-4" />
+                    ) : isGenerating ? (
+                      <Loader2Icon className="size-4 animate-spin" />
+                    ) : (
+                      <CornerDownLeftIcon className="size-4" />
+                    )}
                   </Button>
-                )}
-                <Button
-                  size="icon"
-                  className="size-8 rounded-lg"
-                  onClick={isGenerating ? () => stop() : handleSubmit}
-                  disabled={!isGenerating && !input.trim()}
-                >
-                  {isGenerating && status === "streaming" ? (
-                    <SquareIcon className="size-4" />
-                  ) : isGenerating ? (
-                    <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                    <CornerDownLeftIcon className="size-4" />
-                  )}
-                </Button>
+                </div>
               </div>
-            </div>
-            <div className="mt-2 flex justify-center">
-              <CreditsDisplay credits={usage ?? null} />
+              <div className="mt-2 flex justify-center">
+                <CreditsDisplay credits={usage ?? null} />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <StickToBottom
+          className="relative min-h-0 flex-1"
+          initial="smooth"
+          resize="smooth"
+        >
+          <StickToBottom.Content className="flex flex-col items-center pb-28">
+            <div className="flex w-full max-w-3xl flex-col gap-3 p-4">
+              {messages.map((m, i) => (
+                <MessageItem
+                  key={m.id}
+                  message={m}
+                  isLast={i === messages.length - 1}
+                  isLoading={isGenerating}
+                  onEdit={handleEditMessage}
+                />
+              ))}
+            </div>
+          </StickToBottom.Content>
+          <ScrollButton />
+          <div className="bg-muted/80 sticky bottom-0 w-full backdrop-blur-sm">
+            <div className="mx-auto max-w-3xl p-3">
+              <div
+                className={cn(
+                  "rounded-2xl",
+                  "border-2 border-primary",
+                  "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
+                  "flex items-center gap-1 p-1.5",
+                )}
+              >
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about your bookmarks..."
+                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
+                  rows={1}
+                  disabled={isGenerating && status !== "streaming"}
+                />
+                <div className="flex items-center gap-1">
+                  {input.trim() && !isGenerating && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8 rounded-lg"
+                      onClick={handleClearInput}
+                    >
+                      <XIcon className="size-4" />
+                    </Button>
+                  )}
+                  <Button
+                    size="icon"
+                    className="size-8 rounded-lg"
+                    onClick={isGenerating ? () => stop() : handleSubmit}
+                    disabled={!isGenerating && !input.trim()}
+                  >
+                    {isGenerating && status === "streaming" ? (
+                      <SquareIcon className="size-4" />
+                    ) : isGenerating ? (
+                      <Loader2Icon className="size-4 animate-spin" />
+                    ) : (
+                      <CornerDownLeftIcon className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-2 flex justify-center">
+                <CreditsDisplay credits={usage ?? null} />
+              </div>
+            </div>
+          </div>
+        </StickToBottom>
+      )}
 
       {bookmarkId && (
         <BookmarkDialog bookmarkId={bookmarkId} onClose={handleCloseBookmark} />

@@ -3,7 +3,11 @@ import { hasMarkdownContent } from "@/lib/bookmark-content";
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import { Button } from "@workspace/ui/components/button";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
-import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
 import { Loader } from "@workspace/ui/components/loader";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { BookOpen, ExternalLink } from "lucide-react";
@@ -48,6 +52,7 @@ export function BookmarkDialog({ bookmarkId, onClose }: BookmarkDialogProps) {
     return (
       <Dialog open={true} key="loading">
         <DialogContent>
+          <DialogTitle className="sr-only">Loading bookmark</DialogTitle>
           <Loader />
         </DialogContent>
       </Dialog>
@@ -64,6 +69,9 @@ export function BookmarkDialog({ bookmarkId, onClose }: BookmarkDialogProps) {
           maxHeight: "calc(100vh - 32px)",
         }}
       >
+        <DialogTitle className="sr-only">
+          {bookmark.title || "Bookmark details"}
+        </DialogTitle>
         <header className="flex items-center gap-2 px-6 pt-6">
           <div className="flex-1"></div>
           <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>

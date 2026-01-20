@@ -14,6 +14,33 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.1.1",
+    date: "2026-01-20",
+    type: "feature",
+    title: "AI Agents",
+    description:
+      "Chat with your bookmarks using AI. Ask questions, search by topic, and get relevant results with intelligent filtering.",
+    changes: [
+      {
+        type: "new",
+        text: "AI-powered chat interface to search and explore bookmarks",
+      },
+      {
+        type: "new",
+        text: "Conversation history to continue previous chats",
+      },
+      {
+        type: "new",
+        text: "Smart filtering that shows only highly relevant results",
+      },
+      {
+        type: "improvement",
+        text: "Thinking process visibility for transparency",
+      },
+    ],
+    image: "/changelog/1.1.1.png",
+  },
+  {
     version: "1.8.0",
     date: "2025-09-03",
     type: "feature",

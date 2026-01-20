@@ -27,11 +27,23 @@ function BookmarkGridDisplay({ bookmarks }: { bookmarks: BookmarkData[] }) {
     return <p className="text-muted-foreground text-sm">No bookmarks found.</p>;
   }
 
+  const shouldBreakout = bookmarks.length >= 4;
+
   return (
-    <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] [&>*]:w-full place-items-start">
-      {bookmarks.map((b) => (
-        <BookmarkCard key={b.id} bookmark={b} />
-      ))}
+    <div
+      className={cn(
+        "relative",
+        "w-full",
+        shouldBreakout && "lg:w-[140%] lg:-ml-[20%]",
+        shouldBreakout && "xl:w-[160%] xl:-ml-[30%]",
+        shouldBreakout && "2xl:w-[180%] 2xl:-ml-[40%]",
+      )}
+    >
+      <div className="flex flex-wrap justify-center gap-3 [&>*]:w-full [&>*]:sm:w-72 [&>*]:lg:w-80">
+        {bookmarks.map((b) => (
+          <BookmarkCard key={b.id} bookmark={b} />
+        ))}
+      </div>
     </div>
   );
 }
