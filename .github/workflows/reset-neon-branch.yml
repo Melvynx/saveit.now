@@ -1,0 +1,21 @@
+name: Reset Neon Branch with GitHub Actions Demo
+run-name: Reset a Neon Branch 🚀
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  Reset-Neon-Branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset Branch
+        uses: neondatabase/reset-branch-action@v1
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          parent: true
+          branch: preview/${{ github.ref_name }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+        id: reset-branch
+      - run: echo branch_id ${{ steps.reset-branch.outputs.branch_id }}
