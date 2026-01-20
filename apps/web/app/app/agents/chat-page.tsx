@@ -192,6 +192,9 @@ export function ChatPage() {
         method: "PATCH",
         body: { messages },
       }),
+    onError: () => {
+      toast.error("Failed to save conversation");
+    },
   });
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
@@ -256,16 +259,16 @@ export function ChatPage() {
     setInput("");
     textareaRef.current?.focus();
 
-    // Create conversation in parallel with sending message
+    // Create conversation first if needed, then send message
     if (!conversationId) {
-      createConversationMutation
-        .mutateAsync(messageText)
-        .then((result) => {
-          conversationIdRef.current = result.id;
-        })
-        .catch(() => {
-          toast.error("Failed to create conversation");
-        });
+      try {
+        const result =
+          await createConversationMutation.mutateAsync(messageText);
+        conversationIdRef.current = result.id;
+      } catch {
+        toast.error("Failed to create conversation");
+        return;
+      }
     }
 
     void sendMessage({ text: messageText }).catch((error) => {
@@ -288,19 +291,18 @@ export function ChatPage() {
   };
 
   const handleSuggestionClick = useCallback(
-    (s: string) => {
+    async (s: string) => {
       textareaRef.current?.focus();
 
-      // Create conversation in parallel with sending message
+      // Create conversation first if needed, then send message
       if (!conversationId) {
-        createConversationMutation
-          .mutateAsync(s)
-          .then((result) => {
-            conversationIdRef.current = result.id;
-          })
-          .catch(() => {
-            toast.error("Failed to create conversation");
-          });
+        try {
+          const result = await createConversationMutation.mutateAsync(s);
+          conversationIdRef.current = result.id;
+        } catch {
+          toast.error("Failed to create conversation");
+          return;
+        }
       }
 
       void sendMessage({ text: s }).catch((error) => {

@@ -24,6 +24,7 @@ import {
 import {
   analyzeScreenshot,
   analyzeScreenshotBuffer,
+  isScreenshotUrlValid,
   type ScreenshotAnalysisResult,
 } from "../screenshot-analysis.utils";
 
@@ -142,7 +143,7 @@ export async function processArticleBookmark(
       });
 
       if (screenshotBuffer.length < 1000) {
-        return { url: null, analysis: null };
+        throw new Error("Screenshot buffer too small");
       }
 
       const analysis = await analyzeScreenshotBuffer(screenshotBuffer);
@@ -150,7 +151,7 @@ export async function processArticleBookmark(
         logger.info(
           `[Screenshot] Screenshot invalid (${analysis.invalidReason}), skipping S3 upload`,
         );
-        return { url: null, analysis };
+        throw new Error(`Screenshot invalid: ${analysis.invalidReason}`);
       }
 
       const screenshotUrl = await uploadBufferToS3({
@@ -161,11 +162,38 @@ export async function processArticleBookmark(
       });
 
       if (!screenshotUrl) {
-        return { url: null, analysis: null };
+        throw new Error("uploadBufferToS3 returned null");
       }
 
       return { url: screenshotUrl, analysis };
-    } catch {
+    } catch (error) {
+      logger.error(
+        `[Screenshot] Cloudflare screenshot failed for ${context.url}:`,
+        error,
+      );
+
+      // Fallback to extension screenshot if Cloudflare fails
+      const freshBookmark = await prisma.bookmark.findUnique({
+        where: { id: context.bookmarkId },
+        select: { preview: true },
+      });
+
+      if (freshBookmark?.preview) {
+        const isValid = await isScreenshotUrlValid(
+          freshBookmark.preview,
+          logger,
+        );
+        if (isValid) {
+          logger.info(
+            `[Screenshot] Using extension screenshot as fallback: ${freshBookmark.preview}`,
+          );
+          return { url: freshBookmark.preview, analysis: null };
+        }
+        logger.info(
+          `[Screenshot] Extension screenshot also invalid, no screenshot available`,
+        );
+      }
+
       return { url: null, analysis: null };
     }
   });

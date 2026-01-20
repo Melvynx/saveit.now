@@ -109,3 +109,44 @@ export async function analyzeScreenshotBuffer(
     };
   }
 }
+
+export async function isScreenshotUrlValid(
+  url: string,
+  logger?: { info: (msg: string, ...args: unknown[]) => void },
+): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  const log = logger?.info ?? console.log;
+
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      log(
+        `[Screenshot] Extension screenshot URL invalid (status ${response.status}): ${url}`,
+      );
+      return false;
+    }
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) < 1000) {
+      log(
+        `[Screenshot] Extension screenshot too small (${contentLength} bytes): ${url}`,
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      log(`[Screenshot] Extension screenshot URL timeout: ${url}`);
+    } else {
+      log(`[Screenshot] Extension screenshot URL check failed: ${url}`, error);
+    }
+    return false;
+  }
+}

@@ -24,47 +24,9 @@ import {
 import {
   analyzeScreenshot,
   analyzeScreenshotBuffer,
+  isScreenshotUrlValid,
   type ScreenshotAnalysisResult,
 } from "../screenshot-analysis.utils";
-
-async function isScreenshotUrlValid(url: string): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    const response = await fetch(url, {
-      method: "HEAD",
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      logger.info(
-        `[Screenshot] Extension screenshot URL invalid (status ${response.status}): ${url}`,
-      );
-      return false;
-    }
-    const contentLength = response.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) < 1000) {
-      logger.info(
-        `[Screenshot] Extension screenshot too small (${contentLength} bytes): ${url}`,
-      );
-      return false;
-    }
-    return true;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === "AbortError") {
-      logger.info(`[Screenshot] Extension screenshot URL timeout: ${url}`);
-    } else {
-      logger.info(
-        `[Screenshot] Extension screenshot URL check failed: ${url}`,
-        error,
-      );
-    }
-    return false;
-  }
-}
 
 export async function processStandardWebpage(
   context: {
@@ -233,7 +195,10 @@ export async function processStandardWebpage(
       });
 
       if (freshBookmark?.preview) {
-        const isValid = await isScreenshotUrlValid(freshBookmark.preview);
+        const isValid = await isScreenshotUrlValid(
+          freshBookmark.preview,
+          logger,
+        );
         if (isValid) {
           logger.info(
             `[Screenshot] Using extension screenshot as fallback: ${freshBookmark.preview}`,
