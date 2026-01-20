@@ -1,6 +1,7 @@
-import { AgenticDemo } from "@/features/marketing/agentic-demo";
+import { AgenticDemoChat } from "@/features/marketing/agentic-demo-chat";
 import { ExtensionsSection } from "@/features/marketing/extensions-section";
 import { FAQ } from "@/features/marketing/faq";
+import { HeroVideo } from "@/features/marketing/hero-video";
 import { KeyFeatures } from "@/features/marketing/key-features";
 import { LandingHero } from "@/features/marketing/landing-hero";
 import { LandingPricing } from "@/features/marketing/landing-pricing";
@@ -15,12 +16,13 @@ export default function LandingPage() {
     <div>
       <Header />
       <LandingHero />
+      <HeroVideo />
+      <AgenticDemoChat />
       <WhatIsAgentic />
-      <KeyFeatures />
       <WhySaveIt />
-      <ExtensionsSection />
       <StopFolder />
-      <AgenticDemo />
+      <KeyFeatures />
+      <ExtensionsSection />
       <LandingPricing />
       <FAQ />
       <Footer />

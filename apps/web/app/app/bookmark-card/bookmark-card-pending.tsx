@@ -1,7 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
-
 import { LoadingButton } from "@/features/form/loading-button";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
@@ -21,9 +19,10 @@ import {
   BookmarkCardHeader,
   BookmarkCardTitle,
 } from "./bookmark-card-base";
+import type { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardPendingProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {

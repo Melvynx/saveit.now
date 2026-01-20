@@ -2,23 +2,86 @@
 title: List Bookmarks
 description: Search and list bookmarks using the SaveIt.now API
 method: GET
+endpoint: /api/v1/bookmarks
 order: 3
 category: API
 subcategory: Bookmarks
 tags: [api, bookmarks, list, search]
 published: true
----
+examples:
+  bash: |
+    curl -X GET "https://saveit.now/api/v1/bookmarks?query=javascript&tags=web,development&limit=10" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json"
+  javascript: |
+    const response = await fetch('https://saveit.now/api/v1/bookmarks?query=javascript&tags=web,development&limit=10', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json',
+      },
+    });
 
-# List Bookmarks
+    const data = await response.json();
+    console.log(data);
+  python: |
+    import requests
+
+    url = "https://saveit.now/api/v1/bookmarks"
+    headers = {
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json"
+    }
+    params = {
+        "query": "javascript",
+        "tags": "web,development",
+        "limit": 10
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+    print(data)
+results:
+  success: |
+    {
+      "success": true,
+      "bookmarks": [
+        {
+          "id": "bm_1234567890",
+          "url": "https://example.com/article",
+          "title": "Interesting Article",
+          "summary": "An article about web development",
+          "type": "ARTICLE",
+          "status": "COMPLETED",
+          "starred": true,
+          "read": false,
+          "preview": "Article preview text...",
+          "faviconUrl": "https://example.com/favicon.ico",
+          "ogImageUrl": "https://example.com/og-image.jpg",
+          "ogDescription": "Article description from meta tags",
+          "createdAt": "2024-01-15T10:30:00Z",
+          "metadata": {},
+          "matchedTags": ["web", "development"],
+          "score": 0.95,
+          "matchType": "CONTENT"
+        }
+      ],
+      "hasMore": true,
+      "nextCursor": "eyJpZCI6ImJtXzEyMzQ1Njc4OTAiLCJjcmVhdGVkQXQiOiIyMDI0LTAxLTE1VDEwOjMwOjAwWiJ9"
+    }
+  error: |
+    {
+      "success": false,
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Invalid or missing API key"
+      }
+    }
+---
 
 Search and retrieve bookmarks from your SaveIt.now account.
 
-## API Reference
-
-**Method:** `GET`  
-**Endpoint:** `/api/v1/bookmarks`
-
-### Query Parameters
+## Query Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -29,89 +92,6 @@ Search and retrieve bookmarks from your SaveIt.now account.
 | `limit` | integer | No | Number of results per page (default: 20, max: 100) |
 | `cursor` | string | No | Cursor for pagination (used for fetching next page) |
 
-## Examples
-
-### Bash (cURL)
-
-```bash
-curl -X GET "https://saveit.now/api/v1/bookmarks?query=javascript&tags=web,development&limit=10" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json"
-```
-
-### JavaScript
-
-```javascript
-const response = await fetch('https://saveit.now/api/v1/bookmarks?query=javascript&tags=web,development&limit=10', {
-  method: 'GET',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json',
-  },
-});
-
-const data = await response.json();
-console.log(data);
-```
-
-
-## Results
-
-### Success Response
-
-```json
-{
-  "success": true,
-  "bookmarks": [
-    {
-      "id": "bm_1234567890",
-      "url": "https://example.com/article",
-      "title": "Interesting Article",
-      "summary": "An article about web development",
-      "type": "ARTICLE",
-      "status": "COMPLETED",
-      "starred": true,
-      "read": false,
-      "preview": "Article preview text...",
-      "faviconUrl": "https://example.com/favicon.ico",
-      "ogImageUrl": "https://example.com/og-image.jpg",
-      "ogDescription": "Article description from meta tags",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "metadata": {},
-      "matchedTags": ["web", "development"],
-      "score": 0.95,
-      "matchType": "CONTENT"
-    }
-  ],
-  "hasMore": true,
-  "nextCursor": "eyJpZCI6ImJtXzEyMzQ1Njc4OTAiLCJjcmVhdGVkQXQiOiIyMDI0LTAxLTE1VDEwOjMwOjAwWiJ9"
-}
-```
-
-### Error Responses
-
-**401 Unauthorized** - Invalid or missing API key
-```json
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Invalid or missing API key"
-  }
-}
-```
-
-**400 Bad Request** - Invalid query parameters
-```json
-{
-  "success": false,
-  "error": {
-    "code": "INVALID_PARAMETERS",
-    "message": "Invalid limit parameter. Must be between 1 and 100"
-  }
-}
-```
-
 ## Search Functionality
 
 The search query (`query` parameter) supports:
@@ -120,22 +100,6 @@ The search query (`query` parameter) supports:
 - **Exact phrases**: Use quotes for exact matches: `"web development"`
 - **Boolean operators**: Use `AND`, `OR`, `NOT` operators
 - **Wildcards**: Use `*` for partial matches
-
-### Search Examples
-
-```bash
-# Search for exact phrase
-curl -X GET "https://saveit.now/api/v1/bookmarks?query=\"web development\"" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-
-# Search with boolean operators
-curl -X GET "https://saveit.now/api/v1/bookmarks?query=javascript AND NOT react" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-
-# Search with wildcards
-curl -X GET "https://saveit.now/api/v1/bookmarks?query=javasc*" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
 
 ## Pagination
 
@@ -147,7 +111,7 @@ curl -X GET "https://saveit.now/api/v1/bookmarks?limit=20" \
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Get next 20 bookmarks using cursor from previous response
-curl -X GET "https://saveit.now/api/v1/bookmarks?limit=20&cursor=eyJpZCI6ImJtXzEyMzQ1Njc4OTAiLCJjcmVhdGVkQXQiOiIyMDI0LTAxLTE1VDEwOjMwOjAwWiJ9" \
+curl -X GET "https://saveit.now/api/v1/bookmarks?limit=20&cursor=eyJpZCI6ImJtXzEyMzQ1Njc4OTAifQ" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -159,8 +123,3 @@ curl -X GET "https://saveit.now/api/v1/bookmarks?limit=20&cursor=eyJpZCI6ImJtXzE
 - Tag filtering is exact match (case-insensitive)
 - Type filtering supports: ARTICLE, VIDEO, IMAGE, AUDIO, PDF, DOCUMENT, OTHER
 - Special filters allow filtering by read status or starred bookmarks
-
-## Next Steps
-
-- [Create Bookmark API](/docs/api-bookmarks-create)
-- [API Overview](/docs/api-overview)

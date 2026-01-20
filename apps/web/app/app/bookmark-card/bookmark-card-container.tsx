@@ -29,6 +29,7 @@ type BookmarkCardContainerProps = {
   };
   onMouseEnter?: () => void;
   testId?: string;
+  fitContent?: boolean;
 } & ComponentProps<"div">;
 
 export const BookmarkCardContainer = ({
@@ -38,6 +39,7 @@ export const BookmarkCardContainer = ({
   onMouseEnter,
   ref,
   testId,
+  fitContent = false,
   ...props
 }: BookmarkCardContainerProps) => {
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
@@ -61,7 +63,8 @@ export const BookmarkCardContainer = ({
           <Card
             ref={ref}
             className={cn(
-              "group/card gap-4 overflow-hidden p-0 h-fit aspect-[384/290]",
+              "group/card gap-4 overflow-hidden p-0 h-fit",
+              !fitContent && "aspect-[384/290]",
               className,
             )}
             onMouseEnter={handleMouseEnter}

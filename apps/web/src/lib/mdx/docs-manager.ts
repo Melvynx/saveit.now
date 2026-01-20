@@ -13,6 +13,26 @@ const DocFrontmatterSchema = z.object({
   tags: z.array(z.string()).optional(),
   icon: z.string().optional(),
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional(),
+  endpoint: z.string().optional(),
+  examples: z
+    .object({
+      bash: z.string().optional(),
+      javascript: z.string().optional(),
+      python: z.string().optional(),
+    })
+    .optional(),
+  results: z
+    .object({
+      success: z.string().optional(),
+      error: z.string().optional(),
+    })
+    .optional(),
+  links: z
+    .object({
+      doc: z.string().optional(),
+      api: z.string().optional(),
+    })
+    .optional(),
   published: z.boolean().default(true),
 });
 

@@ -16,9 +16,9 @@ import {
   BookmarkCardPricing,
 } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
-import { MentionFilterInputRef } from "./components/type-filter-input";
+import { ChatBar } from "./components/chat-bar";
 import { MoreResultsButton } from "./more-results-button";
-import { SearchInput } from "./search-input";
+import { SearchInput, type SearchInputRef } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
 
 export function BookmarksPage() {
@@ -32,7 +32,7 @@ export function BookmarksPage() {
   } = useBookmarks();
   const session = useSession();
   const router = useRouter();
-  const searchInputRef = useRef<MentionFilterInputRef>(null);
+  const searchInputRef = useRef<SearchInputRef>(null);
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -82,9 +82,6 @@ export function BookmarksPage() {
         ) : (
           <>
             {!query && <BookmarkCardInput />}
-            {query && bookmarks.length > 0 && (
-              <BookmarkCardAgenticSearch query={query} />
-            )}
 
             {bookmarks.map((bookmark, i) => {
               if (query && i === 0) {
@@ -116,6 +113,7 @@ export function BookmarksPage() {
           </>
         )}
       </div>
+      <ChatBar />
     </div>
   );
 }

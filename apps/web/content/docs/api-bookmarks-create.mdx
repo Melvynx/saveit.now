@@ -2,23 +2,94 @@
 title: Create Bookmark
 description: Create a new bookmark using the SaveIt.now API
 method: POST
+endpoint: /api/v1/bookmarks
 order: 2
 category: API
 subcategory: Bookmarks
 tags: [api, bookmarks, create]
 published: true
----
+examples:
+  bash: |
+    curl -X POST https://saveit.now/api/v1/bookmarks \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -d '{
+        "url": "https://example.com/article",
+        "transcript": "Optional transcript content",
+        "metadata": {
+          "source": "api",
+          "category": "article"
+        }
+      }'
+  javascript: |
+    const response = await fetch('https://saveit.now/api/v1/bookmarks', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: 'https://example.com/article',
+        transcript: 'Optional transcript content',
+        metadata: {
+          source: 'api',
+          category: 'article'
+        }
+      })
+    });
 
-# Create Bookmark
+    const data = await response.json();
+    console.log(data);
+  python: |
+    import requests
+
+    url = "https://saveit.now/api/v1/bookmarks"
+    headers = {
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "url": "https://example.com/article",
+        "transcript": "Optional transcript content",
+        "metadata": {
+            "source": "api",
+            "category": "article"
+        }
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+    print(data)
+results:
+  success: |
+    {
+      "success": true,
+      "bookmark": {
+        "id": "bm_1234567890",
+        "url": "https://example.com/article",
+        "title": "Interesting Article",
+        "summary": "An article about web development",
+        "type": "ARTICLE",
+        "status": "PENDING",
+        "starred": false,
+        "read": false,
+        "createdAt": "2024-01-15T10:30:00Z",
+        "updatedAt": "2024-01-15T10:30:00Z"
+      }
+    }
+  error: |
+    {
+      "success": false,
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Invalid or missing API key"
+      }
+    }
+---
 
 Create a new bookmark in your SaveIt.now account.
 
-## API Reference
-
-**Method:** `POST`  
-**Endpoint:** `/api/v1/bookmarks`
-
-### Request Parameters
+## Request Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -26,101 +97,13 @@ Create a new bookmark in your SaveIt.now account.
 | `transcript` | string | No | Optional transcript content for the bookmark |
 | `metadata` | object | No | Optional metadata object for additional information |
 
-## Examples
-
-### Bash (cURL)
-
-```bash
-curl -X POST https://saveit.now/api/v1/bookmarks \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -d '{
-    "url": "https://example.com/article",
-    "transcript": "Optional transcript content",
-    "metadata": {
-      "source": "api",
-      "category": "article"
-    }
-  }'
-```
-
-### JavaScript
-
-```javascript
-const response = await fetch('https://saveit.now/api/v1/bookmarks', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    url: 'https://example.com/article',
-    transcript: 'Optional transcript content',
-    metadata: {
-      source: 'api',
-      category: 'article'
-    }
-  })
-});
-
-const data = await response.json();
-console.log(data);
-```
-
-
-## Results
-
-### Success Response
-
-```json
-{
-  "success": true,
-  "bookmark": {
-    "id": "bm_1234567890",
-    "url": "https://example.com/article",
-    "title": "Interesting Article",
-    "summary": "An article about web development",
-    "type": "ARTICLE",
-    "status": "PENDING",
-    "starred": false,
-    "read": false,
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### Error Responses
+## Error Responses
 
 **400 Bad Request** - Invalid URL format or validation error
-```json
-{
-  "success": false,
-  "error": "Invalid URL format"
-}
-```
 
 **401 Unauthorized** - Invalid or missing API key
-```json
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Invalid or missing API key"
-  }
-}
-```
 
 **409 Conflict** - Bookmark already exists
-```json
-{
-  "success": false,
-  "error": {
-    "code": "BOOKMARK_EXISTS",
-    "message": "A bookmark with this URL already exists"
-  }
-}
-```
 
 ## Notes
 
@@ -128,8 +111,3 @@ console.log(data);
 - Screenshots are generated asynchronously after bookmark creation
 - Duplicate URLs are not allowed - use the update endpoint to modify existing bookmarks
 - The API will validate the URL format and accessibility before creating the bookmark
-
-## Next Steps
-
-- [List Bookmarks API](/docs/api-bookmarks-list)
-- [API Overview](/docs/api-overview)

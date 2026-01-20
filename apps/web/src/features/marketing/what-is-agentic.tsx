@@ -1,94 +1,118 @@
-import { Badge } from "@workspace/ui/components/badge";
-import { Card } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
-import { ArrowRight } from "lucide-react";
+import { cn } from "@workspace/ui/lib/utils";
+import { CheckIcon, XIcon } from "lucide-react";
 import { MaxWidthContainer } from "../page/page";
 
 export const WhatIsAgentic = () => {
   return (
-    <MaxWidthContainer spacing="default" className="py-16">
-      <div className="text-center mb-12 flex flex-col gap-2 items-center mx-auto max-w-2xl">
-        <Badge variant="outline">What makes it "Agentic"?</Badge>
-        <Typography variant="h2">
-          AI-powered waits.{" "}
-          <span className="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            Agentic works.
-          </span>
-        </Typography>
-      </div>
+    <MaxWidthContainer spacing="default" className="py-24">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-16 text-center">
+          <p className="text-sm font-mono text-muted-foreground mb-4">
+            003 — The difference
+          </p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[0.9] tracking-tight">
+            AI-powered{" "}
+            <span className="text-muted-foreground font-light">waits.</span>
+            <br />
+            Agentic <span className="text-primary font-light">works.</span>
+          </h2>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        <Card className="p-6 bg-muted/30 border-destructive/20">
-          <Typography variant="h3" className="mb-4 text-muted-foreground">
-            Traditional Bookmarks
-          </Typography>
-          <div className="flex flex-col gap-3">
-            <Step number={1} text="You save" muted />
-            <Step number={2} text="You organize into folders" muted />
-            <Step number={3} text="You search with keywords" muted />
-            <Step number={4} text="You (maybe) find it" muted />
+        {/* Comparison table */}
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+          {/* Traditional */}
+          <div className="rounded-2xl border border-dashed bg-muted/30 p-8">
+            <div className="mb-8">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
+                Traditional bookmarks
+              </p>
+              <p className="text-2xl font-bold text-muted-foreground">
+                You do all the work
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <ComparisonItem text="Manually create folders" negative />
+              <ComparisonItem text="Tag everything yourself" negative />
+              <ComparisonItem text="Search with exact keywords" negative />
+              <ComparisonItem
+                text="Scroll through hundreds of results"
+                negative
+              />
+              <ComparisonItem text="Still can't find what you saved" negative />
+            </div>
           </div>
-          <Typography variant="muted" className="mt-4 text-sm">
-            All the work is on you. That's why it fails.
-          </Typography>
-        </Card>
 
-        <Card className="p-6 bg-primary/5 border-primary/20">
-          <Typography variant="h3" className="mb-4 text-primary">
-            Agentic Bookmarks
-          </Typography>
-          <div className="flex flex-col gap-3">
-            <Step number={1} text="You save" highlight />
-            <Step number={2} text="Agent organizes automatically" highlight />
-            <Step number={3} text="Agent indexes & summarizes" highlight />
-            <Step number={4} text="Agent finds instantly" highlight />
+          {/* Agentic */}
+          <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-8 relative overflow-hidden">
+            {/* Subtle glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+            <div className="relative mb-8">
+              <p className="text-xs font-mono text-primary uppercase tracking-wider mb-2">
+                Agentic bookmarks
+              </p>
+              <p className="text-2xl font-bold text-foreground">
+                Your agent does it for you
+              </p>
+            </div>
+
+            <div className="relative space-y-4">
+              <ComparisonItem text="Auto-organizes by content" positive />
+              <ComparisonItem text="AI-generated tags & summaries" positive />
+              <ComparisonItem text="Search by meaning, not keywords" positive />
+              <ComparisonItem text="Instant semantic results" positive />
+              <ComparisonItem
+                text="Always finds exactly what you need"
+                positive
+              />
+            </div>
           </div>
-          <Typography className="mt-4 text-sm text-primary/80">
-            Your agent works autonomously. You just describe what you need.
-          </Typography>
-        </Card>
-      </div>
+        </div>
 
-      <div className="mt-12 text-center max-w-2xl mx-auto">
-        <Typography variant="lead" className="text-muted-foreground">
-          <b className="text-foreground">
-            Agentic = AI that acts, not just assists.
-          </b>
-          <br />
-          Your bookmarks make decisions, organize themselves, and find what you
-          need—without being asked.
-        </Typography>
+        {/* Bottom stat */}
+        <div className="mt-12 text-center">
+          <p className="text-muted-foreground">
+            Traditional tools wait for commands.{" "}
+            <span className="text-foreground font-medium">
+              Your agent works autonomously.
+            </span>
+          </p>
+        </div>
       </div>
     </MaxWidthContainer>
   );
 };
 
-function Step({
-  number,
+function ComparisonItem({
   text,
-  muted,
-  highlight,
+  positive,
+  negative,
 }: {
-  number: number;
   text: string;
-  muted?: boolean;
-  highlight?: boolean;
+  positive?: boolean;
+  negative?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`size-6 rounded-full flex items-center justify-center text-xs font-medium ${
-          highlight
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-muted-foreground"
-        }`}
+        className={cn(
+          "flex items-center justify-center size-6 rounded-full shrink-0",
+          positive && "bg-primary/20 text-primary",
+          negative && "bg-muted text-muted-foreground",
+        )}
       >
-        {number}
+        {positive && <CheckIcon className="size-3.5" />}
+        {negative && <XIcon className="size-3.5" />}
       </div>
-      <ArrowRight
-        className={`size-4 ${highlight ? "text-primary" : "text-muted-foreground/50"}`}
-      />
-      <span className={muted ? "text-muted-foreground" : "text-foreground"}>
+      <span
+        className={cn(
+          "text-sm",
+          positive && "text-foreground",
+          negative && "text-muted-foreground",
+        )}
+      >
         {text}
       </span>
     </div>

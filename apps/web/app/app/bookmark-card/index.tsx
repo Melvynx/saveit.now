@@ -1,7 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
-
 import { BookmarkCardError } from "./bookmark-card-error";
 import { BookmarkCardImage } from "./bookmark-card-image";
 import { BookmarkCardPage } from "./bookmark-card-page";
@@ -10,9 +8,10 @@ import { BookmarkCardPending } from "./bookmark-card-pending";
 import { BookmarkCardProduct } from "./bookmark-card-product";
 import { BookmarkCardTweet } from "./bookmark-card-tweet";
 import { BookmarkCardYouTube } from "./bookmark-card-youtube";
+import type { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCard = ({ bookmark }: BookmarkCardProps) => {

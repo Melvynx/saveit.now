@@ -1,79 +1,93 @@
 /* eslint-disable @next/next/no-img-element */
 import { Input } from "@workspace/ui/components/input";
-import { Typography } from "@workspace/ui/components/typography";
 import { MaxWidthContainer } from "../page/page";
 
 export const StopFolder = () => {
   return (
-    <MaxWidthContainer spacing="sm" className="flex flex-col gap-8 lg:gap-12">
-      <div>
-        <Typography variant="h2">Folders are dead.</Typography>
-        <Typography variant="lead">Welcome to agentic bookmarking</Typography>
-      </div>
-      <div className="w-full flex flex-col lg:flex-row gap-4">
-        <div className="flex-1 flex flex-col border rounded-lg p-4 border-destructive/20 bg-destructive/5">
-          <Typography variant="h3" className="text-muted-foreground">
-            Traditional: You do all the work
-          </Typography>
-          <Typography variant="muted">
-            Organize into folders. Tag everything. Search with exact keywords.
-            Still can't find anything.
-          </Typography>
-          <div className="h-42 relative w-full">
-            <img
-              src="/images/landing/folder.png"
-              alt="Folder"
-              className="size-32 -rotate-12 absolute top-10 left-10"
-            />
-            <img
-              src="/images/landing/mess.png"
-              alt="Folder"
-              className="size-32 rotate-3 absolute top-10 left-1/2 -translate-x-1/2"
-            />
-            <img
-              src="/images/landing/tags.png"
-              alt="Folder"
-              className="size-32 rotate-12 absolute top-10 right-10"
-            />
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              viewBox="0 0 100 100"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <line
-                x1="0"
-                y1="0"
-                x2="100"
-                y2="100"
-                stroke="red"
-                strokeWidth="5"
-                strokeLinecap="round"
-              />
-              <line
-                x1="100"
-                y1="0"
-                x2="0"
-                y2="100"
-                stroke="red"
-                strokeWidth="5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+    <MaxWidthContainer spacing="default" className="py-24">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-12">
+          <p className="text-sm font-mono text-muted-foreground mb-4">
+            005 — The problem
+          </p>
+          <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight">
+            Folders
+            <br />
+            <span className="text-muted-foreground font-light">are dead.</span>
+          </h2>
         </div>
-        <div className="flex-1 flex flex-col border rounded-lg p-4 border-primary/20 bg-primary/5">
-          <Typography variant="h3" className="text-primary">
-            Agentic: Your agent does the work
-          </Typography>
-          <Typography variant="muted">
-            Just describe what you're looking for. Your agent finds it
-            instantly.
-          </Typography>
-          <div className="h-42 relative w-full mt-12">
-            <Input
-              className="text-2xl lg:text-xl h-12"
-              placeholder="That article about productivity..."
-            />
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Traditional */}
+          <div className="rounded-lg border border-dashed p-6 relative overflow-hidden">
+            <p className="text-xs font-mono text-muted-foreground mb-4">
+              THE OLD WAY
+            </p>
+            <p className="text-muted-foreground mb-6">
+              Organize into folders. Tag everything. Search with exact keywords.
+              Still can't find anything.
+            </p>
+            <div className="h-32 relative">
+              <img
+                src="/images/landing/folder.png"
+                alt="Folder"
+                className="size-20 -rotate-12 absolute top-4 left-4 opacity-50"
+              />
+              <img
+                src="/images/landing/mess.png"
+                alt="Mess"
+                className="size-20 rotate-3 absolute top-4 left-1/2 -translate-x-1/2 opacity-50"
+              />
+              <img
+                src="/images/landing/tags.png"
+                alt="Tags"
+                className="size-20 rotate-12 absolute top-4 right-4 opacity-50"
+              />
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 100 100"
+              >
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="90"
+                  y2="90"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="text-destructive/50"
+                />
+                <line
+                  x1="90"
+                  y1="10"
+                  x2="10"
+                  y2="90"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="text-destructive/50"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Agentic */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-6">
+            <p className="text-xs font-mono text-primary mb-4">THE NEW WAY</p>
+            <p className="text-foreground mb-6">
+              Just describe what you're looking for. Your agent finds it
+              instantly.
+            </p>
+            <div className="space-y-3">
+              <Input
+                className="h-12 text-base"
+                placeholder="That article about productivity..."
+                readOnly
+              />
+              <p className="text-xs text-muted-foreground">
+                Search by meaning, not keywords
+              </p>
+            </div>
           </div>
         </div>
       </div>

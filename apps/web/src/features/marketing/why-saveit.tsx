@@ -1,98 +1,103 @@
 import { MaxWidthContainer } from "@/features/page/page";
-import { Badge } from "@workspace/ui/components/badge";
-import { Card } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
+import {
+  BrainCircuitIcon,
+  CameraIcon,
+  FileSearchIcon,
+  LayersIcon,
+  SparklesIcon,
+  ZapIcon,
+} from "lucide-react";
 
 interface Benefit {
   id: string;
-  icon: string;
   title: string;
   description: string;
+  icon: React.ReactNode;
 }
 
 const benefits: Benefit[] = [
   {
     id: "autonomous-capture",
-    icon: "🎯",
     title: "Autonomous Capture",
     description:
-      "Paste any URL. Your agent screenshots, summarizes, and indexes—instantly. You do nothing but save.",
+      "Paste any URL. Your agent screenshots, summarizes, and indexes—instantly.",
+    icon: <CameraIcon className="size-5" />,
   },
   {
     id: "self-organization",
-    icon: "🧠",
     title: "Self-Organization",
-    description:
-      "No folders. No tags. Your agent decides where things belong and how to find them later.",
+    description: "No folders. No tags. Your agent decides where things belong.",
+    icon: <LayersIcon className="size-5" />,
   },
   {
     id: "semantic-retrieval",
-    icon: "🔍",
     title: "Semantic Retrieval",
-    description:
-      "Describe what you remember. 'That productivity article from last month'—found in milliseconds.",
+    description: "Describe what you remember. Found in milliseconds.",
+    icon: <FileSearchIcon className="size-5" />,
   },
   {
     id: "universal-understanding",
-    icon: "📚",
     title: "Universal Understanding",
-    description:
-      "PDFs, videos, tweets, articles—your agent comprehends them all, searchable in one place.",
+    description: "PDFs, videos, tweets, articles—all searchable in one place.",
+    icon: <BrainCircuitIcon className="size-5" />,
   },
   {
     id: "continuous-learning",
-    icon: "⚡",
     title: "Continuous Learning",
-    description:
-      "The more you save, the smarter your agent gets. Personalized retrieval that improves daily.",
+    description: "The more you save, the smarter your agent gets.",
+    icon: <SparklesIcon className="size-5" />,
   },
   {
     id: "proactive-surfacing",
-    icon: "🔮",
     title: "Proactive Surfacing",
-    description:
-      "Your agent notices patterns and surfaces relevant saved content—before you even search.",
+    description: "Surfaces relevant content before you even search.",
+    icon: <ZapIcon className="size-5" />,
   },
 ];
 
-function BenefitCard({ benefit }: { benefit: Benefit }) {
+function BenefitCard({ benefit, index }: { benefit: Benefit; index: number }) {
   return (
-    <Card className="p-4 flex flex-col gap-4 text-center">
-      <Typography variant="h2">{benefit.icon}</Typography>
-      <Typography variant="h3">{benefit.title}</Typography>
-      <Typography variant="muted" className="text-sm leading-relaxed">
+    <div className="relative rounded-2xl border bg-card/50 p-6">
+      <div className="absolute -top-3 -right-3 flex size-8 items-center justify-center rounded-full bg-muted border text-xs font-mono text-muted-foreground">
+        {String(index + 1).padStart(2, "0")}
+      </div>
+
+      <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {benefit.icon}
+      </div>
+
+      <h3 className="mb-2 font-semibold text-lg">{benefit.title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">
         {benefit.description}
-      </Typography>
-    </Card>
+      </p>
+    </div>
   );
 }
 
 export function WhySaveIt() {
   return (
-    <MaxWidthContainer
-      width="lg"
-      spacing="default"
-      className="bg-foreground/5 rounded-md py-8 shadow"
-    >
-      <div className="text-center mb-16 flex flex-col gap-2 items-center mx-auto max-w-2xl">
-        <Badge variant="outline">What Your Agent Does</Badge>
-        <Typography variant="h2">
-          Your agent works{" "}
-          <span className="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            while you create
-          </span>
-        </Typography>
-        <Typography variant="lead">
-          Every other bookmark tool waits for you to organize and search. Your
-          SaveIt agent works autonomously—capturing, organizing, and retrieving
-          so you never lose an idea again.
-        </Typography>
-      </div>
+    <MaxWidthContainer spacing="default" className="py-24">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-16 max-w-2xl">
+          <p className="text-sm font-mono text-muted-foreground mb-4">
+            004 — Capabilities
+          </p>
+          <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight mb-6">
+            What your
+            <br />
+            <span className="text-muted-foreground font-light">agent does</span>
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Six autonomous capabilities that transform how you save and find
+            information.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        {benefits.map((benefit) => (
-          <BenefitCard key={benefit.id} benefit={benefit} />
-        ))}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {benefits.map((benefit, index) => (
+            <BenefitCard key={benefit.id} benefit={benefit} index={index} />
+          ))}
+        </div>
       </div>
     </MaxWidthContainer>
   );

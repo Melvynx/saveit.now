@@ -1,6 +1,5 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
 import { Input } from "@workspace/ui/components/input";
 import { AlertCircle, Trash2 } from "lucide-react";
 
@@ -15,9 +14,10 @@ import {
   HEADER_HEIGHT,
 } from "./bookmark-card-base";
 import { DeleteButtonAction } from "./bookmark-card-pending";
+import type { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardErrorProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {

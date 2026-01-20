@@ -65,7 +65,7 @@ You can filter by:
         specialFilters: filters,
       });
 
-      const limitedResults = results.slice(0, Math.min(limit, 12));
+      const limitedResults = results.slice(0, Math.min(limit, 20));
 
       return limitedResults.map((bookmark) => ({
         id: bookmark.id,

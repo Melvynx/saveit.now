@@ -7,7 +7,6 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ArrowDownIcon,
   BookmarkIcon,
-  BrainIcon,
   CornerDownLeftIcon,
   Loader2Icon,
   SquareIcon,
@@ -20,11 +19,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
 import { BookmarkDialog } from "../bookmark-page/bookmark-page";
 import { ChatHeader } from "./components/chat-header";
@@ -109,41 +103,6 @@ function ScrollButton() {
   );
 }
 
-function ThinkingToggle({
-  enabled,
-  onChange,
-  disabled,
-}: {
-  enabled: boolean;
-  onChange: (enabled: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onChange(!enabled)}
-          disabled={disabled}
-          className={cn(
-            "h-7 gap-1 rounded px-2 text-muted-foreground hover:text-foreground",
-            enabled &&
-              "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary",
-          )}
-          aria-label="Toggle thinking mode"
-        >
-          <BrainIcon className="size-3" />
-          {enabled && <span className="text-[10px] font-medium">2x</span>}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{enabled ? "Thinking mode enabled" : "Enable thinking mode"}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
 function CreditsDisplay({
   credits,
 }: {
@@ -166,7 +125,6 @@ function CreditsDisplay({
 export function ChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [input, setInput] = useState("");
-  const [enableThinking, setEnableThinking] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(
     searchParams.get("c"),
   );
@@ -177,13 +135,8 @@ export function ChatPage() {
     !!searchParams.get("c"),
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const enableThinkingRef = useRef(enableThinking);
   const conversationIdRef = useRef(conversationId);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    enableThinkingRef.current = enableThinking;
-  }, [enableThinking]);
 
   const bookmarkId = searchParams.get("b");
 
@@ -249,7 +202,7 @@ export function ChatPage() {
         return {
           body: {
             messages,
-            enableThinking: enableThinkingRef.current,
+            enableThinking: true,
             conversationId: conversationIdRef.current,
           },
         };
@@ -257,6 +210,9 @@ export function ChatPage() {
     }),
     onFinish: () => {
       void refetchUsage();
+    },
+    onError: (err) => {
+      console.error("[Chat] Error:", err);
     },
   });
 
@@ -374,7 +330,8 @@ export function ChatPage() {
     setMessages([]);
     setInput("");
     conversationIdRef.current = null;
-  }, [setMessages]);
+    setSearchParams({}, { replace: true });
+  }, [setMessages, setSearchParams]);
 
   const handleSelectConversation = useCallback(
     async (id: string) => {
@@ -455,53 +412,53 @@ export function ChatPage() {
           )}
 
           <div className="p-3">
-            <div className="bg-background rounded-xl border shadow-sm">
+            <div
+              className={cn(
+                "rounded-2xl",
+                "border-2 border-primary",
+                "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
+                "flex items-center gap-1 p-1.5",
+              )}
+            >
               <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about your bookmarks..."
-                className="min-h-[36px] resize-none border-0 bg-transparent px-3.5 py-2.5 text-sm shadow-none focus-visible:ring-0"
+                className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
                 rows={1}
                 disabled={isGenerating && status !== "streaming"}
               />
-              <div className="flex items-center justify-between gap-1.5 px-2 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <ThinkingToggle
-                    enabled={enableThinking}
-                    onChange={setEnableThinking}
-                    disabled={isGenerating}
-                  />
-                  <CreditsDisplay credits={usage ?? null} />
-                </div>
-                <div className="flex items-center gap-1">
-                  {input.trim() && !isGenerating && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-7 rounded"
-                      onClick={handleClearInput}
-                    >
-                      <XIcon className="size-4" />
-                    </Button>
-                  )}
+              <div className="flex items-center gap-1">
+                {input.trim() && !isGenerating && (
                   <Button
                     size="icon"
-                    className="size-7 rounded"
-                    onClick={isGenerating ? () => stop() : handleSubmit}
-                    disabled={!isGenerating && !input.trim()}
+                    variant="ghost"
+                    className="size-8 rounded-lg"
+                    onClick={handleClearInput}
                   >
-                    {isGenerating && status === "streaming" ? (
-                      <SquareIcon className="size-4" />
-                    ) : isGenerating ? (
-                      <Loader2Icon className="size-4 animate-spin" />
-                    ) : (
-                      <CornerDownLeftIcon className="size-4" />
-                    )}
+                    <XIcon className="size-4" />
                   </Button>
-                </div>
+                )}
+                <Button
+                  size="icon"
+                  className="size-8 rounded-lg"
+                  onClick={isGenerating ? () => stop() : handleSubmit}
+                  disabled={!isGenerating && !input.trim()}
+                >
+                  {isGenerating && status === "streaming" ? (
+                    <SquareIcon className="size-4" />
+                  ) : isGenerating ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <CornerDownLeftIcon className="size-4" />
+                  )}
+                </Button>
               </div>
+            </div>
+            <div className="mt-2 flex justify-center">
+              <CreditsDisplay credits={usage ?? null} />
             </div>
           </div>
         </div>
