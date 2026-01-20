@@ -212,18 +212,11 @@ export const MessageItem = memo(function MessageItem({
         }
 
         if (part.type === "reasoning") {
-          const isThinkingActive = isLast && isLoading;
           return (
-            <details key={index} open={isThinkingActive}>
+            <details key={index}>
               <summary className="text-muted-foreground flex cursor-pointer items-center gap-1.5 text-sm list-none [&::-webkit-details-marker]:hidden">
-                {isThinkingActive ? (
-                  <BrainIcon className="size-3.5 animate-pulse" />
-                ) : (
-                  <BrainIcon className="size-3.5" />
-                )}
-                <span>
-                  {isThinkingActive ? "Thinking..." : "Thinking process"}
-                </span>
+                <BrainIcon className="size-3.5" />
+                <span>Thinking process</span>
               </summary>
               <div className="bg-muted/50 mt-2 max-w-[85%] rounded-lg border px-3 py-2">
                 <div className="prose prose-sm dark:prose-invert max-w-none text-xs leading-relaxed">

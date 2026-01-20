@@ -254,6 +254,7 @@ export function ChatPage() {
 
     const messageText = input.trim();
     setInput("");
+    textareaRef.current?.focus();
 
     // Create conversation in parallel with sending message
     if (!conversationId) {
@@ -288,6 +289,8 @@ export function ChatPage() {
 
   const handleSuggestionClick = useCallback(
     (s: string) => {
+      textareaRef.current?.focus();
+
       // Create conversation in parallel with sending message
       if (!conversationId) {
         createConversationMutation

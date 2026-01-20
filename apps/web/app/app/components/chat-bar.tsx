@@ -51,7 +51,7 @@ export function ChatBar() {
           size="sm"
           className="rounded-xl px-4"
         >
-          <span className="hidden sm:inline mr-2">Submit</span>
+          <span className="hidden sm:inline mr-2">Search</span>
           <CornerDownLeft className="size-4" />
         </Button>
       </div>
