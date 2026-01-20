@@ -9,7 +9,7 @@ import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { BookOpen, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { useNavigateWithQuery } from "../bookmark-card/link-with-query";
 import { ExternalLinkTracker } from "../external-link-tracker";
@@ -24,17 +24,16 @@ import { ReadButton } from "./read-button";
 import { StarButton } from "./star-button";
 import { useBookmark } from "./use-bookmark";
 
-export function BookmarkPage() {
-  const params = useParams();
-  const navigate = useNavigateWithQuery();
-  const bookmarkId = params.id as string;
+type BookmarkDialogProps = {
+  bookmarkId: string;
+  onClose: () => void;
+};
 
+export function BookmarkDialog({ bookmarkId, onClose }: BookmarkDialogProps) {
   const query = useBookmark(bookmarkId);
-
   const bookmark = query.data?.bookmark;
 
   useHotkeys("c", () => {
-    // copy
     if (!bookmark) return;
     window.navigator.clipboard.writeText(bookmark.url);
     toast.success("Copied to clipboard");
@@ -44,10 +43,6 @@ export function BookmarkPage() {
     if (!bookmark) return;
     window.open(bookmark.url, "_blank");
   });
-
-  if (!bookmarkId) {
-    return null;
-  }
 
   if (!bookmark) {
     return (
@@ -60,7 +55,7 @@ export function BookmarkPage() {
   }
 
   return (
-    <Dialog open={true} onOpenChange={() => navigate("/app")} key="view">
+    <Dialog open={true} onOpenChange={onClose} key="view">
       <DialogContent
         disableClose
         className="flex flex-col gap-0 overflow-auto p-0"
@@ -133,4 +128,23 @@ export function BookmarkPage() {
       </DialogContent>
     </Dialog>
   );
+}
+
+export function BookmarkPage() {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigateWithQuery();
+  const bookmarkId = params.id as string;
+  const state = location.state as { from?: string } | null;
+  const isFromAgents = state?.from === "agents";
+
+  const handleClose = () => {
+    navigate(isFromAgents ? "/app/agents" : "/app", { preserveState: false });
+  };
+
+  if (!bookmarkId) {
+    return null;
+  }
+
+  return <BookmarkDialog bookmarkId={bookmarkId} onClose={handleClose} />;
 }

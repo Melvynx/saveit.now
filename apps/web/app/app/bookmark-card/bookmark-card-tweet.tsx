@@ -19,7 +19,7 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
   return (
     <BookmarkCardContainer
       bookmark={bookmark}
-      className="py-0 tweet-container relative"
+      className="py-0 tweet-container relative overflow-hidden"
     >
       <Tweet id={metadata.tweetId} />
       <BookmarkCardActions

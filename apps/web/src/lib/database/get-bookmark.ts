@@ -40,6 +40,19 @@ export const getUserBookmark = async (bookmarkId: string, userId: string) => {
   });
 };
 
+export const getUserBookmarksByIds = async (
+  bookmarkIds: string[],
+  userId: string,
+) => {
+  return await prisma.bookmark.findMany({
+    where: {
+      id: { in: bookmarkIds },
+      userId: userId,
+    },
+    select: SELECT_QUERY,
+  });
+};
+
 export const getPublicBookmark = async (bookmarkId: string) => {
   return await prisma.bookmark.findUnique({
     where: {

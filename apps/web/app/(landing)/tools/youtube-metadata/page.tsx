@@ -15,7 +15,8 @@ import { CheckCircle } from "lucide-react";
 import { YoutubeMetadataTool } from "./youtube-metadata-tool";
 
 export const metadata = {
-  title: "Free YouTube Metadata Extractor | Get Video Info, Thumbnails & Channel Data",
+  title:
+    "Free YouTube Metadata Extractor | Get Video Info, Thumbnails & Channel Data",
   description:
     "Extract comprehensive metadata from any YouTube video including title, description, thumbnails, channel info, view count, and duration. Free online tool with bulk thumbnail download.",
   keywords:
@@ -42,21 +43,12 @@ export const metadata = {
     url: "/tools/youtube-metadata",
     siteName: "SaveIt.now",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-images/tools/youtube-metadata.png",
-        width: 1200,
-        height: 630,
-        alt: "YouTube Metadata Extractor Tool - Extract video info, thumbnails, and channel data",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free YouTube Metadata Extractor Tool",
     description:
       "Extract YouTube video metadata, thumbnails, and statistics. Perfect for content creators and researchers.",
-    images: ["/og-images/tools/youtube-metadata.png"],
   },
 };
 
@@ -81,9 +73,9 @@ export default function YoutubeMetadataToolPage() {
             Free YouTube Metadata Extractor
           </Typography>
           <Typography variant="lead" className="mb-8 max-w-4xl mx-auto">
-            Extract comprehensive metadata from any YouTube video including title, 
-            description, thumbnails, channel information, view count, duration, 
-            and publication date.
+            Extract comprehensive metadata from any YouTube video including
+            title, description, thumbnails, channel information, view count,
+            duration, and publication date.
           </Typography>
           <ul className="flex flex-col lg:flex-row items-center justify-center gap-6">
             <li className="flex items-center gap-2">
@@ -119,10 +111,11 @@ export default function YoutubeMetadataToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                YouTube metadata includes all the information associated with a video: 
-                title, description, thumbnails, channel details, view count, duration, 
-                publication date, and technical identifiers. This data helps with 
-                content analysis, research, and understanding video performance.
+                YouTube metadata includes all the information associated with a
+                video: title, description, thumbnails, channel details, view
+                count, duration, publication date, and technical identifiers.
+                This data helps with content analysis, research, and
+                understanding video performance.
               </Typography>
             </CardContent>
           </Card>
@@ -133,9 +126,9 @@ export default function YoutubeMetadataToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Extracting YouTube metadata is essential for content creators, 
-                researchers, marketers, and developers. It enables competitive 
-                analysis, thumbnail research, content planning, data analysis, 
+                Extracting YouTube metadata is essential for content creators,
+                researchers, marketers, and developers. It enables competitive
+                analysis, thumbnail research, content planning, data analysis,
                 and understanding video optimization strategies.
               </Typography>
             </CardContent>
@@ -153,7 +146,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Enter YouTube URL:</Typography>
                   <Typography variant="muted">
-                    Paste any YouTube video URL (youtube.com, youtu.be, or shorts)
+                    Paste any YouTube video URL (youtube.com, youtu.be, or
+                    shorts)
                   </Typography>
                 </div>
               </li>
@@ -162,7 +156,7 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Extract Metadata:</Typography>
                   <Typography variant="muted">
-                    Our tool fetches comprehensive video information including 
+                    Our tool fetches comprehensive video information including
                     hidden metadata and all thumbnail qualities
                   </Typography>
                 </div>
@@ -172,8 +166,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">View Results:</Typography>
                   <Typography variant="muted">
-                    Browse video details, channel information, statistics, 
-                    and thumbnail gallery with all available qualities
+                    Browse video details, channel information, statistics, and
+                    thumbnail gallery with all available qualities
                   </Typography>
                 </div>
               </li>
@@ -182,7 +176,7 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Download & Export:</Typography>
                   <Typography variant="muted">
-                    Download thumbnails individually or in bulk, copy metadata 
+                    Download thumbnails individually or in bulk, copy metadata
                     as JSON, or export for further analysis
                   </Typography>
                 </div>
@@ -202,7 +196,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Video Information:</Typography>
                   <Typography variant="muted">
-                    Title, description, duration, view count, and publication date
+                    Title, description, duration, view count, and publication
+                    date
                   </Typography>
                 </div>
               </li>
@@ -220,8 +215,9 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Thumbnail Gallery:</Typography>
                   <Typography variant="muted">
-                    All 5 thumbnail qualities: default (120x90), medium (320x180), 
-                    high (480x360), standard (640x480), and max resolution (1280x720)
+                    All 5 thumbnail qualities: default (120x90), medium
+                    (320x180), high (480x360), standard (640x480), and max
+                    resolution (1280x720)
                   </Typography>
                 </div>
               </li>
@@ -239,7 +235,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Export Options:</Typography>
                   <Typography variant="muted">
-                    JSON export, individual thumbnail downloads, and bulk operations
+                    JSON export, individual thumbnail downloads, and bulk
+                    operations
                   </Typography>
                 </div>
               </li>
@@ -249,7 +246,9 @@ export default function YoutubeMetadataToolPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Common Use Cases for YouTube Metadata Extraction</CardTitle>
+            <CardTitle>
+              Common Use Cases for YouTube Metadata Extraction
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
@@ -258,8 +257,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Content Research:</Typography>
                   <Typography variant="muted">
-                    Analyze competitor videos, study trending content, and research 
-                    successful video strategies in your niche
+                    Analyze competitor videos, study trending content, and
+                    research successful video strategies in your niche
                   </Typography>
                 </div>
               </li>
@@ -268,8 +267,9 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Thumbnail Analysis:</Typography>
                   <Typography variant="muted">
-                    Study high-performing thumbnails, collect design inspiration, 
-                    and analyze thumbnail effectiveness across different qualities
+                    Study high-performing thumbnails, collect design
+                    inspiration, and analyze thumbnail effectiveness across
+                    different qualities
                   </Typography>
                 </div>
               </li>
@@ -278,7 +278,7 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">SEO & Marketing:</Typography>
                   <Typography variant="muted">
-                    Research keywords in titles and descriptions, analyze video 
+                    Research keywords in titles and descriptions, analyze video
                     performance metrics, and study content optimization
                   </Typography>
                 </div>
@@ -288,8 +288,8 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Data Collection:</Typography>
                   <Typography variant="muted">
-                    Build datasets for research, collect video statistics, 
-                    and monitor content performance over time
+                    Build datasets for research, collect video statistics, and
+                    monitor content performance over time
                   </Typography>
                 </div>
               </li>
@@ -298,7 +298,7 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Development & APIs:</Typography>
                   <Typography variant="muted">
-                    Prototype YouTube integrations, test video data processing, 
+                    Prototype YouTube integrations, test video data processing,
                     and understand YouTube's metadata structure
                   </Typography>
                 </div>
@@ -316,29 +316,35 @@ export default function YoutubeMetadataToolPage() {
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-green-500 rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Max Resolution (1280x720):</Typography>
+                  <Typography variant="small">
+                    Max Resolution (1280x720):
+                  </Typography>
                   <Typography variant="muted">
-                    Highest quality thumbnail, perfect for previews and high-resolution displays. 
-                    Not available for all videos.
+                    Highest quality thumbnail, perfect for previews and
+                    high-resolution displays. Not available for all videos.
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Standard Definition (640x480):</Typography>
+                  <Typography variant="small">
+                    Standard Definition (640x480):
+                  </Typography>
                   <Typography variant="muted">
-                    High quality thumbnail suitable for most use cases and guaranteed 
-                    availability across all videos.
+                    High quality thumbnail suitable for most use cases and
+                    guaranteed availability across all videos.
                   </Typography>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-purple-500 rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">High Quality (480x360):</Typography>
+                  <Typography variant="small">
+                    High Quality (480x360):
+                  </Typography>
                   <Typography variant="muted">
-                    Good balance between file size and quality, widely supported 
+                    Good balance between file size and quality, widely supported
                     and available for most videos.
                   </Typography>
                 </div>
@@ -346,9 +352,11 @@ export default function YoutubeMetadataToolPage() {
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 bg-orange-500 rounded-full mt-2 shrink-0"></span>
                 <div>
-                  <Typography variant="small">Medium Quality (320x180):</Typography>
+                  <Typography variant="small">
+                    Medium Quality (320x180):
+                  </Typography>
                   <Typography variant="muted">
-                    Compact size perfect for lists and smaller displays while 
+                    Compact size perfect for lists and smaller displays while
                     maintaining reasonable image quality.
                   </Typography>
                 </div>
@@ -358,7 +366,7 @@ export default function YoutubeMetadataToolPage() {
                 <div>
                   <Typography variant="small">Default (120x90):</Typography>
                   <Typography variant="muted">
-                    Smallest thumbnail size, suitable for icons and minimal 
+                    Smallest thumbnail size, suitable for icons and minimal
                     bandwidth situations. Always available.
                   </Typography>
                 </div>
@@ -384,8 +392,9 @@ export default function YoutubeMetadataToolPage() {
                 How to Optimize YouTube Video Metadata for Better Performance
               </CardTitle>
               <CardDescription>
-                Learn best practices for YouTube SEO including title optimization, 
-                description writing, and thumbnail design strategies.
+                Learn best practices for YouTube SEO including title
+                optimization, description writing, and thumbnail design
+                strategies.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -401,7 +410,7 @@ export default function YoutubeMetadataToolPage() {
                 YouTube Thumbnail Design Guide: What Makes Thumbnails Click
               </CardTitle>
               <CardDescription>
-                Comprehensive guide to creating compelling YouTube thumbnails 
+                Comprehensive guide to creating compelling YouTube thumbnails
                 that increase click-through rates and engagement.
               </CardDescription>
             </CardHeader>
@@ -418,7 +427,7 @@ export default function YoutubeMetadataToolPage() {
                 YouTube Analytics: Understanding Video Performance Metrics
               </CardTitle>
               <CardDescription>
-                Deep dive into YouTube analytics and how to use video metadata 
+                Deep dive into YouTube analytics and how to use video metadata
                 to improve your content strategy and audience engagement.
               </CardDescription>
             </CardHeader>

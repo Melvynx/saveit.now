@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SaveIt.now - Logo Showcase v1</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #fff;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .cell {
+        aspect-ratio: 1;
+        border: 1px solid #e5e5e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .cell svg {
+        width: 100%;
+        height: 100%;
+        max-width: 80px;
+        max-height: 80px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <!-- 1: Neural node with radiating connections (Claude-inspired) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="250" cy="250" r="50" fill="#000"/>
+          <circle cx="250" cy="100" r="25" fill="#000"/>
+          <circle cx="380" cy="175" r="25" fill="#000"/>
+          <circle cx="380" cy="325" r="25" fill="#000"/>
+          <circle cx="250" cy="400" r="25" fill="#000"/>
+          <circle cx="120" cy="325" r="25" fill="#000"/>
+          <circle cx="120" cy="175" r="25" fill="#000"/>
+          <line x1="250" y1="200" x2="250" y2="125" stroke="#000" stroke-width="12"/>
+          <line x1="290" y1="220" x2="355" y2="185" stroke="#000" stroke-width="12"/>
+          <line x1="290" y1="280" x2="355" y2="315" stroke="#000" stroke-width="12"/>
+          <line x1="250" y1="300" x2="250" y2="375" stroke="#000" stroke-width="12"/>
+          <line x1="210" y1="280" x2="145" y2="315" stroke="#000" stroke-width="12"/>
+          <line x1="210" y1="220" x2="145" y2="185" stroke="#000" stroke-width="12"/>
+        </svg>
+      </div>
+
+      <!-- 2: Abstract eye with save arrow (observant agent) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 250 Q250 100 450 250 Q250 400 50 250" stroke="#000" stroke-width="30" fill="none"/>
+          <circle cx="250" cy="250" r="60" fill="#000"/>
+          <path d="M250 200 L290 260 H270 V320 H230 V260 H210 Z" fill="#fff"/>
+        </svg>
+      </div>
+
+      <!-- 3: Circular orbit with central bookmark point -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="250" cy="250" r="180" stroke="#000" stroke-width="20" fill="none"/>
+          <circle cx="250" cy="250" r="100" stroke="#000" stroke-width="15" fill="none"/>
+          <path d="M220 190 V310 L250 280 L280 310 V190 Z" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 4: Hexagonal AI core -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M250 50 L420 135 V365 L250 450 L80 365 V135 Z" stroke="#000" stroke-width="25" fill="none"/>
+          <circle cx="250" cy="250" r="70" fill="#000"/>
+          <circle cx="250" cy="250" r="30" fill="#fff"/>
+        </svg>
+      </div>
+
+      <!-- 5: Spark/star burst (autonomous intelligence) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M250 50 L270 200 L420 180 L290 250 L420 320 L270 300 L250 450 L230 300 L80 320 L210 250 L80 180 L230 200 Z" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 6: Ribbon bookmark flowing into infinity -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M100 100 C100 100 100 350 100 350 L200 280 L300 350 C300 350 300 200 300 200 C350 200 400 150 400 200 C400 250 350 300 300 300 C250 300 200 350 200 400 C200 450 250 450 300 400" stroke="#000" stroke-width="30" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- 7: Layered bookmark with depth (Stripe-inspired) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M120 100 V340 L200 280 L280 340 V100 Z" fill="#000" opacity="0.3"/>
+          <path d="M160 130 V370 L240 310 L320 370 V130 Z" fill="#000" opacity="0.6"/>
+          <path d="M200 160 V400 L280 340 L360 400 V160 Z" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 8: Downward capture arrow with circular base -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="250" cy="320" r="130" stroke="#000" stroke-width="25" fill="none"/>
+          <path d="M250 80 V280" stroke="#000" stroke-width="35" stroke-linecap="round"/>
+          <path d="M170 200 L250 300 L330 200" stroke="#000" stroke-width="35" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+
+      <!-- 9: Save icon deconstructed into geometric forms -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="100" y="100" width="300" height="300" rx="30" stroke="#000" stroke-width="25" fill="none"/>
+          <rect x="170" y="100" width="160" height="120" fill="#000"/>
+          <rect x="200" y="280" width="100" height="120" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 10: Bookmark with neural path integrated -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M150 80 V380 L250 300 L350 380 V80 Z" stroke="#000" stroke-width="25" fill="none"/>
+          <circle cx="250" cy="160" r="30" fill="#000"/>
+          <circle cx="200" cy="240" r="20" fill="#000"/>
+          <circle cx="300" cy="240" r="20" fill="#000"/>
+          <line x1="250" y1="190" x2="200" y2="220" stroke="#000" stroke-width="10"/>
+          <line x1="250" y1="190" x2="300" y2="220" stroke="#000" stroke-width="10"/>
+        </svg>
+      </div>
+
+      <!-- 11: Lightning bolt merged with bookmark -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M150 80 V380 L250 300 L350 380 V80 Z" stroke="#000" stroke-width="25" fill="none"/>
+          <path d="M290 130 L210 230 H270 L200 350 L300 230 H240 Z" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 12: Arrow piercing through circle (quick capture) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="250" cy="280" r="150" stroke="#000" stroke-width="25" fill="none"/>
+          <path d="M250 50 V350" stroke="#000" stroke-width="35" stroke-linecap="round"/>
+          <path d="M180 130 L250 50 L320 130" stroke="#000" stroke-width="35" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+
+      <!-- 13: Swoosh capturing a point -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M80 350 Q80 150 250 150 Q420 150 420 350" stroke="#000" stroke-width="30" fill="none" stroke-linecap="round"/>
+          <circle cx="250" cy="280" r="50" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 14: Speed lines forming save shape -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M100 150 H300" stroke="#000" stroke-width="20" stroke-linecap="round"/>
+          <path d="M80 220 H320" stroke="#000" stroke-width="20" stroke-linecap="round"/>
+          <path d="M60 290 H340" stroke="#000" stroke-width="20" stroke-linecap="round"/>
+          <path d="M300 150 V380 L380 300" stroke="#000" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+
+      <!-- 15: Motion blur bookmark -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M100 100 V340 L180 280 L260 340 V100 Z" fill="#000" opacity="0.15"/>
+          <path d="M140 100 V340 L220 280 L300 340 V100 Z" fill="#000" opacity="0.3"/>
+          <path d="M180 100 V340 L260 280 L340 340 V100 Z" fill="#000" opacity="0.5"/>
+          <path d="M220 100 V340 L300 280 L380 340 V100 Z" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 16: Negative space bookmark in solid circle -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="250" cy="250" r="200" fill="#000"/>
+          <path d="M180 120 V340 L250 280 L320 340 V120 Z" fill="#fff"/>
+        </svg>
+      </div>
+
+      <!-- 17: DNA helix styled as bookmark -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M180 80 Q180 170 250 170 Q320 170 320 260 Q320 350 250 350 Q180 350 180 420" stroke="#000" stroke-width="25" fill="none"/>
+          <path d="M320 80 Q320 170 250 170 Q180 170 180 260 Q180 350 250 350 Q320 350 320 420" stroke="#000" stroke-width="25" fill="none"/>
+          <line x1="190" y1="170" x2="310" y2="170" stroke="#000" stroke-width="15"/>
+          <line x1="190" y1="260" x2="310" y2="260" stroke="#000" stroke-width="15"/>
+          <line x1="190" y1="350" x2="310" y2="350" stroke="#000" stroke-width="15"/>
+        </svg>
+      </div>
+
+      <!-- 18: Abstract hand gesturing save (minimalist) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M250 420 Q150 350 150 250 Q150 150 250 150" stroke="#000" stroke-width="30" fill="none" stroke-linecap="round"/>
+          <path d="M250 150 Q300 150 300 200 V320" stroke="#000" stroke-width="25" fill="none" stroke-linecap="round"/>
+          <path d="M300 200 Q350 200 350 250 V300" stroke="#000" stroke-width="25" fill="none" stroke-linecap="round"/>
+          <circle cx="250" cy="100" r="30" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 19: Bookmark formed from dots/particles -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="160" cy="100" r="20" fill="#000"/>
+          <circle cx="160" cy="160" r="20" fill="#000"/>
+          <circle cx="160" cy="220" r="20" fill="#000"/>
+          <circle cx="160" cy="280" r="20" fill="#000"/>
+          <circle cx="190" cy="320" r="20" fill="#000"/>
+          <circle cx="230" cy="350" r="20" fill="#000"/>
+          <circle cx="250" cy="300" r="20" fill="#000"/>
+          <circle cx="270" cy="350" r="20" fill="#000"/>
+          <circle cx="310" cy="320" r="20" fill="#000"/>
+          <circle cx="340" cy="280" r="20" fill="#000"/>
+          <circle cx="340" cy="220" r="20" fill="#000"/>
+          <circle cx="340" cy="160" r="20" fill="#000"/>
+          <circle cx="340" cy="100" r="20" fill="#000"/>
+        </svg>
+      </div>
+
+      <!-- 20: Minimalist agent icon (S-shaped wave) -->
+      <div class="cell">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M150 150 Q150 80 250 80 Q350 80 350 150 Q350 220 250 220 Q150 220 150 290 Q150 360 250 360 Q350 360 350 290" stroke="#000" stroke-width="40" fill="none" stroke-linecap="round"/>
+          <circle cx="350" cy="290" r="30" fill="#000"/>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

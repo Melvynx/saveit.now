@@ -1,21 +1,20 @@
-import { DocsSidebar } from "@/components/docs/docs-sidebar";
-import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
-import { MaxWidthContainer } from "@/features/page/page";
-import {
-  getAllDocs,
-  getDocBySlug,
-  getGroupedDocs,
-} from "@/lib/mdx/docs-manager";
+import { DocsApiExamples } from "@/components/docs/docs-api-examples";
+import { DocsCopyButton } from "@/components/docs/docs-copy-button";
+import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
+import { getAllDocs, getDocBySlug } from "@/lib/mdx/docs-manager";
 import { rehypePlugins, remarkPlugins } from "@/lib/mdx/mdx-config";
-import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { ArrowLeft, ArrowRight, Book, Clock, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  DocCard,
+  DocCardGrid,
+  DocCardWrapper,
+  DocSection,
+} from "@/components/docs/doc-card";
 
 interface DocPageProps {
   params: Promise<{
@@ -32,175 +31,151 @@ export async function generateStaticParams() {
 
 export const dynamic = "force-static";
 
+function extractToc(content: string): TocItem[] {
+  const headingRegex = /^(#{2,4})\s+(.+)$/gm;
+  const toc: TocItem[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const depth = match[1]!.length;
+    const title = match[2]!.trim();
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    toc.push({
+      title,
+      url: `#${slug}`,
+      depth,
+    });
+  }
+
+  return toc;
+}
+
 export default async function DocPage(props: DocPageProps) {
   const params = await props.params;
   const doc = await getDocBySlug(params.slug);
-  const groupedDocs = await getGroupedDocs();
 
   if (!doc) {
     notFound();
   }
 
-  // Find docs in the same category for sidebar
-  const categoryDocs =
-    groupedDocs.find((group) => group.category === doc.frontmatter.category)
-      ?.docs || [];
+  const allDocs = await getAllDocs();
+  const currentIndex = allDocs.findIndex((d) => d.slug === doc.slug);
+  const neighbours = {
+    previous: currentIndex > 0 ? allDocs[currentIndex - 1] : null,
+    next: currentIndex < allDocs.length - 1 ? allDocs[currentIndex + 1] : null,
+  };
+
+  const method = doc.frontmatter.method;
+  const { endpoint, examples, results } = doc.frontmatter;
+  const hasApiExamples = method ?? endpoint ?? examples ?? results;
+  const toc = extractToc(doc.content);
+
+  const mdxComponents = {
+    DocCard,
+    DocCardGrid,
+    DocCardWrapper,
+    DocSection,
+  };
 
   return (
-    <div>
-      <Header />
-      <MaxWidthContainer className="py-16">
-        <div className="flex gap-12">
-          <DocsSidebar currentDoc={doc} />
-
-          {/* Main Content */}
-          <article className="flex-1 max-w-4xl">
-            {/* Mobile breadcrumb */}
-            <div className="lg:hidden mb-6">
-              <Button variant="ghost" asChild className="gap-2">
-                <Link href="/docs">
-                  <ArrowLeft className="size-4" />
-                  All Docs
-                </Link>
-              </Button>
-            </div>
-
-            <header className="space-y-6 pb-8 border-b">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary">
-                  <Book className="size-3 mr-1" />
-                  {doc.frontmatter.category}
-                </Badge>
-                {doc.frontmatter.subcategory && (
-                  <Badge variant="outline">{doc.frontmatter.subcategory}</Badge>
+    <div
+      className={
+        hasApiExamples ? "xl:pr-[400px]" : toc.length > 0 ? "xl:pr-64" : ""
+      }
+    >
+      <div className="flex w-full">
+        <div className="flex min-w-0 flex-1">
+          <div className="mx-auto px-6 py-8">
+            <div className="mx-auto flex max-w-prose flex-col gap-6">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-4">
+                  <Typography
+                    variant="h1"
+                    className="flex-1 text-4xl font-bold tracking-tight"
+                  >
+                    {doc.frontmatter.title}
+                  </Typography>
+                  <div className="shrink-0">
+                    <DocsCopyButton content={doc.content} />
+                  </div>
+                </div>
+                {doc.frontmatter.description && (
+                  <Typography
+                    variant="p"
+                    className="text-muted-foreground text-lg"
+                  >
+                    {doc.frontmatter.description}
+                  </Typography>
                 )}
               </div>
 
-              <Typography variant="h1" className="text-4xl md:text-5xl">
-                {doc.frontmatter.title}
-              </Typography>
-
-              <Typography variant="lead" className="text-muted-foreground">
-                {doc.frontmatter.description}
-              </Typography>
-
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="size-4" />
-                {doc.readingTime.text}
+              <div className="typography">
+                <MDXRemote
+                  source={doc.content}
+                  options={{
+                    mdxOptions: {
+                      remarkPlugins,
+                      rehypePlugins,
+                    },
+                  }}
+                  components={mdxComponents}
+                />
               </div>
 
-              {doc.frontmatter.tags && doc.frontmatter.tags.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {doc.frontmatter.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </header>
-
-            {/* Article Content */}
-            <div className="prose prose-lg dark:prose-invert max-w-none py-8">
-              <MDXRemote
-                source={doc.content}
-                options={{
-                  mdxOptions: {
-                    remarkPlugins,
-                    rehypePlugins,
-                  },
-                }}
-              />
-            </div>
-
-            {/* Navigation Footer */}
-            <footer className="pt-8 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Previous Doc */}
-                {(() => {
-                  const currentIndex = categoryDocs.findIndex(
-                    (d) => d.slug === doc.slug,
-                  );
-                  const prevDoc =
-                    currentIndex > 0 ? categoryDocs[currentIndex - 1] : null;
-
-                  return prevDoc ? (
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <Link
-                          href={`/docs/${prevDoc.slug}`}
-                          className="flex items-center gap-3"
-                        >
-                          <ArrowLeft className="size-5 text-muted-foreground" />
-                          <div>
-                            <div className="text-xs text-muted-foreground">
-                              Previous
-                            </div>
-                            <div className="font-medium">
-                              {prevDoc.frontmatter.title}
-                            </div>
-                          </div>
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  ) : null;
-                })()}
-
-                {/* Next Doc */}
-                {(() => {
-                  const currentIndex = categoryDocs.findIndex(
-                    (d) => d.slug === doc.slug,
-                  );
-                  const nextDoc =
-                    currentIndex < categoryDocs.length - 1
-                      ? categoryDocs[currentIndex + 1]
-                      : null;
-
-                  return nextDoc ? (
-                    <Card className="hover:shadow-md transition-shadow md:ml-auto">
-                      <CardContent className="p-4">
-                        <Link
-                          href={`/docs/${nextDoc.slug}`}
-                          className="flex items-center gap-3 text-right"
-                        >
-                          <div className="flex-1">
-                            <div className="text-xs text-muted-foreground">
-                              Next
-                            </div>
-                            <div className="font-medium">
-                              {nextDoc.frontmatter.title}
-                            </div>
-                          </div>
-                          <ArrowRight className="size-5 text-muted-foreground" />
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  ) : null;
-                })()}
-              </div>
-
-              {/* Help CTA */}
-              <div className="mt-8 text-center">
-                <Typography variant="muted" className="mb-4">
-                  Was this page helpful?
-                </Typography>
-                <div className="flex gap-4 justify-center">
-                  <Button variant="outline" asChild>
-                    <Link href="/contact">Contact Support</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/help">
-                      <FileText className="size-4 mr-2" />
-                      Browse Help Center
+              <div className="border-border flex items-center justify-between border-t pt-6">
+                {neighbours.previous && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/docs/${neighbours.previous.slug}`}>
+                      <ArrowLeft className="size-4" />
+                      {neighbours.previous.frontmatter.title}
                     </Link>
                   </Button>
-                </div>
+                )}
+                {neighbours.next && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto"
+                    asChild
+                  >
+                    <Link href={`/docs/${neighbours.next.slug}`}>
+                      {neighbours.next.frontmatter.title}
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                )}
               </div>
-            </footer>
-          </article>
+            </div>
+          </div>
         </div>
-      </MaxWidthContainer>
-      <Footer />
+
+        <div className="fixed top-16 right-0 hidden h-[calc(100vh-4rem)] overflow-y-auto xl:flex">
+          {hasApiExamples && (
+            <aside className="bg-background w-96 overflow-y-auto border-l">
+              <div className="p-6">
+                <DocsApiExamples
+                  method={method}
+                  endpoint={endpoint}
+                  examples={examples}
+                  results={results}
+                />
+              </div>
+            </aside>
+          )}
+
+          {toc.length > 0 && !hasApiExamples && (
+            <aside className="bg-background w-64 overflow-y-auto border-l">
+              <div className="p-6">
+                <DocsTableOfContents toc={toc} />
+              </div>
+            </aside>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

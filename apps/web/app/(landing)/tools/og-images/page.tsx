@@ -42,21 +42,12 @@ export const metadata = {
     url: "/tools/og-images",
     siteName: "SaveIt.now",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-images/tools/og-images.png",
-        width: 1200,
-        height: 630,
-        alt: "OG Image Extractor Tool - Extract Open Graph images and Twitter cards",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free OG Image & Twitter Card Extractor Tool",
     description:
       "Extract Open Graph images and Twitter cards from any URL. Free online tool for social media optimization.",
-    images: ["/og-images/tools/og-images.png"],
   },
 };
 

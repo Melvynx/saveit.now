@@ -1,81 +1,73 @@
-import { Button } from "@workspace/ui/components/button";
-import { ButtonGroup } from "@workspace/ui/components/button-group";
-import { useQueryState } from "nuqs";
-import { forwardRef } from "react";
-import { toast } from "sonner";
-import { FilterList } from "./components/filter-list";
-import { SelectedFiltersBadges } from "./components/selected-filters-badges";
-import {
-  MentionFilterInput,
-  MentionFilterInputRef,
-} from "./components/type-filter-input";
+"use client";
 
-import { SearchInputProvider } from "./contexts/search-input-context";
-import { URL_SCHEMA } from "./schema";
-import { useCreateBookmarkAction } from "./use-create-bookmark";
+import { BookmarkType } from "@workspace/database";
+import { Input } from "@workspace/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils";
+import { Search } from "lucide-react";
+import { useQueryState, useQueryStates } from "nuqs";
+import { forwardRef, useImperativeHandle, useRef } from "react";
+import { TagMultiSelect } from "./components/tag-multi-select";
+import { TypeMultiSelect } from "./components/type-multi-select";
 
-const SearchInputContent = forwardRef<
-  MentionFilterInputRef,
-  { query: string; setQuery: (query: string) => void }
->(({ query, setQuery }, ref) => {
-  // No need to destructure context values here since components access them directly
+export type SearchInputRef = {
+  focus: () => void;
+};
 
-  const isUrl = URL_SCHEMA.safeParse(query).success;
+const BOOKMARK_TYPES: BookmarkType[] = Object.values(BookmarkType);
 
-  const action = useCreateBookmarkAction({
-    onSuccess: () => {
-      toast.success("Bookmark added");
-      setQuery("");
-    },
-  });
+export const SearchInput = forwardRef<SearchInputRef>((props, ref) => {
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleEnterPress = () => {
-    if (isUrl) {
-      action.execute({ url: query });
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <ButtonGroup className="w-full">
-        <MentionFilterInput
-          ref={ref}
-          query={query}
-          onQueryChange={setQuery}
-          isUrl={isUrl}
-          onEnterPress={handleEnterPress}
-        />
-        {isUrl ? (
-          <Button
-            onClick={() => {
-              action.execute({ url: query });
-            }}
-            variant="outline"
-            className="lg:h-16 lg:px-6 lg:py-4 lg:text-2xl lg:rounded-xl"
-          >
-            Add
-          </Button>
-        ) : null}
-      </ButtonGroup>
-
-      <SelectedFiltersBadges />
-
-      <FilterList query={query} />
-    </div>
-  );
-});
-
-SearchInputContent.displayName = "SearchInputContent";
-
-export const SearchInput = forwardRef<MentionFilterInputRef>((props, ref) => {
   const [query, setQuery] = useQueryState("query", {
     defaultValue: "",
   });
 
+  const [urlState, setUrlState] = useQueryStates({
+    types: {
+      defaultValue: [] as BookmarkType[],
+      serialize: (types) => types.join(","),
+      parse: (str) =>
+        str
+          ? (str
+              .split(",")
+              .filter((type) =>
+                BOOKMARK_TYPES.includes(type as BookmarkType),
+              ) as BookmarkType[])
+          : [],
+    },
+    tags: {
+      defaultValue: [] as string[],
+      serialize: (tags) => tags.join(","),
+      parse: (str) => (str ? str.split(",").filter(Boolean) : []),
+    },
+  });
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
+
   return (
-    <SearchInputProvider onInputChange={setQuery}>
-      <SearchInputContent ref={ref} query={query} setQuery={setQuery} />
-    </SearchInputProvider>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative max-w-md flex-1 min-w-[200px]">
+        <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder="Search bookmarks..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className={cn("h-10 pl-9")}
+        />
+      </div>
+      <TagMultiSelect
+        selectedTags={urlState.tags}
+        onTagsChange={(tags) => setUrlState({ tags })}
+      />
+      <TypeMultiSelect
+        selectedTypes={urlState.types}
+        onTypesChange={(types) => setUrlState({ types })}
+      />
+    </div>
   );
 });
 

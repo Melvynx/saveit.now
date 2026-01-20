@@ -10,14 +10,15 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
   BookmarkCard,
+  BookmarkCardAgenticSearch,
   BookmarkCardInput,
   BookmarkCardLoadMore,
   BookmarkCardPricing,
 } from "./bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
-import { MentionFilterInputRef } from "./components/type-filter-input";
+import { ChatBar } from "./components/chat-bar";
 import { MoreResultsButton } from "./more-results-button";
-import { SearchInput } from "./search-input";
+import { SearchInput, type SearchInputRef } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
 
 export function BookmarksPage() {
@@ -31,7 +32,7 @@ export function BookmarksPage() {
   } = useBookmarks();
   const session = useSession();
   const router = useRouter();
-  const searchInputRef = useRef<MentionFilterInputRef>(null);
+  const searchInputRef = useRef<SearchInputRef>(null);
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -76,6 +77,7 @@ export function BookmarksPage() {
                 className="bg-muted mb-[var(--grid-spacing)] h-72 rounded-md"
               />
             ))}
+            {query && <MoreResultsButton />}
           </>
         ) : (
           <>
@@ -111,6 +113,7 @@ export function BookmarksPage() {
           </>
         )}
       </div>
+      <ChatBar />
     </div>
   );
 }

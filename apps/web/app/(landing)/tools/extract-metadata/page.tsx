@@ -43,21 +43,12 @@ export const metadata = {
     url: "/tools/extract-metadata",
     siteName: "SaveIt.now",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-images/tools/extract-metadata.png",
-        width: 1200,
-        height: 630,
-        alt: "Metadata Extractor Tool - Extract meta tags, Open Graph, and structured data",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free Website Metadata Extractor Tool",
     description:
       "Extract comprehensive metadata from any website including Open Graph, Twitter Cards, and JSON-LD structured data.",
-    images: ["/og-images/tools/extract-metadata.png"],
   },
 };
 
@@ -119,10 +110,11 @@ export default function ExtractMetadataToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Metadata is structured information embedded in HTML that describes
-                your web page content. It includes title tags, meta descriptions,
-                Open Graph data, Twitter Cards, and technical tags that help
-                search engines and social platforms understand your content.
+                Metadata is structured information embedded in HTML that
+                describes your web page content. It includes title tags, meta
+                descriptions, Open Graph data, Twitter Cards, and technical tags
+                that help search engines and social platforms understand your
+                content.
               </Typography>
             </CardContent>
           </Card>
@@ -133,10 +125,10 @@ export default function ExtractMetadataToolPage() {
             </CardHeader>
             <CardContent>
               <Typography variant="p">
-                Analyzing metadata helps optimize SEO performance, improve social
-                media sharing, and ensure your content appears correctly across
-                platforms. Proper metadata can increase click-through rates by up
-                to 30% and improve search rankings.
+                Analyzing metadata helps optimize SEO performance, improve
+                social media sharing, and ensure your content appears correctly
+                across platforms. Proper metadata can increase click-through
+                rates by up to 30% and improve search rankings.
               </Typography>
             </CardContent>
           </Card>
@@ -171,7 +163,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Review Results:</Typography>
                   <Typography variant="muted">
-                    View organized metadata including standard, Open Graph, and Twitter tags
+                    View organized metadata including standard, Open Graph, and
+                    Twitter tags
                   </Typography>
                 </div>
               </li>
@@ -199,7 +192,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Title Tag:</Typography>
                   <Typography variant="muted">
-                    Keep between 50-60 characters, include primary keyword, make it compelling
+                    Keep between 50-60 characters, include primary keyword, make
+                    it compelling
                   </Typography>
                 </div>
               </li>
@@ -208,7 +202,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Meta Description:</Typography>
                   <Typography variant="muted">
-                    150-160 characters that summarize your page content and encourage clicks
+                    150-160 characters that summarize your page content and
+                    encourage clicks
                   </Typography>
                 </div>
               </li>
@@ -217,7 +212,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Open Graph Tags:</Typography>
                   <Typography variant="muted">
-                    Optimize for social sharing with og:title, og:description, and og:image
+                    Optimize for social sharing with og:title, og:description,
+                    and og:image
                   </Typography>
                 </div>
               </li>
@@ -226,7 +222,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Twitter Cards:</Typography>
                   <Typography variant="muted">
-                    Enhance Twitter sharing with twitter:card, twitter:title, and twitter:description
+                    Enhance Twitter sharing with twitter:card, twitter:title,
+                    and twitter:description
                   </Typography>
                 </div>
               </li>
@@ -235,7 +232,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Canonical URL:</Typography>
                   <Typography variant="muted">
-                    Prevent duplicate content issues by specifying the preferred URL version
+                    Prevent duplicate content issues by specifying the preferred
+                    URL version
                   </Typography>
                 </div>
               </li>
@@ -244,7 +242,8 @@ export default function ExtractMetadataToolPage() {
                 <div>
                   <Typography variant="small">Robots Meta Tag:</Typography>
                   <Typography variant="muted">
-                    Control how search engines index and follow links on your page
+                    Control how search engines index and follow links on your
+                    page
                   </Typography>
                 </div>
               </li>
@@ -272,7 +271,8 @@ export default function ExtractMetadataToolPage() {
                 Free OG Image & Twitter Card Extractor
               </CardTitle>
               <CardDescription>
-                Extract and preview Open Graph images and Twitter cards from any URL for social media optimization.
+                Extract and preview Open Graph images and Twitter cards from any
+                URL for social media optimization.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -288,7 +288,8 @@ export default function ExtractMetadataToolPage() {
                 How to Optimize Meta Tags for Better SEO
               </CardTitle>
               <CardDescription>
-                Learn best practices for writing compelling title tags and meta descriptions that improve search rankings.
+                Learn best practices for writing compelling title tags and meta
+                descriptions that improve search rankings.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -304,7 +305,8 @@ export default function ExtractMetadataToolPage() {
                 Social Media Meta Tags Checklist
               </CardTitle>
               <CardDescription>
-                Complete checklist for optimizing Open Graph and Twitter Card meta tags for maximum engagement.
+                Complete checklist for optimizing Open Graph and Twitter Card
+                meta tags for maximum engagement.
               </CardDescription>
             </CardHeader>
             <CardContent>

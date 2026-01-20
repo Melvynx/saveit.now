@@ -95,6 +95,7 @@
     "sharp": "^0.34.2",
     "shiki": "^3.7.0",
     "sonner": "^2.0.3",
+    "streamdown": "^2.0.1",
     "stripe": "17.7.0",
     "turndown": "^7.2.0",
     "unified": "^11.0.5",

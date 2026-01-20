@@ -28,7 +28,7 @@ export const BookmarkCardActions = ({
 }: BookmarkCardActionsProps) => {
   return (
     <div
-      className={`absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${className}`}
+      className={`absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 ${className}`}
     >
       <ExternalLinkTracker
         bookmarkId={bookmarkId}

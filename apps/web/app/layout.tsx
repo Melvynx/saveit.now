@@ -26,8 +26,22 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SaveIt.now",
   description:
-    "Don't ever lose your bookmarks again. Let's our advanced AI system find it for you.",
+    "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
   metadataBase: new URL(getServerUrl()),
+  openGraph: {
+    title: "SaveIt.now",
+    description:
+      "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
+    type: "website",
+    siteName: "SaveIt.now",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SaveIt.now",
+    description:
+      "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
+  },
 };
 
 export default function RootLayout({

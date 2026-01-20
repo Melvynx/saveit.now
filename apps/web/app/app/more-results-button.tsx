@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
 import { Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { usePrefetchBookmarks } from "./use-bookmarks";
@@ -44,7 +43,7 @@ export function MoreResultsButton() {
   };
 
   return (
-    <Card className="w-full p-4 gap-0 overflow-hidden h-[var(--card-height)]">
+    <Card className="w-full p-4 gap-0 overflow-hidden aspect-[384/290] flex flex-col">
       <CardHeader className="pb-4 px-0">
         <div className="flex items-center gap-2">
           <Plus className="text-primary size-4" />
@@ -55,7 +54,7 @@ export function MoreResultsButton() {
           you can increase the matching distance to show more results.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex h-full w-full items-center flex-col gap-4 justify-center">
+      <CardContent className="flex-1 flex flex-col justify-end px-0 pb-0">
         <LoadingButton
           size="sm"
           className="w-full"
@@ -69,23 +68,6 @@ export function MoreResultsButton() {
         >
           Increase matching distance
         </LoadingButton>
-        <Typography variant="muted">
-          {Math.round(currentMatchingDistance * 100) / 100}{" "}
-          {currentMatchingDistance > 0.1 ? (
-            <button
-              className="text-primary underline"
-              onClick={() => mutation.mutate({ n: 0.1 })}
-              onMouseEnter={() =>
-                mutation.mutate({
-                  n: 0.1,
-                  prefetchOnly: true,
-                })
-              }
-            >
-              Reset
-            </button>
-          ) : null}
-        </Typography>
       </CardContent>
     </Card>
   );

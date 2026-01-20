@@ -1,101 +1,103 @@
 import { MaxWidthContainer } from "@/features/page/page";
-import { Badge } from "@workspace/ui/components/badge";
-import { Card } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
+import {
+  BrainCircuitIcon,
+  CameraIcon,
+  FileSearchIcon,
+  LayersIcon,
+  SparklesIcon,
+  ZapIcon,
+} from "lucide-react";
 
 interface Benefit {
   id: string;
-  icon: string;
   title: string;
   description: string;
+  icon: React.ReactNode;
 }
 
 const benefits: Benefit[] = [
   {
-    id: "never-lose",
-    icon: "🧠",
-    title: "Never Lose Ideas Again",
+    id: "autonomous-capture",
+    title: "Autonomous Capture",
     description:
-      "Stop losing breakthrough ideas because you can't find that perfect resource from 3 months ago. Turn information chaos into instant insights.",
+      "Paste any URL. Your agent screenshots, summarizes, and indexes—instantly.",
+    icon: <CameraIcon className="size-5" />,
   },
   {
-    id: "instant-retrieval",
-    icon: "⚡",
-    title: "3-Second Retrieval",
-    description:
-      "Type what you remember and our AI finds it. No more scrolling through endless bookmark folders trying to find that one link.",
+    id: "self-organization",
+    title: "Self-Organization",
+    description: "No folders. No tags. Your agent decides where things belong.",
+    icon: <LayersIcon className="size-5" />,
   },
   {
-    id: "creator-focused",
-    icon: "🎯",
-    title: "Built for Creators",
-    description:
-      "500+ hours of real creator research went into building this. It just works the way your brain works, not like boring enterprise tools.",
+    id: "semantic-retrieval",
+    title: "Semantic Retrieval",
+    description: "Describe what you remember. Found in milliseconds.",
+    icon: <FileSearchIcon className="size-5" />,
   },
   {
-    id: "zero-organization",
-    icon: "🗂️",
-    title: "Zero Organization Required",
-    description:
-      "Folders are the worst way to organize knowledge. Our AI does the organizing so you can focus on creating, not cataloging.",
+    id: "universal-understanding",
+    title: "Universal Understanding",
+    description: "PDFs, videos, tweets, articles—all searchable in one place.",
+    icon: <BrainCircuitIcon className="size-5" />,
   },
   {
-    id: "instant-context",
-    icon: "🚀",
-    title: "Instant Context",
-    description:
-      "AI summaries give you the key insights without re-reading everything. Perfect for busy creators who need information fast.",
+    id: "continuous-learning",
+    title: "Continuous Learning",
+    description: "The more you save, the smarter your agent gets.",
+    icon: <SparklesIcon className="size-5" />,
   },
   {
-    id: "search-by-vibes",
-    icon: "🔍",
-    title: "Find What You Forgot",
-    description:
-      "Describe what you remember and we'll find it. Even if you forgot the exact title or website. Search by vibes, not keywords.",
+    id: "proactive-surfacing",
+    title: "Proactive Surfacing",
+    description: "Surfaces relevant content before you even search.",
+    icon: <ZapIcon className="size-5" />,
   },
 ];
 
-function BenefitCard({ benefit }: { benefit: Benefit }) {
+function BenefitCard({ benefit, index }: { benefit: Benefit; index: number }) {
   return (
-    <Card className="p-4 flex flex-col gap-4 text-center">
-      <Typography variant="h2">{benefit.icon}</Typography>
-      <Typography variant="h3">{benefit.title}</Typography>
-      <Typography variant="muted" className="text-sm leading-relaxed">
+    <div className="relative rounded-2xl border bg-card/50 p-6">
+      <div className="absolute -top-3 -right-3 flex size-8 items-center justify-center rounded-full bg-muted border text-xs font-mono text-muted-foreground">
+        {String(index + 1).padStart(2, "0")}
+      </div>
+
+      <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {benefit.icon}
+      </div>
+
+      <h3 className="mb-2 font-semibold text-lg">{benefit.title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">
         {benefit.description}
-      </Typography>
-    </Card>
+      </p>
+    </div>
   );
 }
 
 export function WhySaveIt() {
   return (
-    <MaxWidthContainer
-      width="lg"
-      spacing="default"
-      className="bg-foreground/5 rounded-md py-8 shadow"
-    >
-      <div className="text-center mb-16 flex flex-col gap-2 items-center mx-auto max-w-2xl">
-        <Badge variant="outline">Why SaveIt.now?</Badge>
-        <Typography variant="h2">
-          Already drowning in bookmarks and research?{" "}
-          <br className="hidden md:block" />
-          Let's turn that chaos into your{" "}
-          <span className="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            Knowledge Superpower
-          </span>
-          .
-        </Typography>
-        <Typography variant="lead">
-          You've saved thousands of links, but when inspiration strikes, you
-          can't find that perfect resource you saw months ago. Another brilliant
-          idea dies because your "system" failed you again.
-        </Typography>
-      </div>
+    <MaxWidthContainer spacing="default" className="py-24">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-16 max-w-2xl">
+          <p className="text-sm font-mono text-muted-foreground mb-4">
+            004 — Capabilities
+          </p>
+          <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight mb-6">
+            What your
+            <br />
+            <span className="text-muted-foreground font-light">agent does</span>
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Six autonomous capabilities that transform how you save and find
+            information.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        {benefits.map((benefit) => (
-          <BenefitCard key={benefit.id} benefit={benefit} />
-        ))}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {benefits.map((benefit, index) => (
+            <BenefitCard key={benefit.id} benefit={benefit} index={index} />
+          ))}
+        </div>
       </div>
     </MaxWidthContainer>
   );
