@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "\"${CONDUCTOR_ROOT_PATH}/scripts/setup.sh\"",
-    "archive": "\"${CONDUCTOR_ROOT_PATH}/scripts/archive.sh\""
+    "setup": "./scripts/setup.sh",
+    "archive": "./scripts/archive.sh"
   }
 }
