@@ -4,7 +4,14 @@ import { upfetch } from "@/lib/up-fetch";
 import { useChat } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { ArrowDownIcon, BookmarkIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  BookmarkIcon,
+  CornerDownLeftIcon,
+  Loader2Icon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
