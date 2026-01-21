@@ -44,10 +44,15 @@ update_env_file() {
         echo "✅ Copied ${env_path} from ${source_path}"
 
         if grep -q "^DATABASE_URL=" "${env_path}"; then
-            local new_db_name="saveit.now2-${WORKSPACE_NAME}"
-            sed -i.bak "s|^DATABASE_URL=\"postgresql://melvynx:@localhost:5432/saveit\.now2\"|DATABASE_URL=\"postgresql://melvynx:@localhost:5432/${new_db_name}\"|" "${env_path}"
-            echo "✅ Updated DATABASE_URL in ${env_path} to use: ${new_db_name}"
+            local new_db_name="saveit.now-${WORKSPACE_NAME}"
+            sed -i.bak "s|^DATABASE_URL=\"postgresql://melvynx:@localhost:5432/saveit\.now\"|DATABASE_URL=\"postgresql://melvynx:@localhost:5432/${new_db_name}\"|" "${env_path}"
             rm -f "${env_path}.bak"
+
+            if grep -q "saveit\.now-${WORKSPACE_NAME}" "${env_path}"; then
+                echo "✅ Updated DATABASE_URL in ${env_path} to use: ${new_db_name}"
+            else
+                echo "⚠️  DATABASE_URL pattern not matched in ${env_path}, check manually"
+            fi
         fi
     else
         echo "⚠️  Warning: ${env_path} not found in ROOT_PATH or DEV_PATH"
@@ -80,11 +85,11 @@ pnpm install
 echo "Generating Prisma client..."
 pnpm --filter=database prisma:generate
 
-NEW_DB_NAME="saveit.now2-${WORKSPACE_NAME}"
+NEW_DB_NAME="saveit.now-${WORKSPACE_NAME}"
 echo "Creating database: ${NEW_DB_NAME}"
 createdb -U melvynx "${NEW_DB_NAME}"
 
-ORIGINAL_DB="saveit.now2"
+ORIGINAL_DB="saveit.now"
 echo "Copying data from original database..."
 
 if psql -U melvynx -lqt | cut -d \| -f 1 | grep -qw "${ORIGINAL_DB}"; then

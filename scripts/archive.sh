@@ -33,7 +33,7 @@ if DB_NAME=$(get_db_name_from_env "packages/database/.env"); then
 elif DB_NAME=$(get_db_name_from_env "apps/web/.env"); then
     echo "Found database name in apps/web/.env: ${DB_NAME}"
 else
-    DB_NAME="saveit.now2-${WORKSPACE_NAME}"
+    DB_NAME="saveit.now-${WORKSPACE_NAME}"
     echo "No DATABASE_URL found in .env files, using expected database name: ${DB_NAME}"
 fi
 
