@@ -7,26 +7,41 @@ set -e
 
 WORKSPACE_NAME="${CONDUCTOR_WORKSPACE_NAME}"
 ROOT_PATH="${CONDUCTOR_ROOT_PATH}"
+DEV_PATH="/Users/melvynx/Developer/saas/saveit.now-mono"
 
 if [ -z "${WORKSPACE_NAME}" ]; then
     echo "Error: CONDUCTOR_WORKSPACE_NAME is not set"
     exit 1
 fi
 
-if [ -z "${ROOT_PATH}" ]; then
-    echo "Error: CONDUCTOR_ROOT_PATH is not set"
-    exit 1
-fi
-
 echo "Setting up SaveIt.now workspace: ${WORKSPACE_NAME}"
+echo "Current directory: $(pwd)"
+echo "CONDUCTOR_ROOT_PATH: ${ROOT_PATH}"
+echo "Fallback dev path: ${DEV_PATH}"
+
+find_env_source() {
+    local env_path="$1"
+
+    if [ -n "${ROOT_PATH}" ] && [ -f "${ROOT_PATH}/${env_path}" ]; then
+        echo "${ROOT_PATH}/${env_path}"
+        return 0
+    fi
+
+    if [ -f "${DEV_PATH}/${env_path}" ]; then
+        echo "${DEV_PATH}/${env_path}"
+        return 0
+    fi
+
+    return 1
+}
 
 update_env_file() {
     local env_path="$1"
-    local root_env_path="${ROOT_PATH}/${env_path}"
+    local source_path
 
-    if [ -f "${root_env_path}" ]; then
-        cp "${root_env_path}" "${env_path}"
-        echo "✅ Copied ${env_path}"
+    if source_path=$(find_env_source "${env_path}"); then
+        cp "${source_path}" "${env_path}"
+        echo "✅ Copied ${env_path} from ${source_path}"
 
         if grep -q "^DATABASE_URL=" "${env_path}"; then
             local new_db_name="saveit.now2-${WORKSPACE_NAME}"
@@ -35,20 +50,21 @@ update_env_file() {
             rm -f "${env_path}.bak"
         fi
     else
-        echo "⚠️  Warning: ${root_env_path} not found"
+        echo "⚠️  Warning: ${env_path} not found in ROOT_PATH or DEV_PATH"
     fi
 }
 
 copy_env_file() {
     local env_path="$1"
-    local root_env_path="${ROOT_PATH}/${env_path}"
+    local source_path
 
-    if [ -f "${root_env_path}" ]; then
-        cp "${root_env_path}" "${env_path}"
-        echo "✅ Copied ${env_path}"
+    if source_path=$(find_env_source "${env_path}"); then
+        cp "${source_path}" "${env_path}"
+        echo "✅ Copied ${env_path} from ${source_path}"
     fi
 }
 
+echo ""
 echo "Copying .env files..."
 update_env_file "packages/database/.env"
 update_env_file "apps/web/.env"
@@ -57,6 +73,7 @@ copy_env_file "apps/mobile/.env"
 copy_env_file "apps/mobile/.env.development"
 copy_env_file "apps/mobile/.env.production"
 
+echo ""
 echo "Installing dependencies..."
 pnpm install
 
@@ -79,6 +96,7 @@ else
     pnpm --filter=database prisma:migrate:deploy
 fi
 
+echo ""
 echo "🎉 SaveIt.now workspace '${WORKSPACE_NAME}' setup completed successfully!"
 echo "Database: ${NEW_DB_NAME}"
 echo "Ready to start development with: pnpm dev"
