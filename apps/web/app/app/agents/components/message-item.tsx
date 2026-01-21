@@ -13,6 +13,8 @@ import {
   PencilIcon,
   SearchIcon,
   TagIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
 } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
@@ -53,6 +55,8 @@ type MessageItemProps = {
   isLast: boolean;
   isLoading: boolean;
   onEdit?: (messageId: string, newContent: string) => void;
+  onLike?: () => void;
+  onDislike?: () => void;
 };
 
 export const MessageItem = memo(function MessageItem({
@@ -60,6 +64,8 @@ export const MessageItem = memo(function MessageItem({
   isLast,
   isLoading,
   onEdit,
+  onLike,
+  onDislike,
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const [isEditing, setIsEditing] = useState(false);
@@ -216,6 +222,26 @@ export const MessageItem = memo(function MessageItem({
                       )}
                       {copied ? "Copied" : "Copy"}
                     </Button>
+                    {onLike && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-6"
+                        onClick={onLike}
+                      >
+                        <ThumbsUpIcon className="size-3" />
+                      </Button>
+                    )}
+                    {onDislike && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-6"
+                        onClick={onDislike}
+                      >
+                        <ThumbsDownIcon className="size-3" />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

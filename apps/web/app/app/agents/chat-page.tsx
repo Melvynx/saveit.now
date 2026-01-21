@@ -4,14 +4,7 @@ import { upfetch } from "@/lib/up-fetch";
 import { useChat } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import {
-  ArrowDownIcon,
-  BookmarkIcon,
-  CornerDownLeftIcon,
-  Loader2Icon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
+import { ArrowDownIcon, BookmarkIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -196,6 +189,40 @@ export function ChatPage() {
       toast.error("Failed to save conversation");
     },
   });
+
+  const likeMutation = useMutation({
+    mutationFn: (id: string) =>
+      upfetch(`/api/chat/conversations/${id}/like`, {
+        method: "POST",
+      }),
+  });
+
+  const dislikeMutation = useMutation({
+    mutationFn: (id: string) =>
+      upfetch(`/api/chat/conversations/${id}/dislike`, {
+        method: "POST",
+      }),
+  });
+
+  const handleLike = useCallback(() => {
+    if (
+      conversationId &&
+      !likeMutation.isPending &&
+      !dislikeMutation.isPending
+    ) {
+      likeMutation.mutate(conversationId);
+    }
+  }, [conversationId, likeMutation, dislikeMutation]);
+
+  const handleDislike = useCallback(() => {
+    if (
+      conversationId &&
+      !likeMutation.isPending &&
+      !dislikeMutation.isPending
+    ) {
+      dislikeMutation.mutate(conversationId);
+    }
+  }, [conversationId, likeMutation, dislikeMutation]);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -456,6 +483,8 @@ export function ChatPage() {
                   isLast={i === messages.length - 1}
                   isLoading={isGenerating}
                   onEdit={handleEditMessage}
+                  onLike={m.role === "assistant" ? handleLike : undefined}
+                  onDislike={m.role === "assistant" ? handleDislike : undefined}
                 />
               ))}
             </div>

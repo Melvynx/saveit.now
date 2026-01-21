@@ -9,7 +9,7 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Typography } from "@workspace/ui/components/typography";
-import { Mail, Users } from "lucide-react";
+import { Mail, MessageSquareIcon, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -37,12 +37,20 @@ export default async function AdminPage({
           <Users className="size-6" />
           <Typography variant="h1">Admin Panel</Typography>
         </div>
-        <Button className="flex items-center gap-2" asChild>
-          <Link href="/admin/send-email">
-            <Mail className="size-4" />
-            Send Marketing Email
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" asChild>
+            <Link href="/admin/conversations">
+              <MessageSquareIcon className="size-4" />
+              Conversations
+            </Link>
+          </Button>
+          <Button className="flex items-center gap-2" asChild>
+            <Link href="/admin/send-email">
+              <Mail className="size-4" />
+              Send Marketing Email
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>

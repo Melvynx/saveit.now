@@ -102,3 +102,104 @@ export async function deleteConversation(
     where: { id, userId },
   });
 }
+
+export async function updateConversationLikes(
+  id: string,
+  userId: string,
+  delta: number,
+): Promise<void> {
+  await prisma.chatConversation.updateMany({
+    where: { id, userId },
+    data: {
+      likes: {
+        increment: delta,
+      },
+    },
+  });
+}
+
+export type ConversationWithLikes = {
+  id: string;
+  title: string | null;
+  likes: number;
+  updatedAt: Date;
+  createdAt: Date;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+};
+
+export async function getConversationsWithLikes(): Promise<
+  ConversationWithLikes[]
+> {
+  const conversations = await prisma.chatConversation.findMany({
+    where: {
+      likes: {
+        not: 0,
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      likes: true,
+      updatedAt: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { likes: "desc" },
+  });
+
+  return conversations;
+}
+
+export type ConversationWithMessagesAdmin = {
+  id: string;
+  title: string | null;
+  messages: UIMessage[];
+  likes: number;
+  updatedAt: Date;
+  createdAt: Date;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+};
+
+export async function getConversationAdmin(
+  id: string,
+): Promise<ConversationWithMessagesAdmin | null> {
+  const conversation = await prisma.chatConversation.findFirst({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      messages: true,
+      likes: true,
+      updatedAt: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!conversation) return null;
+
+  return {
+    ...conversation,
+    messages: conversation.messages as unknown as UIMessage[],
+  };
+}
