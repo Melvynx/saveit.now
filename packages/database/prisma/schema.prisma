@@ -26,6 +26,8 @@ model User {
   role                   String?
   unsubscribed           Boolean                 @default(false)
   metadata               Json?
+  publicLinkSlug         String?                 @unique
+  publicLinkEnabled      Boolean                 @default(false)
   bookmarks              Bookmark[]
   bookmarkOpens          BookmarkOpen[]
   bookmarkProcessingRuns BookmarkProcessingRun[]
