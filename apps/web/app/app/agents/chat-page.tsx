@@ -438,7 +438,7 @@ export function ChatPage() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Ask about your bookmarks..."
-                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
+                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-base shadow-none focus-visible:ring-0 md:text-sm"
                   rows={1}
                   disabled={isGenerating && status !== "streaming"}
                 />
@@ -513,7 +513,7 @@ export function ChatPage() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Ask about your bookmarks..."
-                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
+                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-base shadow-none focus-visible:ring-0 md:text-sm"
                   rows={1}
                   disabled={isGenerating && status !== "streaming"}
                 />
