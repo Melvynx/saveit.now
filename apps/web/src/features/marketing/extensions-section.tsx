@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import { APP_LINKS } from "@/lib/app-links";
-import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
@@ -62,9 +61,9 @@ export const ExtensionsSection = () => {
   return (
     <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">
       <div className="text-center justify-center flex flex-col gap-2 items-center">
-        <Badge variant="outline" className="w-fit">
-          Our extensions
-        </Badge>
+        <p className="text-sm font-mono text-muted-foreground">
+          006 — Extensions
+        </p>
         <Typography variant="h2">One simple click away</Typography>
         <Typography variant="lead">Do nothing. Just save it.</Typography>
       </div>

@@ -9,7 +9,7 @@ export const WhatIsAgentic = () => {
         {/* Header */}
         <div className="mb-16 text-center">
           <p className="text-sm font-mono text-muted-foreground mb-4">
-            003 — The difference
+            002 — The difference
           </p>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[0.9] tracking-tight">
             AI-powered{" "}

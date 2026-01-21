@@ -23,6 +23,9 @@ export const KeyFeatures = () => {
     <BrowserRouter>
       <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">
         <div className="text-center flex flex-col gap-2">
+          <p className="text-sm font-mono text-muted-foreground">
+            005 — Supported formats
+          </p>
           <Typography variant="h2">We save everything for you.</Typography>
           <Typography variant="lead">
             PDF, YouTube video, X post, web page or simple blog post -- we got

@@ -54,7 +54,9 @@ export const LandingPricing = () => {
         />
       </div>
       <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-base/7 font-semibold text-primary">Pricing</h2>
+        <p className="text-sm font-mono text-muted-foreground mb-4">
+          007 — Pricing
+        </p>
         <p className="mt-2 text-5xl font-semibold tracking-tight text-balance text-foreground sm:text-6xl">
           Choose the right plan for you
         </p>

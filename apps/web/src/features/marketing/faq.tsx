@@ -10,7 +10,8 @@ import { MaxWidthContainer } from "../page/page";
 export const FAQ = () => {
   return (
     <MaxWidthContainer className="py-16 flex flex-col gap-8">
-      <div className="text-center">
+      <div className="text-center flex flex-col gap-2">
+        <p className="text-sm font-mono text-muted-foreground">008 — FAQ</p>
         <Typography variant="h2">Frequently Asked Questions</Typography>
       </div>
 

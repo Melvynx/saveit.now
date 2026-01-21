@@ -19,7 +19,7 @@ export const LandingHero = () => {
           {/* Left side - Headline */}
           <div className="flex-1">
             <p className="text-sm font-mono text-muted-foreground mb-4">
-              001 — First of its kind
+              000 — First of its kind
             </p>
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight">
               Agentic

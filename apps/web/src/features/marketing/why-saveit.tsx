@@ -80,7 +80,7 @@ export function WhySaveIt() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-16 max-w-2xl">
           <p className="text-sm font-mono text-muted-foreground mb-4">
-            004 — Capabilities
+            003 — Capabilities
           </p>
           <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight mb-6">
             What your

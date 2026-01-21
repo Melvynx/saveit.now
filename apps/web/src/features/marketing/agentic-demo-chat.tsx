@@ -277,7 +277,7 @@ export function AgenticDemoChat() {
     <MaxWidthContainer id="demo" spacing="default" className="py-24">
       <div className="mb-12 max-w-2xl">
         <p className="text-sm font-mono text-muted-foreground mb-4">
-          002 — Live demo
+          001 — Live demo
         </p>
         <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight">
           Watch it

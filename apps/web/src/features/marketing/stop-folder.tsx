@@ -8,7 +8,7 @@ export const StopFolder = () => {
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
           <p className="text-sm font-mono text-muted-foreground mb-4">
-            005 — The problem
+            004 — The problem
           </p>
           <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight">
             Folders
