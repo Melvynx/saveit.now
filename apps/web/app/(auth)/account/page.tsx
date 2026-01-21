@@ -1,5 +1,6 @@
 import { EmailChangeForm } from "@/features/auth/email-change-form";
 import { AvatarSection } from "@/features/auth/avatar-section";
+import { PublicLinkSettings } from "@/features/auth/public-link-settings";
 import { SubmitButton } from "@/features/form/loading-button";
 import { DeleteAccountButton } from "@/components/delete-account-button";
 import { MaxWidthContainer } from "@/features/page/page";
@@ -7,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { getUser } from "@/lib/auth-session";
 import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
 import { serverToast } from "@/lib/server-toast";
+import { prisma } from "@workspace/database";
 import {
   Card,
   CardContent,
@@ -20,8 +22,22 @@ import { Typography } from "@workspace/ui/components/typography";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+async function getUserPublicLinkSettings(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      publicLinkEnabled: true,
+      publicLinkSlug: true,
+    },
+  });
+  return user;
+}
+
 export default async function AuthPage() {
   const user = await getUser();
+  const publicLinkSettings = user
+    ? await getUserPublicLinkSettings(user.id)
+    : null;
 
   return (
     <MaxWidthContainer className="my-8 flex flex-col gap-6 lg:gap-10">
@@ -94,6 +110,10 @@ export default async function AuthPage() {
 
           revalidatePath("/account");
         }}
+      />
+      <PublicLinkSettings
+        initialEnabled={publicLinkSettings?.publicLinkEnabled ?? false}
+        initialSlug={publicLinkSettings?.publicLinkSlug ?? null}
       />
       <Card>
         <CardHeader>

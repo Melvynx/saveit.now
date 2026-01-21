@@ -14,6 +14,34 @@ export interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.1.2",
+    date: "2026-01-21",
+    type: "feature",
+    title: "Public Profile Sharing",
+    url: "https://github.com/Melvynx/saveit.now/pull/122",
+    description:
+      "Share your bookmarks publicly with a custom profile link. Create your unique URL and let others discover your curated collections.",
+    changes: [
+      {
+        type: "new",
+        text: "Public profile page accessible at /u/your-slug",
+      },
+      {
+        type: "new",
+        text: "Custom slug configuration in account settings",
+      },
+      {
+        type: "new",
+        text: "Public bookmarks API for developers",
+      },
+      {
+        type: "new",
+        text: "Toggle to enable/disable public sharing",
+      },
+    ],
+    image: "/changelog/1.1.2.png",
+  },
+  {
     version: "1.1.1",
     date: "2026-01-20",
     type: "feature",
