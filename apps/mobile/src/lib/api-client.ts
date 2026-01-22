@@ -210,14 +210,34 @@ class ApiClient {
   async createBookmark(data: {
     url: string;
     metadata?: Record<string, any>;
+    imageFile?: { uri: string; name: string; type: string };
   }): Promise<Bookmark> {
-    const headers = await this.getAuthHeaders();
+    let headers: HeadersInit;
+    let body: string | FormData;
+
+    if (data.imageFile) {
+      headers = await this.getAuthHeadersWithoutContentType();
+      const formData = new FormData();
+      formData.append("url", data.url);
+      if (data.metadata) {
+        formData.append("metadata", JSON.stringify(data.metadata));
+      }
+      formData.append("image", {
+        uri: data.imageFile.uri,
+        name: data.imageFile.name,
+        type: data.imageFile.type,
+      } as any);
+      body = formData;
+    } else {
+      headers = await this.getAuthHeaders();
+      body = JSON.stringify(data);
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers,
       credentials: "include",
-      body: JSON.stringify(data),
+      body,
     });
 
     if (!response.ok) {
@@ -226,6 +246,22 @@ class ApiClient {
 
     const result = await response.json();
     return result.bookmark;
+  }
+
+  private async getAuthHeadersWithoutContentType(): Promise<HeadersInit> {
+    try {
+      const cookies = authClient.getCookie();
+      const headers: HeadersInit = {};
+
+      if (cookies) {
+        headers.Cookie = cookies;
+      }
+
+      return headers;
+    } catch (error) {
+      console.error("Error getting auth headers", error);
+      return {};
+    }
   }
 
   async updateBookmark(

@@ -1,3 +1,4 @@
+import { uploadFileToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
 import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
@@ -6,31 +7,104 @@ import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const POST = userRoute
-  .body(
-    z.object({
-      url: z.string().url(),
-      transcript: z.string().optional(),
-      metadata: z.any().optional(),
-    }),
-  )
-  .handler(async (req, { body, ctx }) => {
-    try {
-      const bookmark = await createBookmark({
-        url: body.url,
-        userId: ctx.user.id,
-        transcript: body.transcript,
-        metadata: body.metadata,
-      });
-      return { status: "ok", bookmark };
-    } catch (error: unknown) {
-      if (error instanceof BookmarkValidationError) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
+export const POST = userRoute.body(z.any()).handler(async (req, { ctx }) => {
+  try {
+    const contentType = req.headers.get("content-type") || "";
+    let url: string;
+    let transcript: string | undefined;
+    let metadata: unknown;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      url = formData.get("url") as string;
+      transcript = (formData.get("transcript") as string) || undefined;
+      const metadataString = formData.get("metadata") as string;
+      const imageFile = formData.get("image") as File | null;
+
+      if (!url) {
+        return NextResponse.json({ error: "URL is required" }, { status: 400 });
       }
 
-      throw error;
+      if (metadataString) {
+        try {
+          metadata = JSON.parse(metadataString);
+        } catch {
+          metadata = {};
+        }
+      }
+
+      if (imageFile) {
+        if (imageFile.size > MAX_FILE_SIZE) {
+          return NextResponse.json(
+            { error: "File size must be less than 2MB" },
+            { status: 400 },
+          );
+        }
+
+        if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
+          return NextResponse.json(
+            { error: "Only image files (JPEG, PNG, WebP, GIF) are allowed" },
+            { status: 400 },
+          );
+        }
+
+        const s3Url = await uploadFileToS3({
+          file: imageFile,
+          prefix: `users/${ctx.user.id}/bookmarks`,
+          fileName: `${Date.now()}-${imageFile.name}`,
+          contentType: imageFile.type,
+        });
+
+        if (!s3Url) {
+          return NextResponse.json(
+            { error: "Failed to upload image" },
+            { status: 500 },
+          );
+        }
+
+        url = s3Url;
+        metadata = {
+          ...(metadata as Record<string, unknown>),
+          originalFileName: imageFile.name,
+          uploadedFromMobile: true,
+        };
+      }
+    } else {
+      const body = await req.json();
+      url = body.url;
+      transcript = body.transcript;
+      metadata = body.metadata;
+
+      if (!url) {
+        return NextResponse.json({ error: "URL is required" }, { status: 400 });
+      }
     }
-  });
+
+    const bookmark = await createBookmark({
+      url,
+      userId: ctx.user.id,
+      transcript,
+      metadata: metadata as Record<string, any> | undefined,
+    });
+
+    return { status: "ok", bookmark };
+  } catch (error: unknown) {
+    if (error instanceof BookmarkValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    throw error;
+  }
+});
 
 export const GET = userRoute
   .query(

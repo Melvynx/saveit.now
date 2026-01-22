@@ -25,10 +25,12 @@ export default function ShareHandler() {
     mutationFn: ({
       url,
       metadata,
+      imageFile,
     }: {
       url: string;
       metadata: Record<string, any>;
-    }) => apiClient.createBookmark({ url, metadata }),
+      imageFile?: { uri: string; name: string; type: string };
+    }) => apiClient.createBookmark({ url, metadata, imageFile }),
     onSuccess: () => {
       // Show success for 2 seconds, then close
       setTimeout(() => {
@@ -94,7 +96,33 @@ export default function ShareHandler() {
     } else if (shareIntent.files && shareIntent.files.length > 0) {
       // File content (images, etc.)
       const file = shareIntent.files[0];
-      if (file) {
+      if (file && file.mimeType?.startsWith("image/")) {
+        // For images, we'll upload the file - URL will be replaced by S3 URL
+        url = `placeholder-image-upload-${Date.now()}`;
+        metadata = {
+          type: "image",
+          fileName: file.fileName || "Shared image",
+          mimeType: file.mimeType,
+          fileSize: file.size,
+        };
+
+        // Create image file object for upload
+        const imageFile = {
+          uri: file.path,
+          name:
+            file.fileName ||
+            `image-${Date.now()}.${file.mimeType.split("/")[1]}`,
+          type: file.mimeType,
+        };
+
+        if (!url) {
+          return;
+        }
+
+        createBookmarkMutation.mutate({ url, metadata, imageFile });
+        return;
+      } else if (file) {
+        // For non-image files, keep existing behavior
         url = file.path;
         metadata = {
           type: "file",
@@ -121,7 +149,13 @@ export default function ShareHandler() {
   if (error) {
     return (
       <View flex={1} backgroundColor="$background">
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$4">
+        <YStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          padding="$4"
+          gap="$4"
+        >
           <Circle
             size={80}
             backgroundColor="$destructive"
@@ -150,7 +184,9 @@ export default function ShareHandler() {
             fontWeight="600"
           >
             <X size={20} color="$destructiveForeground" />
-            <Text color="$destructiveForeground" fontWeight="600">Close</Text>
+            <Text color="$destructiveForeground" fontWeight="600">
+              Close
+            </Text>
           </Button>
         </YStack>
       </View>
@@ -161,7 +197,13 @@ export default function ShareHandler() {
   if (createBookmarkMutation.isError) {
     return (
       <View flex={1} backgroundColor="$background">
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$4">
+        <YStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          padding="$4"
+          gap="$4"
+        >
           <Circle
             size={80}
             backgroundColor="$primary"
@@ -188,7 +230,9 @@ export default function ShareHandler() {
             fontWeight="600"
           >
             <X size={20} color="$primaryForeground" />
-            <Text color="$primaryForeground" fontWeight="600">Close</Text>
+            <Text color="$primaryForeground" fontWeight="600">
+              Close
+            </Text>
           </Button>
         </YStack>
       </View>
@@ -199,7 +243,13 @@ export default function ShareHandler() {
   if (createBookmarkMutation.isSuccess) {
     return (
       <View flex={1} backgroundColor="$background">
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$4">
+        <YStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          padding="$4"
+          gap="$4"
+        >
           <Circle
             size={80}
             backgroundColor="$primary"
@@ -233,7 +283,13 @@ export default function ShareHandler() {
   if (createBookmarkMutation.isPending) {
     return (
       <View flex={1} backgroundColor="$background">
-        <YStack flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$4">
+        <YStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          padding="$4"
+          gap="$4"
+        >
           <Circle
             size={80}
             backgroundColor="$primary"
