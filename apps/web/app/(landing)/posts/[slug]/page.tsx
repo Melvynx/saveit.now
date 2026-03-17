@@ -10,6 +10,8 @@ import { MDXRemote } from "next-mdx-remote-client/rsc";
 import { notFound } from "next/navigation";
 import { rehypePlugins, remarkPlugins } from "@/lib/mdx/mdx-config";
 import { Button } from "@workspace/ui/components/button";
+import type { Metadata } from "next";
+import { getServerUrl } from "@/lib/server-url";
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -22,6 +24,57 @@ export async function generateStaticParams() {
   return posts.map((post) => ({
     slug: post.slug,
   }));
+}
+
+export async function generateMetadata({
+  params,
+}: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
+
+  if (!post) {
+    return { title: "Post Not Found" };
+  }
+
+  const baseUrl = getServerUrl();
+  const canonicalUrl = `${baseUrl}/posts/${slug}`;
+
+  return {
+    title: post.frontmatter.title,
+    description: post.frontmatter.description,
+    keywords: post.frontmatter.tags,
+    metadataBase: new URL(baseUrl),
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: post.frontmatter.title,
+      description: post.frontmatter.description,
+      type: "article",
+      url: canonicalUrl,
+      publishedTime: post.frontmatter.date.toISOString(),
+      authors: [post.frontmatter.author],
+      tags: post.frontmatter.tags,
+      images: [
+        {
+          url: post.frontmatter.banner,
+          width: 1200,
+          height: 630,
+          alt: post.frontmatter.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.frontmatter.title,
+      description: post.frontmatter.description,
+      images: [post.frontmatter.banner],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
 }
 
 export default async function BlogPostPage(props: BlogPostPageProps) {
@@ -53,14 +106,16 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="secondary">{post.frontmatter.category}</Badge>
                 {post.frontmatter.featured && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20">Featured</Badge>
+                  <Badge className="bg-primary/10 text-primary border-primary/20">
+                    Featured
+                  </Badge>
                 )}
               </div>
-              
+
               <Typography variant="h1" className="text-4xl md:text-5xl">
                 {post.frontmatter.title}
               </Typography>
-              
+
               <Typography variant="lead" className="text-muted-foreground">
                 {post.frontmatter.description}
               </Typography>
@@ -75,7 +130,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
                   {new Date(post.frontmatter.date).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
-                    day: "numeric"
+                    day: "numeric",
                   })}
                 </div>
                 <div className="flex items-center gap-2">
@@ -107,7 +162,6 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
                 }}
               />
             </div>
-
           </article>
         </div>
       </MaxWidthContainer>

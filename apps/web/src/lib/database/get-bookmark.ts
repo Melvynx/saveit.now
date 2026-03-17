@@ -10,6 +10,7 @@ const SELECT_QUERY = {
   note: true,
   preview: true,
   ogImageUrl: true,
+  ogDescription: true,
   type: true,
   metadata: true,
   status: true,

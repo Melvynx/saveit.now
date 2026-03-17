@@ -24,23 +24,50 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SaveIt.now",
+  title: {
+    default: "SaveIt.now - AI Bookmark Manager",
+    template: "%s | SaveIt.now",
+  },
   description:
-    "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
+    "Save, organize, and rediscover your bookmarks with AI. Smart search, automatic tags, summaries, and more.",
+  keywords: [
+    "bookmark manager",
+    "AI bookmarks",
+    "save bookmarks",
+    "organize bookmarks",
+    "bookmark search",
+    "bookmark organizer",
+  ],
   metadataBase: new URL(getServerUrl()),
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
-    title: "SaveIt.now",
+    title: "SaveIt.now - AI Bookmark Manager",
     description:
-      "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
+      "Save, organize, and rediscover your bookmarks with AI. Smart search, automatic tags, summaries, and more.",
     type: "website",
     siteName: "SaveIt.now",
     locale: "en_US",
+    images: [
+      {
+        url: "/images/og-image-base.png",
+        width: 1200,
+        height: 630,
+        alt: "SaveIt.now - AI Bookmark Manager",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SaveIt.now",
+    title: "SaveIt.now - AI Bookmark Manager",
     description:
-      "Don't ever lose your bookmarks again. Let our advanced AI system find it for you.",
+      "Save, organize, and rediscover your bookmarks with AI. Smart search, automatic tags, summaries, and more.",
+    images: ["/images/og-image-base.png"],
   },
 };
 
