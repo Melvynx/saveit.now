@@ -1,4 +1,4 @@
-import { uploadFileToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
+import { parseBookmarkBody } from "@/lib/api/parse-bookmark-body";
 import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { apiRoute } from "@/lib/safe-route";
@@ -7,92 +7,15 @@ import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
-
 export const POST = apiRoute.body(z.any()).handler(async (req, { ctx }) => {
   try {
-    const contentType = req.headers.get("content-type") || "";
-    let url: string;
-    let transcript: string | undefined;
-    let metadata: Record<string, unknown> = {};
+    const result = await parseBookmarkBody(req, ctx.user.id);
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await req.formData();
-      url = formData.get("url") as string;
-      const metadataString = formData.get("metadata") as string;
-      const imageFile = formData.get("image") as File | null;
-
-      if (!url) {
-        return NextResponse.json(
-          { error: "URL is required", success: false },
-          { status: 400 },
-        );
-      }
-
-      if (metadataString) {
-        try {
-          metadata = JSON.parse(metadataString);
-        } catch {
-          metadata = {};
-        }
-      }
-
-      if (imageFile) {
-        if (imageFile.size > MAX_FILE_SIZE) {
-          return NextResponse.json(
-            { error: "File size must be less than 2MB", success: false },
-            { status: 400 },
-          );
-        }
-
-        if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
-          return NextResponse.json(
-            {
-              error: "Only image files (JPEG, PNG, WebP, GIF) are allowed",
-              success: false,
-            },
-            { status: 400 },
-          );
-        }
-
-        const s3Url = await uploadFileToS3({
-          file: imageFile,
-          prefix: `users/${ctx.user.id}/bookmarks`,
-          fileName: `${Date.now()}-${imageFile.name}`,
-          contentType: imageFile.type,
-        });
-
-        if (!s3Url) {
-          return NextResponse.json(
-            { error: "Failed to upload image", success: false },
-            { status: 500 },
-          );
-        }
-
-        url = s3Url;
-        metadata.originalFileName = imageFile.name;
-        metadata.uploadedFromMobile = true;
-      }
-    } else {
-      const body = await req.json();
-      url = body.url;
-      transcript = body.transcript;
-      metadata = body.metadata || {};
-
-      if (!url) {
-        return NextResponse.json(
-          { error: "URL is required", success: false },
-          { status: 400 },
-        );
-      }
+    if (!result.success) {
+      return result.error;
     }
+
+    const { url, transcript, metadata } = result.data;
 
     const bookmark = await createBookmark({
       url,

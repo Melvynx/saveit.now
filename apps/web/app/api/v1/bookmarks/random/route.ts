@@ -13,12 +13,14 @@ export const GET = apiRoute.handler(async (_, { ctx }) => {
 
   const excludeIds = openedBookmarkIds.map((o) => o.bookmarkId);
 
+  const baseWhere = {
+    userId,
+    status: "READY" as const,
+    ...(excludeIds.length > 0 && { id: { notIn: excludeIds } }),
+  };
+
   const totalAvailable = await prisma.bookmark.count({
-    where: {
-      userId,
-      status: "READY",
-      id: { notIn: excludeIds.length > 0 ? excludeIds : undefined },
-    },
+    where: baseWhere,
   });
 
   if (totalAvailable === 0) {
@@ -35,11 +37,7 @@ export const GET = apiRoute.handler(async (_, { ctx }) => {
   const skip = Math.floor(Math.random() * totalAvailable);
 
   const bookmark = await prisma.bookmark.findFirst({
-    where: {
-      userId,
-      status: "READY",
-      id: { notIn: excludeIds.length > 0 ? excludeIds : undefined },
-    },
+    where: baseWhere,
     skip,
     include: {
       tags: { include: { tag: true } },

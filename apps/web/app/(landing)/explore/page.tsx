@@ -81,10 +81,13 @@ export default async function ExplorePage({ searchParams }: PageProps) {
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * BOOKMARKS_PER_PAGE;
 
+  const validTypes = Object.values(BookmarkType);
+  const validatedType = type && validTypes.includes(type as BookmarkType) ? (type as BookmarkType) : undefined;
+
   const where = {
     status: "READY" as const,
     title: { not: null },
-    ...(type && { type: type as never }),
+    ...(validatedType && { type: validatedType }),
     ...(tag && {
       tags: {
         some: { tag: { name: { equals: tag, mode: "insensitive" as const } } },

@@ -115,10 +115,6 @@ export default function ShareHandler() {
           type: file.mimeType,
         };
 
-        if (!url) {
-          return;
-        }
-
         createBookmarkMutation.mutate({ url, metadata, imageFile });
         return;
       } else if (file) {
