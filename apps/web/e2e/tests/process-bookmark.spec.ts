@@ -170,14 +170,12 @@ test.describe("Process bookmarks tests", () => {
     await page.goto("/app");
     await page.waitForLoadState("networkidle");
 
-    // Add a bookmark through the UI instead of directly in database
     const testUrl = `https://example.com/test-delete-${nanoid(4)}`;
-    await page
-      .getByRole("textbox", { name: /Search bookmarks/ })
-      .fill(testUrl);
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.request.post("/api/bookmarks", {
+      data: { url: testUrl },
+    });
+    await page.reload();
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
 
     // Find any bookmark card (either pending or processed) to test deletion
     const bookmarkCards = page.locator(

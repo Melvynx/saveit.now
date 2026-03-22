@@ -7,15 +7,42 @@ import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const POST = userRoute.body(z.any()).handler(async (req, { ctx }) => {
+export const POST = userRoute.body(z.any()).handler(async (req, { ctx, body }) => {
   try {
-    const result = await parseBookmarkBody(req, ctx.user.id);
+    const contentType = req.headers.get("content-type") || "";
 
-    if (!result.success) {
-      return result.error;
+    if (contentType.includes("multipart/form-data")) {
+      const result = await parseBookmarkBody(req, ctx.user.id);
+      if (!result.success) return result.error;
+      const { url, transcript, metadata } = result.data;
+      const bookmark = await createBookmark({
+        url,
+        userId: ctx.user.id,
+        transcript,
+        metadata: metadata as Record<string, any> | undefined,
+      });
+      return { status: "ok", bookmark };
     }
 
-    const { url, transcript, metadata } = result.data;
+    const url = body?.url;
+    const transcript = body?.transcript;
+    const metadata = body?.metadata;
+
+    if (!url || typeof url !== "string") {
+      return NextResponse.json(
+        { error: "URL is required", success: false },
+        { status: 400 },
+      );
+    }
+
+    try {
+      new URL(url);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid URL format", success: false },
+        { status: 400 },
+      );
+    }
 
     const bookmark = await createBookmark({
       url,
@@ -47,7 +74,6 @@ export const GET = userRoute
     }),
   )
   .handler(async (req, { ctx, query }) => {
-    // Validate and filter bookmark types
     const validBookmarkTypes = Object.values(BookmarkType);
     const types = query.types
       ? query.types
@@ -60,7 +86,6 @@ export const GET = userRoute
 
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
 
-    // Validate and filter special filters
     const validSpecialFilters = ["READ", "UNREAD", "STAR"];
 
     const specialFilters = query.special

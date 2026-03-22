@@ -7,15 +7,40 @@ import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const POST = apiRoute.body(z.any()).handler(async (req, { ctx }) => {
+export const POST = apiRoute.body(z.any()).handler(async (req, { ctx, body }) => {
   try {
-    const result = await parseBookmarkBody(req, ctx.user.id);
+    const contentType = req.headers.get("content-type") || "";
+    let url: string | undefined;
+    let transcript: string | undefined;
+    let metadata: Record<string, unknown> | undefined;
 
-    if (!result.success) {
-      return result.error;
+    if (contentType.includes("multipart/form-data")) {
+      const result = await parseBookmarkBody(req, ctx.user.id);
+      if (!result.success) return result.error;
+      url = result.data.url;
+      transcript = result.data.transcript;
+      metadata = result.data.metadata;
+    } else {
+      url = body?.url;
+      transcript = body?.transcript;
+      metadata = body?.metadata;
     }
 
-    const { url, transcript, metadata } = result.data;
+    if (!url || typeof url !== "string") {
+      return NextResponse.json(
+        { error: "URL is required", success: false },
+        { status: 400 },
+      );
+    }
+
+    try {
+      new URL(url);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid URL format", success: false },
+        { status: 400 },
+      );
+    }
 
     const bookmark = await createBookmark({
       url,

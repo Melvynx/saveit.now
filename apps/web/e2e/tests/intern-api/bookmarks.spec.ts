@@ -33,6 +33,10 @@ test.describe("Bookmarks API", () => {
       data: bookmarkData,
     });
 
+    if (response.status() !== 200) {
+      const body = await response.text();
+      console.error(`POST /api/bookmarks returned ${response.status()}: ${body}`);
+    }
     expect(response.status()).toBe(200);
 
     const result = await response.json();

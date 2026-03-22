@@ -44,16 +44,18 @@ export const createBookmark = async (body: {
     },
   });
 
-  inngest
-    .send({
+  try {
+    await inngest.send({
       name: "bookmark/process",
       data: {
         bookmarkId: bookmark.id,
         userId: body.userId,
         hasExtensionTranscript: !!body.transcript,
       },
-    })
-    .catch(() => {});
+    });
+  } catch {
+    // Inngest may not be available in test/CI environments
+  }
 
   posthogClient.capture({
     distinctId: body.userId,
