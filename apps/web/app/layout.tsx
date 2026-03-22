@@ -5,7 +5,7 @@ import { getServerUrl } from "@/lib/server-url";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -21,6 +21,13 @@ const geistMono = Geist_Mono({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-elegant",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -80,7 +87,7 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={cn(
-          `${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`,
+          `${geistSans.variable} ${geistMono.variable} ${inter.variable} ${instrumentSerif.variable} antialiased`,
           "h-full",
         )}
       >

@@ -1,10 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { APP_LINKS } from "@/lib/app-links";
-import { Button } from "@workspace/ui/components/button";
-import { Card } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
 import Link from "next/link";
-import { MaxWidthContainer } from "../page/page";
 
 interface ExtensionFeature {
   id: string;
@@ -39,33 +35,33 @@ const extensionFeatures: ExtensionFeature[] = [
 
 function ExtensionFeatureCard({ feature }: { feature: ExtensionFeature }) {
   return (
-    <Card className="p-6 flex flex-col gap-6 text-center">
+    <div className="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 flex flex-col gap-6 text-center">
       <div className="flex justify-center">
         <img
           src={feature.gif}
           alt={feature.title}
-          className="rounded-lg border max-w-full h-auto"
+          className="rounded-lg border border-[#2a2a2a] max-w-full h-auto"
         />
       </div>
       <div className="space-y-2">
-        <Typography variant="h3">{feature.title}</Typography>
-        <Typography variant="muted" className="text-sm leading-relaxed">
+        <h3 className="text-[15px] font-medium text-[#fafafa]">{feature.title}</h3>
+        <p className="text-sm text-[#666] leading-relaxed">
           {feature.description}
-        </Typography>
+        </p>
       </div>
-    </Card>
+    </div>
   );
 }
 
 export const ExtensionsSection = () => {
   return (
-    <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">
+    <section className="mx-auto max-w-5xl px-4 py-20 lg:py-28 flex flex-col gap-8">
       <div className="text-center justify-center flex flex-col gap-2 items-center">
-        <p className="text-sm font-mono text-muted-foreground">
+        <p className="text-sm text-[#666]">
           006 — Extensions
         </p>
-        <Typography variant="h2">One simple click away</Typography>
-        <Typography variant="lead">Do nothing. Just save it.</Typography>
+        <h2 className="font-elegant text-4xl md:text-5xl tracking-tight text-[#fafafa]">One simple <em>click away</em></h2>
+        <p className="text-[#888]">Do nothing. Just save it.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -73,9 +69,7 @@ export const ExtensionsSection = () => {
           <ExtensionFeatureCard key={feature.id} feature={feature} />
         ))}
       </div>
-      <Button asChild className="w-fit mx-auto" size="lg">
-        <Link href={APP_LINKS.extensions}>Download Extension</Link>
-      </Button>
-    </MaxWidthContainer>
+      <Link href={APP_LINKS.extensions} className="mx-auto inline-flex h-10 items-center justify-center rounded-full bg-[#fafafa] px-6 text-sm font-medium text-[#141414] hover:bg-[#e0e0e0] transition-colors">Download Extension</Link>
+    </section>
   );
 };
