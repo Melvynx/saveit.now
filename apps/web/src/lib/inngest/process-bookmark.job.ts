@@ -1,3 +1,4 @@
+import type { Realtime } from "@inngest/realtime";
 import { BookmarkType, prisma } from "@workspace/database";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
@@ -14,6 +15,7 @@ import {
 } from "./bookmark-type/process-product-bookmark";
 import { processTweetBookmark } from "./bookmark-type/process-tweet-bookmark";
 import { processYouTubeBookmark } from "./bookmark-type/process-youtube-bookmark";
+import type { BaseContext } from "inngest/types";
 import { inngest } from "./client";
 import { BOOKMARK_STEP_ID_TO_ID } from "./process-bookmark.step";
 
@@ -26,7 +28,7 @@ export const processBookmarkJob = inngest.createFunction(
       key: "event.data.userId",
       limit: 1,
     },
-    onFailure: async ({ event, publish }) => {
+    onFailure: async ({ event, publish }: { event: { data: { event: { data: { bookmarkId?: string; userId?: string } }; error: { message: string } } }; publish: Realtime.PublishFn }) => {
       const data = event.data.event.data;
       const bookmarkId = data.bookmarkId;
 
@@ -75,7 +77,7 @@ export const processBookmarkJob = inngest.createFunction(
     },
   },
   { event: "bookmark/process" },
-  async ({ event, step, runId, publish }) => {
+  async ({ event, step, runId, publish }: { event: { data: { bookmarkId?: string; userId: string } }; step: BaseContext<typeof inngest>["step"]; runId: string; publish: Realtime.PublishFn }) => {
     const bookmarkId = event.data.bookmarkId;
     const userId = event.data.userId;
 

@@ -6,8 +6,18 @@ export default function MarkdownEmail(props: {
   preview?: string;
   disabledSignature?: boolean;
 }) {
+  let markdown = props.markdown;
+
+  if (!props.disabledSignature) {
+    markdown += `
+
+Best,\n
+Melvyn from SaveIt.now
+    `;
+  }
+
   // Normalize markdown by removing leading/trailing spaces from each line
-  props.markdown = props.markdown
+  markdown = markdown
     .split("\n")
     .map((line) => line.trim())
     .join("\n");
@@ -30,7 +40,7 @@ export default function MarkdownEmail(props: {
           },
         }}
       >
-        {props.markdown}
+        {markdown}
       </Markdown>
     </EmailLayout>
   );

@@ -1,55 +1,39 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { EmbeddingModel, LanguageModel } from "ai";
-import { MockEmbeddingModelV2, MockLanguageModelV2 } from "ai/test";
+import type { LanguageModelV3GenerateResult } from "@ai-sdk/provider";
+import type { EmbeddingModel, LanguageModel } from "ai";
+import { MockEmbeddingModelV3, MockLanguageModelV3 } from "ai/test";
 import { env } from "./env";
 
 const openai = createOpenAI({});
 
+const mockGenerateResult: LanguageModelV3GenerateResult = {
+  finishReason: { unified: "stop", raw: undefined },
+  usage: {
+    inputTokens: {
+      total: 10,
+      noCache: undefined,
+      cacheRead: undefined,
+      cacheWrite: undefined,
+    },
+    outputTokens: { total: 20, text: undefined, reasoning: undefined },
+  },
+  content: [{ type: "text", text: "MOCK" }],
+  warnings: [],
+};
+
 export const OPENAI_MODELS: {
   cheap: LanguageModel;
   normal: LanguageModel;
-  embedding: EmbeddingModel<string>;
+  embedding: EmbeddingModel;
 } = env.CI
   ? {
-      cheap: new MockLanguageModelV2({
-        doGenerate: async () => ({
-          rawCall: { rawPrompt: null, rawSettings: {} },
-          finishReason: "stop",
-          usage: {
-            inputTokens: 10,
-            outputTokens: 20,
-            totalTokens: 30,
-            promptTokens: 10,
-            completionTokens: 20,
-          },
-          content: [{ type: "text", text: "OPENAI CHEAP MODEL" }],
+      cheap: new MockLanguageModelV3({ doGenerate: mockGenerateResult }),
+      normal: new MockLanguageModelV3({ doGenerate: mockGenerateResult }),
+      embedding: new MockEmbeddingModelV3({
+        doEmbed: {
+          embeddings: [Array.from({ length: 1536 }, (_, i) => i * 0.0001)],
           warnings: [],
-        }),
-      }),
-      normal: new MockLanguageModelV2({
-        doGenerate: async () => ({
-          rawCall: { rawPrompt: null, rawSettings: {} },
-          finishReason: "stop",
-          usage: {
-            inputTokens: 10,
-            outputTokens: 20,
-            totalTokens: 30,
-            promptTokens: 10,
-            completionTokens: 20,
-          },
-          content: [{ type: "text", text: "OPENAI NORMAL MODEL" }],
-          warnings: [],
-        }),
-      }),
-      embedding: new MockEmbeddingModelV2({
-        doEmbed: async (options) => ({
-          embeddings: options.values.map(() =>
-            Array.from(
-              { length: 1536 },
-              (_, i) => Math.random() * 0.01 + i * 0.0001,
-            ),
-          ),
-        }),
+        },
       }),
     }
   : {

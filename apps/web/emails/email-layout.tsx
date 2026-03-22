@@ -69,9 +69,25 @@ export const EmailLayout = (
           <Tailwind>
             <Hr className="mt-12 mb-6 border-gray-300" />
 
+            <table cellPadding={0} cellSpacing={0}>
+              <tr>
+                <td className="pr-2">
+                  <Img
+                    src={`${baseUrl}/images/logo.png`}
+                    height={32}
+                    className="inline w-auto"
+                    alt={`SaveIt.now's logo`}
+                  />
+                </td>
+                <td>
+                  <Text className="text-xl">SaveIt.now</Text>
+                </td>
+              </tr>
+            </table>
             <Text className="text-sm text-gray-500">
               Melvyn, from SaveIt.now
             </Text>
+            <Text className="text-sm text-gray-500">Bali, Indonesia</Text>
           </Tailwind>
         </Container>
       </Body>

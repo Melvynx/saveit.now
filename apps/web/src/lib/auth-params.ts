@@ -1,6 +1,7 @@
 import { BetterAuthOptions } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
+import MarkdownEmail from "emails/markdown.emails";
 import { sendEmail } from "./mail/send-email";
 import { getServerUrl } from "./server-url";
 import { stripeClient } from "./stripe";
@@ -12,20 +13,20 @@ export const AUTH_PARAMS = {
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ user, newEmail, url }) => {
-        await sendEmail({
-          to: user.email, // verification email must be sent to the current user email to approve the change
-          subject: "Approve email change",
-          text: `Hello,
-
-You requested to change your email address from ${user.email} to ${newEmail}.
+        const markdown = `You requested to change your email address from ${user.email} to ${newEmail}.
 
 Click the link below to approve this change:
-${url}
+[Approve email change](${url})
 
-If you didn't request this change, please ignore this email.
-
-Best regards,
-The SaveIt.now Team`,
+If you didn't request this change, please ignore this email.`;
+        await sendEmail({
+          to: user.email,
+          subject: "Approve email change",
+          text: markdown,
+          html: MarkdownEmail({
+            markdown,
+            preview: "Approve your email change",
+          }),
         });
       },
     },
@@ -55,27 +56,39 @@ The SaveIt.now Team`,
         }
       },
       afterDelete: async (user) => {
+        const markdown = `It's Melvyn, the founder of SaveIt.now.
+
+I'm sending you this email to confirm that your account has been permanently deleted.
+
+If you have any questions, feel free to reach out at help@saveit.now.`;
         await sendEmail({
           to: user.email,
           subject: "Account Deleted",
-          text: `Hello, it's Melvyn the found of SaveIt.now.
-        
-I sent you a quick e-mail to confirm you that your account has been permanently deleted.
-
-If you have any questions, please don't hesitate to contact me at melvyn@saveit.now.
-
-Best regards,
-Melvyn`,
+          text: markdown,
+          html: MarkdownEmail({
+            markdown,
+            preview: "Your account has been deleted",
+          }),
         });
       },
       sendDeleteAccountVerification: async ({
-        user, // The user object
-        url, // The auto-generated URL for deletion
+        user,
+        url,
       }) => {
+        const markdown = `You requested to delete your account.
+
+Click the link below to confirm the deletion:
+[Delete my account](${url})
+
+If you didn't request this, please ignore this email.`;
         await sendEmail({
           to: user.email,
           subject: "Verify Deletion",
-          text: `Click here to delete your account: ${url}`,
+          text: markdown,
+          html: MarkdownEmail({
+            markdown,
+            preview: "Confirm your account deletion",
+          }),
         });
       },
     },
@@ -111,10 +124,21 @@ Melvyn`,
         return Math.floor(100000 + Math.random() * 900000).toString();
       },
       async sendVerificationOTP({ email, otp }) {
+        logger.info(`OTP code for ${email}: ${otp}`);
+        const markdown = `Your verification code is:
+
+**${otp}**
+
+This code expires in 5 minutes. If you didn't request this, please ignore this email.`;
         await sendEmail({
           to: email,
           subject: `SaveIt.now - ${otp} is your verification code`,
-          html: `Your OTP code is: <strong>${otp}</strong>`,
+          text: markdown,
+          html: MarkdownEmail({
+            markdown,
+            preview: `Your verification code is ${otp}`,
+            disabledSignature: true,
+          }),
         });
       },
       otpLength: 6,
@@ -122,10 +146,20 @@ Melvyn`,
     }),
     magicLink({
       async sendMagicLink(data) {
+        const markdown = `Click the link below to sign in to SaveIt.now:
+
+[Sign in to SaveIt.now](${data.url})
+
+This link expires in 10 minutes. If you didn't request this, please ignore this email.`;
         await sendEmail({
           to: data.email,
-          subject: "Magic Link",
-          text: `Click here to login: ${data.url}`,
+          subject: "Sign in to SaveIt.now",
+          text: markdown,
+          html: MarkdownEmail({
+            markdown,
+            preview: "Sign in to SaveIt.now",
+            disabledSignature: true,
+          }),
         });
       },
     }),

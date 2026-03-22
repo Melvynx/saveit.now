@@ -5,6 +5,9 @@ export const allowedOrigins = [
   "http://localhost:8081/*",
   "http://localhost:3000",
   "http://localhost:3000/*",
+  "https://saveit.now",
+  "https://saveit.now/*",
+  "https://*.saveit.now",
 ];
 
 export const updateHeaders = (headers: Headers, request: Request) => {

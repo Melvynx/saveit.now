@@ -25,7 +25,6 @@ import {
   Gem,
   Hash,
   Menu,
-  MessageSquareIcon,
   Moon,
   Sun,
 } from "lucide-react";
@@ -58,13 +57,6 @@ export const BookmarkHeader = () => {
         </span>
       </RouterLink>
 
-      <RouterLink
-        to="/app/agents"
-        className={buttonVariants({ variant: "outline", size: "sm" })}
-      >
-        <MessageSquareIcon className="mr-1.5 size-4" />
-        Agents
-      </RouterLink>
       <div className="flex-1"></div>
       {!isMobile ? (
         <>

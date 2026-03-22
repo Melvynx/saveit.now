@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: CHAT_MODEL,
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(messages as UIMessage[]),
+    messages: await convertToModelMessages(messages as UIMessage[]),
     tools,
     stopWhen: stepCountIs(20),
     providerOptions: thinkingConfig.providerOptions,

@@ -214,7 +214,7 @@ const useZodForm = <
 }: UseZodFormProps<Input, Output, Z>) =>
   useForm({
     ...formProps,
-    resolver: zodResolver(schema) as never,
+    resolver: zodResolver(schema as never) as never,
   });
 
 export {

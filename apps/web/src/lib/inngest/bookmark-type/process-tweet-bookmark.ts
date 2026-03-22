@@ -69,10 +69,12 @@ export async function processTweetBookmark(
       profile_image_url_https: tweet.user.profile_image_url_https,
     },
     medias:
-      tweet.mediaDetails?.map((media) => ({
-        url: media.media_url_https,
-        type: media.type,
-      })) || [],
+      tweet.mediaDetails?.map(
+        (media: { media_url_https: string; type: string }) => ({
+          url: media.media_url_https,
+          type: media.type,
+        }),
+      ) || [],
   };
 
   await publish({
