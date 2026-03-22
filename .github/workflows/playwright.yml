@@ -33,6 +33,7 @@ jobs:
     env:
       # Core
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
+      DATABASE_URL_UNPOOLED: "postgresql://postgres:postgres@localhost:5432/saveit_test"
       BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
       NODE_ENV: "production"
       # AWS S3 / Cloudflare R2

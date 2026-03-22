@@ -45,12 +45,14 @@ export const validateBookmarkLimits = async (
 
     if (!emailAlreadySent) {
       logger.info("Sending limit reached email to user", { userId });
-      inngest.send({
-        name: "marketing/email-on-limit-reached",
-        data: {
-          userId,
-        },
-      });
+      inngest
+        .send({
+          name: "marketing/email-on-limit-reached",
+          data: {
+            userId,
+          },
+        })
+        .catch(() => {});
     } else {
       logger.info("Limit email already sent", { userId });
     }

@@ -28,9 +28,9 @@ export async function ApiKeyList() {
       <CardContent>
         {apiKeys.length === 0 ? (
           <div className="text-center py-8">
-            <Typography variant="muted">
+            <p className="text-sm text-muted-foreground">
               Create your first API key to get started with the SaveIt.now API.
-            </Typography>
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

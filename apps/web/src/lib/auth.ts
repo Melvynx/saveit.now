@@ -2,6 +2,7 @@ import { prisma } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AUTH_PARAMS } from "./auth-params";
+import { allowedOrigins } from "./cors";
 import { createBookmark } from "./database/create-bookmark";
 import { inngest } from "./inngest/client";
 import { logger } from "./logger";
@@ -12,12 +13,7 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-  trustedOrigins: [
-    "saveit://*",
-    "saveit://",
-    "http://localhost:8081",
-    "http://localhost:8081/*",
-  ],
+  trustedOrigins: allowedOrigins,
   session: {
     expiresIn: 60 * 60 * 24 * 400, // 400 days - max allowed by cookies
     updateAge: 60 * 60 * 24, // Refresh session every day (extends to 400 days on each visit)

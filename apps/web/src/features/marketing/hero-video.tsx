@@ -1,10 +1,8 @@
-import { MaxWidthContainer } from "../page/page";
-
 export const HeroVideo = () => {
   return (
-    <MaxWidthContainer spacing="default" className="py-12">
+    <section className="mx-auto max-w-5xl px-4 py-12">
       <div
-        className="relative w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border shadow-2xl"
+        className="relative w-full max-w-5xl mx-auto rounded-xl overflow-hidden border border-[#2a2a2a] shadow-2xl shadow-black/30"
         style={{
           paddingBottom: "56.25%",
           height: 0,
@@ -16,6 +14,6 @@ export const HeroVideo = () => {
           className="absolute inset-0 size-full border-0"
         />
       </div>
-    </MaxWidthContainer>
+    </section>
   );
 };

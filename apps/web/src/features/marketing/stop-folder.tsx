@@ -4,26 +4,26 @@ import { MaxWidthContainer } from "../page/page";
 
 export const StopFolder = () => {
   return (
-    <MaxWidthContainer spacing="default" className="py-24">
+    <section className="mx-auto max-w-5xl px-4 py-20 lg:py-28">
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
-          <p className="text-sm font-mono text-muted-foreground mb-4">
+          <p className="text-sm text-[#666] mb-4">
             004 — The problem
           </p>
-          <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight">
+          <h2 className="font-elegant text-4xl md:text-5xl tracking-tight text-[#fafafa]">
             Folders
             <br />
-            <span className="text-muted-foreground font-light">are dead.</span>
+            <span className="italic text-[#666]">are dead.</span>
           </h2>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Traditional */}
-          <div className="rounded-lg border border-dashed p-6 relative overflow-hidden">
-            <p className="text-xs font-mono text-muted-foreground mb-4">
+          <div className="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 relative overflow-hidden">
+            <p className="text-xs text-[#888] mb-4">
               THE OLD WAY
             </p>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-[#666] mb-6">
               Organize into folders. Tag everything. Search with exact keywords.
               Still can't find anything.
             </p>
@@ -55,7 +55,7 @@ export const StopFolder = () => {
                   stroke="currentColor"
                   strokeWidth="3"
                   strokeLinecap="round"
-                  className="text-destructive/50"
+                  className="text-[#444]"
                 />
                 <line
                   x1="90"
@@ -65,32 +65,32 @@ export const StopFolder = () => {
                   stroke="currentColor"
                   strokeWidth="3"
                   strokeLinecap="round"
-                  className="text-destructive/50"
+                  className="text-[#444]"
                 />
               </svg>
             </div>
           </div>
 
           {/* Agentic */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-6">
-            <p className="text-xs font-mono text-primary mb-4">THE NEW WAY</p>
-            <p className="text-foreground mb-6">
+          <div className="rounded-xl border border-[#3a3a3a] bg-[#1a1a1a] p-6">
+            <p className="text-xs text-[#888] mb-4">THE NEW WAY</p>
+            <p className="text-[#fafafa] mb-6">
               Just describe what you're looking for. Your agent finds it
               instantly.
             </p>
             <div className="space-y-3">
               <Input
-                className="h-12 text-base"
+                className="h-12 text-base bg-[#141414] border-[#2a2a2a] text-[#fafafa] placeholder:text-[#555]"
                 placeholder="That article about productivity..."
                 readOnly
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-[#555]">
                 Search by meaning, not keywords
               </p>
             </div>
           </div>
         </div>
       </div>
-    </MaxWidthContainer>
+    </section>
   );
 };

@@ -24,6 +24,9 @@ const nextConfig = {
     "/api/**/*": ["./node_modules/.prisma/**/*", "./packages/database/generated/prisma/**/*"],
     "/app/**/*": ["./node_modules/.prisma/**/*", "./packages/database/generated/prisma/**/*"],
   },
+  turbopack: {
+    root: path.join(import.meta.dirname, "../../"),
+  },
   experimental: {
     authInterrupts: true,
   },

@@ -2,7 +2,6 @@
 
 import { CheckIcon, Loader2Icon, SearchIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { MaxWidthContainer } from "../page/page";
 
 type DemoBookmark = {
   id: string;
@@ -79,11 +78,11 @@ function DemoUserMessage({
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[85%]">
-        <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2">
+        <div className="bg-white/10 text-[#fafafa] rounded-2xl px-3 py-2">
           <p className="whitespace-pre-wrap text-sm">
             {text}
             {isTyping && (
-              <span className="inline-block w-1 h-4 bg-primary-foreground/70 ml-0.5 animate-pulse" />
+              <span className="inline-block w-1 h-4 bg-white/70 ml-0.5 animate-pulse" />
             )}
           </p>
         </div>
@@ -102,10 +101,10 @@ function DemoToolCall({
   resultCount?: number;
 }) {
   return (
-    <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
+    <div className="text-[#888] flex items-center gap-1.5 text-sm">
       {isCompleted ? (
         <>
-          <CheckIcon className="text-muted-foreground size-3.5" />
+          <CheckIcon className="text-[#888] size-3.5" />
           <span>
             Found {resultCount} result{resultCount === 1 ? "" : "s"} for "
             {query}"
@@ -113,7 +112,7 @@ function DemoToolCall({
         </>
       ) : (
         <>
-          <SearchIcon className="text-muted-foreground size-3.5 animate-pulse" />
+          <SearchIcon className="text-[#888] size-3.5 animate-pulse" />
           <span>Searching "{query}"</span>
         </>
       )}
@@ -123,8 +122,8 @@ function DemoToolCall({
 
 function DemoBookmarkCard({ bookmark }: { bookmark: DemoBookmark }) {
   return (
-    <div className="relative flex w-full flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+    <div className="relative flex w-full flex-col overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] text-[#fafafa] shadow-sm">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#141414]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={bookmark.previewUrl}
@@ -142,7 +141,7 @@ function DemoBookmarkCard({ bookmark }: { bookmark: DemoBookmark }) {
             className="size-4 rounded-sm"
             loading="lazy"
           />
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-[#666] truncate">
             {bookmark.domain}
           </p>
         </div>
@@ -176,12 +175,12 @@ function DemoAssistantMessage({
       <div className="max-w-[85%] space-y-2">
         {toolCalls && <div className="flex flex-col gap-1">{toolCalls}</div>}
         {children && (
-          <div className="bg-muted/50 text-foreground rounded-2xl px-3 py-2">
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#fafafa] rounded-2xl px-3 py-2">
             {children}
           </div>
         )}
         {isLoading && (
-          <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
+          <div className="text-[#888] flex items-center gap-1.5 text-sm">
             <Loader2Icon className="size-3.5 animate-spin" />
             <span>Thinking...</span>
           </div>
@@ -274,26 +273,25 @@ export function AgenticDemoChat() {
   const showResponse = step === "response";
 
   return (
-    <MaxWidthContainer id="demo" spacing="default" className="py-24">
+    <section id="demo" className="mx-auto max-w-5xl px-4 py-20 lg:py-28">
       <div className="mb-12 max-w-2xl">
-        <p className="text-sm font-mono text-muted-foreground mb-4">
+        <p className="text-sm text-[#666] mb-4">
           001 — Live demo
         </p>
-        <h2 className="text-4xl md:text-5xl font-black leading-[0.9] tracking-tight">
-          Watch it
-          <br />
-          <span className="text-muted-foreground font-light">work</span>
+        <h2 className="font-elegant text-4xl md:text-5xl tracking-tight text-[#fafafa]">
+          Watch it{" "}
+          <em className="not-italic">work</em>
         </h2>
       </div>
 
       <div className="w-full">
-        <div className="bg-muted rounded-xl border overflow-hidden">
+        <div className="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
           {/* Chat header */}
-          <div className="bg-background border-b px-4 py-3 flex items-center gap-2">
-            <div className="size-3 rounded-full bg-red-500/80" />
-            <div className="size-3 rounded-full bg-yellow-500/80" />
-            <div className="size-3 rounded-full bg-green-500/80" />
-            <span className="ml-2 text-sm text-muted-foreground">
+          <div className="border-b border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 flex items-center gap-2">
+            <div className="size-3 rounded-full bg-[#ff5f57]" />
+            <div className="size-3 rounded-full bg-[#febc2e]" />
+            <div className="size-3 rounded-full bg-[#28c840]" />
+            <span className="ml-2 text-sm text-[#666]">
               SaveIt Agent
             </span>
           </div>
@@ -344,19 +342,19 @@ export function AgenticDemoChat() {
           </div>
 
           {/* Chat input */}
-          <div className="bg-background border-t p-3">
-            <div className="bg-muted/50 rounded-lg border px-3 py-2 text-sm text-muted-foreground">
+          <div className="border-t border-[#2a2a2a] bg-[#1a1a1a] p-3">
+            <div className="bg-[#141414] rounded-lg border border-[#2a2a2a] px-3 py-2 text-sm text-[#555]">
               Ask about your bookmarks...
             </div>
           </div>
         </div>
 
         {/* Caption */}
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-[#666]">
           Your agent searches semantically—not just keywords. Describe what you
           remember.
         </p>
       </div>
-    </MaxWidthContainer>
+    </section>
   );
 }

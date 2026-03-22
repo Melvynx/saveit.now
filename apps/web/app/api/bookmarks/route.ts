@@ -1,3 +1,4 @@
+import { parseBookmarkBody } from "@/lib/api/parse-bookmark-body";
 import { BookmarkValidationError } from "@/lib/database/bookmark-validation";
 import { createBookmark } from "@/lib/database/create-bookmark";
 import { userRoute } from "@/lib/safe-route";
@@ -6,31 +7,59 @@ import { BookmarkType } from "@workspace/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const POST = userRoute
-  .body(
-    z.object({
-      url: z.string().url(),
-      transcript: z.string().optional(),
-      metadata: z.any().optional(),
-    }),
-  )
-  .handler(async (req, { body, ctx }) => {
-    try {
+export const POST = userRoute.body(z.any()).handler(async (req, { ctx, body }) => {
+  try {
+    const contentType = req.headers.get("content-type") || "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const result = await parseBookmarkBody(req, ctx.user.id);
+      if (!result.success) return result.error;
+      const { url, transcript, metadata } = result.data;
       const bookmark = await createBookmark({
-        url: body.url,
+        url,
         userId: ctx.user.id,
-        transcript: body.transcript,
-        metadata: body.metadata,
+        transcript,
+        metadata: metadata as Record<string, any> | undefined,
       });
       return { status: "ok", bookmark };
-    } catch (error: unknown) {
-      if (error instanceof BookmarkValidationError) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-
-      throw error;
     }
-  });
+
+    const url = body?.url;
+    const transcript = body?.transcript;
+    const metadata = body?.metadata;
+
+    if (!url || typeof url !== "string") {
+      return NextResponse.json(
+        { error: "URL is required", success: false },
+        { status: 400 },
+      );
+    }
+
+    try {
+      new URL(url);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid URL format", success: false },
+        { status: 400 },
+      );
+    }
+
+    const bookmark = await createBookmark({
+      url,
+      userId: ctx.user.id,
+      transcript,
+      metadata: metadata as Record<string, any> | undefined,
+    });
+
+    return { status: "ok", bookmark };
+  } catch (error: unknown) {
+    if (error instanceof BookmarkValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    throw error;
+  }
+});
 
 export const GET = userRoute
   .query(
@@ -45,7 +74,6 @@ export const GET = userRoute
     }),
   )
   .handler(async (req, { ctx, query }) => {
-    // Validate and filter bookmark types
     const validBookmarkTypes = Object.values(BookmarkType);
     const types = query.types
       ? query.types
@@ -58,7 +86,6 @@ export const GET = userRoute
 
     const tags = query.tags ? query.tags.split(",").filter(Boolean) : [];
 
-    // Validate and filter special filters
     const validSpecialFilters = ["READ", "UNREAD", "STAR"];
 
     const specialFilters = query.special

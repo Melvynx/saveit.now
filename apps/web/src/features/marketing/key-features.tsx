@@ -2,7 +2,6 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { SvglImg } from "@/components/svgl-auto-dark-mode-image";
-import { Typography } from "@workspace/ui/components/typography";
 import { useIsClient } from "@workspace/ui/hooks/use-is-client";
 import {
   BookmarkCardPDF,
@@ -12,7 +11,6 @@ import {
 } from "app/app/bookmark-card";
 import { ArrowRight, File, Globe } from "lucide-react";
 import { BrowserRouter } from "react-router";
-import { MaxWidthContainer } from "../page/page";
 
 export const KeyFeatures = () => {
   const isClient = useIsClient();
@@ -21,16 +19,16 @@ export const KeyFeatures = () => {
 
   return (
     <BrowserRouter>
-      <MaxWidthContainer className="py-16 flex flex-col gap-8 lg:py-32">
+      <section className="mx-auto max-w-5xl px-4 py-20 lg:py-28 flex flex-col gap-8">
         <div className="text-center flex flex-col gap-2">
-          <p className="text-sm font-mono text-muted-foreground">
+          <p className="text-sm text-[#666]">
             005 — Supported formats
           </p>
-          <Typography variant="h2">We save everything for you.</Typography>
-          <Typography variant="lead">
+          <h2 className="font-elegant text-4xl md:text-5xl tracking-tight text-[#fafafa]">We save <em>everything</em> for you.</h2>
+          <p className="text-[#888] text-base">
             PDF, YouTube video, X post, web page or simple blog post -- we got
             you
-          </Typography>
+          </p>
         </div>
 
         <div className="flex flex-col gap-8">
@@ -42,12 +40,12 @@ export const KeyFeatures = () => {
                 className="size-6"
                 alt="YouTube"
               />
-              <Typography variant="h3" className="whitespace-nowrap">
+              <h3 className="text-[15px] font-medium text-[#fafafa] whitespace-nowrap">
                 YouTube Video
-              </Typography>
+              </h3>
             </div>
             <div className="hidden lg:flex flex-1"></div>
-            <ArrowRight className="text-muted-foreground hidden lg:block" />
+            <ArrowRight className="text-[#555] hidden lg:block" />
             <div className="hidden lg:flex flex-1"></div>
             <div className="w-full max-w-96">
               <BookmarkCardYouTube
@@ -94,12 +92,12 @@ export const KeyFeatures = () => {
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-1">
               <File className="size-6 text-red-500" />
-              <Typography variant="h3" className="whitespace-nowrap">
+              <h3 className="text-[15px] font-medium text-[#fafafa] whitespace-nowrap">
                 PDF Document
-              </Typography>
+              </h3>
             </div>
             <div className="hidden lg:flex flex-1"></div>
-            <ArrowRight className="text-muted-foreground hidden lg:block" />
+            <ArrowRight className="text-[#555] hidden lg:block" />
             <div className="hidden lg:flex flex-1"></div>
             <div className="w-full max-w-96">
               <BookmarkCardPDF
@@ -131,12 +129,12 @@ export const KeyFeatures = () => {
           <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-1">
               <Globe className="size-6 text-blue-500" />
-              <Typography variant="h3" className="whitespace-nowrap">
+              <h3 className="text-[15px] font-medium text-[#fafafa] whitespace-nowrap">
                 Web Page
-              </Typography>
+              </h3>
             </div>
             <div className="hidden lg:flex flex-1"></div>
-            <ArrowRight className="text-muted-foreground hidden lg:block" />
+            <ArrowRight className="text-[#555] hidden lg:block" />
             <div className="hidden lg:flex flex-1"></div>
             <div className="w-full max-w-96">
               <BookmarkCardPage
@@ -177,10 +175,10 @@ export const KeyFeatures = () => {
                 darkIconName="x_dark"
                 className="size-6"
               />
-              <Typography variant="h3">X Post</Typography>
+              <h3 className="text-[15px] font-medium text-[#fafafa] whitespace-nowrap">X Post</h3>
             </div>
             <div className="hidden lg:flex flex-1"></div>
-            <ArrowRight className="text-muted-foreground hidden lg:block" />
+            <ArrowRight className="text-[#555] hidden lg:block" />
             <div className="hidden lg:flex flex-1"></div>
             <div className="w-full max-w-96">
               <BookmarkCardTweet
@@ -219,7 +217,7 @@ export const KeyFeatures = () => {
             </div>
           </div>
         </div>
-      </MaxWidthContainer>
+      </section>
     </BrowserRouter>
   );
 };

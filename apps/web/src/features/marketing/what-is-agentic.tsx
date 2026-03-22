@@ -4,30 +4,30 @@ import { MaxWidthContainer } from "../page/page";
 
 export const WhatIsAgentic = () => {
   return (
-    <MaxWidthContainer spacing="default" className="py-24">
+    <section className="mx-auto max-w-5xl px-4 py-20 lg:py-28">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-16 text-center">
-          <p className="text-sm font-mono text-muted-foreground mb-4">
+          <p className="text-sm text-[#666] mb-4">
             002 — The difference
           </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[0.9] tracking-tight">
+          <h2 className="font-elegant text-4xl md:text-5xl lg:text-6xl tracking-tight text-[#fafafa]">
             AI-powered{" "}
-            <span className="text-muted-foreground font-light">waits.</span>
+            <span className="italic text-[#666]">waits.</span>
             <br />
-            Agentic <span className="text-primary font-light">works.</span>
+            Agentic <span className="italic text-[#fafafa]">works.</span>
           </h2>
         </div>
 
         {/* Comparison table */}
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {/* Traditional */}
-          <div className="rounded-2xl border border-dashed bg-muted/30 p-8">
+          <div className="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-8">
             <div className="mb-8">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-xs text-[#888] uppercase tracking-wider mb-2">
                 Traditional bookmarks
               </p>
-              <p className="text-2xl font-bold text-muted-foreground">
+              <p className="text-2xl font-bold text-[#666]">
                 You do all the work
               </p>
             </div>
@@ -45,15 +45,12 @@ export const WhatIsAgentic = () => {
           </div>
 
           {/* Agentic */}
-          <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-8 relative overflow-hidden">
-            {/* Subtle glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-
+          <div className="rounded-xl border border-[#3a3a3a] bg-[#1a1a1a] p-8 relative overflow-hidden">
             <div className="relative mb-8">
-              <p className="text-xs font-mono text-primary uppercase tracking-wider mb-2">
+              <p className="text-xs text-[#888] uppercase tracking-wider mb-2">
                 Agentic bookmarks
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold text-[#fafafa]">
                 Your agent does it for you
               </p>
             </div>
@@ -73,15 +70,15 @@ export const WhatIsAgentic = () => {
 
         {/* Bottom stat */}
         <div className="mt-12 text-center">
-          <p className="text-muted-foreground">
+          <p className="text-[#888]">
             Traditional tools wait for commands.{" "}
-            <span className="text-foreground font-medium">
+            <span className="text-[#fafafa] font-medium">
               Your agent works autonomously.
             </span>
           </p>
         </div>
       </div>
-    </MaxWidthContainer>
+    </section>
   );
 };
 
@@ -99,8 +96,8 @@ function ComparisonItem({
       <div
         className={cn(
           "flex items-center justify-center size-6 rounded-full shrink-0",
-          positive && "bg-primary/20 text-primary",
-          negative && "bg-muted text-muted-foreground",
+          positive && "bg-[#fafafa]/10 text-[#fafafa]",
+          negative && "bg-[#2a2a2a] text-[#555]",
         )}
       >
         {positive && <CheckIcon className="size-3.5" />}
@@ -109,8 +106,8 @@ function ComparisonItem({
       <span
         className={cn(
           "text-sm",
-          positive && "text-foreground",
-          negative && "text-muted-foreground",
+          positive && "text-[#fafafa]",
+          negative && "text-[#666]",
         )}
       >
         {text}

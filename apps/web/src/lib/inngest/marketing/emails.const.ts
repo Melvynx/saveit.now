@@ -22,8 +22,7 @@ ${getServerUrl()}${APP_LINKS.app}
 
 If you hit a problem or just want to share feedback, write me at help@saveit.now or DM me on Twitter: https://x.com/melvynxdev
 
-Thanks for trying SaveIt.now.  
-Melvyn`,
+Thanks for trying SaveIt.now.`,
 
   CHROME_EXTENSION_EMAIL: `Hi,
 
@@ -41,10 +40,7 @@ Here's why you should install it:
 Install the Extension here:
 ${getServerUrl()}${APP_LINKS.extensions}
 
-Once installed, you can save bookmarks directly from any webpage. Just click the SaveIt.now icon in your browser toolbar.
-
-Best,
-Melvyn`,
+Once installed, you can save bookmarks directly from any webpage. Just click the SaveIt.now icon in your browser toolbar.`,
 
   HOW_USE_CHROME_EXTENSION_EMAIL: `Hi,
 
@@ -58,10 +54,7 @@ Finally, you can right click on any image to save it.
 
 After the image is saved, you'll be able to search it because our AI analyzes the image and generates a description.
 
-So... if you don't have the extension yet, download it here: ${getServerUrl()}${APP_LINKS.extensions}
-
-Best,
-Melvyn`,
+So... if you don't have the extension yet, download it here: ${getServerUrl()}${APP_LINKS.extensions}`,
 
   HOW_TO_IMPORT_BOOKMARKS_EMAIL: `Hi,
 
@@ -83,10 +76,7 @@ You can also just copy/paste any list of links into the input.
 
 And that's it! 📋
 
-The import can take a while... on average, it's 30 seconds per bookmark. If you import 20 bookmarks, it will take 10 minutes.
-
-Best,
-Melvyn`,
+The import can take a while... on average, it's 30 seconds per bookmark. If you import 20 bookmarks, it will take 10 minutes.`,
 
   HOW_TO_USE_BOOKMARKS_EMAIL: `Hi,
 
@@ -110,10 +100,7 @@ No need to organize, add notes, or tags. Our software is intelligent and will he
 
 Try saving a few more bookmarks and see how the AI helps organize them automatically.
 
-Start saving: ${getServerUrl()}${APP_LINKS.app}
-
-Best,
-Melvyn`,
+Start saving: ${getServerUrl()}${APP_LINKS.app}`,
 
   HOW_TO_SEARCH_BOOKMARKS_EMAIL: `Hi,
 
@@ -135,10 +122,7 @@ Pro Tips
 
 Use the search bar at the top of any page. Bookmark important searches for quick access. The more you save, the smarter the search becomes.
 
-Try searching for something now: ${getServerUrl()}${APP_LINKS.app}
-
-Best,
-Melvyn`,
+Try searching for something now: ${getServerUrl()}${APP_LINKS.app}`,
 
   PREMIUM_COMMITMENT_EMAIL: `Hi,
 
@@ -162,9 +146,6 @@ Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}
 
 Thanks for being part of the SaveIt.now community!
 
-Best,
-Melvyn
-
 P.S. Hit reply if you have any feedback or questions - I read every email personally.`,
 
   // Subscription emails
@@ -182,10 +163,7 @@ Your money helps me build the best bookmark manager possible.
 
 If you need help, reach me on Twitter @melvynxdev or just reply to this email.
 
-I'll reply as soon as possible.
-
-Best,
-Melvyn`,
+I'll reply as soon as possible.`,
 
   SUBSCRIPTION_HOW_TO_USE_PREMIUM_EMAIL: `Hi,
 
@@ -195,10 +173,7 @@ With premium, you have unlimited bookmarks (with fair usage). Save everything yo
 
 If a website generates wrong content, just use the report button so I can check it.
 
-That's it! Start saving everything: ${getServerUrl()}${APP_LINKS.app}
-
-Best,
-Melvyn`,
+That's it! Start saving everything: ${getServerUrl()}${APP_LINKS.app}`,
 
   SUBSCRIPTION_LETS_TALK_EMAIL: `Hi,
 
@@ -211,10 +186,7 @@ I don't like calls, but I like email and voice. Just reply to this email to help
 • What you like
 • What you dislike
 
-I read every email personally.
-
-Best,
-Melvyn`,
+I read every email personally.`,
 
   SUBSCRIPTION_OUR_COMMITMENT_EMAIL: `Hi,
 
@@ -228,10 +200,7 @@ My commitment to you:
 
 We avoid useless features, but still, we create a lot of micro improvements that you can find here: ${getServerUrl()}${APP_LINKS.changelog}
 
-Thanks for being pro!
-
-Best,
-Melvyn`,
+Thanks for being pro!`,
 
   // Limit reached emails
   LIMIT_REACHED_DISCOUNT_EMAIL: (promoCode: string) => `Hi,
@@ -253,10 +222,7 @@ Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}
 
 When you are on this page, just choose yearly or monthly pricing and then add the coupon during the checkout : 
 
-<img src="${getServerUrl()}/images/coupon.png" alt="Limit reached discount" />
-
-Best,
-Melvyn`,
+<img src="${getServerUrl()}/images/coupon.png" alt="Limit reached discount" />`,
 
   LIMIT_REACHED_REMINDER_EMAIL: (promoCode: string) => `Hi,
 
@@ -269,10 +235,7 @@ Your promo code \`${promoCode}\` is still valid for:
 
 Don't miss out - it expires tomorrow.
 
-Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}
-
-Best,
-Melvyn`,
+Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}`,
 
   LIMIT_REACHED_LAST_CHANCE_EMAIL: (promoCode: string) => `Hi,
 
@@ -284,8 +247,5 @@ This is your final reminder to get premium for just $1.
 
 After today, it goes back to the regular price.
 
-Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}
-
-Best,
-Melvyn`,
+Upgrade now: ${getServerUrl()}${APP_LINKS.upgrade}`,
 };

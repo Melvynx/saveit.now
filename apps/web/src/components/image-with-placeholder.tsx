@@ -58,7 +58,7 @@ export const ImageWithPlaceholder = ({
     }
   };
 
-  const src = error && fallbackImage ? fallbackImage : props.src;
+  const src = error && fallbackImage ? fallbackImage : (props.src as string | undefined);
 
   if (!src) {
     return (

@@ -6,8 +6,7 @@ import { useSession } from "@/lib/auth-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { useEffect } from "react";
-import { HEYO } from "@heyo.so/js";
+import { TchaoProvider } from "tchao/react";
 import { Toaster } from "sonner";
 
 const queryClient = new QueryClient({
@@ -44,25 +43,19 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
 export const ChatSnippet = () => {
   const session = useSession();
+  const user = session.data?.user;
+  const impersonatedBy = session.data?.session.impersonatedBy;
 
-  useEffect(() => {
-    if (!session.data?.user) {
-      return;
-    }
-
-    HEYO.identify({
-      userId: session.data.user.id,
-      name: session.data.user.name || "Anonymous",
-      email: session.data.user.email || undefined,
-    });
-  }, [session.data?.user]);
-
-  useEffect(() => {
-    void HEYO.init({
-      projectId: "68ba5e182a237aaa4010661c",
-      hidden: false,
-    });
-  }, []);
-
-  return null;
+  return (
+    <TchaoProvider
+      websiteId="kd7ctwnpfvvrjxegjtmz7t3q018061ad"
+      visitorEmail={user?.email ?? undefined}
+      visitorName={user?.name ?? "Anonymous"}
+      visitorAvatar={user?.image ?? undefined}
+      visitorId={user?.id}
+      visitorRole={user?.role ?? "user"}
+      visitorMetadata={impersonatedBy ? { impersonatedBy } : undefined}
+      impersonate={Boolean(impersonatedBy)}
+    />
+  );
 };
