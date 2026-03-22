@@ -6,16 +6,20 @@ import { getAllPosts } from "@/lib/mdx/posts-manager";
 const URLS_PER_SITEMAP = 50000;
 
 export async function generateSitemaps() {
-  const count = await prisma.bookmark.count({
-    where: {
-      status: "READY",
-      title: { not: null },
-    },
-  });
+  try {
+    const count = await prisma.bookmark.count({
+      where: {
+        status: "READY",
+        title: { not: null },
+      },
+    });
 
-  const numSitemaps = Math.ceil(count / URLS_PER_SITEMAP) + 1;
+    const numSitemaps = Math.ceil(count / URLS_PER_SITEMAP) + 1;
 
-  return Array.from({ length: numSitemaps }, (_, i) => ({ id: i }));
+    return Array.from({ length: numSitemaps }, (_, i) => ({ id: i }));
+  } catch {
+    return [{ id: 0 }];
+  }
 }
 
 export default async function sitemap({
@@ -66,54 +70,62 @@ export default async function sitemap({
       })),
     ];
 
-    const posts = await getAllPosts();
-    const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
-      url: `${baseUrl}/posts/${post.slug}`,
-      lastModified: post.frontmatter.date,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    }));
+    try {
+      const posts = await getAllPosts();
+      const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
+        url: `${baseUrl}/posts/${post.slug}`,
+        lastModified: post.frontmatter.date,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+      }));
 
-    const publicUsers = await prisma.user.findMany({
-      where: {
-        publicLinkEnabled: true,
-        publicLinkSlug: { not: null },
-      },
-      select: {
-        publicLinkSlug: true,
-        updatedAt: true,
-      },
-    });
+      const publicUsers = await prisma.user.findMany({
+        where: {
+          publicLinkEnabled: true,
+          publicLinkSlug: { not: null },
+        },
+        select: {
+          publicLinkSlug: true,
+          updatedAt: true,
+        },
+      });
 
-    const userEntries: MetadataRoute.Sitemap = publicUsers.map((user) => ({
-      url: `${baseUrl}/u/${user.publicLinkSlug}`,
-      lastModified: user.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
+      const userEntries: MetadataRoute.Sitemap = publicUsers.map((user) => ({
+        url: `${baseUrl}/u/${user.publicLinkSlug}`,
+        lastModified: user.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      }));
 
-    return [...staticEntries, ...postEntries, ...userEntries];
+      return [...staticEntries, ...postEntries, ...userEntries];
+    } catch {
+      return staticEntries;
+    }
   }
 
-  const bookmarkOffset = (id - 1) * URLS_PER_SITEMAP;
-  const bookmarks = await prisma.bookmark.findMany({
-    where: {
-      status: "READY",
-      title: { not: null },
-    },
-    select: {
-      id: true,
-      updatedAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-    skip: bookmarkOffset,
-    take: URLS_PER_SITEMAP,
-  });
+  try {
+    const bookmarkOffset = (id - 1) * URLS_PER_SITEMAP;
+    const bookmarks = await prisma.bookmark.findMany({
+      where: {
+        status: "READY",
+        title: { not: null },
+      },
+      select: {
+        id: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      skip: bookmarkOffset,
+      take: URLS_PER_SITEMAP,
+    });
 
-  return bookmarks.map((bookmark) => ({
-    url: `${baseUrl}/p/${bookmark.id}`,
-    lastModified: bookmark.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.5,
-  }));
+    return bookmarks.map((bookmark) => ({
+      url: `${baseUrl}/p/${bookmark.id}`,
+      lastModified: bookmark.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+  } catch {
+    return [];
+  }
 }
