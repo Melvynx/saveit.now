@@ -44,14 +44,16 @@ export const createBookmark = async (body: {
     },
   });
 
-  await inngest.send({
-    name: "bookmark/process",
-    data: {
-      bookmarkId: bookmark.id,
-      userId: body.userId,
-      hasExtensionTranscript: !!body.transcript,
-    },
-  });
+  inngest
+    .send({
+      name: "bookmark/process",
+      data: {
+        bookmarkId: bookmark.id,
+        userId: body.userId,
+        hasExtensionTranscript: !!body.transcript,
+      },
+    })
+    .catch(() => {});
 
   posthogClient.capture({
     distinctId: body.userId,
@@ -63,8 +65,7 @@ export const createBookmark = async (body: {
     },
   });
 
-  // Invalidate search cache after creating a new bookmark
-  await SearchCache.invalidateBookmarkUpdate(body.userId);
+  SearchCache.invalidateBookmarkUpdate(body.userId).catch(() => {});
 
   return bookmark;
 };

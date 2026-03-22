@@ -9,7 +9,7 @@ test.describe("Process bookmarks tests", () => {
     await signInWithEmail({ email: getUserEmail(), page });
 
     await page
-      .getByRole("textbox", { name: "Search bookmarks or type @" })
+      .getByRole("textbox", { name: /Search bookmarks/ })
       .fill(`https://resend.com?a=${nanoid(2)}&isPlaywrightTest=true`);
     await page.getByRole("button", { name: "Add" }).click();
 
@@ -173,7 +173,7 @@ test.describe("Process bookmarks tests", () => {
     // Add a bookmark through the UI instead of directly in database
     const testUrl = `https://example.com/test-delete-${nanoid(4)}`;
     await page
-      .getByRole("textbox", { name: "Search bookmarks or type @" })
+      .getByRole("textbox", { name: /Search bookmarks/ })
       .fill(testUrl);
     await page.getByRole("button", { name: "Add" }).click();
     await page.waitForLoadState("networkidle");
