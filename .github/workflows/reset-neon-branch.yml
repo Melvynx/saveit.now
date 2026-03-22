@@ -17,5 +17,6 @@ jobs:
           parent: true
           branch: preview/${{ github.ref_name }}
           api_key: ${{ secrets.NEON_API_KEY }}
+          database: neondb
         id: reset-branch
       - run: echo branch_id ${{ steps.reset-branch.outputs.branch_id }}
