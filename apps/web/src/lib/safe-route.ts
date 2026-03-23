@@ -26,10 +26,40 @@ export const routeClient = createZodRoute({
   },
 });
 
+const deduplicateCookies = (headers: Headers): Headers => {
+  const cookieHeader = headers.get("cookie");
+  if (!cookieHeader) return headers;
+
+  const parts = cookieHeader.split(";").map((c) => c.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  let hasDuplicates = false;
+  for (const part of parts) {
+    const key = part.split("=")[0]?.trim();
+    if (key && seen.has(key)) {
+      hasDuplicates = true;
+      break;
+    }
+    if (key) seen.add(key);
+  }
+  if (!hasDuplicates) return headers;
+
+  // Keep LAST occurrence of each cookie (most recently set value)
+  const cookieMap = new Map<string, string>();
+  for (const part of parts) {
+    const eqIdx = part.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = part.substring(0, eqIdx).trim();
+    cookieMap.set(key, part);
+  }
+
+  const newHeaders = new Headers(headers);
+  newHeaders.set("cookie", Array.from(cookieMap.values()).join("; "));
+  return newHeaders;
+};
+
 const getSessionFromRequest = async (request: Request) => {
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  });
+  const headers = deduplicateCookies(request.headers);
+  const session = await auth.api.getSession({ headers });
   return session?.user ?? null;
 };
 
