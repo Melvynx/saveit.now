@@ -1,8 +1,9 @@
-import { getUser } from "@/lib/auth-session";
 import { validateApiKey } from "@/lib/auth/api-key-auth";
 import { createZodRoute } from "next-zod-route";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "./auth";
 import { ApplicationError, SafeRouteError } from "./errors";
+import { logger } from "./logger";
 
 export const routeClient = createZodRoute({
   handleServerError: (error) => {
@@ -25,16 +26,36 @@ export const routeClient = createZodRoute({
   },
 });
 
-export const userRoute = routeClient.use(async ({ next }) => {
-  const user = await getUser();
+const getSessionFromRequest = async (request: Request) => {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+  return session?.user ?? null;
+};
+
+export const userRoute = routeClient.use(async ({ next, request }) => {
+  const user = await getSessionFromRequest(request);
   if (!user) {
+    const cookieHeader = request.headers.get("cookie");
+    const userAgent = request.headers.get("user-agent") || "";
+    logger.warn("[AUTH] userRoute session failed", {
+      hasCookie: !!cookieHeader,
+      cookieKeys: cookieHeader
+        ? cookieHeader
+            .split(";")
+            .map((c) => c.trim().split("=")[0])
+            .filter(Boolean)
+        : [],
+      userAgent: userAgent.substring(0, 100),
+      url: request.url,
+    });
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   return next({ ctx: { user } });
 });
 
-export const adminRoute = routeClient.use(async ({ next }) => {
-  const user = await getUser();
+export const adminRoute = routeClient.use(async ({ next, request }) => {
+  const user = await getSessionFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
