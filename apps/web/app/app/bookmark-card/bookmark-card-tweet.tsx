@@ -21,7 +21,9 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       bookmark={bookmark}
       className="py-0 tweet-container relative overflow-hidden"
     >
-      <Tweet id={metadata.tweetId} />
+      <div className="overflow-hidden pointer-events-none">
+        <Tweet id={metadata.tweetId} />
+      </div>
       <BookmarkCardActions
         url={bookmark.url}
         bookmarkId={bookmark.id}

@@ -46,6 +46,7 @@ BE EXTREMELY PICKY about what you show. Only include bookmarks that DIRECTLY ans
 - showBookmark: Display single bookmark
 - getBookmark: Get bookmark details (internal)
 - updateTags: Add/remove tags
+- downloadBookmarks: Generate a downloadable file (CSV or JSON) from bookmark IDs. User sees a download button. Use when user asks to export/download/save bookmarks to a file.
 </tools>
 
 <FORBIDDEN>

@@ -1,0 +1,134 @@
+---
+title: OpenClaw AI Agent Setup
+description: Set up the SaveIt.now skill for your OpenClaw AI agent to manage bookmarks via natural language
+order: 10
+category: Integrations
+tags: [openclaw, ai, agent, cli, automation]
+published: true
+---
+
+# OpenClaw AI Agent Setup
+
+Set up your OpenClaw AI agent to manage SaveIt.now bookmarks using natural language.
+
+## Prerequisites
+
+- An [OpenClaw](https://openclaw.com) agent running
+- A SaveIt.now Pro account with API access
+- [bun](https://bun.sh) installed on your machine
+
+## Quick Setup Prompt
+
+Copy and paste this prompt into your OpenClaw agent to set everything up:
+
+```
+I need you to set up the SaveIt.now bookmark manager. Follow these steps:
+
+1. Install the saveit-bookmark skill from ClawHub:
+   npx clawhub install saveitnow
+
+2. Launch the skill to make it available:
+   npx clawhub launch saveitnow
+
+3. Install the CLI tool:
+   npm i -g saveitnow
+
+4. Set up the API key (I'll provide it):
+   saveitnow auth set "<YOUR_API_KEY>"
+
+5. Test the connection:
+   saveitnow auth test
+
+6. Try listing my bookmarks:
+   saveitnow bookmarks list --limit 5
+
+Once everything is working, you can use the saveitnow skill to manage my bookmarks.
+```
+
+## Step-by-Step Guide
+
+### 1. Install the SaveIt.now Skill
+
+Install the skill from ClawHub so your agent knows how to use the CLI:
+
+```bash
+npx clawhub install saveitnow
+```
+
+### 2. Launch the Skill
+
+Activate the skill so your OpenClaw agent can use it:
+
+```bash
+npx clawhub launch saveitnow
+```
+
+This gives your OpenClaw agent the knowledge of all available commands and their options.
+
+### 3. Install the CLI
+
+Install the `saveitnow` command-line tool globally:
+
+```bash
+npm i -g saveitnow
+```
+
+Verify the installation:
+
+```bash
+saveitnow --help
+```
+
+### 4. Get Your API Key
+
+1. Go to [saveit.now/account/keys](https://saveit.now/account/keys)
+2. Click "Create API Key"
+3. Copy the generated key
+
+### 5. Configure the API Key
+
+```bash
+saveitnow auth set "your-api-key-here"
+```
+
+Test it works:
+
+```bash
+saveitnow auth test
+```
+
+### 6. Start Using It
+
+Once set up, your OpenClaw agent can:
+
+- **Save bookmarks**: "Save this article to my bookmarks"
+- **Search bookmarks**: "Find my bookmarks about React"
+- **Get a random read**: "Give me a random unread bookmark"
+- **List tags**: "Show me all my bookmark tags"
+- **Delete bookmarks**: "Remove bookmark with ID xyz"
+
+## Available Commands
+
+| Command | What it does |
+|---------|-------------|
+| `saveitnow bookmarks list` | List and search bookmarks |
+| `saveitnow bookmarks create --url <url>` | Save a new bookmark |
+| `saveitnow bookmarks delete <id>` | Delete a bookmark |
+| `saveitnow bookmarks random` | Get a random unread bookmark |
+| `saveitnow tags list` | List all tags |
+| `saveitnow auth set <key>` | Save API key |
+| `saveitnow auth test` | Verify API key works |
+
+## Troubleshooting
+
+### "Insufficient permissions" error
+
+API access requires a Pro plan. Upgrade at [saveit.now/pricing](https://saveit.now/pricing).
+
+### "No token configured" error
+
+Run `saveitnow auth set "your-api-key"` to configure your API key.
+
+### CLI not found
+
+Make sure you installed globally: `npm i -g saveitnow`

@@ -9,6 +9,7 @@ import {
   BrainIcon,
   CheckIcon,
   CopyIcon,
+  DownloadIcon,
   Loader2Icon,
   PencilIcon,
   SearchIcon,
@@ -414,6 +415,74 @@ export const MessageItem = memo(function MessageItem({
                 <span>
                   Updating tags{parts.length > 0 ? `: ${parts.join(", ")}` : ""}
                 </span>
+              </div>
+            );
+          }
+
+          if (toolName === "downloadBookmarks") {
+            if (isCompleted) {
+              const output = tool.output as {
+                content?: string;
+                filename?: string;
+                mimeType?: string;
+                bookmarkCount?: number;
+                error?: string;
+              };
+
+              if (output.error) {
+                return (
+                  <div
+                    key={index}
+                    className="text-muted-foreground flex items-center gap-1.5 text-sm"
+                  >
+                    <CheckIcon className="size-3.5" />
+                    <span>{output.error}</span>
+                  </div>
+                );
+              }
+
+              const handleDownload = () => {
+                if (!output.content || !output.filename || !output.mimeType)
+                  return;
+                const blob = new Blob([output.content], {
+                  type: output.mimeType,
+                });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = output.filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+              };
+
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={handleDownload}
+                  >
+                    <DownloadIcon className="size-3.5" />
+                    {output.filename}
+                  </Button>
+                  <span className="text-muted-foreground text-xs">
+                    {output.bookmarkCount} bookmark
+                    {output.bookmarkCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={index}
+                className="text-muted-foreground flex items-center gap-1.5 text-sm"
+              >
+                <Loader2Icon className="size-3.5 animate-spin" />
+                <span>Preparing download...</span>
               </div>
             );
           }

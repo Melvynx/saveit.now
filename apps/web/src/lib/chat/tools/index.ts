@@ -1,3 +1,4 @@
+import { createDownloadBookmarksTool } from "./download-bookmarks";
 import { createGetBookmarkTool } from "./get-bookmark";
 import { createSearchBookmarksTool } from "./search-bookmarks";
 import { createShowBookmarkTool } from "./show-bookmark";
@@ -10,6 +11,7 @@ export const createBookmarkTools = (userId: string) => ({
   showBookmarks: createShowBookmarksTool(userId),
   showBookmark: createShowBookmarkTool(userId),
   updateTags: createUpdateTagsTool(userId),
+  downloadBookmarks: createDownloadBookmarksTool(userId),
 });
 
 export type BookmarkTools = ReturnType<typeof createBookmarkTools>;
