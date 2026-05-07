@@ -1,9 +1,12 @@
 import { BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateText } from "ai";
+import { generateText } from "ai";
 import sharp from "sharp";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
-import { GEMINI_MODELS } from "../../gemini";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  GEMINI_MODELS,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -159,10 +162,7 @@ export async function handleImageStep(
   });
 
   await step.run("update-embedding", async () => {
-    const embedding = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [title, vectorSummary],
-    });
+    const embedding = await embedGeminiDocuments([title, vectorSummary]);
     const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
@@ -170,7 +170,13 @@ export async function handleImageStep(
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
       WHERE id = ${context.bookmarkId}
     `;
   });

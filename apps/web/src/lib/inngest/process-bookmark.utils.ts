@@ -2,7 +2,6 @@ import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { GEMINI_MODELS } from "../gemini";
-import { OPENAI_MODELS } from "../openai";
 
 /**
  * Generates AI-powered tags from content and creates them in the database
@@ -31,7 +30,7 @@ export async function generateAndCreateTags(
       : systemPrompt;
 
   const { object } = await generateObject({
-    model: OPENAI_MODELS.cheap,
+    model: GEMINI_MODELS.cheap,
     schema: z.object({
       tags: z.array(z.string()),
     }),

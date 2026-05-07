@@ -1,11 +1,15 @@
 import { uploadFileFromURLToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateObject } from "ai";
+import { generateObject } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import { z } from "zod";
 import { logger } from "../../logger";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  GEMINI_MODELS,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -314,7 +318,7 @@ ${contentText}
 Focus on finding the main product being sold, its price, brand, and other key details.`;
 
     const result = await generateObject({
-      model: OPENAI_MODELS.cheap,
+      model: GEMINI_MODELS.cheap,
       schema: ProductExtractionSchema,
       prompt,
     });
@@ -644,19 +648,25 @@ ${markdown.substring(0, 2500)}
 
     try {
       // Use the search-optimized summary for embeddings
-      const embedding = await embedMany({
-        model: OPENAI_MODELS.embedding,
-        values: [searchSummary, titleForEmbedding],
-      });
+      const embedding = await embedGeminiDocuments([
+        searchSummary,
+        titleForEmbedding,
+      ]);
       const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
 
       // Update embeddings in database
       await prisma.$executeRaw`
         UPDATE "Bookmark"
         SET
-          "titleEmbedding" = ${titleEmbedding}::vector,
-          "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
-        WHERE id = ${context.bookmarkId}
+        "titleEmbedding" = ${titleEmbedding}::vector,
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
+      WHERE id = ${context.bookmarkId}
       `;
     } catch (error) {
       logger.error(`💃 EMBEDDING ERROR for ${context.bookmarkId}:`, error);

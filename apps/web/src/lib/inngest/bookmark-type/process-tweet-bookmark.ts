@@ -1,9 +1,11 @@
 import { BookmarkType, prisma } from "@workspace/database";
-import { embedMany } from "ai";
 import { NonRetriableError } from "inngest";
 import { getTweet } from "react-tweet/api";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -222,17 +224,20 @@ ${tweetImageDescription}
   await step.run("update-embedding", async () => {
     if (!vectorSummary || !summary) return;
 
-    const embedding = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [vectorSummary || ""],
-    });
+    const embedding = await embedGeminiDocuments([vectorSummary || ""]);
     const [vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
     await prisma.$executeRaw`
       UPDATE "Bookmark"
       SET 
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
       WHERE id = ${context.bookmarkId}
     `;
   });

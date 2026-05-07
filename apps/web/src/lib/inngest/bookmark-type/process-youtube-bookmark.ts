@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookmarkType, prisma } from "@workspace/database";
-import { embedMany } from "ai";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { logger } from "../../logger";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { getServerUrl } from "../../server-url";
 import { getYouTubeMetadata } from "../../youtube/metadata";
 import { InngestPublish, InngestStep } from "../inngest.utils";
@@ -294,26 +296,26 @@ export async function processYouTubeBookmark(
 
   await step.run("update-embedding", async () => {
     if (!summary && !vectorSummary) {
-      const embedding = await embedMany({
-        model: OPENAI_MODELS.embedding,
-        values: [videoInfo.title],
-      });
+      const embedding = await embedGeminiDocuments([videoInfo.title]);
       const [titleEmbedding] = embedding.embeddings;
 
       // Update embeddings in database
       await prisma.$executeRaw`
         UPDATE "Bookmark"
         SET 
-          "titleEmbedding" = ${titleEmbedding}::vector
+          "titleEmbedding" = ${titleEmbedding}::vector,
+          metadata = jsonb_set(
+            COALESCE(metadata, '{}'::jsonb),
+            '{embeddingModel}',
+            to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+            true
+          )
         WHERE id = ${context.bookmarkId}
       `;
       return;
     }
 
-    const embedding = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [videoInfo.title, vectorSummary],
-    });
+    const embedding = await embedGeminiDocuments([videoInfo.title, vectorSummary]);
     const [titleEmbedding, vectorSummaryEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
@@ -321,7 +323,13 @@ export async function processYouTubeBookmark(
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
       WHERE id = ${context.bookmarkId}
     `;
   });

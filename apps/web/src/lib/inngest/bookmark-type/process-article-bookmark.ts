@@ -1,6 +1,5 @@
 import { Bookmark, BookmarkType, prisma } from "@workspace/database";
 import { logger } from "../../logger";
-import { embedMany } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import {
@@ -8,7 +7,10 @@ import {
   uploadFileFromURLToS3,
 } from "../../aws-s3/aws-s3-upload-files";
 import { captureScreenshot } from "../../cloudflare/screenshot";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -365,10 +367,10 @@ ${screenshotAnalysis.description}
   await step.run("update-embedding", async () => {
     if (!vectorSummary || !summary || !pageMetadata.title) return;
 
-    const embedding = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [vectorSummary || "", pageMetadata.title || ""],
-    });
+    const embedding = await embedGeminiDocuments([
+      vectorSummary || "",
+      pageMetadata.title || "",
+    ]);
     const [vectorSummaryEmbedding, titleEmbedding] = embedding.embeddings;
 
     // Update embeddings in database
@@ -376,7 +378,13 @@ ${screenshotAnalysis.description}
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
       WHERE id = ${context.bookmarkId}
     `;
   });

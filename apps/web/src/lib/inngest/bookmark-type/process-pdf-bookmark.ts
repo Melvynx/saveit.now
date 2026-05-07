@@ -1,8 +1,12 @@
 import { BookmarkType, prisma } from "@workspace/database";
-import { embedMany, generateText } from "ai";
+import { generateText } from "ai";
 import { uploadBufferToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { capturePDFScreenshot } from "../../cloudflare/screenshot";
-import { OPENAI_MODELS } from "../../openai";
+import {
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  GEMINI_MODELS,
+  embedGeminiDocuments,
+} from "../../gemini";
 import { InngestPublish, InngestStep } from "../inngest.utils";
 import { BOOKMARK_STEP_ID_TO_ID } from "../process-bookmark.step";
 import {
@@ -78,7 +82,7 @@ export async function processPDFBookmark(
     const pdfContent = await response.arrayBuffer();
 
     const analysis = await generateText({
-      model: OPENAI_MODELS.cheap,
+      model: GEMINI_MODELS.cheap,
       system: PDF_SUMMARY_PROMPT,
       messages: [
         {
@@ -213,10 +217,9 @@ export async function processPDFBookmark(
 
   // Update embeddings
   await step.run("update-embeddings", async () => {
-    const { embeddings } = await embedMany({
-      model: OPENAI_MODELS.embedding,
-      values: [title, detailedSummary].filter(Boolean),
-    });
+    const { embeddings } = await embedGeminiDocuments(
+      [title, detailedSummary].filter(Boolean),
+    );
 
     const [titleEmbedding, vectorSummaryEmbedding] =
       embeddings;
@@ -225,7 +228,13 @@ export async function processPDFBookmark(
       UPDATE "Bookmark"
       SET 
         "titleEmbedding" = ${titleEmbedding}::vector,
-        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector
+        "vectorSummaryEmbedding" = ${vectorSummaryEmbedding}::vector,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{embeddingModel}',
+          to_jsonb(${GEMINI_EMBEDDING_METADATA_VALUE}::text),
+          true
+        )
       WHERE id = ${context.bookmarkId}
     `;
   });
