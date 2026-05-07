@@ -1,6 +1,7 @@
 "use server";
 
 import { getAuthLimits } from "@/lib/auth-limits";
+import { getUserMetadata } from "@/lib/database/user-metadata.utils";
 import { ApplicationError } from "@/lib/errors";
 import { userAction } from "@/lib/safe-action";
 import { prisma } from "@workspace/database";
@@ -9,7 +10,14 @@ import { z } from "zod";
 export const exportBookmarksAction = userAction
   .schema(z.object({}))
   .action(async ({ ctx: { user } }) => {
-    const limits = await getAuthLimits();
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        referenceId: user.id,
+        status: { in: ["active", "trialing"] },
+      },
+    });
+    const metadata = await getUserMetadata(user.id);
+    const limits = getAuthLimits(subscription, metadata);
 
     if (limits.canExport === 0) {
       throw new ApplicationError(

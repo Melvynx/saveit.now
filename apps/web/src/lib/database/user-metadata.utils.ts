@@ -1,9 +1,19 @@
 import { prisma } from "@workspace/database";
 import { z } from "zod";
 import type { Prisma } from "@workspace/database";
+import { AUTH_LIMIT_KEYS, type CustomAuthLimits } from "../auth-limits";
+
+const CustomLimitsSchema = z
+  .object(
+    Object.fromEntries(
+      AUTH_LIMIT_KEYS.map((key) => [key, z.number().int().min(0).optional()]),
+    ) as Record<keyof CustomAuthLimits, z.ZodOptional<z.ZodNumber>>,
+  )
+  .partial();
 
 const UserMetadataSchema = z.object({
   limitEmailSentAt: z.string().optional(),
+  customLimits: CustomLimitsSchema.optional(),
 }).passthrough();
 
 export type UserMetadata = z.infer<typeof UserMetadataSchema>;

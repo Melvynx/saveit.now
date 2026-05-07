@@ -1,4 +1,5 @@
-import { getAuthLimits } from "@/lib/auth-limits";
+import { getAuthLimits, parseCustomAuthLimits } from "@/lib/auth-limits";
+import { getUserMetadata } from "@/lib/database/user-metadata.utils";
 import { userRoute } from "@/lib/safe-route";
 import { prisma } from "@workspace/database";
 
@@ -10,12 +11,14 @@ export const GET = userRoute.handler(async (_, { ctx }) => {
     },
   });
 
-  const limits = getAuthLimits(subscription);
+  const metadata = await getUserMetadata(ctx.user.id);
+  const limits = getAuthLimits(subscription, metadata);
   const plan = (subscription?.plan ?? "free") as "free" | "pro";
 
   return {
     plan,
     limits,
+    customLimits: parseCustomAuthLimits(metadata),
     subscription: subscription
       ? {
           id: subscription.id,

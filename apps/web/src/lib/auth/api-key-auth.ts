@@ -61,19 +61,20 @@ export async function validateApiKey(
         id: result.key.userId,
       },
       select: {
+        metadata: true,
         subscriptions: {
           select: {
             plan: true,
           },
           where: {
-            status: "active",
+            status: { in: ["active", "trialing"] },
           },
         },
       },
     });
 
     const currentPlan = plan?.subscriptions[0]?.plan;
-    const limits = getAuthLimits({ plan: currentPlan });
+    const limits = getAuthLimits({ plan: currentPlan }, plan?.metadata);
 
     if (limits.apiAccess === 0) {
       return {
