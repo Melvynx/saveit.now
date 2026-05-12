@@ -17,6 +17,8 @@ import {
   Shield,
   Search,
   Bookmark,
+  Package,
+  Terminal,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
@@ -39,6 +41,8 @@ const ICONS: Record<string, LucideIcon> = {
   Shield,
   Search,
   Bookmark,
+  Package,
+  Terminal,
 };
 
 type DocCardProps = {

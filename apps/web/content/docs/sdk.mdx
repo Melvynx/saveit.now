@@ -1,0 +1,169 @@
+---
+title: SaveIt SDK
+description: Use the official `saveit` npm package to manage bookmarks from any Node.js, Bun, or Deno application.
+order: 10
+category: SDK & CLI
+tags: [sdk, npm, typescript, javascript]
+icon: Package
+published: true
+---
+
+# SaveIt SDK
+
+The official [`saveit`](https://www.npmjs.com/package/saveit) npm package gives you a typed client for the SaveIt.now REST API. The same package also ships an executable CLI - see the [CLI guide](/docs/cli).
+
+## Install
+
+```bash
+npm install saveit
+# or
+pnpm add saveit
+# or
+bun add saveit
+```
+
+Requires Node.js 18+ (or any runtime with global `fetch`).
+
+## Get an API key
+
+Create one at [saveit.now/account/keys](/account/keys). API keys require a **Pro plan** - free accounts will receive `403 Pro plan required`.
+
+Pass it explicitly or set `SAVEIT_API_KEY` in your environment:
+
+```ts
+import { Saveit } from "saveit";
+
+const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
+```
+
+## Quickstart
+
+```ts
+import { Saveit } from "saveit";
+
+const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
+
+// 1. List recent bookmarks
+const { bookmarks, hasMore, nextCursor } = await saveit.bookmarks.list({
+  limit: 20,
+});
+
+// 2. Search by query and tags
+const matches = await saveit.bookmarks.list({
+  query: "next.js app router",
+  tags: ["frontend"],
+  types: ["ARTICLE", "YOUTUBE"],
+  special: "UNREAD",
+});
+
+// 3. Save a new bookmark
+const created = await saveit.bookmarks.create({
+  url: "https://nextjs.org/docs/app",
+});
+
+// 4. Pick a random unopened bookmark (and mark it opened)
+const random = await saveit.bookmarks.random();
+if (random.exhausted) {
+  console.log("You're all caught up.");
+} else {
+  console.log(random.bookmark?.url, `(${random.remaining} left)`);
+}
+
+// 5. Delete one
+await saveit.bookmarks.delete(created.id);
+
+// 6. List tags
+const { tags } = await saveit.tags.list({ limit: 50 });
+```
+
+## Constructor options
+
+```ts
+new Saveit({
+  apiKey: process.env.SAVEIT_API_KEY,   // required (or via SAVEIT_API_KEY)
+  baseUrl: "https://saveit.now/api/v1", // optional override (or SAVEIT_BASE_URL)
+  fetch: globalThis.fetch,              // optional, swap fetch implementations
+  timeoutMs: 30_000,                    // per-request timeout, default 30s
+  maxRetries: 3,                        // retries on 429/5xx, default 3
+});
+```
+
+## Methods
+
+### `saveit.bookmarks.list(options?)`
+
+| Option              | Type                                              | Description                                  |
+| ------------------- | ------------------------------------------------- | -------------------------------------------- |
+| `query`             | `string`                                          | Full-text search across title/url/summary    |
+| `tags`              | `string[]`                                        | Tag names to match                           |
+| `types`             | `BookmarkType[]`                                  | `VIDEO`, `ARTICLE`, `PAGE`, `IMAGE`, `YOUTUBE`, `TWEET`, `PDF`, `PRODUCT` |
+| `special`           | `"READ" \| "UNREAD" \| "STAR"`                    | Special filter                               |
+| `limit`             | `number` (1-100, default 20)                      | Page size                                    |
+| `cursor`            | `string`                                          | Pagination cursor (use `nextCursor`)         |
+| `matchingDistance`  | `number` (0.1-2)                                  | Vector match distance, default `0.3`         |
+
+Returns `{ bookmarks: Bookmark[], hasMore: boolean, nextCursor: string | null }`.
+
+### `saveit.bookmarks.create({ url, transcript?, metadata? })`
+
+`url` is required. Returns the created `Bookmark` (with status `PROCESSING` until SaveIt finishes scraping/summarizing in the background).
+
+### `saveit.bookmarks.delete(bookmarkId)`
+
+Returns `{ id: string }`. Throws `SaveitApiError(404)` if the bookmark doesn't belong to the caller.
+
+### `saveit.bookmarks.random()`
+
+Returns `{ bookmark, remaining, exhausted }`. `bookmark` is a random `READY` bookmark you haven't opened yet (also marks it as opened). When you've opened every available bookmark, returns `{ bookmark: null, remaining: 0, exhausted: true }` instead of throwing.
+
+### `saveit.tags.list({ limit?, cursor? })`
+
+Returns `{ tags: Tag[], hasMore, nextCursor }`. Each tag includes a `bookmarkCount`.
+
+## Error handling
+
+```ts
+import { Saveit, SaveitApiError, SaveitConfigError } from "saveit";
+
+try {
+  await saveit.bookmarks.create({ url: "not a url" });
+} catch (err) {
+  if (err instanceof SaveitApiError) {
+    // err.status, err.code, err.message, err.response
+    console.error(`API ${err.status}:`, err.message);
+  } else if (err instanceof SaveitConfigError) {
+    console.error("SDK is misconfigured:", err.message);
+  } else {
+    throw err;
+  }
+}
+```
+
+The SDK retries `429` and `5xx` responses up to `maxRetries` times with exponential backoff (and honors `Retry-After`). `4xx` errors except `429` surface immediately as `SaveitApiError`.
+
+## Browser support
+
+The SDK is **server-side only**. Importing it into a browser bundle will inline `process.env.SAVEIT_API_KEY` at build time and ship your API key to every visitor. Use it from a Node/Bun/Deno backend or serverless function and forward results to your frontend.
+
+## TypeScript
+
+Everything is fully typed. Public types are exported directly:
+
+```ts
+import type {
+  Bookmark,
+  BookmarkType,
+  BookmarkStatus,
+  CreateBookmarkInput,
+  ListBookmarksOptions,
+  ListBookmarksResult,
+  Tag,
+  SaveitOptions,
+} from "saveit";
+```
+
+## Next steps
+
+- [CLI guide](/docs/cli) - same operations from the terminal
+- [AI integration prompt](/docs/ai-integration) - copy/paste prompt to teach Claude/GPT how to use SaveIt
+- [API reference](/docs/api-overview) - the underlying REST endpoints

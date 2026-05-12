@@ -1,0 +1,50 @@
+{
+  "name": "saveit",
+  "version": "0.1.0",
+  "description": "Official SaveIt.now SDK and CLI for managing bookmarks, tags, and more.",
+  "keywords": ["saveit", "bookmarks", "cli", "sdk", "saveit.now"],
+  "license": "MIT",
+  "homepage": "https://saveit.now/docs/sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Melvynx/saveit.now-mono",
+    "directory": "packages/saveit"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "saveit": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "tsup"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.3.5",
+    "typescript": "5.7.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
