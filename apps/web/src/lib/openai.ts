@@ -37,7 +37,7 @@ export const OPENAI_MODELS: {
       }),
     }
   : {
-      cheap: openai("gpt-5-mini"),
-      normal: openai("gpt-5"),
+      cheap: openai("gpt-5.4-mini"),
+      normal: openai("gpt-5.5"),
       embedding: openai.embedding("text-embedding-3-small"),
     };

@@ -1,7 +1,9 @@
 import { getRequiredUser } from "@/lib/auth-session";
+import { getAuthLimits, parseCustomAuthLimits } from "@/lib/auth-limits";
 import { prisma } from "@workspace/database";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -9,6 +11,7 @@ import {
 import { Typography } from "@workspace/ui/components/typography";
 import { Users } from "lucide-react";
 import { notFound } from "next/navigation";
+import { CustomLimitsForm } from "./custom-limits-form";
 
 export default async function RoutePage(props: {
   params: Promise<{ userId: string }>;
@@ -41,6 +44,16 @@ export default async function RoutePage(props: {
     notFound();
   }
 
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      referenceId: params.userId,
+      status: { in: ["active", "trialing"] },
+    },
+  });
+  const baseLimits = getAuthLimits(subscription);
+  const customLimits = parseCustomAuthLimits(userData.metadata);
+  const effectiveLimits = getAuthLimits(subscription, userData.metadata);
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex items-center gap-2">
@@ -55,6 +68,23 @@ export default async function RoutePage(props: {
             clicks
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom limits</CardTitle>
+          <CardDescription>
+            Override this user's plan limits without changing their Stripe plan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CustomLimitsForm
+            userId={userData.id}
+            baseLimits={baseLimits}
+            effectiveLimits={effectiveLimits}
+            customLimits={customLimits}
+          />
+        </CardContent>
       </Card>
     </div>
   );

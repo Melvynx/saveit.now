@@ -93,6 +93,6 @@ export interface SaveitOptions {
   fetch?: typeof fetch;
   /** Per-request timeout in milliseconds. Default 30s. */
   timeoutMs?: number;
-  /** Number of retries on 429/5xx. Default 3. */
+  /** Number of retries for GET requests on network errors, 429, or 5xx. Default 3. */
   maxRetries?: number;
 }

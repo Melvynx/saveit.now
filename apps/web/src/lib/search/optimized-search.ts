@@ -1,11 +1,14 @@
-import { OPENAI_MODELS } from "@/lib/openai";
+import {
+  GEMINI_EMBEDDING_CACHE_MODEL,
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  embedGeminiQuery,
+} from "@/lib/gemini";
 import {
   BookmarkStatus,
   BookmarkType,
   Prisma,
   prisma,
 } from "@workspace/database";
-import { embed } from "ai";
 import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchOptions,
@@ -100,6 +103,11 @@ class OptimizedSearchQuery {
     `;
   }
 
+  private buildVectorEmbeddingModelFilter(alias: string): string {
+    const prefix = alias ? `${alias}.` : "";
+    return `AND ${prefix}metadata->>'embeddingModel' = '${GEMINI_EMBEDDING_METADATA_VALUE}'`;
+  }
+
   private buildVectorSearchCTE(
     paramIndex: number,
     skipDistanceFilter: boolean = false,
@@ -108,6 +116,7 @@ class OptimizedSearchQuery {
     const statusFilter = this.buildStatusFilter("").replace("AND ", "AND ");
     const typeFilter = this.buildTypeFilter("").replace("AND ", "AND ");
     const specialFilter = this.buildSpecialFilters("").replace("AND ", "AND ");
+    const vectorModelFilter = this.buildVectorEmbeddingModelFilter("");
 
     if (skipDistanceFilter) {
       // Return top results by distance without threshold filtering
@@ -120,6 +129,7 @@ class OptimizedSearchQuery {
         FROM "Bookmark" b
         WHERE b."userId" = $1
           ${this.buildStatusFilter("b")}
+          ${this.buildVectorEmbeddingModelFilter("b")}
           ${this.buildTypeFilter("b")}
           ${this.buildSpecialFilters("b")}
         ORDER BY (0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
@@ -136,6 +146,7 @@ class OptimizedSearchQuery {
       FROM "Bookmark" b
       WHERE b."userId" = $1
         ${this.buildStatusFilter("b")}
+        ${this.buildVectorEmbeddingModelFilter("b")}
         AND (
           (0.2 * COALESCE(b."titleEmbedding" <=> $${paramIndex}::vector, 1) +
            0.8 * COALESCE(b."vectorSummaryEmbedding" <=> $${paramIndex}::vector, 1)) <= (
@@ -146,6 +157,7 @@ class OptimizedSearchQuery {
             FROM "Bookmark"
             WHERE "userId" = $1
               ${statusFilter}
+              ${vectorModelFilter}
               ${typeFilter}
               ${specialFilter}
           )
@@ -305,15 +317,13 @@ export async function optimizedSearch(
         // Try to get embedding from cache first
         let embedding = await EmbeddingCache.get(
           trimmedQuery,
-          "text-embedding-3-small",
+          GEMINI_EMBEDDING_CACHE_MODEL,
         );
 
         if (!embedding) {
           // Cache miss - generate new embedding
-          const { embedding: newEmbedding } = await embed({
-            model: OPENAI_MODELS.embedding,
-            value: trimmedQuery,
-          });
+          const { embedding: newEmbedding } =
+            await embedGeminiQuery(trimmedQuery);
 
           embedding = newEmbedding;
 
@@ -321,7 +331,7 @@ export async function optimizedSearch(
           EmbeddingCache.set(
             trimmedQuery,
             embedding,
-            "text-embedding-3-small",
+            GEMINI_EMBEDDING_CACHE_MODEL,
           ).catch(console.error);
         }
 

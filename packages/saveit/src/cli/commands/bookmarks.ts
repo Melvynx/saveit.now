@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { handleError } from "../error-handling.js";
 import { getClient } from "../sdk-factory.js";
-import { output } from "../output.js";
+import { isJsonOutput, output } from "../output.js";
 import type {
   BookmarkType,
   ListBookmarksOptions,
@@ -26,7 +26,9 @@ function parseTypes(value?: string): BookmarkType[] | undefined {
   return value
     .split(",")
     .map((s) => s.trim().toUpperCase())
-    .filter((s): s is BookmarkType => BOOKMARK_TYPES.includes(s as BookmarkType));
+    .filter((s): s is BookmarkType =>
+      BOOKMARK_TYPES.includes(s as BookmarkType),
+    );
 }
 
 function parseSpecial(value?: string): SpecialFilter | undefined {
@@ -72,23 +74,29 @@ bookmarksCommand
       json?: boolean;
       format?: string;
     }) => {
+      const wantsJson = isJsonOutput({ json: opts.json, format: opts.format });
       try {
         const params: ListBookmarksOptions = {
           query: opts.query,
-          tags: opts.tags ? opts.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+          tags: opts.tags
+            ? opts.tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : undefined,
           types: parseTypes(opts.types),
           special: parseSpecial(opts.special),
           limit: opts.limit ? Number(opts.limit) : undefined,
           cursor: opts.cursor,
         };
         const result = await getClient().bookmarks.list(params);
-        output(result.bookmarks, {
+        output(wantsJson ? result : result.bookmarks, {
           json: opts.json,
           format: opts.format,
           fields: opts.fields?.split(","),
         });
       } catch (err) {
-        handleError(err, opts.json);
+        handleError(err, wantsJson);
       }
     },
   );
@@ -107,6 +115,7 @@ bookmarksCommand
       metadata?: string;
       json?: boolean;
     }) => {
+      const wantsJson = isJsonOutput({ json: opts.json });
       try {
         const metadata = opts.metadata ? safeJson(opts.metadata) : undefined;
         const bookmark = await getClient().bookmarks.create({
@@ -116,7 +125,7 @@ bookmarksCommand
         });
         output(bookmark, { json: opts.json });
       } catch (err) {
-        handleError(err, opts.json);
+        handleError(err, wantsJson);
       }
     },
   );
@@ -127,11 +136,12 @@ bookmarksCommand
   .argument("<id>", "Bookmark ID")
   .option("--json", "Output as JSON")
   .action(async (id: string, opts: { json?: boolean }) => {
+    const wantsJson = isJsonOutput({ json: opts.json });
     try {
       const result = await getClient().bookmarks.delete(id);
       output({ deleted: true, id: result.id }, { json: opts.json });
     } catch (err) {
-      handleError(err, opts.json);
+      handleError(err, wantsJson);
     }
   });
 
@@ -140,9 +150,10 @@ bookmarksCommand
   .description("Pick a random unopened bookmark and mark it as opened")
   .option("--json", "Output as JSON")
   .action(async (opts: { json?: boolean }) => {
+    const wantsJson = isJsonOutput({ json: opts.json });
     try {
       const result = await getClient().bookmarks.random();
-      if (opts.json) {
+      if (wantsJson) {
         output(result, { json: true });
         return;
       }
@@ -153,7 +164,7 @@ bookmarksCommand
       output(result.bookmark);
       console.log(`\n(${result.remaining} left to explore)`);
     } catch (err) {
-      handleError(err, opts.json);
+      handleError(err, wantsJson);
     }
   });
 

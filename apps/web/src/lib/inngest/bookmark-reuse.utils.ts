@@ -1,4 +1,8 @@
-import { BookmarkType, prisma } from "@workspace/database";
+import { BookmarkType, Prisma, prisma } from "@workspace/database";
+import {
+  GEMINI_EMBEDDING_METADATA_KEY,
+  GEMINI_EMBEDDING_METADATA_VALUE,
+} from "../gemini";
 import { getVideoId } from "./bookmark-type/process-youtube-bookmark";
 
 /**
@@ -9,8 +13,14 @@ export async function findExistingBookmark(params: {
   bookmarkId: string;
 }): Promise<string | null> {
   const { url, bookmarkId } = params;
+  const embeddingModelWhere: Prisma.BookmarkWhereInput = {
+    metadata: {
+      path: [GEMINI_EMBEDDING_METADATA_KEY],
+      equals: GEMINI_EMBEDDING_METADATA_VALUE,
+    },
+  };
   
-  let whereClause = {};
+  let whereClause: Prisma.BookmarkWhereInput = {};
   
   // For tweets, check by URL (exact match)
   if (url.includes("twitter.com") || url.startsWith("https://x.com/")) {
@@ -18,6 +28,7 @@ export async function findExistingBookmark(params: {
       url,
       status: "READY",
       NOT: { id: bookmarkId },
+      ...embeddingModelWhere,
     };
   }
   // For YouTube videos, check by YouTube ID
@@ -26,10 +37,15 @@ export async function findExistingBookmark(params: {
       const youtubeId = getVideoId(url);
       whereClause = {
         type: BookmarkType.YOUTUBE,
-        metadata: {
-          path: ["youtubeId"],
-          equals: youtubeId,
-        },
+        AND: [
+          {
+            metadata: {
+              path: ["youtubeId"],
+              equals: youtubeId,
+            },
+          },
+          embeddingModelWhere,
+        ],
         status: "READY",
         NOT: { id: bookmarkId },
       };
@@ -43,10 +59,11 @@ export async function findExistingBookmark(params: {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     
-    const baseWhere = {
+    const baseWhere: Prisma.BookmarkWhereInput = {
       url,
       status: "READY",
       NOT: { id: bookmarkId },
+      ...embeddingModelWhere,
     };
     
     // For PAGE type, add age restriction (within 1 month)

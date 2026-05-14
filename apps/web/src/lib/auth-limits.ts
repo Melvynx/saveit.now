@@ -6,6 +6,18 @@ export type AuthLimits = {
   apiAccess: number;
 };
 
+export type CustomAuthLimits = Partial<AuthLimits>;
+
+type AuthLimitsMetadata = unknown;
+
+export const AUTH_LIMIT_KEYS = [
+  "bookmarks",
+  "monthlyBookmarkRuns",
+  "monthlyChatQueries",
+  "canExport",
+  "apiAccess",
+] as const satisfies readonly (keyof AuthLimits)[];
+
 export const AUTH_LIMITS: Record<"pro" | "free", AuthLimits> = {
   free: {
     bookmarks: 20,
@@ -23,9 +35,46 @@ export const AUTH_LIMITS: Record<"pro" | "free", AuthLimits> = {
   },
 };
 
+export const parseCustomAuthLimits = (
+  metadata?: AuthLimitsMetadata,
+): CustomAuthLimits => {
+  if (!metadata || typeof metadata !== "object") {
+    return {};
+  }
+
+  const rawMetadata = metadata as { customLimits?: unknown };
+  if (!rawMetadata.customLimits || typeof rawMetadata.customLimits !== "object") {
+    return {};
+  }
+
+  const customLimits: CustomAuthLimits = {};
+  const rawLimits = rawMetadata.customLimits as Record<string, unknown>;
+
+  for (const key of AUTH_LIMIT_KEYS) {
+    const value = rawLimits[key];
+    if (
+      typeof value === "number" &&
+      Number.isFinite(value) &&
+      Number.isInteger(value) &&
+      value >= 0
+    ) {
+      customLimits[key] = value;
+    }
+  }
+
+  return customLimits;
+};
+
 export const getAuthLimits = (
   subscription?: { plan?: string | null } | null,
+  metadata?: AuthLimitsMetadata,
 ): AuthLimits => {
-  return (AUTH_LIMITS[subscription?.plan as keyof typeof AUTH_LIMITS] ??
-    AUTH_LIMITS.free) as AuthLimits;
+  const planLimits =
+    AUTH_LIMITS[subscription?.plan as keyof typeof AUTH_LIMITS] ??
+    AUTH_LIMITS.free;
+
+  return {
+    ...planLimits,
+    ...parseCustomAuthLimits(metadata),
+  };
 };

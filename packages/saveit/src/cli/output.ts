@@ -1,15 +1,25 @@
 import pc from "picocolors";
 import { globalFlags } from "./config.js";
 
-interface OutputOptions {
+export interface OutputOptions {
   json?: boolean;
   format?: string;
   fields?: string[];
   noHeader?: boolean;
 }
 
+export function isJsonOutput(
+  opts: Pick<OutputOptions, "json" | "format"> = {},
+): boolean {
+  return (
+    opts.json === true ||
+    globalFlags.json ||
+    (opts.format ?? globalFlags.format) === "json"
+  );
+}
+
 export function output(data: unknown, opts: OutputOptions = {}): void {
-  const isJson = opts.json ?? globalFlags.json;
+  const isJson = opts.json === true || globalFlags.json;
   const format = isJson ? "json" : (opts.format ?? globalFlags.format);
 
   switch (format) {
@@ -53,7 +63,9 @@ function printText(data: unknown, fields?: string[], noHeader?: boolean): void {
     }
     printTable(unwrapped as Record<string, unknown>[], fields, noHeader);
     console.log(
-      pc.dim(`\n${unwrapped.length} result${unwrapped.length === 1 ? "" : "s"}`),
+      pc.dim(
+        `\n${unwrapped.length} result${unwrapped.length === 1 ? "" : "s"}`,
+      ),
     );
   } else if (unwrapped && typeof unwrapped === "object") {
     printKeyValue(unwrapped as Record<string, unknown>);
@@ -136,9 +148,7 @@ function printCsv(data: unknown, fields?: string[], noHeader?: boolean): void {
   const cols = fields ?? Object.keys(unwrapped[0] as Record<string, unknown>);
   if (!noHeader) console.log(cols.join(","));
   for (const row of unwrapped as Record<string, unknown>[]) {
-    console.log(
-      cols.map((c) => csvEscape(String(row[c] ?? ""))).join(","),
-    );
+    console.log(cols.map((c) => csvEscape(String(row[c] ?? ""))).join(","));
   }
 }
 

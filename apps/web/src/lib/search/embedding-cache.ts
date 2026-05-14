@@ -1,3 +1,4 @@
+import { GEMINI_EMBEDDING_CACHE_MODEL } from '@/lib/gemini';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 import { parseRedisResponse } from './redis-utils';
@@ -20,7 +21,7 @@ export class EmbeddingCache {
     return `embedding:${this.CACHE_VERSION}:${model}:${textHash}`;
   }
 
-  static async get(text: string, model: string = 'text-embedding-3-small'): Promise<number[] | null> {
+  static async get(text: string, model: string = GEMINI_EMBEDDING_CACHE_MODEL): Promise<number[] | null> {
     try {
       const cacheKey = this.generateEmbeddingKey(text, model);
       const cached = await redis.get(cacheKey);
@@ -43,7 +44,7 @@ export class EmbeddingCache {
     }
   }
 
-  static async set(text: string, embedding: number[], model: string = 'text-embedding-3-small'): Promise<void> {
+  static async set(text: string, embedding: number[], model: string = GEMINI_EMBEDDING_CACHE_MODEL): Promise<void> {
     try {
       const cacheKey = this.generateEmbeddingKey(text, model);
 

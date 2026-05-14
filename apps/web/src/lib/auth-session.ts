@@ -2,7 +2,8 @@ import { prisma } from "@workspace/database";
 import { headers } from "next/headers";
 import { unauthorized } from "next/navigation";
 import { auth } from "./auth";
-import { getAuthLimits } from "./auth-limits";
+import { getAuthLimits, parseCustomAuthLimits } from "./auth-limits";
+import { getUserMetadata } from "./database/user-metadata.utils";
 
 export const getUser = async () => {
   const session = await auth.api.getSession({
@@ -30,11 +31,13 @@ export const getUserLimits = async () => {
     },
   });
 
-  const limits = getAuthLimits(subscription);
+  const metadata = await getUserMetadata(user.id);
+  const limits = getAuthLimits(subscription, metadata);
 
   return {
     ...user,
     limits,
+    customLimits: parseCustomAuthLimits(metadata),
     plan: (subscription?.plan ?? "free") as "free" | "pro",
   };
 };

@@ -1,6 +1,6 @@
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
-import { getAuthLimits } from "../auth-limits";
+import { AUTH_LIMITS, getAuthLimits } from "../auth-limits";
 import { ApplicationError, BookmarkErrorType } from "../errors";
 import { inngest } from "../inngest/client";
 import { logger } from "../logger";
@@ -26,10 +26,13 @@ export const validateBookmarkLimits = async (
   const subscription = await prisma.subscription.findFirst({
     where: {
       referenceId: userId,
+      status: { in: ["active", "trialing"] },
     },
   });
   const plan = subscription?.plan ?? "free";
-  const limits = getAuthLimits(subscription);
+  const { getUserMetadata } = await import("./user-metadata.utils");
+  const metadata = await getUserMetadata(userId);
+  const limits = getAuthLimits(subscription, metadata);
   const posthogClient = getPostHogClient();
 
   // Check total bookmarks limit
@@ -39,7 +42,11 @@ export const validateBookmarkLimits = async (
     },
   });
 
-  if (plan === "free" && totalBookmarks >= 19) {
+  if (
+    plan === "free" &&
+    limits.bookmarks <= AUTH_LIMITS.free.bookmarks &&
+    totalBookmarks >= limits.bookmarks - 1
+  ) {
     const { hasLimitEmailBeenSent } = await import("./user-metadata.utils");
     const emailAlreadySent = await hasLimitEmailBeenSent(userId);
 

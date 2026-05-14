@@ -1,6 +1,7 @@
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
 import { getAuthLimits } from "../auth-limits";
+import { getUserMetadata } from "../database/user-metadata.utils";
 import { SafeRouteError } from "../errors";
 
 export type ChatUsageResult = {
@@ -21,7 +22,8 @@ export const getChatUsage = async (
   });
 
   const plan = subscription?.plan ?? "free";
-  const limits = getAuthLimits(subscription);
+  const metadata = await getUserMetadata(userId);
+  const limits = getAuthLimits(subscription, metadata);
 
   const startOfMonth = dayjs().startOf("month");
   const used = await prisma.chatUsage.count({
@@ -70,8 +72,12 @@ export const checkAndIncrementChatUsage = async (
         status: { in: ["active", "trialing"] },
       },
     });
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { metadata: true },
+    });
 
-    const limits = getAuthLimits(subscription);
+    const limits = getAuthLimits(subscription, user?.metadata);
 
     if (used >= limits.monthlyChatQueries) {
       throw new SafeRouteError(

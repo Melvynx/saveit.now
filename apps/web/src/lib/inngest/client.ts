@@ -1,17 +1,9 @@
+import { realtimeMiddleware } from "@inngest/realtime/middleware";
 import { Inngest } from "inngest";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const middleware: any[] = [];
-
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { realtimeMiddleware } = require("@inngest/realtime");
-  if (process.env.NODE_ENV === "production" && !process.env.CI) {
-    middleware.push(realtimeMiddleware());
-  }
-} catch {
-  // @inngest/realtime not available
-}
+const middleware = process.env.NODE_ENV === "production" && !process.env.CI
+  ? [realtimeMiddleware()]
+  : [];
 
 const baseInngest = new Inngest({
   id: "saveit.now",

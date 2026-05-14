@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { handleError } from "../error-handling.js";
 import { getClient } from "../sdk-factory.js";
-import { output } from "../output.js";
+import { isJsonOutput, output } from "../output.js";
 
 export const tagsCommand = new Command("tags").description(
   "List and inspect tags",
@@ -23,18 +23,19 @@ tagsCommand
       json?: boolean;
       format?: string;
     }) => {
+      const wantsJson = isJsonOutput({ json: opts.json, format: opts.format });
       try {
         const result = await getClient().tags.list({
           limit: opts.limit ? Number(opts.limit) : undefined,
           cursor: opts.cursor,
         });
-        output(result.tags, {
+        output(wantsJson ? result : result.tags, {
           json: opts.json,
           format: opts.format,
           fields: opts.fields?.split(","),
         });
       } catch (err) {
-        handleError(err, opts.json);
+        handleError(err, wantsJson);
       }
     },
   );

@@ -1,6 +1,7 @@
 import { prisma } from "@workspace/database";
 import dayjs from "dayjs";
 import { getAuthLimits } from "../auth-limits";
+import { getUserMetadata } from "../database/user-metadata.utils";
 
 export type UserLimitsCheckResult = {
   isOverLimit: boolean;
@@ -20,11 +21,13 @@ export const isUserOverLimits = async (
   const subscription = await prisma.subscription.findFirst({
     where: {
       referenceId: userId,
+      status: { in: ["active", "trialing"] },
     },
   });
 
   const plan = subscription?.plan ?? "free";
-  const limits = getAuthLimits(subscription);
+  const metadata = await getUserMetadata(userId);
+  const limits = getAuthLimits(subscription, metadata);
 
   const totalBookmarks = await prisma.bookmark.count({
     where: { userId },

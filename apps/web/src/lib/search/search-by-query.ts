@@ -1,4 +1,8 @@
-import { OPENAI_MODELS } from "@/lib/openai";
+import {
+  GEMINI_EMBEDDING_CACHE_MODEL,
+  GEMINI_EMBEDDING_METADATA_VALUE,
+  embedGeminiQuery,
+} from "@/lib/gemini";
 import { logger } from "@/lib/logger";
 import {
   BookmarkStatus,
@@ -6,7 +10,6 @@ import {
   prisma,
   Prisma,
 } from "@workspace/database";
-import { embed } from "ai";
 import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchByDomainOptions,
@@ -318,6 +321,7 @@ export async function searchByVector({
          0.8 * COALESCE("vectorSummaryEmbedding" <=> $1::vector, 1)) as distance
       FROM "Bookmark" b
       WHERE "userId" = $2
+      AND b.metadata->>'embeddingModel' = '${GEMINI_EMBEDDING_METADATA_VALUE}'
       ${tagsCondition}
       ${typesCondition}
       ${specialFiltersCondition}
@@ -405,15 +409,12 @@ export async function searchByText({
     // Try to get embedding from cache first
     let embedding = await EmbeddingCache.get(
       trimmedQuery,
-      "text-embedding-3-small",
+      GEMINI_EMBEDDING_CACHE_MODEL,
     );
 
     if (!embedding) {
       // Cache miss - generate new embedding
-      const { embedding: newEmbedding } = await embed({
-        model: OPENAI_MODELS.embedding,
-        value: trimmedQuery,
-      });
+      const { embedding: newEmbedding } = await embedGeminiQuery(trimmedQuery);
 
       embedding = newEmbedding;
 
@@ -421,7 +422,7 @@ export async function searchByText({
       EmbeddingCache.set(
         trimmedQuery,
         embedding,
-        "text-embedding-3-small",
+        GEMINI_EMBEDDING_CACHE_MODEL,
       ).catch(console.error);
     }
 
