@@ -106,11 +106,13 @@ test.describe("Process bookmarks tests", () => {
     });
 
     await page.goto("/app");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await expect(page.getByText(bookmark.title ?? "")).toBeVisible({
+      timeout: 10000,
+    });
 
     const bookmarkCard = page
       .locator('[data-testid="bookmark-card-page"]')
+      .filter({ hasText: bookmark.title ?? "" })
       .first();
     await expect(bookmarkCard).toBeVisible();
     await bookmarkCard.click();

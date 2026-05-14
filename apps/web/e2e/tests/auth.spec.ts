@@ -43,21 +43,13 @@ test.describe("Authentication Flow - Simple Tests", () => {
   });
 
   test("landing page loads for unauthenticated users", async ({ page }) => {
-    await page.goto("/");
-
-    // Wait for page to load
-    await page.waitForLoadState("networkidle");
-
-    const currentURL = page.url();
+    await page.goto("/", { waitUntil: "domcontentloaded" });
 
     // Should not be redirected to signin immediately
-    expect(currentURL).not.toMatch(/\/signin/);
+    await expect(page).not.toHaveURL(/\/signin/);
 
-    // Should have some way to sign in - try multiple selector patterns
-
-    await page
-      .locator('button:has-text("Sign in")')
-      .isVisible({ timeout: 5000 });
+    // Should have some way to sign in
+    await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
   });
 
   test("email form progresses to OTP step", async ({ page }) => {
