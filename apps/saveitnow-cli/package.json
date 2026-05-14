@@ -1,0 +1,35 @@
+{
+  "name": "saveitnow",
+  "version": "0.1.0",
+  "description": "CLI for the SaveIt.now API - manage bookmarks and tags from the terminal",
+  "type": "module",
+  "bin": {
+    "saveitnow": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun",
+    "dev": "bun run src/index.ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "cli",
+    "api",
+    "saveitnow",
+    "bookmarks"
+  ],
+  "engines": {
+    "bun": ">=1.0"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
