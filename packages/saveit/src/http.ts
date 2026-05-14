@@ -1,0 +1,272 @@
+import { SaveitApiError, SaveitConfigError } from "./errors.js";
+
+export const DEFAULT_BASE_URL = "https://saveit.now/api/v1";
+
+const DEFAULT_RETRY_DELAYS_MS = [500, 1500, 3500];
+const DEFAULT_TIMEOUT_MS = 30_000;
+const MAX_RETRY_DELAY_MS = 60_000;
+const CONTROL_CHAR_REGEX = /[\r\n\x00-\x1F\x7F]/;
+
+export interface HttpClientOptions {
+  apiKey: string;
+  baseUrl?: string;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+  maxRetries?: number;
+}
+
+export interface RequestOptions {
+  query?: Record<string, string | number | boolean | undefined | null>;
+  body?: unknown;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+type Method = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const canRetryMethod = (method: Method) => method === "GET";
+
+export class HttpClient {
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
+  private readonly fetchImpl: typeof fetch;
+  private readonly timeoutMs: number;
+  private readonly maxRetries: number;
+
+  constructor(opts: HttpClientOptions) {
+    if (!opts.apiKey) {
+      throw new SaveitConfigError(
+        "SaveIt API key is required. Set the `apiKey` option or the SAVEIT_API_KEY env var.",
+      );
+    }
+    if (CONTROL_CHAR_REGEX.test(opts.apiKey)) {
+      throw new SaveitConfigError(
+        "SaveIt API key contains illegal control characters (newlines, tabs, etc.).",
+      );
+    }
+    this.apiKey = opts.apiKey;
+
+    const rawBaseUrl = opts.baseUrl ?? DEFAULT_BASE_URL;
+    let parsedBase: URL;
+    try {
+      parsedBase = new URL(rawBaseUrl);
+    } catch {
+      throw new SaveitConfigError(`Invalid base URL: ${rawBaseUrl}`);
+    }
+    if (parsedBase.protocol !== "https:" && parsedBase.protocol !== "http:") {
+      throw new SaveitConfigError(
+        `Base URL must use http or https. Got: ${parsedBase.protocol}`,
+      );
+    }
+    if (parsedBase.username || parsedBase.password) {
+      throw new SaveitConfigError(
+        "Base URL must not contain inline credentials.",
+      );
+    }
+    this.baseUrl = rawBaseUrl.replace(/\/+$/, "");
+
+    this.fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+    this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.maxRetries = opts.maxRetries ?? 3;
+
+    if (typeof this.fetchImpl !== "function") {
+      throw new SaveitConfigError(
+        "No fetch implementation available. Use Node 18+, Bun, or pass `fetch` explicitly.",
+      );
+    }
+  }
+
+  get<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>("GET", path, opts);
+  }
+
+  post<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>("POST", path, opts);
+  }
+
+  patch<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>("PATCH", path, opts);
+  }
+
+  put<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>("PUT", path, opts);
+  }
+
+  delete<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>("DELETE", path, opts);
+  }
+
+  private buildUrl(path: string, query?: RequestOptions["query"]): string {
+    const url = new URL(
+      `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`,
+    );
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value === undefined || value === null || value === "") continue;
+        url.searchParams.set(key, String(value));
+      }
+    }
+    return url.toString();
+  }
+
+  private async request<T>(
+    method: Method,
+    path: string,
+    opts: RequestOptions,
+  ): Promise<T> {
+    const url = this.buildUrl(path, opts.query);
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      Authorization: `Bearer ${this.apiKey}`,
+      "User-Agent": "saveit-sdk/0.1.0",
+    };
+
+    const init: RequestInit = { method, headers };
+
+    if (opts.body !== undefined && method !== "GET") {
+      headers["Content-Type"] = "application/json";
+      init.body = JSON.stringify(opts.body);
+    }
+
+    const timeoutMs = opts.timeoutMs ?? this.timeoutMs;
+    const canRetry = canRetryMethod(method);
+
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      const controller = new AbortController();
+      const externalAbort = () => controller.abort(opts.signal?.reason);
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const cleanup = () => {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        if (opts.signal)
+          opts.signal.removeEventListener("abort", externalAbort);
+      };
+
+      if (opts.signal) {
+        if (opts.signal.aborted) controller.abort(opts.signal.reason);
+        else
+          opts.signal.addEventListener("abort", externalAbort, { once: true });
+      }
+      timeoutId = setTimeout(
+        () =>
+          controller.abort(new Error(`Request timed out after ${timeoutMs}ms`)),
+        timeoutMs,
+      );
+
+      let response: Response;
+      try {
+        response = await this.fetchImpl(url, {
+          ...init,
+          signal: controller.signal,
+        });
+      } catch (err) {
+        cleanup();
+        if (
+          canRetry &&
+          attempt < this.maxRetries &&
+          err instanceof Error &&
+          !opts.signal?.aborted
+        ) {
+          await abortableSleep(
+            DEFAULT_RETRY_DELAYS_MS[attempt] ?? 4000,
+            opts.signal,
+          );
+          continue;
+        }
+        throw new SaveitApiError(0, `Network error: ${(err as Error).message}`);
+      }
+
+      const shouldRetry =
+        canRetry &&
+        (response.status === 429 || response.status >= 500) &&
+        attempt < this.maxRetries;
+
+      if (shouldRetry) {
+        const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
+        const delay = Math.min(
+          retryAfter ?? DEFAULT_RETRY_DELAYS_MS[attempt] ?? 4000,
+          MAX_RETRY_DELAY_MS,
+        );
+        cleanup();
+        await abortableSleep(delay, opts.signal);
+        continue;
+      }
+
+      try {
+        const text = await response.text();
+        let data: unknown = null;
+        if (text.length > 0) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = text;
+          }
+        }
+
+        if (!response.ok) {
+          const message = extractErrorMessage(data) ?? response.statusText;
+          throw new SaveitApiError(response.status, message, {
+            code: extractErrorCode(data),
+            response: data,
+          });
+        }
+
+        return data as T;
+      } finally {
+        cleanup();
+      }
+    }
+
+    /* istanbul ignore next - loop always returns or throws on the last iteration */
+    throw new SaveitApiError(0, "Max retries exceeded");
+  }
+}
+
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+function parseRetryAfter(value: string | null): number | null {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const dateMs = Date.parse(value);
+  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+  return null;
+}
+
+function extractErrorMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.error === "string") return obj.error;
+  if (obj.error && typeof obj.error === "object") {
+    const inner = obj.error as Record<string, unknown>;
+    if (typeof inner.message === "string") return inner.message;
+  }
+  if (typeof obj.message === "string") return obj.message;
+  return undefined;
+}
+
+function extractErrorCode(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  const obj = data as Record<string, unknown>;
+  if (obj.error && typeof obj.error === "object") {
+    const code = (obj.error as Record<string, unknown>).code;
+    if (typeof code === "string") return code;
+  }
+  if (typeof obj.code === "string") return obj.code;
+  return undefined;
+}
