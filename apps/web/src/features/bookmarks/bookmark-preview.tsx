@@ -5,11 +5,11 @@ import { YouTubeEmbed } from "@next/third-parties/google";
 import { Card } from "@workspace/ui/components/card";
 import { Image } from "lucide-react";
 import { useState } from "react";
-import { Tweet } from "react-tweet";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
 import useMeasure from "react-use-measure";
 import { BookmarkSectionTitle } from "./bookmark-content-view";
+import { SafeTweet } from "./safe-tweet";
 import { ScreenshotUploader } from "./screenshot-uploader";
 
 interface BookmarkPreviewProps {
@@ -33,9 +33,12 @@ export const BookmarkPreview = ({
     return (
       <Card className="p-4">
         <BookmarkSectionTitle icon={Image} text="Post" />
-        <div className="tweet-container">
-          <Tweet id={(bookmark.metadata as { tweetId: string }).tweetId} />
-        </div>
+        <SafeTweet
+          tweetId={metadata?.tweetId}
+          url={bookmark.url}
+          title={bookmark.title}
+          summary={bookmark.summary}
+        />
       </Card>
     );
   }

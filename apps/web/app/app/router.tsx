@@ -16,6 +16,8 @@ function AppContent() {
     <>
       {isAgentsPage ? <AgentsPage /> : <BookmarksPage />}
       <Routes>
+        <Route path="/app" element={null} />
+        <Route path="/app/agents" element={null} />
         <Route path="/app/b/:id" element={<BookmarkPage />} />
       </Routes>
     </>

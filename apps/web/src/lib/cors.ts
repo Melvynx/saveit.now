@@ -8,6 +8,9 @@ export const allowedOrigins = [
   "https://saveit.now",
   "https://saveit.now/*",
   "https://*.saveit.now",
+  "https://saveit-now-web-codelynx.vercel.app",
+  "https://saveit-now-web-git-main-codelynx.vercel.app",
+  "https://saveit-now-*",
 ];
 
 export const updateHeaders = (headers: Headers, request: Request) => {

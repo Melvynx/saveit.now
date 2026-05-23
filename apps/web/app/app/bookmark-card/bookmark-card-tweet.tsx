@@ -1,7 +1,7 @@
 "use client";
 
+import { SafeTweet } from "@/features/bookmarks/safe-tweet";
 import { Button } from "@workspace/ui/components/button";
-import { Tweet } from "react-tweet";
 import {
   BookmarkCardActions,
   BookmarkCardContainer,
@@ -14,7 +14,7 @@ interface BookmarkCardTweetProps {
 }
 
 export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
-  const metadata = bookmark.metadata as { tweetId: string };
+  const metadata = bookmark.metadata as { tweetId?: unknown } | null;
 
   return (
     <BookmarkCardContainer
@@ -22,7 +22,12 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       className="py-0 tweet-container relative overflow-hidden"
     >
       <div className="overflow-hidden pointer-events-none">
-        <Tweet id={metadata.tweetId} />
+        <SafeTweet
+          tweetId={metadata?.tweetId}
+          url={bookmark.url}
+          title={bookmark.title}
+          summary={bookmark.summary}
+        />
       </div>
       <BookmarkCardActions
         url={bookmark.url}
