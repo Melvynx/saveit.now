@@ -24,6 +24,15 @@ export const GET = userRoute
       throw new SafeRouteError("Invalid");
     }
 
+    const realtimeEnabled =
+      process.env.NODE_ENV === "production" &&
+      !process.env.CI &&
+      !!process.env.INNGEST_EVENT_KEY;
+
+    if (!realtimeEnabled) {
+      return { token: null };
+    }
+
     const token = await getSubscriptionToken(inngest, {
       channel: `bookmark:${bookmark.id}`,
       topics: ["status", "finish"],
