@@ -35,6 +35,7 @@ export const BookmarkPreview = ({
         <BookmarkSectionTitle icon={Image} text="Post" />
         <SafeTweet
           tweetId={metadata?.tweetId}
+          tweet={metadata}
           url={bookmark.url}
           title={bookmark.title}
           summary={bookmark.summary}

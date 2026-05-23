@@ -24,9 +24,12 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       <div className="overflow-hidden pointer-events-none">
         <SafeTweet
           tweetId={metadata?.tweetId}
+          tweet={metadata}
           url={bookmark.url}
           title={bookmark.title}
           summary={bookmark.summary}
+          compact
+          showOpenButton={false}
         />
       </div>
       <BookmarkCardActions
