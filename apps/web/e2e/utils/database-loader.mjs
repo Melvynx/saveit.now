@@ -4,18 +4,10 @@
  */
 
 import { createRequire } from "module";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const require = createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load the Prisma client from the generated location
-const prismaPath = path.resolve(
-  __dirname,
-  "../../../../packages/database/generated/prisma",
-);
-const { PrismaClient } = require(prismaPath);
+const { PrismaClient } = require("@prisma/client");
 
 // Create a global instance of Prisma client
 const globalForPrisma = global;
