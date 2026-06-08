@@ -2,6 +2,6 @@ import { config } from "@workspace/eslint-config/react-internal";
 
 /** @type {import("eslint").Linter.Config} */
 export default [
-  { ignores: [".output/**", "dist/**"] },
+  { ignores: [".output/**", ".vercel/output/**", "dist/**"] },
   ...config,
 ];
