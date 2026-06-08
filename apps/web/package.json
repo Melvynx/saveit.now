@@ -16,7 +16,7 @@
     "ts": "tsc --noEmit",
     "better-auth:generate": "pnpm dlx @better-auth/cli@latest generate --output ../../packages/database/prisma/schema.prisma",
     "test": "vitest",
-    "test:ci": "vitest run",
+    "test:ci": "pnpm --filter @workspace/database db:generate && vitest run",
     "test:e2e": "HEADLESS=false playwright test --ui",
     "test:e2e:ci": "HEADLESS=true playwright test --reporter=list",
     "test:search-performance": "tsx scripts/test-search-performance.ts",
