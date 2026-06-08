@@ -1,12 +1,6 @@
-import { createRequire } from "node:module";
-import type { PrismaClient as PrismaClientType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
-const require = createRequire(import.meta.url);
-const { PrismaClient } = require("@prisma/client") as {
-  PrismaClient: typeof PrismaClientType;
-};
-
-const globalForPrisma = global as unknown as { prisma: PrismaClientType };
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma = globalForPrisma.prisma || new PrismaClient();
 
