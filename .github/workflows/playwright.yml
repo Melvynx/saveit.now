@@ -83,6 +83,7 @@ jobs:
       HEADLESS: "true"
       CI: "true"
       PORT: 3000
+      PLAYWRIGHT_CHROMIUM_CHANNEL: "chrome"
 
     services:
       postgres:
@@ -142,8 +143,8 @@ jobs:
         run: pnpm build
         working-directory: apps/web
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium
+      - name: Verify Chrome browser
+        run: google-chrome --version
         working-directory: apps/web
 
       - name: Start Inngest dev server
