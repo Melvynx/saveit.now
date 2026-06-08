@@ -19,9 +19,10 @@ import { TchaoProvider } from "tchao/react";
 import { useEffect } from "react";
 import { z } from "zod";
 
-const convexQueryClient = new ConvexQueryClient(
-  import.meta.env.VITE_CONVEX_URL,
-);
+const convexUrl =
+  import.meta.env.VITE_CONVEX_URL ?? "https://tough-chameleon-916.convex.cloud";
+
+const convexQueryClient = new ConvexQueryClient(convexUrl);
 
 const queryClient = new QueryClient({
   defaultOptions: {
