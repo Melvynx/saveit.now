@@ -1,17 +1,15 @@
-import { screen, waitFor } from "@testing-library/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useQueryState } from "nuqs";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { toast } from "sonner";
 
-import { parseMention, removeMention } from "../app/app/utils/type-filter-utils";
-import { setup, setupWithoutProviders } from "../test/setup";
+import { parseMention, removeMention } from "../src/features/app/utils/type-filter-utils";
 
 // Mock the modules
 vi.mock("react-hotkeys-hook");
 vi.mock("nuqs");
 vi.mock("sonner");
-vi.mock("@/app/use-create-bookmark", () => ({
+vi.mock("@/features/app/use-create-bookmark", () => ({
   useCreateBookmarkAction: vi.fn(() => ({
     execute: vi.fn(),
   })),

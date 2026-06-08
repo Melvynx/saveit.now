@@ -1,4 +1,5 @@
-import { Bookmark, BookmarkType, prisma } from "@workspace/database";
+import { Bookmark, BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 import {

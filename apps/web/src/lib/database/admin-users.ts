@@ -1,5 +1,6 @@
-import { Prisma, prisma } from "@workspace/database";
-import type { Filter, Order, SortBy } from "../../../app/admin/search-params";
+import type { Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
+import type { Filter, Order, SortBy } from "@/features/admin/search-params";
 
 const UserInclude = {
   subscriptions: {
@@ -41,64 +42,55 @@ export const getUsersWithStats = async ({
   total: number;
   totalPages: number;
 }> => {
-  // Build where clause
-  const whereClause: Prisma.UserWhereInput = {};
+  const where: Prisma.UserWhereInput = {};
 
-  // Search filter
   if (search) {
-    whereClause.email = {
+    where.email = {
       contains: search,
       mode: "insensitive",
     };
   }
 
-  // Premium/Regular filter
   if (filter === "premium") {
-    whereClause.subscriptions = {
+    where.subscriptions = {
       some: {
         status: "active",
       },
     };
   }
 
-  // Build order clause - only support what Prisma can handle natively
-  let orderByClause: Prisma.UserOrderByWithRelationInput = {};
-
-  if (sortBy === "createdAt") {
-    orderByClause = { createdAt: order };
-  } else if (sortBy === "bookmarks") {
-    orderByClause = {
-      bookmarks: {
-        _count: order,
-      },
-    };
-  } else if (sortBy === "clicks") {
-    orderByClause = {
-      bookmarkOpens: {
-        _count: order,
+  if (filter === "regular") {
+    where.subscriptions = {
+      none: {
+        status: "active",
       },
     };
   }
 
-  // Get users with basic info
-  const users = await prisma.user.findMany({
-    where: whereClause,
-    orderBy: orderByClause,
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-    include: UserInclude,
-  });
+  let orderBy: Prisma.UserOrderByWithRelationInput = {};
 
-  // Get total count
-  const total = await prisma.user.count({
-    where: whereClause,
-  });
+  if (sortBy === "createdAt") {
+    orderBy = { createdAt: order };
+  } else if (sortBy === "bookmarks") {
+    orderBy = { bookmarks: { _count: order } };
+  } else if (sortBy === "clicks") {
+    orderBy = { bookmarkOpens: { _count: order } };
+  }
 
-  const totalPages = Math.ceil(total / pageSize);
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: UserInclude,
+    }),
+    prisma.user.count({ where }),
+  ]);
 
   return {
     users,
     total,
-    totalPages,
+    totalPages: Math.ceil(total / pageSize),
   };
 };

@@ -1,4 +1,4 @@
-# Cursor CLI — Résumé officiel et pratique
+# Cursor CLI - Résumé officiel et pratique
 
 ## Points clés
 - Le binaire `cursor` est un wrapper de la CLI VS Code (`code`), avec des flags et comportements quasi identiques.
@@ -53,7 +53,7 @@ Note: l’option `--file-write`/`--file-uri` et d’autres flags avancés existe
 - PATH & shell: via la palette de commandes de Cursor, installer « cursor » dans le PATH (similaire à VS Code). Vérifier `which cursor` ou `cursor --version`.
 - Extensions: la CLI gère l’installation, la liste et la suppression d’extensions. Le répertoire peut être isolé avec `--extensions-dir`.
 - Profils/données: `--user-data-dir` permet de séparer des profils (utile en CI ou tests).
-- IA & modèles: la sélection de modèles (OpenAI, Claude, etc.) et les clés BYO se configurent dans l’application. La CLI ne fournit pas de sous‑commandes de chat/génération.
+- IA & modèles: la sélection de modèles (OpenAI, Claude, etc.) et les clés BYO se configurent dans l’application. La CLI ne fournit pas de sous-commandes de chat/génération.
 - Intégration outillage: `--wait` facilite l’usage dans des scripts (lancer un diff/merge et reprendre après fermeture). `--status` retourne l’état de l’instance.
 
 ## Limites & licence

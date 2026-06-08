@@ -1,7 +1,8 @@
 "use client";
 
-import { updatePublicLinkAction } from "app/(auth)/account/update-public-link.action";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { upfetch } from "@/lib/up-fetch";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -15,10 +16,9 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { cn } from "@workspace/ui/lib/utils";
 import { Check, Copy, ExternalLink } from "lucide-react";
-import Link from "next/link";
-import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 type PublicLinkSettingsProps = {
   initialEnabled: boolean;
@@ -34,13 +34,19 @@ export function PublicLinkSettings({
   const [error, setError] = useState<string | null>(null);
   const { isCopied, copyToClipboard } = useCopyToClipboard();
 
-  const { execute, isPending } = useAction(updatePublicLinkAction, {
+  const mutation = useMutation({
+    mutationFn: async () =>
+      upfetch("/api/user/public-link", {
+        method: "PATCH",
+        body: { enabled, slug: enabled ? slug : null },
+        schema: z.object({ success: z.boolean() }),
+      }),
     onSuccess: () => {
       toast.success("Public link settings updated");
       setError(null);
     },
     onError: (error) => {
-      setError(error.error.serverError?.message ?? "Failed to update settings");
+      setError(error instanceof Error ? error.message : "Failed to update settings");
     },
   });
 
@@ -52,22 +58,18 @@ export function PublicLinkSettings({
       setError("Slug is required when enabling public link");
       return;
     }
-    execute({ enabled, slug: enabled ? slug : null });
-  };
-
-  const handleCopy = () => {
-    copyToClipboard(publicUrl);
+    mutation.mutate();
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Public Link</CardTitle>
+        <CardTitle>Public link</CardTitle>
         <CardDescription>
-          Share a public link to let anyone view your bookmarks.
+          Let anyone view bookmarks you choose to expose publicly.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <Checkbox
             id="public-link-enabled"
@@ -78,19 +80,19 @@ export function PublicLinkSettings({
         </div>
 
         <div
-          className={cn("space-y-3 transition-opacity", {
+          className={cn("flex flex-col gap-3 transition-opacity", {
             "opacity-50 pointer-events-none": !enabled,
           })}
         >
-          <div className="space-y-2">
+          <div className="flex max-w-sm flex-col gap-2">
             <Label htmlFor="public-slug">Slug</Label>
             <Input
               id="public-slug"
               type="text"
               placeholder="my-bookmarks"
               value={slug}
-              onChange={(e) =>
-                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+              onChange={(event) =>
+                setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
               }
               disabled={!enabled}
             />
@@ -113,7 +115,8 @@ export function PublicLinkSettings({
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={handleCopy}
+                aria-label="Copy public link"
+                onClick={() => copyToClipboard(publicUrl)}
               >
                 {isCopied ? (
                   <Check className="size-4" />
@@ -122,9 +125,14 @@ export function PublicLinkSettings({
                 )}
               </Button>
               <Button type="button" variant="outline" size="icon" asChild>
-                <Link href={`/u/${slug}`} target="_blank">
+                <a
+                  href={`/u/${slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open public link"
+                >
                   <ExternalLink className="size-4" />
-                </Link>
+                </a>
               </Button>
             </div>
           )}
@@ -132,8 +140,13 @@ export function PublicLinkSettings({
 
         {error && <p className="text-destructive text-sm">{error}</p>}
 
-        <Button onClick={handleSave} disabled={isPending}>
-          {isPending ? "Saving..." : "Save"}
+        <Button
+          onClick={handleSave}
+          disabled={mutation.isPending}
+          size="sm"
+          className="w-fit"
+        >
+          {mutation.isPending ? "Saving..." : "Save public link"}
         </Button>
       </CardContent>
     </Card>

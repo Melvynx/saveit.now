@@ -1,6 +1,5 @@
-"use client"; // @NOTE: Add in case you are using Next.js
+"use client";
 
-import * as Slot from "@radix-ui/react-slot";
 import { cn } from "@workspace/ui/lib/utils";
 import { motion, type MotionProps } from "motion/react";
 
@@ -205,9 +204,5 @@ export function Text({ variant = "shine", className, ...props }: TextProps) {
 
   const Component = variantComponent || variants[FALLBACK_INDEX].component;
 
-  return (
-    <Slot.Root className={cn("font-medium text-sm")}>
-      <Component {...props} className={className} />
-    </Slot.Root>
-  );
+  return <Component {...props} className={cn("font-medium text-sm", className)} />;
 }

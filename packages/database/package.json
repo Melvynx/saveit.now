@@ -16,6 +16,7 @@
     "fix:bookmark-ids": "tsx scripts/fix-bookmark-ids.ts"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
   }
 }

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Play,
   Code2,
@@ -61,13 +60,12 @@ export function DocCard({
   external,
 }: DocCardProps) {
   const Icon = ICONS[icon] ?? FileText;
-  const Component = external ? "a" : Link;
   const externalProps = external
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {};
 
   return (
-    <Component
+    <a
       href={href}
       className={cn(
         "group border-border flex flex-col gap-3 rounded-lg border p-4 no-underline",
@@ -85,7 +83,7 @@ export function DocCard({
           {description}
         </span>
       </div>
-    </Component>
+    </a>
   );
 }
 

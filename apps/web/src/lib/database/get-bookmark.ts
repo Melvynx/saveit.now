@@ -1,4 +1,5 @@
-import { Prisma, prisma } from "@workspace/database";
+import type { Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 
 const SELECT_QUERY = {
   id: true,

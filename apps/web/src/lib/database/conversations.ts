@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import type { UIMessage } from "ai";
 
 export type ConversationListItem = {

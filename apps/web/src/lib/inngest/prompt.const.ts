@@ -150,7 +150,7 @@ You are generating a short, keyword-rich summary that captures the full purpose 
 </context>
 
 <goal>
-Write a dense, 3–4 sentence summary in **English only**, even if the input page is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+Write a dense, 3-4 sentence summary in **English only**, even if the input page is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
 Precise WHAT is the purpose of the website. Example : A landing page for selling a courses, for capturing leads... A portfolio, a documentation, a blog...
 </goal>
 
@@ -159,7 +159,7 @@ You will receive the transcript of the youtube video.
 </input>
 
 <output>
-Return **only plain text in English** (no formatting). Limit the output to 3–4 sentences, packed with relevant searchable terms.
+Return **only plain text in English** (no formatting). Limit the output to 3-4 sentences, packed with relevant searchable terms.
 </output>`;
 
 export const VECTOR_SUMMARY_PROMPT = `<context>
@@ -167,7 +167,7 @@ You are generating a short, keyword-rich summary that captures the full purpose 
 </context>
 
 <goal>
-Write a dense, 3–4 sentence summary in **English only**, even if the input page is in another language.
+Write a dense, 3-4 sentence summary in **English only**, even if the input page is in another language.
 The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the page is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
 The summary must include as many relevant keywords, tools and use cases that is necessary to understand the full purpose of the page.
 
@@ -214,7 +214,7 @@ You will receive the Markdown content of a web page.
 </input>
 
 <output>
-Return **only plain text in English** (no formatting). Limit the output to 3–4 sentences, packed with relevant searchable terms.
+Return **only plain text in English** (no formatting). Limit the output to 3-4 sentences, packed with relevant searchable terms.
 </output>
 
 Here are some examples of a PERFECT summary that you SHOULD follow :
@@ -243,7 +243,7 @@ Tag Rules:
    - "context" (for context/reference pages)
    - "dashboard" (for dashboards, analytics, admin panels)
    - "other" (only if none of the above fit)
-4. Second and third tags: Simple theme/technology keywords that describe the main topic (e.g., "software", "courses", "ai", "react", "nextjs", "python", "design", "marketing", "productivity", "database", "api", "framework")
+4. Second and third tags: Simple theme/technology keywords that describe the main topic (e.g., "software", "courses", "ai", "react", "typescript", "python", "design", "marketing", "productivity", "database", "api", "framework")
 </context>
 
 <goal>
@@ -255,7 +255,7 @@ Examples:
 - GitHub React repository: ["coderepo", "react", "javascript"]
 - Stripe pricing page: ["pricing", "payments", "saas"]
 - Personal blog post about AI: ["post", "ai", "technology"]
-- Next.js documentation: ["documentation", "nextjs", "react"]
+- React documentation: ["documentation", "react", "javascript"]
 </goal>
 
 <input>
@@ -417,7 +417,7 @@ You are generating a short, keyword-rich summary that captures the full purpose 
 </context>
 
 <goal>
-Write a dense, 3–4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the product is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
+Write a dense, 3-4 sentence summary in **English only**, even if the input product is in another language. The summary must include as many relevant **keywords, brand names, tools, concepts, and use cases** as possible. Focus on what the product is about, who it is for, what value it offers, and how it can be used. Be specific and contextual.
 
 **AVOID technical specifications, measurements, dimensions, weights, prices, and detailed numerical values.** Focus on functionality, purpose, materials, design philosophy, and target audience instead.
 
@@ -442,7 +442,7 @@ You will receive the Markdown content of a web page.
 </input>
 
 <output>
-Return **only plain text in English** (no formatting). Limit the output to 3–4 sentences, packed with relevant searchable terms.
+Return **only plain text in English** (no formatting). Limit the output to 3-4 sentences, packed with relevant searchable terms.
 </output>
 
 Here are some examples of a PERFECT summary that you SHOULD follow :

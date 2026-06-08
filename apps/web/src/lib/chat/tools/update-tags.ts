@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { tool } from "ai";
 import { z } from "zod";
 

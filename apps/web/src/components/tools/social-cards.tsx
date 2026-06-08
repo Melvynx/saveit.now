@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import Image from "next/image";
 
 interface SocialCardsProps {
   url: string;
@@ -71,13 +70,10 @@ export function SocialCards({ url, openGraph, twitter, page }: SocialCardsProps)
             <div className="border-t border-border">
               {ogImageUrl && (
                 <div className="relative">
-                  <Image
+                  <img
                     src={ogImageUrl}
                     alt="Facebook preview"
-                    width={400}
-                    height={210}
                     className="w-full h-52 object-cover"
-                    unoptimized
                   />
                 </div>
               )}
@@ -156,13 +152,10 @@ export function SocialCards({ url, openGraph, twitter, page }: SocialCardsProps)
                 <div className="mt-3 border border-border rounded-2xl overflow-hidden">
                   {twitterImageUrl && (
                     <div className="relative">
-                      <Image
+                      <img
                         src={twitterImageUrl}
                         alt="Twitter preview"
-                        width={400}
-                        height={200}
                         className="w-full h-48 object-cover"
-                        unoptimized
                       />
                     </div>
                   )}

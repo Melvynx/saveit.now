@@ -1,5 +1,4 @@
 import { cn } from "@workspace/ui/lib/utils";
-import Link from "next/link";
 
 interface ToolCardProps {
   title: string;
@@ -21,7 +20,7 @@ export function ToolCard({
   className,
 }: ToolCardProps) {
   return (
-    <Link
+    <a
       href={href}
       className={cn(
         "group relative flex flex-col rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 transition-colors hover:border-[#3a3a3a] hover:bg-[#1e1e1e]",
@@ -58,6 +57,6 @@ export function ToolCard({
       <span className="mt-4 text-[13px] font-medium text-[#888] transition-colors group-hover:text-[#fafafa]">
         Use tool →
       </span>
-    </Link>
+    </a>
   );
 }

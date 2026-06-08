@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import dayjs from "dayjs";
 import { getAuthLimits } from "../auth-limits";
 import { getUserMetadata } from "../database/user-metadata.utils";

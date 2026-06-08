@@ -1,5 +1,5 @@
 import { BetterAuthOptions } from "better-auth";
-import { nextCookies } from "better-auth/next-js";
+import { reactStartCookies } from "better-auth/react-start";
 import { admin, apiKey, emailOTP, magicLink } from "better-auth/plugins";
 import MarkdownEmail from "emails/markdown.emails";
 import { sendEmail } from "./mail/send-email";
@@ -9,6 +9,23 @@ import { logger } from "./logger";
 
 export const AUTH_PARAMS = {
   baseURL: getServerUrl(),
+  trustedOrigins: (request: Request) => {
+    const origin = request.headers.get("origin");
+    if (!origin) {
+      return [];
+    }
+
+    try {
+      const { hostname } = new URL(origin);
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return [origin];
+      }
+    } catch {
+      return [];
+    }
+
+    return [];
+  },
   user: {
     changeEmail: {
       enabled: true,
@@ -132,11 +149,11 @@ If you didn't request this, please ignore this email.`;
 This code expires in 5 minutes. If you didn't request this, please ignore this email.`;
         await sendEmail({
           to: email,
-          subject: `SaveIt.now - ${otp} is your verification code`,
+          subject: "SaveIt.now verification code",
           text: markdown,
           html: MarkdownEmail({
             markdown,
-            preview: `Your verification code is ${otp}`,
+            preview: `Your SaveIt.now verification code is ${otp}`,
             disabledSignature: true,
           }),
         });
@@ -163,7 +180,7 @@ This link expires in 10 minutes. If you didn't request this, please ignore this 
         });
       },
     }),
-    nextCookies(),
+    reactStartCookies(),
     admin({}),
     apiKey({
       rateLimit: {

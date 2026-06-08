@@ -1,5 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
-import { useTheme } from "next-themes";
+import { useTheme } from "@/features/dark-mode/theme-provider";
 import { ImgHTMLAttributes } from "react";
 
 type SvglImgProps = {
@@ -12,8 +11,12 @@ export const SvglImg = ({
   darkIconName,
   ...imgProps
 }: SvglImgProps) => {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { theme } = useTheme();
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
   const src = `https://svgl.app/library/${isDark ? darkIconName : lightIconName}.svg`;
 
   return (

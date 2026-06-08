@@ -1,32 +1,26 @@
 {
-  "extends": "@workspace/typescript-config/nextjs.json",
+  "extends": "@workspace/typescript-config/react-library.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    }
   },
   "include": [
-    "next-env.d.ts",
-    "next.config.ts",
     "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "e2e/**/*.mjs"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules",
     "test/**/*",
     "**/*.test.*",
     "**/*.spec.*",
+    "e2e/**/*",
     "vitest.config.ts",
     "playwright.config.ts",
-    ".next/*/**",
     "scripts/**/*"
   ]
 }

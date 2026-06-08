@@ -241,14 +241,12 @@ export const LandingHero = () => {
                   {showResults && (
                     <div className="space-y-3">
                       <div className="grid gap-2.5 sm:grid-cols-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         {DEMO_BOOKMARKS.map((b) => (
                           <div
                             key={b.title}
                             className="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                           >
                             <div className="aspect-[16/10] w-full overflow-hidden bg-[#161b22]">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={b.preview}
                                 alt={b.title}
@@ -258,7 +256,6 @@ export const LandingHero = () => {
                             </div>
                             <div className="px-3 py-2.5">
                               <div className="mb-1 flex items-center gap-1.5">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={b.favicon}
                                   alt=""

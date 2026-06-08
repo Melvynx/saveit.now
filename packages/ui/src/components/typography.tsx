@@ -7,7 +7,7 @@ import type { ComponentPropsWithRef, ElementType, ForwardedRef } from "react";
 import React, { forwardRef } from "react";
 
 // Source : https://www.totaltypescript.com/pass-component-as-prop-react
-type FixedForwardRef = <T, P = {}>(
+type FixedForwardRef = <T, P = object>(
   render: (props: P, ref: React.Ref<T>) => React.ReactNode,
 ) => (props: P & React.RefAttributes<T>) => React.ReactNode;
 

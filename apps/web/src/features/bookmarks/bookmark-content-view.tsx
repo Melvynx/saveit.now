@@ -1,15 +1,14 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { LucideIcon, ShoppingBag, Sparkle, TagIcon } from "lucide-react";
 
 import { BookmarkViewType } from "@/lib/database/get-bookmark";
-import { BookmarkTagSelector } from "app/app/bookmark-card/bookmark-tag-selector";
-import { BookmarkFavicon } from "app/app/bookmark-favicon";
-import { BookmarkNote } from "app/app/bookmark-page/bookmark-note";
-import { ExternalLinkTracker } from "app/app/external-link-tracker";
+import { BookmarkTagSelector } from "@/features/app/bookmark-card/bookmark-tag-selector";
+import { BookmarkFavicon } from "@/features/app/bookmark-favicon";
+import { BookmarkNote } from "@/features/app/bookmark-page/bookmark-note";
+import { ExternalLinkTracker } from "@/features/app/external-link-tracker";
 import { BookmarkPreview } from "./bookmark-preview";
 import { TranscriptViewer } from "./transcript-viewer";
 

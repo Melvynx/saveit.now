@@ -1,5 +1,6 @@
 import { uploadFileFromURLToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
-import { Bookmark, BookmarkType, prisma } from "@workspace/database";
+import { Bookmark, BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { generateObject } from "ai";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";

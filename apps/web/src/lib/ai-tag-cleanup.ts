@@ -32,7 +32,7 @@ Look for:
 2. Abbreviations vs full names (js vs javascript, css vs cascading-style-sheets)
 3. Formatting inconsistencies (kebab-case vs camelCase vs snake_case)
 4. Plural vs singular forms (tag vs tags, component vs components)
-5. Similar technologies that could be grouped (nextjs vs next.js vs "next js")
+5. Similar technologies that could be grouped (reactjs vs react.js vs "react js")
 
 Rules:
 - Only suggest consolidations when tags are clearly related/similar

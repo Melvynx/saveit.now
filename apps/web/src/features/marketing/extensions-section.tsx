@@ -1,6 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
 import { APP_LINKS } from "@/lib/app-links";
-import Link from "next/link";
 
 interface ExtensionFeature {
   id: string;
@@ -58,7 +56,7 @@ export const ExtensionsSection = () => {
     <section className="mx-auto max-w-5xl px-4 py-20 lg:py-28 flex flex-col gap-8">
       <div className="text-center justify-center flex flex-col gap-2 items-center">
         <p className="text-sm text-[#666]">
-          006 — Extensions
+          006  -  Extensions
         </p>
         <h2 className="font-elegant text-4xl md:text-5xl tracking-tight text-[#fafafa]">One simple <em>click away</em></h2>
         <p className="text-[#888]">Do nothing. Just save it.</p>
@@ -69,7 +67,7 @@ export const ExtensionsSection = () => {
           <ExtensionFeatureCard key={feature.id} feature={feature} />
         ))}
       </div>
-      <Link href={APP_LINKS.extensions} className="mx-auto inline-flex h-10 items-center justify-center rounded-full bg-[#fafafa] px-6 text-sm font-medium text-[#141414] hover:bg-[#e0e0e0] transition-colors">Download Extension</Link>
+      <a href={APP_LINKS.extensions} className="mx-auto inline-flex h-10 items-center justify-center rounded-full bg-[#fafafa] px-6 text-sm font-medium text-[#141414] hover:bg-[#e0e0e0] transition-colors">Download Extension</a>
     </section>
   );
 };

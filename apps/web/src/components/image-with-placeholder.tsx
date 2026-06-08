@@ -1,9 +1,6 @@
-"use client";
-
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { cn } from "@workspace/ui/lib/utils";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 function useIsClient() {
@@ -76,11 +73,9 @@ export const ImageWithPlaceholder = ({
     );
   }
 
-  const ImageComp = src.includes("saveit.mlvcdn.com") ? Image : "img";
-
   if (!isLoading) {
     return (
-      <ImageComp
+      <img
         {...props}
         width={width ? Number(width) : 380}
         height={(width ? Number(width) : 380) * 0.5625}
@@ -101,7 +96,7 @@ export const ImageWithPlaceholder = ({
         <Skeleton className={cn("absolute inset-0 h-full w-full", className)} />
       )}
 
-      <ImageComp
+      <img
         {...props}
         width={width ? Number(width) : 380}
         height={(width ? Number(width) : 380) * 0.5625}

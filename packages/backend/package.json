@@ -1,0 +1,29 @@
+{
+  "name": "@workspace/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "dev:once": "convex dev --once",
+    "codegen": "convex codegen",
+    "deploy": "convex deploy",
+    "dashboard": "convex dashboard"
+  },
+  "dependencies": {
+    "convex": "^1.40.0"
+  },
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./dataModel": {
+      "types": "./convex/_generated/dataModel.d.ts"
+    },
+    "./server": {
+      "types": "./convex/_generated/server.d.ts",
+      "default": "./convex/_generated/server.js"
+    }
+  }
+}

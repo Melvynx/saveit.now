@@ -1,5 +1,4 @@
 import { uploadFileToS3 } from "@/lib/aws-s3/aws-s3-upload-files";
-import { NextResponse } from "next/server";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_IMAGE_TYPES = [
@@ -18,7 +17,7 @@ type ParsedBookmarkBody = {
 
 type ParseResult =
   | { success: true; data: ParsedBookmarkBody }
-  | { success: false; error: NextResponse };
+  | { success: false; error: Response };
 
 function isValidUrl(value: string): boolean {
   try {
@@ -51,7 +50,7 @@ async function parseJsonBody(req: Request): Promise<ParseResult> {
   if (!url || typeof url !== "string") {
     return {
       success: false,
-      error: NextResponse.json(
+      error: Response.json(
         { error: "URL is required", success: false },
         { status: 400 },
       ),
@@ -61,7 +60,7 @@ async function parseJsonBody(req: Request): Promise<ParseResult> {
   if (!isValidUrl(url)) {
     return {
       success: false,
-      error: NextResponse.json(
+      error: Response.json(
         { error: "Invalid URL format", success: false },
         { status: 400 },
       ),
@@ -87,7 +86,7 @@ async function parseMultipartBody(
   if (!url) {
     return {
       success: false,
-      error: NextResponse.json(
+      error: Response.json(
         { error: "URL is required", success: false },
         { status: 400 },
       ),
@@ -108,7 +107,7 @@ async function parseMultipartBody(
     if (imageFile.size > MAX_FILE_SIZE) {
       return {
         success: false,
-        error: NextResponse.json(
+        error: Response.json(
           { error: "File size must be less than 2MB", success: false },
           { status: 400 },
         ),
@@ -118,7 +117,7 @@ async function parseMultipartBody(
     if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
       return {
         success: false,
-        error: NextResponse.json(
+        error: Response.json(
           {
             error: "Only image files (JPEG, PNG, WebP, GIF) are allowed",
             success: false,
@@ -138,7 +137,7 @@ async function parseMultipartBody(
     if (!s3Url) {
       return {
         success: false,
-        error: NextResponse.json(
+        error: Response.json(
           { error: "Failed to upload image", success: false },
           { status: 500 },
         ),
@@ -151,7 +150,7 @@ async function parseMultipartBody(
   } else if (!isValidUrl(url)) {
     return {
       success: false,
-      error: NextResponse.json(
+      error: Response.json(
         { error: "Invalid URL format", success: false },
         { status: 400 },
       ),

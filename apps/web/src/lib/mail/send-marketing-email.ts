@@ -1,5 +1,5 @@
 import { getServerUrl } from "@/lib/server-url";
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import MarkdownEmail from "emails/markdown.emails";
 import { sendEmail } from "./send-email";
 

@@ -21,7 +21,7 @@ We need to find a way to make screenshot with worker. For this we can use apps/w
 1. Path: `/pdf?url=<public-pdf-URL>`.
 2. Bindings: `BROWSER` (Workers Browser Rendering API).
 3. Steps  
-    a. Validate `url` query param – if missing or malformed, respond **400**.  
+    a. Validate `url` query param - if missing or malformed, respond **400**.  
     b. `const page = await env.BROWSER.newPage({ viewport: { width: 1280, height: 720 } })`.  
     c. `await page.goto(\`data:text/html,<embed src="${encodeURI(url)}" type="application/pdf" style="width:100%;height:100%">\`, { waitUntil: 'networkidle0' })`.  
 d. `const jpeg = await page.screenshot({ type: 'jpeg', quality: 80 })`.  

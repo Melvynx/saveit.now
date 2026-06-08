@@ -1,36 +1,35 @@
-import Link from "next/link";
 import { HeaderUser } from "../page/header-user";
 
-export const LandingHeader = async () => {
+export const LandingHeader = () => {
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-[#141414]/80 backdrop-blur-md">
       <div className="mx-auto flex h-12 max-w-5xl items-center justify-between border-b border-white/[0.08] px-6">
-        <Link
+        <a
           href="/"
           className="font-elegant text-lg tracking-tight text-[#fafafa]"
         >
           SaveIt.now
-        </Link>
+        </a>
 
         <nav className="hidden items-center gap-8 text-[13px] text-[#888] md:flex">
-          <Link
+          <a
             href="/tools"
             className="transition-colors hover:text-[#fafafa]"
           >
             Tools
-          </Link>
-          <Link
+          </a>
+          <a
             href="/pricing"
             className="transition-colors hover:text-[#fafafa]"
           >
             Pricing
-          </Link>
-          <Link
+          </a>
+          <a
             href="/docs"
             className="transition-colors hover:text-[#fafafa]"
           >
             Docs
-          </Link>
+          </a>
         </nav>
 
         <div className="flex items-center gap-3">

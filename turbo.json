@@ -27,6 +27,10 @@
         "R2_URL",
         "STRIPE_PRO_MONTHLY_PRICE_ID",
         "STRIPE_PRO_YEARLY_PRICE_ID",
+        "VITE_POSTHOG_HOST",
+        "VITE_POSTHOG_KEY",
+        "VITE_STRIPE_PUBLISHABLE_KEY",
+        "VITE_ENABLE_VIRTUALIZATION",
         "VERCEL_PROJECT_PRODUCTION_URL",
         "VERCEL_URL",
         "PLAYWRIGHT_TEST_BASE_URL",
@@ -40,11 +44,16 @@
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN",
         "CLOUDFLARE_ACCOUNT_ID",
-        "CLOUDFLARE_API_TOKEN"
+        "CLOUDFLARE_API_TOKEN",
+        "CONVEX_DEPLOYMENT",
+        "CONVEX_URL",
+        "CONVEX_SITE_URL",
+        "VITE_CONVEX_URL",
+        "CONVEX_DEPLOY_KEY"
       ],
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": ["dist/**", ".output/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -118,6 +127,10 @@
         "R2_URL",
         "STRIPE_PRO_MONTHLY_PRICE_ID",
         "STRIPE_PRO_YEARLY_PRICE_ID",
+        "VITE_POSTHOG_HOST",
+        "VITE_POSTHOG_KEY",
+        "VITE_STRIPE_PUBLISHABLE_KEY",
+        "VITE_ENABLE_VIRTUALIZATION",
         "VERCEL_PROJECT_PRODUCTION_URL",
         "VERCEL_URL",
         "PLAYWRIGHT_TEST_BASE_URL",
@@ -131,7 +144,12 @@
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN",
         "CLOUDFLARE_ACCOUNT_ID",
-        "CLOUDFLARE_API_TOKEN"
+        "CLOUDFLARE_API_TOKEN",
+        "CONVEX_DEPLOYMENT",
+        "CONVEX_URL",
+        "CONVEX_SITE_URL",
+        "VITE_CONVEX_URL",
+        "CONVEX_DEPLOY_KEY"
       ],
       "cache": false
     }

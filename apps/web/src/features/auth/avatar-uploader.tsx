@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
@@ -35,7 +34,6 @@ export function AvatarUploader(props: {
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative inline-flex">
-        {/* Drop area */}
         <button
           className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 focus-visible:border-ring focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 relative flex size-16 items-center justify-center overflow-hidden rounded-full border border-dashed outline-none transition-colors focus-visible:ring-[3px] has-[img]:border-none"
           onClick={openFileDialog}
@@ -45,6 +43,7 @@ export function AvatarUploader(props: {
           onDrop={handleDrop}
           data-dragging={isDragging || undefined}
           aria-label={previewUrl ? "Change image" : "Upload image"}
+          type="button"
         >
           {previewUrl ? (
             <img
@@ -67,6 +66,7 @@ export function AvatarUploader(props: {
             size="icon"
             className="border-background focus-visible:border-background absolute -right-1 -top-1 size-6 rounded-full border-2 shadow-none"
             aria-label="Remove image"
+            type="button"
           >
             <XIcon className="size-3.5" />
           </Button>
@@ -81,3 +81,4 @@ export function AvatarUploader(props: {
     </div>
   );
 }
+

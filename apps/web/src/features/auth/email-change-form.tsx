@@ -1,81 +1,104 @@
 "use client";
 
-import { SubmitButton } from "@/features/form/loading-button";
+import { LoadingButton } from "@/features/form/loading-button";
 import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
+import { upfetch } from "@/lib/up-fetch";
+import { useMutation } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
 
 interface EmailChangeFormProps {
   currentEmail: string;
-  onEmailChange: (formData: FormData) => Promise<void>;
 }
 
-export function EmailChangeForm({ currentEmail, onEmailChange }: EmailChangeFormProps) {
+export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
   const [email, setEmail] = useState(currentEmail);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const handleSubmit = async (formData: FormData) => {
+  const mutation = useMutation({
+    mutationFn: async (newEmail: string) =>
+      upfetch("/api/user/profile", {
+        method: "PATCH",
+        body: { email: newEmail },
+        schema: z.object({ success: z.boolean() }),
+      }),
+    onSuccess: () => {
+      toast.success("Check your current email for verification link");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to change email. Please try again.");
+    },
+  });
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setErrors([]);
-    
-    // Client-side validation
-    const newEmail = formData.get("email") as string;
-    const validation = EmailChangeSchema.safeParse({ newEmail });
-    
+
+    const validation = EmailChangeSchema.safeParse({ newEmail: email });
     if (!validation.success) {
-      const errorMessages = validation.error.issues.map(issue => issue.message);
-      setErrors(errorMessages);
+      setErrors(validation.error.issues.map((issue) => issue.message));
       return;
     }
 
-    if (newEmail === currentEmail) {
+    if (email === currentEmail) {
       setErrors(["New email must be different from current email"]);
       return;
     }
 
-    try {
-      await onEmailChange(formData);
-      // Keep the current email in the form - don't clear it
-    } catch (error) {
-      // Error handling is done in the server action with serverToast
-      console.error("Error changing email:", error);
-    }
+    mutation.mutate(email);
   };
 
   return (
-    <form action={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
           <CardTitle>Email</CardTitle>
+          <CardDescription>
+            Change the email address used for login and notifications.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="flex max-w-sm flex-col gap-2">
+            <Label htmlFor="account-email">Email address</Label>
             <Input
+              id="account-email"
               type="email"
               name="email"
               placeholder="Email address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               required
-              className={errors.length > 0 ? "border-red-500" : ""}
+              aria-invalid={errors.length > 0}
             />
             {errors.length > 0 && (
-              <div className="text-sm text-red-500">
-                {errors.map((error, index) => (
-                  <div key={index}>{error}</div>
+              <div className="text-destructive text-sm">
+                {errors.map((error) => (
+                  <div key={error}>{error}</div>
                 ))}
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <SubmitButton>Change Email</SubmitButton>
+        <CardFooter className="flex justify-end border-t">
+          <LoadingButton
+            loading={mutation.isPending}
+            disabled={mutation.isPending}
+            size="sm"
+            variant="outline"
+          >
+            Change email
+          </LoadingButton>
         </CardFooter>
       </Card>
     </form>

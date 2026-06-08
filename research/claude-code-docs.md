@@ -1,8 +1,8 @@
-# Claude Code — Synthèse de la documentation officielle
+# Claude Code - Synthèse de la documentation officielle
 
 ## Points clés
 
-- Claude Code: assistant de développement d’Anthropic pour IDE et CLI, centré sur la lecture/écriture de code, la navigation multi‑fichiers et l’exécution guidée de commandes.
+- Claude Code: assistant de développement d’Anthropic pour IDE et CLI, centré sur la lecture/écriture de code, la navigation multi-fichiers et l’exécution guidée de commandes.
 - Intégrations IDE: extensions officielles pour VS Code et JetBrains (chat contextuel, actions inline, aperçu des diffs, exécution de tests/commandes avec approbations).
 - CLI: outil en terminal pour dialoguer avec Claude Code dans un repo, proposer des modifications et, si autorisé, lancer des commandes; confirmations requises pour actions sensibles.
 - Projets & contexte: indexation contextuelle du dépôt/projet afin d’améliorer la compréhension du code, recherche sémantique, et propositions de refactorisation fondées sur un large contexte.
@@ -17,7 +17,7 @@
 
 ## Config & intégrations
 
-- Portée du projet: choisir les dossiers indexés (mono‑repo, apps/packages ciblés) pour limiter l’exposition et améliorer la pertinence du contexte.
+- Portée du projet: choisir les dossiers indexés (mono-repo, apps/packages ciblés) pour limiter l’exposition et améliorer la pertinence du contexte.
 - Permissions granulaires: lecture seule, proposition de changements, écriture de fichiers, exécution de commandes; chaque catégorie peut exiger une confirmation explicite.
 - Outils externes: possibilité de lancer linters, tests, build, scripts package.json, etc., depuis le chat/CLI, avec traces et sorties relayées dans l’interface.
 - Authentification & organisations: connexion via compte Anthropic; pour les organisations, politiques centralisées (rétention, partage, modèles autorisés) et audit selon l’offre.

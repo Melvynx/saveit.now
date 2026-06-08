@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { parseMention } from "../app/app/utils/type-filter-utils";
+import { parseMention } from "../src/features/app/utils/type-filter-utils";
 
 // Mock up-fetch at the module level to ensure it's available
 vi.mock("@/lib/up-fetch", async () => {

@@ -13,8 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Web Application (apps/web)
 
-- `pnpm dev` - Start Next.js dev server with Turbo pack
-- `pnpm lint` - Run Next.js linting
+- `pnpm dev` - Start TanStack Start dev server
+- `pnpm lint` - Run web linting
 - `pnpm ts` - Run TypeScript formatting
 - `pnpm better-auth:generate` - Generate Better Auth schema
 
@@ -34,7 +34,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 ### Key Applications
 
-- **apps/web** - Next.js 15 web application (main SaaS product)
+- **apps/web** - TanStack Start web application (main SaaS product)
 - **apps/chrome-extension** - Chrome browser extension
 - **apps/firefox-extension** - Firefox browser extension
 - **apps/worker** - Cloudflare Worker for background processing
@@ -80,3 +80,17 @@ The application requires extensive environment variables (35+ variables) for var
 ## Workflow
 
 - Always run `pnpm ts` AND `pnpm lint` in the folder `app/web` to verify typescript working after a task
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`packages/backend/convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->

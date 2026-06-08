@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useLocation } from "@tanstack/react-router";
 import { cn } from "@workspace/ui/lib/utils";
 import type { DocGroup } from "@/lib/mdx/docs-manager";
 
@@ -18,7 +17,7 @@ interface DocsSidebarProps {
 }
 
 export function DocsSidebar({ groupedDocs }: DocsSidebarProps) {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   return (
     <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 overflow-y-auto border-r lg:block">
@@ -36,7 +35,7 @@ export function DocsSidebar({ groupedDocs }: DocsSidebarProps) {
 
                 return (
                   <li key={doc.slug}>
-                    <Link
+                    <a
                       href={docUrl}
                       className={cn(
                         "flex items-center gap-1.5 rounded px-2 py-1 text-[13px] transition-colors",
@@ -56,7 +55,7 @@ export function DocsSidebar({ groupedDocs }: DocsSidebarProps) {
                         </span>
                       )}
                       <span className="truncate">{doc.frontmatter.title}</span>
-                    </Link>
+                    </a>
                   </li>
                 );
               })}

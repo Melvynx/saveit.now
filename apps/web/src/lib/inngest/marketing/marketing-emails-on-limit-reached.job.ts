@@ -1,7 +1,7 @@
 import { env } from "@/lib/env";
 import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
 import { stripeClient } from "@/lib/stripe";
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import dayjs from "dayjs";
 import { nanoid } from "nanoid";
 import { inngest } from "../client";

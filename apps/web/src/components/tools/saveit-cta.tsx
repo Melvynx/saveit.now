@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 interface SaveItCTAProps {
   title?: string;
   description?: string;
@@ -27,18 +25,18 @@ export function SaveItCTA({
           {description}
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
-          <Link
+          <a
             href={primaryButtonHref}
             className="inline-flex h-10 items-center rounded-full bg-[#fafafa] px-6 text-sm font-medium text-[#141414] transition-colors hover:bg-[#e0e0e0]"
           >
             {primaryButtonText}
-          </Link>
-          <Link
+          </a>
+          <a
             href={secondaryButtonHref}
             className="inline-flex h-10 items-center rounded-full border border-white/10 px-6 text-sm font-medium text-[#fafafa] transition-colors hover:bg-white/5"
           >
             {secondaryButtonText} →
-          </Link>
+          </a>
         </div>
       </div>
     </section>

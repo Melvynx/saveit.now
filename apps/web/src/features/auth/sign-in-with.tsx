@@ -27,9 +27,12 @@ export const SignInWith = (props: {
   type: OAuthProvider;
   className?: string;
   buttonProps: ButtonProps;
+  variant?: "default" | "monochrome";
+  callbackURL?: string;
 }) => {
   const posthog = usePostHog();
   const session = useSession();
+  const isMonochrome = props.variant === "monochrome";
   const mutation = useMutation({
     mutationFn: () => {
       posthog.capture("sign_in_with_social", {
@@ -38,13 +41,15 @@ export const SignInWith = (props: {
       return unwrapSafePromise(
         authClient.signIn.social({
           provider: props.type,
-          callbackURL: "/app",
+          callbackURL: props.callbackURL ?? "/app",
         }),
       );
     },
     onSuccess: () => {
       session.refetch();
-      toast.success("Signed in with GitHub");
+      toast.success(
+        `Signed in with ${props.type === "github" ? "GitHub" : "Google"}`,
+      );
     },
     onError: (ctx: { error: { message: string } }) => {
       toast.error(ctx.error.message);
@@ -54,22 +59,36 @@ export const SignInWith = (props: {
   return (
     <LoadingButton
       loading={mutation.isPending}
-      className={cn("flex-1 max-lg:py-2 w-full", props.className)}
+      className={cn(
+        "flex-1 max-lg:py-2 w-full",
+        isMonochrome &&
+          "h-[44px] min-h-[44px] border border-neutral-800 bg-black text-white shadow-none hover:border-neutral-700 hover:bg-neutral-950 hover:text-white",
+        props.className,
+      )}
       variant="outline"
       onClick={() => {
         mutation.mutate();
       }}
       {...props.buttonProps}
     >
-      <SvglImg
-        height="16"
-        width="16"
-        lightIconName={IconMap[props.type].light}
-        darkIconName={IconMap[props.type].dark}
-      />
+      <span
+        className={cn(
+          "flex size-4 items-center justify-center",
+          isMonochrome && "[&_img]:brightness-0 [&_img]:invert",
+        )}
+      >
+        <SvglImg
+          height="16"
+          width="16"
+          lightIconName={IconMap[props.type].light}
+          darkIconName={IconMap[props.type].dark}
+        />
+      </span>
 
-      {props.type === "github" ? "Continue with GitHub" : null}
-      {props.type === "google" ? "Continue with Google" : null}
+      <span className={cn(isMonochrome && "text-white")}>
+        {props.type === "github" ? "Sign in with GitHub" : null}
+        {props.type === "google" ? "Sign in with Google" : null}
+      </span>
     </LoadingButton>
   );
 };

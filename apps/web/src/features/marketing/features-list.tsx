@@ -7,7 +7,7 @@ export const FeaturesList = () => {
         Never lose an important link again.
       </Typography>
       <Typography variant="lead">
-        Save it now—find it in seconds, whether it’s an article, video, post, or
+        Save it now - find it in seconds, whether it’s an article, video, post, or
         tool.
       </Typography>
       <ul className="flex flex-col gap-4">
@@ -18,7 +18,7 @@ export const FeaturesList = () => {
               Instant capture
             </Typography>
             <Typography variant="muted">
-              Paste any URL and it's safely stored—no friction.
+              Paste any URL and it's safely stored - no friction.
             </Typography>
           </div>
         </li>
@@ -41,7 +41,7 @@ export const FeaturesList = () => {
               Auto-tagging
             </Typography>
             <Typography variant="muted">
-              Your library organizes itself—no folders, no mess.
+              Your library organizes itself - no folders, no mess.
             </Typography>
           </div>
         </li>

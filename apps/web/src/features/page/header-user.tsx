@@ -1,11 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
-
 import { APP_LINKS } from "@/lib/app-links";
 import { authClient } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -16,14 +14,29 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import { CreditCard, Gem, Key, Shield, User, UserX } from "lucide-react";
-import Link from "next/link";
-import { useMedia } from "react-use";
+import { useEffect, useState } from "react";
 import { LogoutButton } from "../auth/logout";
+
+const useMobileMedia = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+};
 
 export const HeaderUser = () => {
   const plan = useUserPlan();
   const session = authClient.useSession();
-  const isMobile = useMedia("(max-width: 768px)");
+  const isMobile = useMobileMedia();
 
   const isImpersonating = session.data?.session.impersonatedBy !== null;
   const isAdmin = session.data?.user.role === "admin";
@@ -94,31 +107,31 @@ export const HeaderUser = () => {
               </>
             )}
             <DropdownMenuItem asChild>
-              <Link href="/account">
+              <a href="/account">
                 <User className="size-4" />
                 Account
-              </Link>
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/account/keys">
+              <a href="/account/keys">
                 <Key className="size-4" />
                 API Keys
-              </Link>
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/billing">
+              <a href="/billing">
                 <CreditCard className="size-4" />
                 Billing
-              </Link>
+              </a>
             </DropdownMenuItem>
             {isAdmin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/admin">
+                  <a href="/admin">
                     <Shield className="size-4" />
                     Admin Panel
-                  </Link>
+                  </a>
                 </DropdownMenuItem>
               </>
             )}
@@ -133,9 +146,9 @@ export const HeaderUser = () => {
           className={buttonVariants({
             size: "sm",
             variant: "outline",
-            className: "font-inter",
+            className: "font-inter text-foreground",
           })}
-          href={APP_LINKS.signin}
+          to={APP_LINKS.signin}
         >
           Sign In
         </Link>

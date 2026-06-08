@@ -9,7 +9,7 @@ This document outlines the comprehensive plan for integrating an Expo React Nati
 The existing monorepo structure:
 ```
 ├── apps/
-│   ├── web/              # Next.js 15 web app with Better Auth
+│   ├── web/              # TanStack Start web app with Better Auth
 │   ├── chrome-extension/ # Chrome browser extension  
 │   ├── firefox-extension/# Firefox browser extension
 │   └── worker/           # Cloudflare Worker
@@ -37,7 +37,7 @@ Add the mobile app to the existing monorepo:
 ```
 ├── apps/
 │   ├── mobile/           # NEW: Expo React Native app (self-contained)
-│   ├── web/              # Existing Next.js app
+│   ├── web/              # Existing TanStack Start app
 │   ├── chrome-extension/ # Existing
 │   ├── firefox-extension/# Existing  
 │   └── worker/           # Existing
@@ -106,7 +106,7 @@ module.exports = config;
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "outputs": ["dist/**", ".output/**"],
       "dependsOn": ["^build"]
     },
     "build:mobile": {
