@@ -64,6 +64,9 @@ jobs:
       # Analytics
       NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
       NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+      # Convex
+      VITE_CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
+      CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
       # OAuth
       GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
       GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
