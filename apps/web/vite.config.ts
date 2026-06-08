@@ -9,11 +9,6 @@ const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const devServerPort = Number.parseInt(process.env.PORT ?? "3000", 10);
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      external: ["turndown"],
-    },
-  },
   server: {
     port: Number.isFinite(devServerPort) ? devServerPort : 3000,
     strictPort: true,
