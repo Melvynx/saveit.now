@@ -1,8 +1,8 @@
 import { createRequire } from "node:module";
-import type { PrismaClient as PrismaClientType } from "../generated/prisma";
+import type { PrismaClient as PrismaClientType } from "@prisma/client";
 
 const require = createRequire(import.meta.url);
-const { PrismaClient } = require("../generated/prisma") as {
+const { PrismaClient } = require("@prisma/client") as {
   PrismaClient: typeof PrismaClientType;
 };
 

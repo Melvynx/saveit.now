@@ -50,8 +50,7 @@ function ApiKeysPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <CreateApiKeyForm />
-      <ApiKeyList apiKeys={apiKeys} />
+      <ApiKeyList apiKeys={apiKeys} action={<CreateApiKeyForm />} />
     </div>
   );
 }

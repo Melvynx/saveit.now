@@ -65,8 +65,10 @@ import { Route as ApiChatRouteImport } from "./routes/api.chat";
 import { Route as ApiBugReportRouteImport } from "./routes/api.bug-report";
 import { Route as ApiBookmarksRouteImport } from "./routes/api.bookmarks";
 import { Route as ApiBRouteImport } from "./routes/api.b";
+import { Route as AdminUsersRouteImport } from "./routes/admin.users";
 import { Route as AdminSendEmailRouteImport } from "./routes/admin.send-email";
 import { Route as AdminConversationsRouteImport } from "./routes/admin.conversations";
+import { Route as AccountPublicLinkRouteImport } from "./routes/account.public-link";
 import { Route as AccountKeysRouteImport } from "./routes/account.keys";
 import { Route as PBookmarkIdReadRouteImport } from "./routes/p.$bookmarkId.read";
 import { Route as AppBBookmarkIdRouteImport } from "./routes/app.b.$bookmarkId";
@@ -108,6 +110,7 @@ import { Route as ApiBookmarksBookmarkIdUploadScreenshotRouteImport } from "./ro
 import { Route as ApiBookmarksBookmarkIdTagsRouteImport } from "./routes/api.bookmarks.$bookmarkId.tags";
 import { Route as ApiBookmarksBookmarkIdSubscribeRouteImport } from "./routes/api.bookmarks.$bookmarkId.subscribe";
 import { Route as ApiBookmarksBookmarkIdMetadataRouteImport } from "./routes/api.bookmarks.$bookmarkId.metadata";
+import { Route as ApiAccountKeysKeyIdRouteImport } from "./routes/api.account.keys.$keyId";
 import { Route as ApiV1PublicSlugBookmarksRouteImport } from "./routes/api.v1.public.$slug.bookmarks";
 import { Route as ApiChatConversationsIdLikeRouteImport } from "./routes/api.chat.conversations.$id.like";
 import { Route as ApiChatConversationsIdDislikeRouteImport } from "./routes/api.chat.conversations.$id.dislike";
@@ -393,6 +396,11 @@ const ApiBRoute = ApiBRouteImport.update({
   path: "/api/b",
   getParentRoute: () => rootRouteImport,
 } as any);
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: "/users",
+  path: "/users",
+  getParentRoute: () => AdminRoute,
+} as any);
 const AdminSendEmailRoute = AdminSendEmailRouteImport.update({
   id: "/send-email",
   path: "/send-email",
@@ -402,6 +410,11 @@ const AdminConversationsRoute = AdminConversationsRouteImport.update({
   id: "/conversations",
   path: "/conversations",
   getParentRoute: () => AdminRoute,
+} as any);
+const AccountPublicLinkRoute = AccountPublicLinkRouteImport.update({
+  id: "/public-link",
+  path: "/public-link",
+  getParentRoute: () => AccountRoute,
 } as any);
 const AccountKeysRoute = AccountKeysRouteImport.update({
   id: "/keys",
@@ -560,9 +573,9 @@ const ApiAdminSendEmailRoute = ApiAdminSendEmailRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any);
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
-  id: "/users/$userId",
-  path: "/users/$userId",
-  getParentRoute: () => AdminRoute,
+  id: "/$userId",
+  path: "/$userId",
+  getParentRoute: () => AdminUsersRoute,
 } as any);
 const AdminConversationsIdRoute = AdminConversationsIdRouteImport.update({
   id: "/$id",
@@ -614,6 +627,11 @@ const ApiBookmarksBookmarkIdMetadataRoute =
     path: "/metadata",
     getParentRoute: () => ApiBookmarksBookmarkIdRoute,
   } as any);
+const ApiAccountKeysKeyIdRoute = ApiAccountKeysKeyIdRouteImport.update({
+  id: "/api/account/keys/$keyId",
+  path: "/api/account/keys/$keyId",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ApiV1PublicSlugBookmarksRoute =
   ApiV1PublicSlugBookmarksRouteImport.update({
     id: "/api/v1/public/$slug/bookmarks",
@@ -669,8 +687,10 @@ export interface FileRoutesByFullPath {
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
+  "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
+  "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/b": typeof ApiBRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -731,6 +751,7 @@ export interface FileRoutesByFullPath {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
   "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
   "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
   "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
@@ -774,8 +795,10 @@ export interface FileRoutesByTo {
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
+  "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
+  "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/b": typeof ApiBRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -836,6 +859,7 @@ export interface FileRoutesByTo {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
   "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
   "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
   "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
@@ -880,8 +904,10 @@ export interface FileRoutesById {
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
+  "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
+  "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/b": typeof ApiBRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -942,6 +968,7 @@ export interface FileRoutesById {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
   "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
   "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
   "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
@@ -987,8 +1014,10 @@ export interface FileRouteTypes {
     | "/variations"
     | "/verify"
     | "/account/keys"
+    | "/account/public-link"
     | "/admin/conversations"
     | "/admin/send-email"
+    | "/admin/users"
     | "/api/b"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -1049,6 +1078,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/account/keys/$keyId"
     | "/api/bookmarks/$bookmarkId/metadata"
     | "/api/bookmarks/$bookmarkId/subscribe"
     | "/api/bookmarks/$bookmarkId/tags"
@@ -1092,8 +1122,10 @@ export interface FileRouteTypes {
     | "/variations"
     | "/verify"
     | "/account/keys"
+    | "/account/public-link"
     | "/admin/conversations"
     | "/admin/send-email"
+    | "/admin/users"
     | "/api/b"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -1154,6 +1186,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/account/keys/$keyId"
     | "/api/bookmarks/$bookmarkId/metadata"
     | "/api/bookmarks/$bookmarkId/subscribe"
     | "/api/bookmarks/$bookmarkId/tags"
@@ -1197,8 +1230,10 @@ export interface FileRouteTypes {
     | "/variations"
     | "/verify"
     | "/account/keys"
+    | "/account/public-link"
     | "/admin/conversations"
     | "/admin/send-email"
+    | "/admin/users"
     | "/api/b"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -1259,6 +1294,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/account/keys/$keyId"
     | "/api/bookmarks/$bookmarkId/metadata"
     | "/api/bookmarks/$bookmarkId/subscribe"
     | "/api/bookmarks/$bookmarkId/tags"
@@ -1337,6 +1373,7 @@ export interface RootRouteChildren {
   ApiV1BookmarksRoute: typeof ApiV1BookmarksRouteWithChildren;
   ApiV1TagsRoute: typeof ApiV1TagsRoute;
   ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute;
+  ApiAccountKeysKeyIdRoute: typeof ApiAccountKeysKeyIdRoute;
   ApiOgBookmarkBookmarkIdRoute: typeof ApiOgBookmarkBookmarkIdRoute;
   ApiAdminUsersUserIdCustomLimitsRoute: typeof ApiAdminUsersUserIdCustomLimitsRoute;
   ApiV1PublicSlugBookmarksRoute: typeof ApiV1PublicSlugBookmarksRoute;
@@ -1736,6 +1773,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiBRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/admin/users": {
+      id: "/admin/users";
+      path: "/users";
+      fullPath: "/admin/users";
+      preLoaderRoute: typeof AdminUsersRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
     "/admin/send-email": {
       id: "/admin/send-email";
       path: "/send-email";
@@ -1749,6 +1793,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/admin/conversations";
       preLoaderRoute: typeof AdminConversationsRouteImport;
       parentRoute: typeof AdminRoute;
+    };
+    "/account/public-link": {
+      id: "/account/public-link";
+      path: "/public-link";
+      fullPath: "/account/public-link";
+      preLoaderRoute: typeof AccountPublicLinkRouteImport;
+      parentRoute: typeof AccountRoute;
     };
     "/account/keys": {
       id: "/account/keys";
@@ -1969,10 +2020,10 @@ declare module "@tanstack/react-router" {
     };
     "/admin/users/$userId": {
       id: "/admin/users/$userId";
-      path: "/users/$userId";
+      path: "/$userId";
       fullPath: "/admin/users/$userId";
       preLoaderRoute: typeof AdminUsersUserIdRouteImport;
-      parentRoute: typeof AdminRoute;
+      parentRoute: typeof AdminUsersRoute;
     };
     "/admin/conversations/$id": {
       id: "/admin/conversations/$id";
@@ -2037,6 +2088,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiBookmarksBookmarkIdMetadataRouteImport;
       parentRoute: typeof ApiBookmarksBookmarkIdRoute;
     };
+    "/api/account/keys/$keyId": {
+      id: "/api/account/keys/$keyId";
+      path: "/api/account/keys/$keyId";
+      fullPath: "/api/account/keys/$keyId";
+      preLoaderRoute: typeof ApiAccountKeysKeyIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/api/v1/public/$slug/bookmarks": {
       id: "/api/v1/public/$slug/bookmarks";
       path: "/api/v1/public/$slug/bookmarks";
@@ -2070,10 +2128,12 @@ declare module "@tanstack/react-router" {
 
 interface AccountRouteChildren {
   AccountKeysRoute: typeof AccountKeysRoute;
+  AccountPublicLinkRoute: typeof AccountPublicLinkRoute;
 }
 
 const AccountRouteChildren: AccountRouteChildren = {
   AccountKeysRoute: AccountKeysRoute,
+  AccountPublicLinkRoute: AccountPublicLinkRoute,
 };
 
 const AccountRouteWithChildren =
@@ -2090,16 +2150,28 @@ const AdminConversationsRouteChildren: AdminConversationsRouteChildren = {
 const AdminConversationsRouteWithChildren =
   AdminConversationsRoute._addFileChildren(AdminConversationsRouteChildren);
 
+interface AdminUsersRouteChildren {
+  AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute;
+}
+
+const AdminUsersRouteChildren: AdminUsersRouteChildren = {
+  AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+};
+
+const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
+  AdminUsersRouteChildren,
+);
+
 interface AdminRouteChildren {
   AdminConversationsRoute: typeof AdminConversationsRouteWithChildren;
   AdminSendEmailRoute: typeof AdminSendEmailRoute;
-  AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute;
+  AdminUsersRoute: typeof AdminUsersRouteWithChildren;
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminConversationsRoute: AdminConversationsRouteWithChildren,
   AdminSendEmailRoute: AdminSendEmailRoute,
-  AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+  AdminUsersRoute: AdminUsersRouteWithChildren,
 };
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren);
@@ -2375,6 +2447,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1BookmarksRoute: ApiV1BookmarksRouteWithChildren,
   ApiV1TagsRoute: ApiV1TagsRoute,
   ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
+  ApiAccountKeysKeyIdRoute: ApiAccountKeysKeyIdRoute,
   ApiOgBookmarkBookmarkIdRoute: ApiOgBookmarkBookmarkIdRoute,
   ApiAdminUsersUserIdCustomLimitsRoute: ApiAdminUsersUserIdCustomLimitsRoute,
   ApiV1PublicSlugBookmarksRoute: ApiV1PublicSlugBookmarksRoute,

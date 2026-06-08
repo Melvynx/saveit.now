@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton } from "@/features/form/loading-button";
+import { AdminStatusBadge } from "@/features/admin/admin-shared";
 import { authClient } from "@/lib/auth-client";
 import type { UserWithStats } from "@/lib/database/admin-users";
 import { unwrapSafePromise } from "@/lib/promises";
@@ -8,8 +8,22 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
 import { TableCell, TableRow } from "@workspace/ui/components/table";
-import { Ban, Eye, UserCheck } from "lucide-react";
+import {
+  Ban,
+  Crown,
+  Eye,
+  MoreHorizontal,
+  UserCheck,
+  UserCog,
+} from "lucide-react";
 import { toast } from "sonner";
 
 type UserRowProps = {
@@ -96,15 +110,18 @@ export const UserRow = ({ user }: UserRowProps) => {
     },
   });
 
-  const isPremium = user.subscriptions.some((s) => s.status === "active");
+  const isPremium = user.subscriptions.some((subscription) =>
+    ["active", "trialing"].includes(subscription.status ?? ""),
+  );
+  const primarySubscription = user.subscriptions[0];
 
   return (
     <TableRow key={user.id}>
       <TableCell>
-        <div>
-          <div className="font-medium">{user.name}</div>
-          <div className="text-sm text-muted-foreground">{user.email}</div>
-          <div className="flex items-center gap-1 mt-1">
+        <a href={`/admin/users/${user.id}`} className="block min-w-0">
+          <div className="font-medium">{user.name || user.email}</div>
+          <div className="text-muted-foreground text-sm">{user.email}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1">
             {!user.emailVerified && (
               <Badge variant="outline" className="text-xs">
                 Unverified
@@ -116,100 +133,105 @@ export const UserRow = ({ user }: UserRowProps) => {
               </Badge>
             )}
           </div>
-        </div>
+        </a>
       </TableCell>
       <TableCell>
-        <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+        <Badge variant={user.role === "admin" ? "default" : "outline"}>
           {user.role || "user"}
         </Badge>
       </TableCell>
       <TableCell>
-        {user.banned ? (
-          <div>
-            <Badge variant="destructive">Banned</Badge>
-            {user.banReason && (
-              <div className="text-xs text-muted-foreground mt-1">
-                {user.banReason}
-              </div>
-            )}
+        <div className="space-y-1">
+          <AdminStatusBadge value={user.banned ? "banned" : "active"} />
+          {user.banned && user.banReason ? (
+            <div className="text-muted-foreground max-w-44 truncate text-xs">
+              {user.banReason}
+            </div>
+          ) : null}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="space-y-1">
+          <div className="text-sm font-medium">
+            {isPremium ? primarySubscription?.plan || "Premium" : "Regular"}
           </div>
-        ) : (
-          <Badge variant="outline">Active</Badge>
-        )}
-      </TableCell>
-      <TableCell>
-        <div className="text-sm font-medium">{user._count.bookmarks}</div>
-      </TableCell>
-      <TableCell>
-        <div className="text-sm font-medium">{user._count.bookmarkOpens}</div>
-      </TableCell>
-      <TableCell>
-        <div className="text-sm font-medium">
-          {user.subscriptions.length > 0
-            ? user.subscriptions[0]?.status
-            : "No plan"}
+          <div className="text-muted-foreground text-xs">
+            {primarySubscription?.status ?? "No subscription"}
+          </div>
         </div>
       </TableCell>
       <TableCell>
         <div className="text-sm">
-          {new Date(user.createdAt).toLocaleDateString()}
+          <span className="font-medium">{user._count.bookmarks}</span> bookmarks
+        </div>
+        <div className="text-muted-foreground text-xs">
+          {user._count.bookmarkOpens} clicks
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          {user.banned ? (
-            <LoadingButton
-              size="sm"
-              variant="outline"
-              loading={unbanUserMutation.isPending}
-              onClick={() => unbanUserMutation.mutate(user.id)}
-            >
-              <UserCheck className="size-4" />
-              Unban
-            </LoadingButton>
-          ) : (
-            <LoadingButton
-              size="sm"
-              variant="outline"
-              loading={banUserMutation.isPending}
-              onClick={() => banUserMutation.mutate({ userId: user.id })}
-            >
-              <Ban className="size-4" />
-              Ban
-            </LoadingButton>
-          )}
-          {!user.banned && (
-            <LoadingButton
-              size="sm"
-              variant="outline"
-              loading={impersonateMutation.isPending}
-              onClick={() => impersonateMutation.mutate(user.id)}
-            >
-              Impersonate
-            </LoadingButton>
-          )}
-          {user.role !== "admin" && (
-            <LoadingButton
-              size="sm"
-              variant="outline"
-              loading={setRoleMutation.isPending}
-              onClick={() =>
-                setRoleMutation.mutate({
-                  userId: user.id,
-                  role: "admin",
-                })
-              }
-            >
-              Make Admin
-            </LoadingButton>
-          )}
-          <Button variant="outline" size="sm" asChild>
-            <a href={`/admin/users/${user.id}`}>
-              <Eye className="size-4" />
-              View
-            </a>
-          </Button>
+        <div className="text-muted-foreground text-sm">
+          {new Date(user.createdAt).toLocaleDateString()}
         </div>
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Open actions for ${user.email}`}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-48">
+            <DropdownMenuItem asChild>
+              <a href={`/admin/users/${user.id}`}>
+                <Eye className="size-4" />
+                View details
+              </a>
+            </DropdownMenuItem>
+            {!user.banned ? (
+              <DropdownMenuItem
+                onClick={() => impersonateMutation.mutate(user.id)}
+              >
+                <UserCog className="size-4" />
+                Impersonate
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuSeparator />
+            {user.banned ? (
+              <DropdownMenuItem
+                onClick={() => unbanUserMutation.mutate(user.id)}
+              >
+                <UserCheck className="size-4" />
+                Unban
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => banUserMutation.mutate({ userId: user.id })}
+              >
+                <Ban className="size-4" />
+                Ban
+              </DropdownMenuItem>
+            )}
+            {user.role !== "admin" ? (
+              <DropdownMenuItem
+                onClick={() =>
+                  setRoleMutation.mutate({
+                    userId: user.id,
+                    role: "admin",
+                  })
+                }
+              >
+                <Crown className="size-4" />
+                Make admin
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

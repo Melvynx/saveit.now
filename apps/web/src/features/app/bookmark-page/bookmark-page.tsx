@@ -87,9 +87,13 @@ function BookmarkDetail({
 
   const content = (
     <>
-      <DialogTitle className="sr-only">
-        {bookmark.title || "Bookmark details"}
-      </DialogTitle>
+      {renderMode === "dialog" ? (
+        <DialogTitle className="sr-only">
+          {bookmark.title || "Bookmark details"}
+        </DialogTitle>
+      ) : (
+        <h1 className="sr-only">{bookmark.title || "Bookmark details"}</h1>
+      )}
       <header className="flex items-center gap-2 px-6 pt-6">
         <div className="flex-1"></div>
         <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>

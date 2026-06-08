@@ -6,13 +6,20 @@ import path from "node:path";
 import { defineConfig } from "vite";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
+const devServerPort = Number.parseInt(process.env.PORT ?? "3000", 10);
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      external: ["turndown"],
+    },
+  },
   server: {
-    port: 3000,
+    port: Number.isFinite(devServerPort) ? devServerPort : 3000,
+    strictPort: true,
   },
   resolve: {
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
     alias: {
       "@workspace/ui/globals.css": path.resolve(
         workspaceRoot,

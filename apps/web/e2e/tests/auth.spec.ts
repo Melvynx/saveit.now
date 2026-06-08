@@ -24,21 +24,21 @@ test.describe("Authentication Flow - Simple Tests", () => {
 
     // Verify signin page elements - use more specific selectors
     await expect(
-      page.locator('div[data-slot="card-title"]:has-text("Sign in")'),
+      page.getByRole("heading", { name: /sign in to saveit\.now/i }),
     ).toBeVisible();
     await expect(
-      page.locator('input[placeholder="john@doe.com"]'),
+      page.locator('input[placeholder="you@example.com"]'),
     ).toBeVisible();
     await expect(
-      page.locator('button[type="submit"]:has-text("Sign in")'),
+      page.getByRole("button", { name: /send code/i }),
     ).toBeVisible();
 
     // Verify OAuth options are present
     await expect(
-      page.locator('button:has-text("Continue with GitHub")'),
+      page.getByRole("button", { name: /sign in with github/i }),
     ).toBeVisible();
     await expect(
-      page.locator('button:has-text("Continue with Google")'),
+      page.getByRole("button", { name: /sign in with google/i }),
     ).toBeVisible();
   });
 
@@ -58,10 +58,10 @@ test.describe("Authentication Flow - Simple Tests", () => {
     const testEmail = getUserEmail();
 
     // Fill in a test email
-    await page.fill('input[placeholder="john@doe.com"]', testEmail);
+    await page.locator('input[placeholder="you@example.com"]').fill(testEmail);
 
     // Submit the form
-    await page.click('button[type="submit"]:has-text("Sign in")');
+    await page.getByRole("button", { name: /send code/i }).click();
 
     // Should progress to OTP step
     await expect(
@@ -79,8 +79,8 @@ test.describe("Authentication Flow - Simple Tests", () => {
       throw new Error("OTP code not found");
     }
 
-    await page.getByRole("textbox").fill(otpCode);
+    await page.locator('input[inputmode="numeric"]').first().fill(otpCode);
 
-    await expect(page).toHaveURL("/start");
+    await expect(page).toHaveURL(/\/(app|start)$/);
   });
 });

@@ -91,6 +91,8 @@ function DropdownMenuItem({
   className,
   children,
   inset,
+  onClick,
+  onSelect,
   render,
   variant = "default",
   ...props
@@ -109,6 +111,12 @@ function DropdownMenuItem({
         className
       )}
       render={asChild && React.isValidElement(children) ? children : render}
+      onClick={(event) => {
+        onClick?.(event)
+        if (!event.defaultPrevented) {
+          onSelect?.(event)
+        }
+      }}
       {...props}
     >
       {asChild ? undefined : children}

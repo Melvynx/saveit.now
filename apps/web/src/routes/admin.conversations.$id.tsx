@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -8,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 import { ArrowLeftIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { Streamdown } from "streamdown";
@@ -19,22 +19,25 @@ const getAdminConversationData = createServerFn({
 })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    const [{ getRequiredUserOrRedirect }, { getConversationAdmin }] =
-      await Promise.all([
-        import("@/lib/auth-session"),
-        import("@/lib/database/conversations"),
-      ]);
-    const user = await getRequiredUserOrRedirect();
+    const [{ getUser }, { getConversationAdmin }] = await Promise.all([
+      import("@/lib/auth-session"),
+      import("@/lib/database/conversations"),
+    ]);
+    const user = await getUser();
+    if (!user) {
+      return { access: "signed-out" as const };
+    }
+
     if (user.role !== "admin") {
-      throw new Response("Not found", { status: 404 });
+      return { access: "forbidden" as const };
     }
 
     const conversation = await getConversationAdmin(data.id);
     if (!conversation) {
-      throw new Response("Not found", { status: 404 });
+      return { access: "not-found" as const };
     }
 
-    return { conversation };
+    return { access: "granted" as const, conversation };
   });
 
 export const Route = createFileRoute("/admin/conversations/$id")({
@@ -43,25 +46,29 @@ export const Route = createFileRoute("/admin/conversations/$id")({
 });
 
 function AdminConversationDetailPage() {
-  const { conversation } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  if (data.access === "signed-out") return <Navigate to="/signin" />;
+  if (data.access === "forbidden") return null;
+  if (data.access === "not-found") {
+    return <p className="text-muted-foreground">Conversation not found.</p>;
+  }
+
+  const { conversation } = data;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <a href="/admin/conversations">
-            <ArrowLeftIcon className="size-4" />
-          </a>
-        </Button>
-        <div>
-          <Typography variant="h1">
-            {conversation.title || "Untitled Conversation"}
-          </Typography>
-          <p className="text-muted-foreground text-sm">
-            By {conversation.user.name} ({conversation.user.email})
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <AdminPageHeader
+        title={conversation.title || "Untitled Conversation"}
+        description={`By ${conversation.user.name} (${conversation.user.email})`}
+        action={
+          <Button variant="outline" asChild>
+            <a href="/admin/conversations">
+              <ArrowLeftIcon className="size-4" />
+              Back
+            </a>
+          </Button>
+        }
+      />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

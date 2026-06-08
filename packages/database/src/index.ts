@@ -1,4 +1,4 @@
-export type { Bookmark, Prisma, Subscription } from "../generated/prisma";
+export type { Bookmark, Prisma, Subscription } from "@prisma/client";
 
 export const TagType = {
   USER: "USER",

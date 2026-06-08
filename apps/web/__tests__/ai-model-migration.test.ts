@@ -33,14 +33,13 @@ function readProjectFile(relativePath: string) {
 }
 
 describe("AI model migration", () => {
-  it("uses the latest OpenAI generation defaults while keeping the existing embedding model", () => {
-    const content = readProjectFile("src/lib/openai.ts");
+  it("uses the active Gemini generation and embedding defaults", () => {
+    const content = readProjectFile("src/lib/gemini.ts");
 
-    expect(content).toContain('cheap: openai("gpt-5.4-mini")');
-    expect(content).toContain('normal: openai("gpt-5.5")');
-    expect(content).toContain(
-      'embedding: openai.embedding("text-embedding-3-small")',
-    );
+    expect(content).toContain('cheap: "gemini-3.1-flash-lite"');
+    expect(content).toContain('normal: "gemini-3.1-pro-preview"');
+    expect(content).toContain('embedding: "gemini-embedding-2"');
+    expect(content).toContain("GEMINI_EMBEDDING_METADATA_VALUE");
   });
 
   it("keeps bookmark processing and search off OpenAI generation and embedding models", () => {

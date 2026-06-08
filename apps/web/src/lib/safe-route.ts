@@ -3,6 +3,7 @@ import { auth } from "./auth";
 import { ApplicationError, SafeRouteError } from "./errors";
 import { logger } from "./logger";
 import type { z } from "zod";
+import { ZodError } from "zod";
 
 export function jsonError(error: unknown) {
   if (error instanceof SafeRouteError) {
@@ -11,6 +12,18 @@ export function jsonError(error: unknown) {
 
   if (error instanceof ApplicationError) {
     return Response.json({ error: error.message }, { status: 400 });
+  }
+
+  if (error instanceof ZodError) {
+    return Response.json(
+      {
+        error: "Invalid query",
+        message: "Invalid query",
+        errors: error.issues,
+        issues: error.issues,
+      },
+      { status: 400 },
+    );
   }
 
   console.error(error);

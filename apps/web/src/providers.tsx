@@ -4,6 +4,7 @@ import { PostHogProvider } from "@/features/posthog/pohsthog-provider";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { useSession } from "@/lib/auth-client";
 import { upfetch } from "@/lib/up-fetch";
+import { Toaster } from "@workspace/ui/components/sonner";
 import { TooltipProvider } from "@workspace/ui/components/tooltip";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import {
@@ -14,7 +15,6 @@ import {
 import { ClientOnly } from "@tanstack/react-router";
 import { ConvexProvider } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
-import { Toaster } from "sonner";
 import { TchaoProvider } from "tchao/react";
 import { useEffect } from "react";
 import { z } from "zod";

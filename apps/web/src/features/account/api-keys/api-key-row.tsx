@@ -1,18 +1,32 @@
 "use client";
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { authClient } from "@/lib/auth-client";
+import { upfetch } from "@/lib/up-fetch";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
-import { Typography } from "@workspace/ui/components/typography";
-import { Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import { TableCell, TableRow } from "@workspace/ui/components/table";
+import { Check, Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
 
 interface ApiKeyRowProps {
   apiKey: {
     id: string;
     name: string | null;
+    start?: string | null;
+    prefix?: string | null;
+    enabled?: boolean | null;
     createdAt: Date | string;
+    updatedAt?: Date | string;
     expiresAt?: Date | string | null;
     lastRequest?: Date | string | null;
   };
@@ -20,7 +34,46 @@ interface ApiKeyRowProps {
 
 export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const router = useRouter();
+  const displayKey = getDisplayKey(apiKey);
+  const { isCopied, copyToClipboard } = useCopyToClipboard(2000);
+
+  const handleRename = () => {
+    dialogManager.add({
+      title: "Rename API key",
+      description: "Use a short name that makes this key easy to recognize.",
+      input: {
+        label: "Key name",
+        defaultValue: apiKey.name ?? "",
+        placeholder: "Production server",
+      },
+      action: {
+        label: "Save",
+        onClick: async (keyName?: string) => {
+          const name = keyName?.trim();
+
+          if (!name) {
+            throw new Error("Key name is required");
+          }
+
+          setIsRenaming(true);
+          try {
+            await upfetch(`/api/account/keys/${apiKey.id}`, {
+              method: "PATCH",
+              body: { name },
+              schema: z.object({ success: z.boolean() }),
+            });
+
+            toast.success("API key renamed");
+            void router.invalidate();
+          } finally {
+            setIsRenaming(false);
+          }
+        },
+      },
+    });
+  };
 
   const handleDelete = async () => {
     dialogManager.add({
@@ -37,10 +90,10 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
             });
 
             if (error) {
-              console.error("Failed to delete API key:", error);
-              return;
+              throw new Error(error.message ?? "Failed to delete API key");
             }
 
+            toast.success("API key deleted");
             void router.invalidate();
           } finally {
             setIsDeleting(false);
@@ -50,32 +103,90 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
     });
   };
 
-  const formatDate = (date: Date | string) => new Date(date).toLocaleDateString();
+  const formatDate = (date?: Date | string | null) => {
+    if (!date) return "Never";
+
+    return new Date(date).toLocaleDateString();
+  };
 
   return (
-    <div className="border-border flex items-center justify-between gap-4 border-b px-1 py-3 last:border-b-0">
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
-          <Typography variant="default" className="font-medium">
-            {apiKey.name || "Untitled Key"}
-          </Typography>
-          <Typography variant="small" className="text-muted-foreground">
-            Created {formatDate(apiKey.createdAt)}
-          </Typography>
+    <TableRow>
+      <TableCell className="min-w-40 pl-4 font-medium">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="truncate">{apiKey.name || "Untitled key"}</span>
+          {apiKey.enabled === false ? (
+            <span className="text-muted-foreground text-xs">Disabled</span>
+          ) : null}
         </div>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleDelete}
-        data-testid={`delete-api-key-button-${apiKey.name}`}
-        disabled={isDeleting}
-        className="text-destructive hover:text-destructive"
-        aria-label={`Delete ${apiKey.name || "API key"}`}
-      >
-        <Trash2 className="size-4" />
-      </Button>
-    </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex min-w-52 items-center gap-2">
+          <code className="bg-muted text-muted-foreground rounded-md px-2 py-1 font-mono text-xs">
+            {displayKey}
+          </code>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Copy key for ${apiKey.name || "API key"}`}
+            onClick={() => copyToClipboard(displayKey)}
+          >
+            {isCopied ? (
+              <Check className="size-4" />
+            ) : (
+              <Copy className="size-4" />
+            )}
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatDate(apiKey.lastRequest)}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatDate(apiKey.createdAt)}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {apiKey.expiresAt ? formatDate(apiKey.expiresAt) : "No expiry"}
+      </TableCell>
+      <TableCell className="pr-4 text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Open actions for ${apiKey.name || "API key"}`}
+              disabled={isDeleting || isRenaming}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-36">
+            <DropdownMenuItem onClick={handleRename}>
+              <Edit3 className="size-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleDelete}
+              data-testid={`delete-api-key-button-${apiKey.name}`}
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
   );
+}
+
+function getDisplayKey(apiKey: {
+  start?: string | null;
+  prefix?: string | null;
+}) {
+  if (apiKey.start) return `${apiKey.start}...`;
+
+  if (apiKey.prefix) return `${apiKey.prefix}_...`;
+
+  return "key_...";
 }

@@ -4,7 +4,7 @@ import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 
 import { cn } from "@workspace/ui/lib/utils"
-import { Button } from "@workspace/ui/components/button"
+import { Button, type ButtonProps } from "@workspace/ui/components/button"
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
@@ -142,15 +142,32 @@ function AlertDialogDescription({
 }
 
 function AlertDialogAction({
+  asChild = false,
+  children,
   className,
+  render,
+  size = "default",
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: AlertDialogPrimitive.Close.Props &
+  Pick<ButtonProps, "size" | "variant"> & {
+    asChild?: boolean
+  }) {
   return (
-    <Button
+    <AlertDialogPrimitive.Close
       data-slot="alert-dialog-action"
       className={cn(className)}
+      render={
+        asChild && React.isValidElement(children) ? (
+          children
+        ) : (
+          render ?? <Button size={size} variant={variant} />
+        )
+      }
       {...props}
-    />
+    >
+      {asChild ? undefined : children}
+    </AlertDialogPrimitive.Close>
   )
 }
 

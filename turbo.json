@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["PORT"],
   "ui": "tui",
   "tasks": {
     "build": {
@@ -27,6 +28,8 @@
         "R2_URL",
         "STRIPE_PRO_MONTHLY_PRICE_ID",
         "STRIPE_PRO_YEARLY_PRICE_ID",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_POSTHOG_KEY",
         "VITE_POSTHOG_HOST",
         "VITE_POSTHOG_KEY",
         "VITE_STRIPE_PUBLISHABLE_KEY",
@@ -127,6 +130,8 @@
         "R2_URL",
         "STRIPE_PRO_MONTHLY_PRICE_ID",
         "STRIPE_PRO_YEARLY_PRICE_ID",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_POSTHOG_KEY",
         "VITE_POSTHOG_HOST",
         "VITE_POSTHOG_KEY",
         "VITE_STRIPE_PUBLISHABLE_KEY",

@@ -14,8 +14,40 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import { CreditCard, Gem, Key, Shield, User, UserX } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { LogoutButton } from "../auth/logout";
+
+type HeaderUserMenuContentProps = {
+  isAdmin: boolean;
+  isImpersonating: boolean;
+  isStoppingImpersonation: boolean;
+  onStopImpersonating: () => void;
+  side?: ComponentProps<typeof DropdownMenuContent>["side"];
+  align?: ComponentProps<typeof DropdownMenuContent>["align"];
+  className?: string;
+};
+
+export function useHeaderUserMenu() {
+  const session = authClient.useSession();
+  const user = session.data?.user;
+  const isImpersonating = session.data?.session.impersonatedBy != null;
+  const isAdmin = user?.role === "admin";
+
+  const stopImpersonatingMutation = useMutation({
+    mutationFn: () => unwrapSafePromise(authClient.admin.stopImpersonating()),
+    onSuccess: () => {
+      window.location.reload();
+    },
+  });
+
+  return {
+    user,
+    isAdmin,
+    isImpersonating,
+    isStoppingImpersonation: stopImpersonatingMutation.isPending,
+    stopImpersonating: () => stopImpersonatingMutation.mutate(),
+  };
+}
 
 const useMobileMedia = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -35,19 +67,15 @@ const useMobileMedia = () => {
 
 export const HeaderUser = () => {
   const plan = useUserPlan();
-  const session = authClient.useSession();
   const isMobile = useMobileMedia();
+  const {
+    user,
+    isAdmin,
+    isImpersonating,
+    isStoppingImpersonation,
+    stopImpersonating,
+  } = useHeaderUserMenu();
 
-  const isImpersonating = session.data?.session.impersonatedBy !== null;
-  const isAdmin = session.data?.user.role === "admin";
-  const user = session.data?.user;
-
-  const stopImpersonatingMutation = useMutation({
-    mutationFn: () => unwrapSafePromise(authClient.admin.stopImpersonating()),
-    onSuccess: () => {
-      window.location.reload();
-    },
-  });
   return (
     <>
       {user ? (
@@ -92,54 +120,12 @@ export const HeaderUser = () => {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {isImpersonating && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => stopImpersonatingMutation.mutate()}
-                  disabled={stopImpersonatingMutation.isPending}
-                  className="text-orange-600"
-                >
-                  <UserX className="size-4 mr-2" />
-                  Stop Impersonating
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem asChild>
-              <a href="/account">
-                <User className="size-4" />
-                Account
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/account/keys">
-                <Key className="size-4" />
-                API Keys
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/billing">
-                <CreditCard className="size-4" />
-                Billing
-              </a>
-            </DropdownMenuItem>
-            {isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <a href="/admin">
-                    <Shield className="size-4" />
-                    Admin Panel
-                  </a>
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="w-full">
-              <LogoutButton />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+          <HeaderUserMenuContent
+            isAdmin={isAdmin}
+            isImpersonating={isImpersonating}
+            isStoppingImpersonation={isStoppingImpersonation}
+            onStopImpersonating={stopImpersonating}
+          />
         </DropdownMenu>
       ) : (
         <Link
@@ -156,6 +142,74 @@ export const HeaderUser = () => {
     </>
   );
 };
+
+export function HeaderUserMenuContent({
+  isAdmin,
+  isImpersonating,
+  isStoppingImpersonation,
+  onStopImpersonating,
+  side,
+  align,
+  className,
+}: HeaderUserMenuContentProps) {
+  return (
+    <DropdownMenuContent
+      side={side}
+      align={align}
+      className={className}
+    >
+      {isImpersonating && (
+        <>
+          <DropdownMenuItem
+            onClick={onStopImpersonating}
+            disabled={isStoppingImpersonation}
+            className="text-orange-600"
+          >
+            <UserX className="mr-2 size-4" />
+            Stop Impersonating
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      )}
+      <DropdownMenuItem asChild>
+        <a href="/account">
+          <User className="size-4" />
+          Account
+        </a>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <a href="/account/keys">
+          <Key className="size-4" />
+          API Keys
+        </a>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <a href="/billing">
+          <CreditCard className="size-4" />
+          Billing
+        </a>
+      </DropdownMenuItem>
+      {isAdmin && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <a href="/admin">
+              <Shield className="size-4" />
+              Admin Panel
+            </a>
+          </DropdownMenuItem>
+        </>
+      )}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        asChild
+        className="w-full"
+      >
+        <LogoutButton />
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+}
 
 export const HeaderAppNameExtension = () => {
   const plan = useUserPlan();

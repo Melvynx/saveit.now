@@ -2,6 +2,7 @@ import type { UserWithStats } from "@/lib/database/admin-users";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -15,6 +16,7 @@ type UserTableProps = {
   users: UserWithStats[];
   total: number;
   totalPages: number;
+  pageSize: number;
 };
 
 export const UserTable = ({
@@ -22,30 +24,36 @@ export const UserTable = ({
   users,
   total,
   totalPages,
+  pageSize,
 }: UserTableProps) => {
-  const pageSize = 10;
-
   return (
-    <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Bookmarks</TableHead>
-            <TableHead>Clicks</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <UserRow key={user.id} user={user} />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Plan</TableHead>
+              <TableHead>Usage</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-12 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.length > 0 ? (
+              users.map((user) => <UserRow key={user.id} user={user} />)
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="h-24 text-center">
+                  No users match these filters.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
       <AdminPagination
         currentPage={searchParams.page}
         totalPages={totalPages}
@@ -53,6 +61,6 @@ export const UserTable = ({
         pageSize={pageSize}
         searchParams={searchParams}
       />
-    </>
+    </div>
   );
 };

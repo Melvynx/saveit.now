@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
@@ -15,23 +16,28 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table";
-import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 import { MessageSquareIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 
 const getAdminConversationsData = createServerFn({ method: "GET" }).handler(
   async () => {
-    const [{ getRequiredUserOrRedirect }, { getConversationsWithLikes }] =
-      await Promise.all([
-        import("@/lib/auth-session"),
-        import("@/lib/database/conversations"),
-      ]);
-    const user = await getRequiredUserOrRedirect();
-    if (user.role !== "admin") {
-      throw new Response("Not found", { status: 404 });
+    const [{ getUser }, { getConversationsWithLikes }] = await Promise.all([
+      import("@/lib/auth-session"),
+      import("@/lib/database/conversations"),
+    ]);
+    const user = await getUser();
+    if (!user) {
+      return { access: "signed-out" as const };
     }
 
-    return { conversations: await getConversationsWithLikes() };
+    if (user.role !== "admin") {
+      return { access: "forbidden" as const };
+    }
+
+    return {
+      access: "granted" as const,
+      conversations: await getConversationsWithLikes(),
+    };
   },
 );
 
@@ -41,17 +47,24 @@ export const Route = createFileRoute("/admin/conversations")({
 });
 
 function AdminConversationsPage() {
-  const { conversations } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  if (data.access === "signed-out") return <Navigate to="/signin" />;
+  if (data.access === "forbidden") return null;
+
+  const { conversations } = data;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center gap-2">
-        <MessageSquareIcon className="size-6" />
-        <Typography variant="h1">Conversations with Feedback</Typography>
-      </div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <AdminPageHeader
+        title="Conversation Feedback"
+        description="Review conversations that received positive or negative user feedback."
+      />
       <Card>
         <CardHeader>
-          <CardTitle>User Feedback</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquareIcon className="size-4" />
+            Feedback queue
+          </CardTitle>
           <CardDescription>
             Conversations that received likes or dislikes from users
           </CardDescription>

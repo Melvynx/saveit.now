@@ -2,7 +2,6 @@ import { DeleteAccountButton } from "@/components/delete-account-button";
 import { AccountShell } from "@/features/account/account-shell";
 import { AvatarSection } from "@/features/auth/avatar-section";
 import { EmailChangeForm } from "@/features/auth/email-change-form";
-import { PublicLinkSettings } from "@/features/auth/public-link-settings";
 import { LoadingButton } from "@/features/form/loading-button";
 import { upfetch } from "@/lib/up-fetch";
 import {
@@ -15,29 +14,24 @@ import {
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const getAccountData = createServerFn({ method: "GET" }).handler(async () => {
-  const [{ getRequiredUserOrRedirect }, { prisma }] = await Promise.all([
-    import("@/lib/auth-session"),
-    import("@workspace/database/client"),
-  ]);
+  const { getRequiredUserOrRedirect } = await import("@/lib/auth-session");
   const user = await getRequiredUserOrRedirect();
-  const publicLinkSettings = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: {
-      publicLinkEnabled: true,
-      publicLinkSlug: true,
-    },
-  });
 
   return {
     user,
-    publicLinkSettings,
   };
 });
 
@@ -47,23 +41,29 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
-  const { user, publicLinkSettings } = Route.useLoaderData();
+  const { user } = Route.useLoaderData();
   const location = useLocation();
+  const navigate = useNavigate();
   const isAccountIndex = location.pathname === "/account";
+  const isPublicLinkHash =
+    location.pathname === "/account" &&
+    (location.hash === "#public-link" || location.hash === "public-link");
+
+  useEffect(() => {
+    const hash = window.location.hash;
+
+    if (hash === "#public-link") {
+      void navigate({ to: "/account/public-link", replace: true });
+    }
+  }, [navigate]);
 
   return (
     <AccountShell user={user}>
-      {isAccountIndex ? (
+      {isPublicLinkHash ? null : isAccountIndex ? (
         <div className="flex flex-col gap-4">
           <AvatarSection user={user} />
           <NameForm defaultName={user.name ?? ""} />
           <EmailChangeForm currentEmail={user.email || ""} />
-          <section id="public-link" className="scroll-mt-24">
-            <PublicLinkSettings
-              initialEnabled={publicLinkSettings?.publicLinkEnabled ?? false}
-              initialSlug={publicLinkSettings?.publicLinkSlug ?? null}
-            />
-          </section>
           <Card>
             <CardHeader>
               <CardTitle>Delete account</CardTitle>

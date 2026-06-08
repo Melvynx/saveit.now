@@ -50,27 +50,19 @@ function Button({
   asChild = false,
   children,
   className,
+  render,
   variant = "default",
   size = "default",
   ...props
 }: ButtonProps) {
-  if (asChild && React.isValidElement<Record<string, unknown>>(children)) {
-    const childClassName = children.props.className as string | undefined
-
-    return React.cloneElement(children, {
-      ...props,
-      ...children.props,
-      className: cn(buttonVariants({ variant, size, className }), childClassName),
-    })
-  }
-
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      render={asChild && React.isValidElement(children) ? children : render}
       {...props}
     >
-      {children}
+      {asChild ? undefined : children}
     </ButtonPrimitive>
   )
 }

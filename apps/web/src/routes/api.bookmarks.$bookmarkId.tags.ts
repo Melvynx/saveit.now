@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/safe-route";
 import { prisma } from "@workspace/database/client";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 
 export const Route = createFileRoute("/api/bookmarks/$bookmarkId/tags")({
   server: {
@@ -40,7 +40,21 @@ export const Route = createFileRoute("/api/bookmarks/$bookmarkId/tags")({
         const user = await requireUser(request);
         if (user instanceof Response) return user;
 
-        const body = z.object({ tags: z.array(z.string()) }).parse(await request.json());
+        let body: { tags: string[] };
+        try {
+          body = z
+            .object({ tags: z.array(z.string()) })
+            .parse(await request.json());
+        } catch (error) {
+          if (error instanceof ZodError) {
+            return Response.json(
+              { error: "Invalid request body", errors: error.issues },
+              { status: 400 },
+            );
+          }
+
+          throw error;
+        }
         const bookmark = await prisma.bookmark.findUnique({
           where: {
             id: params.bookmarkId,

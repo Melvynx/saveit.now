@@ -1,5 +1,6 @@
 import { EmailComposer } from "@/features/admin/email-composer";
-import { createFileRoute } from "@tanstack/react-router";
+import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
@@ -8,21 +9,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
 import { Mail } from "lucide-react";
 
 const getSendEmailData = createServerFn({ method: "GET" }).handler(async () => {
-  const [{ getRequiredUserOrRedirect }, { getMarketingEligibleUsersCount }] =
-    await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/marketing-users"),
-    ]);
-  const user = await getRequiredUserOrRedirect();
-  if (user.role !== "admin") {
-    throw new Response("Not found", { status: 404 });
+  const [{ getUser }, { getMarketingEligibleUsersCount }] = await Promise.all([
+    import("@/lib/auth-session"),
+    import("@/lib/database/marketing-users"),
+  ]);
+  const user = await getUser();
+  if (!user) {
+    return { access: "signed-out" as const };
   }
 
-  return { eligibleUsersCount: await getMarketingEligibleUsersCount() };
+  if (user.role !== "admin") {
+    return { access: "forbidden" as const };
+  }
+
+  return {
+    access: "granted" as const,
+    eligibleUsersCount: await getMarketingEligibleUsersCount(),
+  };
 });
 
 export const Route = createFileRoute("/admin/send-email")({
@@ -31,17 +37,24 @@ export const Route = createFileRoute("/admin/send-email")({
 });
 
 function SendEmailPage() {
-  const { eligibleUsersCount } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  if (data.access === "signed-out") return <Navigate to="/signin" />;
+  if (data.access === "forbidden") return null;
+
+  const { eligibleUsersCount } = data;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center gap-2">
-        <Mail className="size-6" />
-        <Typography variant="h1">Send Marketing Email</Typography>
-      </div>
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <AdminPageHeader
+        title="Marketing Email"
+        description="Compose and send a campaign to users who opted into marketing emails."
+      />
       <Card>
         <CardHeader>
-          <CardTitle>Compose Marketing Email</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="size-4" />
+            Compose campaign
+          </CardTitle>
           <CardDescription>
             Send an email to all {eligibleUsersCount} users who have opted in to
             marketing emails

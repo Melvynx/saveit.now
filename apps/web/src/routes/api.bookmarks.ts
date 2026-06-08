@@ -5,6 +5,7 @@ import { createBookmark } from "@/lib/database/create-bookmark";
 import { cachedAdvancedSearch } from "@/lib/search/cached-search";
 import { BookmarkType } from "@workspace/database";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
 export const Route = createFileRoute("/api/bookmarks")({
   server: {
@@ -24,6 +25,17 @@ export const Route = createFileRoute("/api/bookmarks")({
         const tags = (url.searchParams.get("tags") ?? "")
           .split(",")
           .filter(Boolean);
+        const limitResult = z.coerce.number().int().min(1).max(50).safeParse(
+          url.searchParams.get("limit") ?? 20,
+        );
+
+        if (!limitResult.success) {
+          return Response.json(
+            { error: "Invalid query", errors: limitResult.error.issues },
+            { status: 400 },
+          );
+        }
+
         const specialFilters = (url.searchParams.get("special") ?? "")
           .split(",")
           .filter(Boolean)
@@ -37,7 +49,7 @@ export const Route = createFileRoute("/api/bookmarks")({
           tags,
           types,
           specialFilters,
-          limit: Number(url.searchParams.get("limit") ?? 20),
+          limit: limitResult.data,
           cursor: url.searchParams.get("cursor") ?? undefined,
           matchingDistance: Number(url.searchParams.get("matchingDistance") ?? 0.1),
         });
