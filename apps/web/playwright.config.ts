@@ -6,6 +6,7 @@ config({ path: ".env" });
 const SERVER_URL =
   process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000";
 const HEADLESS = process.env.HEADLESS === "true";
+const CHROMIUM_CHANNEL = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -42,6 +43,7 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
+        channel: CHROMIUM_CHANNEL,
         // storageState: "playwright/.auth/user.json",
       },
     },

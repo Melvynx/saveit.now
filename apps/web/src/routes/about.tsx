@@ -1,0 +1,151 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Bookmark, CheckCircle, Heart, Video } from "lucide-react";
+
+import { Footer } from "@/features/page/footer";
+import { Header } from "@/features/page/header";
+import { MaxWidthContainer } from "@/features/page/page";
+import { Badge } from "@workspace/ui/components/badge";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { Typography } from "@workspace/ui/components/typography";
+
+export const Route = createFileRoute("/about")({
+  component: AboutPage,
+});
+
+function AboutPage() {
+  return (
+    <div>
+      <Header />
+      <MaxWidthContainer className="py-16">
+        <div className="flex flex-col gap-16">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="w-full md:w-1/2 flex justify-center">
+              <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                <img
+                  src="/images/author.png"
+                  alt="Creator of SaveIt"
+                  className="size-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="w-full md:w-1/2">
+              <Badge className="mb-4">Creator & Daily User</Badge>
+              <Typography variant="h1" className="mb-4">
+                Built by a creator, for creators
+              </Typography>
+              <Typography variant="lead" className="mb-6">
+                Hi! I'm the creator of SaveIt, and I'm a content creator who has
+                published over 500 videos on YouTube.
+              </Typography>
+
+              <div className="space-y-6">
+                <Typography className="text-lg">
+                  To stay constantly informed and up-to-date in the fast-paced
+                  digital world, I created this tool that allows me to find the
+                  websites I need most in a simple and fast way.
+                </Typography>
+                <Typography className="text-lg">
+                  This is not just a side project for me. I personally have over
+                  500 bookmarks saved in this application that I use daily. Your
+                  data is as important to me as my own.
+                </Typography>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              [Video, "500+", "YouTube Videos Published"],
+              [Bookmark, "500+", "Personal Bookmarks Saved"],
+              [Heart, "Daily", "Active Usage"],
+            ].map(([Icon, value, label]) => {
+              const TypedIcon = Icon as typeof Video;
+              return (
+                <Card key={String(label)} className="text-center p-6">
+                  <CardContent className="p-0">
+                    <div className="mb-4">
+                      <TypedIcon className="size-8 text-primary mx-auto mb-2" />
+                      <Typography variant="h3" className="text-2xl font-bold">
+                        {value as string}
+                      </Typography>
+                    </div>
+                    <Typography variant="muted">{label as string}</Typography>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="bg-muted/30 rounded-lg p-8">
+            <div className="text-center mb-8">
+              <Typography variant="h2" className="mb-4">
+                My commitment to you
+              </Typography>
+              <Typography variant="lead" className="max-w-2xl mx-auto">
+                As an independent creator who has been self-employed for several
+                years, I work full-time on multiple projects. However, this
+                project is particularly close to my heart.
+              </Typography>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {[
+                [
+                  "Long-term maintenance guaranteed",
+                  "I use this app every single day with my 500+ bookmarks. If it breaks, my workflow breaks, so you can be sure it will be maintained.",
+                ],
+                [
+                  "Continuous development",
+                  "As a content creator, I constantly discover new needs and use cases. This drives continuous improvements to the platform.",
+                ],
+                [
+                  "Built from real needs",
+                  "Every feature comes from actual pain points I have experienced as a content creator managing hundreds of resources.",
+                ],
+                [
+                  "Personal investment",
+                  "This is not just business for me. It is the tool that powers my daily work. Your success is directly tied to mine.",
+                ],
+              ].map(([title, body]) => (
+                <div key={title} className="flex items-start gap-3">
+                  <CheckCircle className="size-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <Typography variant="large" className="font-medium mb-1">
+                      {title}
+                    </Typography>
+                    <Typography variant="muted">{body}</Typography>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Typography variant="h2" className="mb-6">
+              Why SaveIt exists
+            </Typography>
+            <div className="max-w-3xl mx-auto space-y-6">
+              <Typography className="text-lg">
+                As content creators, designers, entrepreneurs, and
+                professionals, we visit thousands of websites and discover
+                valuable resources that could be game-changers for our work. But
+                traditional bookmarking systems fail us when we need to find
+                that perfect article, tool, or resource we saved months ago.
+              </Typography>
+              <Typography className="text-lg">
+                SaveIt was born from this frustration. I needed a way to not
+                just save links, but to make them truly retrievable when
+                inspiration strikes or when I am solving a specific problem.
+              </Typography>
+              <Typography className="text-lg font-medium text-primary">
+                This tool has transformed how I work, and I am committed to
+                making it do the same for you.
+              </Typography>
+            </div>
+          </div>
+        </div>
+      </MaxWidthContainer>
+      <Footer />
+    </div>
+  );
+}

@@ -1,14 +1,7 @@
+import { GEMINI_EMBEDDING_CACHE_MODEL, GEMINI_EMBEDDING_METADATA_VALUE, embedGeminiQuery, } from "@/lib/gemini";
 import {
-  GEMINI_EMBEDDING_CACHE_MODEL,
-  GEMINI_EMBEDDING_METADATA_VALUE,
-  embedGeminiQuery,
-} from "@/lib/gemini";
-import {
-  BookmarkStatus,
-  BookmarkType,
-  Prisma,
-  prisma,
-} from "@workspace/database";
+  BookmarkStatus, BookmarkType, Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { EmbeddingCache } from "./embedding-cache";
 import {
   SearchOptions,

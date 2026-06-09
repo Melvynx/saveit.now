@@ -1,6 +1,6 @@
 ### Directory Structure (apps/web)
 
-- `app/` - Next.js App Router pages and API routes
+- `src/routes/` - TanStack Start routes and API routes
 - `src/lib/` - Core business logic, database operations, and integrations
 - `src/components/` - Reusable UI components
 - `src/features/` - Feature-specific components and logic
@@ -17,7 +17,7 @@ When working with analytics:
 
 ## Development Workflow
 
-- Always run `pnpm ts` in the `apps/web` directory when modifying NextJS application code
+- Always run `pnpm ts` in the `apps/web` directory when modifying web application code
 
 ## Commands
 
@@ -25,8 +25,8 @@ When working with analytics:
 
 ## Important
 
-- When you create `/api` routes ALWAYS do like @apps/web/app/api/bookmarks/route.ts and use the best @apps/web/src/lib/safe-route.ts files to do it.
-- When you create `Server Function` please always look code in @apps/web/app/(layout)/exports/exports.action.ts and use @apps/web/src/lib/safe-action.ts to do it. Each action should be name `ACTION_NAME.action.ts`
+- When you create `/api` routes, use TanStack Start route files in @apps/web/src/routes and the helpers in @apps/web/src/lib/safe-route.ts.
+- Keep server-side mutations in route handlers or server utilities under @apps/web/src/lib.
 - For fetch request, always use @apps/web/src/lib/up-fetch.ts
 - For env variables, use @apps/web/src/lib/env.ts to typesafe env
 - Always use `useMutation` or `useQuery` when you work with query (with `upfetch`)

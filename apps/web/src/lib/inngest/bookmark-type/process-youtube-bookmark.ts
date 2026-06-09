@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BookmarkType, prisma } from "@workspace/database";
+import { BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { uploadFileToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { logger } from "../../logger";
 import {

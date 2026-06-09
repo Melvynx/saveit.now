@@ -10,8 +10,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: [path.resolve(__dirname, "test/vitest.setup.ts")],
     env: {
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
-      NEXT_PUBLIC_LOG_LEVEL: "6",
+      VITE_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
+      VITE_LOG_LEVEL: "6",
       IS_REACT_ACT_ENVIRONMENT: "true",
       DATABASE_URL: "postgresql://test:test@localhost:5432/test",
       BETTER_AUTH_SECRET: "test-secret",
@@ -24,8 +24,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
-      "@/app": path.resolve(__dirname, "./app/app"),
+      "@": path.resolve(__dirname, "./src"),
+      "@/app": path.resolve(__dirname, "./src/features/app"),
       "@/lib": path.resolve(__dirname, "./src/lib"),
       "@/components": path.resolve(__dirname, "./src/components"),
       "@/features": path.resolve(__dirname, "./src/features"),

@@ -2,7 +2,6 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup } from "@testing-library/react";
 import { fetch } from "cross-fetch";
-import type { ReadonlyURLSearchParams } from "next/navigation";
 import React from "react";
 import { beforeEach, vi } from "vitest";
 import { mockDeep, mockReset } from "vitest-mock-extended";
@@ -31,90 +30,6 @@ Object.defineProperty(window, "localStorage", {
     }),
   },
   writable: true,
-});
-
-// Mock next/navigation
-vi.mock("next/navigation", async () => {
-  const actual = await vi.importActual("next/navigation");
-
-  // Helper to create a fully mocked URLSearchParams that passes TypeScript checks
-  const createMockSearchParams = (
-    defaultParams: Record<string, string> = {},
-  ) => {
-    const params = new Map(Object.entries(defaultParams));
-
-    // Create an empty iterator
-    const emptyIterator = {
-      next: () => ({ done: true, value: undefined }),
-      [Symbol.iterator]: function () {
-        return this;
-      },
-    };
-
-    return {
-      get: vi.fn((key: string) => params.get(key) ?? null),
-      getAll: vi.fn((key: string) =>
-        params.has(key) ? [params.get(key) as string] : [],
-      ),
-      has: vi.fn((key: string) => params.has(key)),
-      keys: vi.fn(() =>
-        params.size
-          ? Array.from(params.keys())[Symbol.iterator]()
-          : emptyIterator,
-      ),
-      values: vi.fn(() =>
-        params.size
-          ? Array.from(params.values())[Symbol.iterator]()
-          : emptyIterator,
-      ),
-      entries: vi.fn(() =>
-        params.size
-          ? Array.from(params.entries())[Symbol.iterator]()
-          : emptyIterator,
-      ),
-      forEach: vi.fn(
-        (
-          callback: (
-            value: string,
-            key: string,
-            parent: URLSearchParams,
-          ) => void,
-        ) => {
-          params.forEach((value, key) => {
-            // Using mock parent as URLSearchParams is not constructable in tests
-            callback(value, key, {} as URLSearchParams);
-          });
-        },
-      ),
-      toString: vi.fn(() => {
-        return Array.from(params.entries())
-          .map(([key, value]) => `${key}=${value}`)
-          .join("&");
-      }),
-      // These props need to be present for ReadonlyURLSearchParams interface
-      append: vi.fn(),
-      delete: vi.fn(),
-      set: vi.fn(),
-      sort: vi.fn(),
-      size: params.size,
-      [Symbol.iterator]: vi.fn(() => params.entries()),
-    };
-  };
-
-  return {
-    ...actual,
-    useSearchParams: vi.fn().mockReturnValue(createMockSearchParams()),
-    useRouter: vi.fn(() => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      back: vi.fn(),
-      forward: vi.fn(),
-      refresh: vi.fn(),
-      prefetch: vi.fn(),
-    })),
-    usePathname: vi.fn(() => "/app"),
-    readonlySearchParamsHook: vi.fn().mockReturnValue(createMockSearchParams()),
-  };
 });
 
 // Mock nuqs

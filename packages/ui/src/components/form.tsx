@@ -1,8 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as LabelPrimitive from "@radix-ui/react-label";
-import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@workspace/ui/lib/utils";
 import * as React from "react";
 import type {
@@ -130,7 +128,7 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 function FormLabel({
   className,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+}: React.ComponentProps<typeof Label>) {
   const { error, formItemId } = useFormField();
 
   return (
@@ -144,23 +142,28 @@ function FormLabel({
   );
 }
 
-function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+type FormControlProps = Omit<React.HTMLAttributes<HTMLElement>, "children"> & {
+  children: React.ReactElement<Record<string, unknown>>;
+};
+
+function FormControl({ children, ...props }: FormControlProps) {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
+  const childProps = children.props;
 
-  return (
-    <Slot
-      data-slot="form-control"
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      {...props}
-    />
-  );
+  return React.cloneElement(children, {
+    ...props,
+    ...childProps,
+    "data-slot": "form-control",
+    id: (childProps.id as string | undefined) ?? props.id ?? formItemId,
+    "aria-describedby":
+      (childProps["aria-describedby"] as string | undefined) ??
+      (!error
+        ? `${formDescriptionId}`
+        : `${formDescriptionId} ${formMessageId}`),
+    "aria-invalid":
+      (childProps["aria-invalid"] as boolean | undefined) ?? !!error,
+  });
 }
 
 function FormDescription({ className, ...props }: React.ComponentProps<"p">) {

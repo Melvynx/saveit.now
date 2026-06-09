@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { inngest } from "../inngest/client";
 import { getPostHogClient } from "../posthog";
 import { SearchCache } from "../search/search-cache";
@@ -67,7 +67,7 @@ export const createBookmark = async (body: {
     },
   });
 
-  SearchCache.invalidateBookmarkUpdate(body.userId).catch(() => {});
+  await SearchCache.invalidateBookmarkUpdate(body.userId);
 
   return bookmark;
 };

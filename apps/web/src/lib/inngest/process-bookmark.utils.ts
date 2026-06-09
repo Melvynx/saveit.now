@@ -1,4 +1,5 @@
-import { BookmarkStatus, BookmarkType, prisma } from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { GEMINI_MODELS } from "../gemini";

@@ -23,10 +23,10 @@ export async function signInMainAccount(page: Page, callbackURL?: string) {
   await page.goto(targetURL);
 
   // Fill in the email
-  await page.fill('input[placeholder="john@doe.com"]', TEST_EMAIL);
+  await page.locator('input[placeholder="you@example.com"]').fill(TEST_EMAIL);
 
   // Click the sign in button
-  await page.click('button[type="submit"]:has-text("Sign in")');
+  await page.getByRole("button", { name: /send code/i }).click();
 
   // Wait for OTP step to appear
   await expect(
@@ -58,10 +58,12 @@ export async function createTestAccount(
   await page.goto(targetURL);
 
   // Fill in the email
-  await page.fill('input[placeholder="john@doe.com"]', testUserData.email);
+  await page
+    .locator('input[placeholder="you@example.com"]')
+    .fill(testUserData.email);
 
   // Click the sign in button to start OTP flow
-  await page.click('button[type="submit"]:has-text("Sign in")');
+  await page.getByRole("button", { name: /send code/i }).click();
 
   // Wait for OTP step to appear
   await expect(
@@ -190,10 +192,10 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
 
   const testEmail = email;
   // Fill in a test email
-  await page.fill('input[placeholder="john@doe.com"]', testEmail);
+  await page.locator('input[placeholder="you@example.com"]').fill(testEmail);
 
   // Submit the form
-  await page.click('button[type="submit"]:has-text("Sign in")');
+  await page.getByRole("button", { name: /send code/i }).click();
 
   // Should progress to OTP step
   await expect(
@@ -211,7 +213,7 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
     throw new Error("OTP code not found");
   }
 
-  await page.getByRole("textbox").fill(otpCode);
+  await page.locator('input[inputmode="numeric"]').first().fill(otpCode);
 
   await page.waitForTimeout(1000);
   try {

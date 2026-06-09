@@ -25,7 +25,10 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Bot, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCreateTagMutation } from "./use-tags";
-import { useInfiniteTags, type Tag as InfiniteTag } from "../../../app/app/hooks/use-tags";
+import {
+  useInfiniteTags,
+  type Tag as InfiniteTag,
+} from "@/features/app/hooks/use-tags";
 
 
 type TagSelectorProps = {

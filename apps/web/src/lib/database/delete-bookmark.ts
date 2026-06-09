@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { deleteFileFromS3 } from "../aws-s3/aws-s3-delete-files";
 import { SafeRouteError } from "../errors";
 import { SearchCache } from "../search/search-cache";

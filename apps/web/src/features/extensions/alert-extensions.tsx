@@ -1,22 +1,38 @@
-"use client";
-
 import { APP_LINKS } from "@/lib/app-links";
 import { logger } from "@/lib/logger";
+import { Link } from "@tanstack/react-router";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useLocalStorage } from "react-use";
+
+const useBooleanLocalStorage = (key: string, defaultValue: boolean) => {
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(key);
+
+    if (stored !== null) {
+      setValue(stored === "true");
+    }
+  }, [key]);
+
+  const updateValue = (nextValue: boolean) => {
+    window.localStorage.setItem(key, String(nextValue));
+    setValue(nextValue);
+  };
+
+  return [value, updateValue] as const;
+};
 
 export const AlertExtensions = () => {
   const [state, setState] = useState<"loading" | "installed" | "not-installed">(
     "loading",
   );
-  const [isClose, setIsClose] = useLocalStorage(
+  const [isClose, setIsClose] = useBooleanLocalStorage(
     "alert-extensions-close",
     false,
   );
@@ -49,7 +65,7 @@ export const AlertExtensions = () => {
       </div>
       <div className="flex gap-2 mt-2 flex-1 justify-end">
         <Button asChild size="sm" variant="outline">
-          <Link href={APP_LINKS.extensions}>Install extension</Link>
+          <Link to={APP_LINKS.extensions}>Install extension</Link>
         </Button>
         <Button size="sm" variant="outline" onClick={() => setIsClose(true)}>
           Close

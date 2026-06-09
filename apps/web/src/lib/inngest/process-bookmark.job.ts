@@ -1,5 +1,6 @@
 import type { Realtime } from "@inngest/realtime";
-import { BookmarkType, prisma } from "@workspace/database";
+import { BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { NonRetriableError } from "inngest";
 import { validateBookmarkLimits } from "../database/bookmark-validation";
 import { logger } from "../logger";

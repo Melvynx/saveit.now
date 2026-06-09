@@ -14,8 +14,13 @@ import {
   CardHeader,
 } from "@workspace/ui/components/card";
 import { Copy, Download, ExternalLink } from "lucide-react";
-import Image from "next/image";
-import { type YoutubeThumbnail } from "../../../app/api/tools/youtube-metadata/youtube-metadata.types";
+
+type YoutubeThumbnail = {
+  url: string;
+  width: number;
+  height: number;
+  quality: "default" | "mqdefault" | "hqdefault" | "sddefault" | "maxresdefault";
+};
 
 interface YoutubeCardProps {
   thumbnail: YoutubeThumbnail;
@@ -100,13 +105,10 @@ export function YoutubeCard({
       </CardHeader>
 
       <CardContent className="">
-        <Image
+        <img
           src={thumbnail.url}
           alt={`${videoTitle} - ${thumbnail.quality} thumbnail`}
-          width={Math.min(thumbnail.width, 240)}
-          height={Math.min(thumbnail.height, 180)}
           className="aspect-video w-full h-auto object-contain"
-          unoptimized
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = "none";

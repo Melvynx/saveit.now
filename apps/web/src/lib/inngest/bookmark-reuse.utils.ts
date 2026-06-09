@@ -1,4 +1,6 @@
-import { BookmarkType, Prisma, prisma } from "@workspace/database";
+import { BookmarkType } from "@workspace/database";
+import type { Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import {
   GEMINI_EMBEDDING_METADATA_KEY,
   GEMINI_EMBEDDING_METADATA_VALUE,

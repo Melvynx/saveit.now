@@ -11,8 +11,7 @@ import {
   getTypeColor,
   getSpecialFilterDisplayName,
   getSpecialFilterColor,
-  type ParsedMention,
-} from "../app/app/utils/type-filter-utils";
+} from "../src/features/app/utils/type-filter-utils";
 
 describe("type-filter-utils", () => {
   describe("parseAtMention", () => {

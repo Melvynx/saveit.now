@@ -2,8 +2,8 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
-import { useRefreshBookmark } from "app/app/bookmark-page/use-bookmark";
-import { useRefreshBookmarks } from "app/app/use-bookmarks";
+import { useRefreshBookmark } from "@/features/app/bookmark-page/use-bookmark";
+import { useRefreshBookmarks } from "@/features/app/use-bookmarks";
 import { useRef } from "react";
 import { toast } from "sonner";
 import { upfetch } from "src/lib/up-fetch";

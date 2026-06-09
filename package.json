@@ -5,8 +5,12 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "start-all": "bash scripts/start-all.sh",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "convex:dev": "pnpm --filter @workspace/backend dev",
+    "convex:deploy": "pnpm --filter @workspace/backend deploy",
+    "convex:dashboard": "pnpm --filter @workspace/backend dashboard",
     "vercel-build": "turbo run db:generate && turbo run db:deploy && turbo run build:web",
     "dev:mobile": "turbo dev:mobile",
     "build:mobile": "turbo build:mobile",

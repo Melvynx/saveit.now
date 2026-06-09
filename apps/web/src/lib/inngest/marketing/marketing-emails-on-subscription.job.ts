@@ -1,5 +1,5 @@
 import { sendMarketingEmail } from "@/lib/mail/send-marketing-email";
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { inngest } from "../client";
 import { EMAILS } from "./emails.const";
 

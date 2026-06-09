@@ -26,6 +26,7 @@ test-product-detection.*
 
 # Build Outputs
 .next/
+.output/
 out/
 build
 dist

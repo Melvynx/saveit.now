@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 
 export function Footer() {
   return (
@@ -22,54 +21,54 @@ export function Footer() {
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium text-[#fafafa]">Product</h4>
                 <nav className="flex flex-col gap-2">
-                  <Link href="/posts" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  <a href="/posts" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Blog
-                  </Link>
-                  <Link href="/docs" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/docs" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Documentation
-                  </Link>
-                  <Link href="/changelog" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/changelog" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Changelog
-                  </Link>
-                  <Link href="/ios" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/ios" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     iOS app
-                  </Link>
+                  </a>
                 </nav>
               </div>
 
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium text-[#fafafa]">Tools</h4>
                 <nav className="flex flex-col gap-2">
-                  <Link href="/tools" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  <a href="/tools" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     All Tools
-                  </Link>
-                  <Link href="/tools/og-images" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/tools/og-images" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     OG Images
-                  </Link>
-                  <Link href="/tools/extract-metadata" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/tools/extract-metadata" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Extract Metadata
-                  </Link>
-                  <Link href="/tools/extract-content" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/tools/extract-content" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Extract Content
-                  </Link>
-                  <Link href="/tools/extract-favicons" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/tools/extract-favicons" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Extract Favicons
-                  </Link>
-                  <Link href="/tools/youtube-metadata" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/tools/youtube-metadata" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     YouTube Metadata
-                  </Link>
+                  </a>
                 </nav>
               </div>
 
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium text-[#fafafa]">Company</h4>
                 <nav className="flex flex-col gap-2">
-                  <Link href="/about" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  <a href="/about" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     About
-                  </Link>
-                  <Link href="/contact" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/contact" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     Contact
-                  </Link>
+                  </a>
                   <a
                     href="https://twitter.com/saveitnow"
                     target="_blank"
@@ -84,18 +83,18 @@ export function Footer() {
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium text-[#fafafa]">Comparaison</h4>
                 <nav className="flex flex-col gap-2">
-                  <Link href="/posts/saveit-vs-pocket-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  <a href="/posts/saveit-vs-pocket-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     vs Pocket
-                  </Link>
-                  <Link href="/posts/saveit-vs-mymind-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/posts/saveit-vs-mymind-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     vs MyMind
-                  </Link>
-                  <Link href="/posts/saveit-vs-raindrop-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/posts/saveit-vs-raindrop-comparison" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     vs Raindrop.io
-                  </Link>
-                  <Link href="/posts/best-bookmark-managers-2024-complete-guide" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
+                  </a>
+                  <a href="/posts/best-bookmark-managers-2024-complete-guide" className="text-sm text-[#666] hover:text-[#fafafa] transition-colors">
                     All Tools
-                  </Link>
+                  </a>
                 </nav>
               </div>
             </div>
@@ -106,18 +105,18 @@ export function Footer() {
               © {new Date().getFullYear()} SaveIt.now. All rights reserved.
             </p>
             <nav className="flex gap-6">
-              <Link
+              <a
                 href="/privacy"
                 className="text-[#666] hover:text-[#fafafa] text-sm transition-colors"
               >
                 Privacy Policy
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/terms"
                 className="text-[#666] hover:text-[#fafafa] text-sm transition-colors"
               >
                 Terms of Service
-              </Link>
+              </a>
             </nav>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
-import readingTime from "reading-time";
 import { z } from "zod";
 
 const PostFrontmatterSchema = z.object({
@@ -65,6 +64,18 @@ function getPostsDirectory(): string {
 
 const postsDirectory = getPostsDirectory();
 
+function getReadingTime(content: string) {
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words / 225));
+
+  return {
+    text: `${minutes} min read`,
+    minutes,
+    time: minutes * 60 * 1000,
+    words,
+  };
+}
+
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
     const realSlug = slug.replace(/\.mdx$/, "");
@@ -79,7 +90,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       return null;
     }
 
-    const stats = readingTime(content);
+    const stats = getReadingTime(content);
 
     return {
       slug: realSlug,

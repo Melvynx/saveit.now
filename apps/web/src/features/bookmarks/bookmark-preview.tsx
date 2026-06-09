@@ -1,7 +1,4 @@
-"use client";
-
 import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
-import { YouTubeEmbed } from "@next/third-parties/google";
 import { Card } from "@workspace/ui/components/card";
 import { Image } from "lucide-react";
 import { useState } from "react";
@@ -52,9 +49,13 @@ export const BookmarkPreview = ({
           className="aspect-video w-full overflow-hidden rounded-md"
           ref={ref}
         >
-          <YouTubeEmbed
+          <iframe
+            title={bookmark.title ?? "YouTube video"}
+            src={`https://www.youtube.com/embed/${(bookmark.metadata as { youtubeId: string }).youtubeId}`}
             width={width}
-            videoid={(bookmark.metadata as { youtubeId: string }).youtubeId}
+            className="aspect-video w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
           />
         </div>
       </Card>

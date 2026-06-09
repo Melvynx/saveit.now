@@ -16,17 +16,17 @@ test.describe("API Keys Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Check for page title
-    await expect(page.locator("h1")).toContainText("API Keys");
+    await expect(page.locator("h1")).toContainText(/API keys/i);
 
     // Check for create API key button
     await expect(
-      page.locator("button:has-text('Create API Key')"),
+      page.getByRole("button", { name: /create key/i }),
     ).toBeVisible();
 
     // Check for page description
     await expect(
       page.locator(
-        "text=Manage your API keys to access the SaveIt.now API programmatically.",
+        "text=Create and revoke keys for programmatic SaveIt.now access.",
       ),
     ).toBeVisible();
 
@@ -44,22 +44,26 @@ test.describe("API Keys Management", () => {
     const uniqueKeyName = `Test API Key ${Date.now()}`;
 
     // Click create API key button
-    await page.click("button:has-text('Create API Key')");
+    await page.getByRole("button", { name: /create key/i }).click();
 
     // Wait for dialog to open and fill in the API key name
-    await page.waitForSelector('input[placeholder*="My Mobile App"]');
-    await page.fill('input[placeholder*="My Mobile App"]', uniqueKeyName);
+    const createDialog = page.getByRole("alertdialog");
+    await expect(createDialog).toBeVisible();
+    await createDialog
+      .locator('input[placeholder*="My Mobile App"]')
+      .fill(uniqueKeyName);
 
     // Submit the form
-    await page.click("button:has-text('Create Key')");
+    await createDialog.getByRole("button", { name: "Create Key" }).click();
 
     // Wait for success dialog
+    const successDialog = page.getByRole("alertdialog");
     await expect(
-      page.locator("text=API Key Created Successfully!"),
+      successDialog.getByText("API Key Created Successfully!"),
     ).toBeVisible();
 
     // Close the success dialog
-    await page.click("button:has-text('Close')");
+    await successDialog.getByRole("button", { name: "Close" }).click();
 
     // Check that the API key appears in the list using exact text matching
     await expect(page.getByText(uniqueKeyName, { exact: true })).toBeVisible();
@@ -72,27 +76,29 @@ test.describe("API Keys Management", () => {
     const apiKeyName = `${faker.location.city()}-dk`;
 
     // Create an API key first
-    await page.click("button:has-text('Create API Key')");
-    await page.waitForSelector('input[placeholder*="My Mobile App"]');
-    await page.fill('input[placeholder*="My Mobile App"]', apiKeyName);
-    await page.click("button:has-text('Create Key')");
+    await page.getByRole("button", { name: /create key/i }).click();
+    const createDialog = page.getByRole("alertdialog");
+    await expect(createDialog).toBeVisible();
+    await createDialog
+      .locator('input[placeholder*="My Mobile App"]')
+      .fill(apiKeyName);
+    await createDialog.getByRole("button", { name: "Create Key" }).click();
 
     // Close the success dialog
-    await page.click("button:has-text('Close')");
+    const successDialog = page.getByRole("alertdialog");
+    await successDialog.getByRole("button", { name: "Close" }).click();
 
     // Wait for the key to appear
     await expect(page.locator(`text=${apiKeyName}`)).toBeVisible();
 
-    // The test fails because the selector matches multiple buttons
-    // Use a more specific selector that targets only the delete button for this specific API key
-    // From the page snapshot, we can see each API key has its own row with text and a button
-
-    // Find the delete button for the API key and click it
+    await page
+      .getByRole("button", { name: `Open actions for ${apiKeyName}` })
+      .click();
     await page.getByTestId(`delete-api-key-button-${apiKeyName}`).click();
 
     // Confirm deletion in the dialog
-
-    await page.click("button:has-text('Delete')");
+    const deleteDialog = page.getByRole("alertdialog");
+    await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await page.waitForLoadState("networkidle");
 
@@ -106,29 +112,32 @@ test.describe("API Keys Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Create an API key first
-    await page.click("button:has-text('Create API Key')");
-    await page.waitForSelector('input[placeholder*="My Mobile App"]');
-    await page.fill(
-      'input[placeholder*="My Mobile App"]',
-      "Test Visibility Key",
-    );
-    await page.click("button:has-text('Create Key')");
+    await page.getByRole("button", { name: /create key/i }).click();
+    const createDialog = page.getByRole("alertdialog");
+    await expect(createDialog).toBeVisible();
+    await createDialog
+      .locator('input[placeholder*="My Mobile App"]')
+      .fill("Test Visibility Key");
+    await createDialog.getByRole("button", { name: "Create Key" }).click();
 
     // Check success dialog messaging
+    const successDialog = page.getByRole("alertdialog");
     await expect(
-      page.locator("text=API Key Created Successfully!"),
+      successDialog.getByText("API Key Created Successfully!"),
     ).toBeVisible();
     await expect(
-      page.locator(
-        "text=Make sure to copy it now - you won't be able to see it again.",
+      successDialog.getByText(
+        "Your API key has been created. Copy it now because you will not be able to see it again.",
       ),
     ).toBeVisible();
 
     // Check that the actual API key is displayed in the dialog
-    await expect(page.locator('input[class*="font-mono"]')).toBeVisible();
+    await expect(
+      successDialog.locator('input[class*="font-mono"]'),
+    ).toBeVisible();
 
     // Close the dialog
-    await page.click("button:has-text('Close')");
+    await successDialog.getByRole("button", { name: "Close" }).click();
 
     // Check that the key appears in the list after closing
     await expect(page.locator("text=Test Visibility Key")).toBeVisible();

@@ -18,7 +18,10 @@ export type OtpFormProps<T> = {
   sendOtp: (email: string) => Promise<void>;
   verifyOtp: (email: string, otp: string) => Promise<T>;
   defaultEmail?: string;
+  initialStep?: Step;
   resendCooldown?: number;
+  variant?: "default" | "split";
+  onStepChange?: (state: { step: Step; email: string }) => void;
   onSuccess?: (result: T) => void;
   onError?: (error: string) => void;
 };
@@ -29,16 +32,20 @@ export function OtpForm<T>({
   sendOtp,
   verifyOtp,
   defaultEmail = "",
+  initialStep = "email",
   resendCooldown = 60,
+  variant = "default",
+  onStepChange,
   onSuccess,
   onError,
 }: OtpFormProps<T>) {
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState(defaultEmail);
   const [isLoading, setIsLoading] = useState(false);
   const [otpResetKey, setOtpResetKey] = useState(0);
   const [direction, setDirection] = useState(1);
   const [ref, bounds] = useMeasure();
+  const isSplit = variant === "split";
 
   const handleSendOtp = async (data: { email: string }) => {
     setIsLoading(true);
@@ -47,6 +54,7 @@ export function OtpForm<T>({
       setEmail(data.email);
       setDirection(1); // Forward direction
       setStep("otp");
+      onStepChange?.({ step: "otp", email: data.email });
     } catch (error) {
       onError?.(error instanceof Error ? error.message : "Failed to send OTP");
     } finally {
@@ -84,6 +92,7 @@ export function OtpForm<T>({
   const handleBack = () => {
     setDirection(-1); // Backward direction
     setStep("email");
+    onStepChange?.({ step: "email", email });
   };
 
   return (
@@ -116,15 +125,22 @@ export function OtpForm<T>({
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <Input
-                    placeholder="john@doe.com"
+                    placeholder="you@example.com"
                     disabled={isLoading}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    autoComplete="email"
+                    className={cn(isSplit && "h-11 rounded-lg bg-background")}
                   />
                 </div>
 
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? "Sending..." : "Sign in"}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className={cn("w-full", isSplit && "h-11 rounded-lg")}
+                >
+                  {isLoading ? "Sending..." : "Send code"}
                 </Button>
               </form>
             </motion.div>
@@ -138,7 +154,12 @@ export function OtpForm<T>({
               transition={{ duration: 0.15 }}
               custom={direction}
             >
-              <div className="flex w-full flex-col items-start gap-4">
+              <div
+                className={cn(
+                  "flex w-full flex-col items-start gap-4",
+                  isSplit && "items-center text-center",
+                )}
+              >
                 <p className="text-muted-foreground text-sm">
                   A one-time password has been sent to{" "}
                   <span className="font-bold">{email}</span>{" "}
@@ -151,11 +172,17 @@ export function OtpForm<T>({
                   </button>
                 </p>
 
-                <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "flex items-center gap-2",
+                    isSplit && "flex-col justify-center sm:flex-row",
+                  )}
+                >
                   <OtpInput
                     key={otpResetKey}
                     onVerify={handleVerifyOtp}
                     isLoading={isLoading}
+                    variant={variant}
                   />
 
                   <ResendButton
@@ -186,10 +213,12 @@ const variants = {
 type OtpStepProps = {
   onVerify: (otp: string) => Promise<void>;
   isLoading: boolean;
+  variant?: "default" | "split";
 };
 
-function OtpInput({ onVerify, isLoading }: OtpStepProps) {
+function OtpInput({ onVerify, isLoading, variant = "default" }: OtpStepProps) {
   const [otpValue, setOtpValue] = useState("");
+  const isSplit = variant === "split";
 
   const handleOtpChange = (value: string) => {
     setOtpValue(value);
@@ -206,15 +235,16 @@ function OtpInput({ onVerify, isLoading }: OtpStepProps) {
       disabled={isLoading}
       className={cn({
         "animate-pulse": isLoading,
+        "justify-center": isSplit,
       })}
     >
       <InputOTPGroup>
-        <InputOTPSlot index={0} />
-        <InputOTPSlot index={1} />
-        <InputOTPSlot index={2} />
-        <InputOTPSlot index={3} />
-        <InputOTPSlot index={4} />
-        <InputOTPSlot index={5} />
+        <InputOTPSlot index={0} className={cn(isSplit && "size-10")} />
+        <InputOTPSlot index={1} className={cn(isSplit && "size-10")} />
+        <InputOTPSlot index={2} className={cn(isSplit && "size-10")} />
+        <InputOTPSlot index={3} className={cn(isSplit && "size-10")} />
+        <InputOTPSlot index={4} className={cn(isSplit && "size-10")} />
+        <InputOTPSlot index={5} className={cn(isSplit && "size-10")} />
       </InputOTPGroup>
     </InputOTP>
   );

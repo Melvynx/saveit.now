@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@workspace/database";
-import { NextRequest } from "next/server";
+import { prisma } from "@workspace/database/client";
 import { getAuthLimits } from "../auth-limits";
 
 type ResponseType =
@@ -21,7 +20,7 @@ type ResponseType =
     };
 
 export async function validateApiKey(
-  request: NextRequest,
+  request: Request,
 ): Promise<ResponseType> {
   const authHeader = request.headers.get("authorization");
 

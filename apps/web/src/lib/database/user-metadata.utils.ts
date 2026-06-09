@@ -1,4 +1,4 @@
-import { prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { z } from "zod";
 import type { Prisma } from "@workspace/database";
 import { AUTH_LIMIT_KEYS, type CustomAuthLimits } from "../auth-limits";

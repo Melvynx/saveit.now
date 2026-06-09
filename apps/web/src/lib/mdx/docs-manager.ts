@@ -1,7 +1,6 @@
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
-import readingTime from "reading-time";
 import { z } from "zod";
 
 const DocFrontmatterSchema = z.object({
@@ -85,6 +84,18 @@ function getDocsDirectory(): string {
 
 const docsDirectory = getDocsDirectory();
 
+function getReadingTime(content: string) {
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words / 225));
+
+  return {
+    text: `${minutes} min read`,
+    minutes,
+    time: minutes * 60 * 1000,
+    words,
+  };
+}
+
 export async function getDocBySlug(slug: string): Promise<Doc | null> {
   try {
     const realSlug = slug.replace(/\.mdx$/, "");
@@ -99,7 +110,7 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
       return null;
     }
 
-    const stats = readingTime(content);
+    const stats = getReadingTime(content);
 
     return {
       slug: realSlug,

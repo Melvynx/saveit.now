@@ -1,4 +1,5 @@
-import { BookmarkType, prisma } from "@workspace/database";
+import { BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { generateText } from "ai";
 import { uploadBufferToS3 } from "../../aws-s3/aws-s3-upload-files";
 import { capturePDFScreenshot } from "../../cloudflare/screenshot";

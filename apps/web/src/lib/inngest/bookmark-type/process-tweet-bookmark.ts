@@ -1,4 +1,5 @@
-import { BookmarkType, prisma } from "@workspace/database";
+import { BookmarkType } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 import { NonRetriableError } from "inngest";
 import { getTweet } from "react-tweet/api";
 import { uploadFileFromURLToS3 } from "../../aws-s3/aws-s3-upload-files";

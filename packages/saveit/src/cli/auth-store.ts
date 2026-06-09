@@ -60,7 +60,7 @@ export function setToken(token: string): void {
   try {
     chmodSync(dir, 0o700);
   } catch {
-    // Filesystems without POSIX perms (e.g. some Windows setups) — best effort.
+    // Filesystems without POSIX perms (e.g. some Windows setups) - best effort.
   }
 
   // Atomic, symlink-safe write: open a sibling temp file with O_NOFOLLOW
@@ -87,7 +87,7 @@ export function setToken(token: string): void {
 
   // Reject if the destination is a symlink (would otherwise be replaced via rename).
   // rename() in POSIX replaces the destination atomically; if dest is a symlink,
-  // it removes the symlink, not the target — but we double-check anyway.
+  // it removes the symlink, not the target - but we double-check anyway.
   try {
     renameSync(tmpPath, TOKEN_PATH);
   } catch (err) {
@@ -105,7 +105,7 @@ export function setToken(token: string): void {
   try {
     chmodSync(TOKEN_PATH, 0o600);
   } catch (err) {
-    // Surface the failure — silent failure could leave a token world-readable.
+    // Surface the failure - silent failure could leave a token world-readable.
     throw new SaveitConfigError(
       `Token saved but could not enforce 0o600 perms: ${(err as Error).message}`,
     );

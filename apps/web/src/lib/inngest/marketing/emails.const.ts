@@ -8,7 +8,7 @@ I'm Melvyn, the founder of SaveIt.now.
 
 I built this app because I had over 500 bookmarks and I kept losing the good ones. Chrome bookmarks weren't helping, and Notion felt too heavy.
 
-SaveIt.now is my solution — a minimal, fast, and smart way to save and find links. It uses AI to summarize content, generate tags, take screenshots, and make everything searchable instantly.
+SaveIt.now is my solution - a minimal, fast, and smart way to save and find links. It uses AI to summarize content, generate tags, take screenshots, and make everything searchable instantly.
 
 This tool is something I use daily, and I'll keep improving it as long as I need it myself.
 

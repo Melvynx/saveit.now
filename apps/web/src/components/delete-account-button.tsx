@@ -10,22 +10,19 @@ import { toast } from "sonner";
 
 export function DeleteAccountButton() {
   const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
-      return unwrapSafePromise(
+    mutationFn: async () =>
+      unwrapSafePromise(
         authClient.deleteUser({
           callbackURL: "/goodbye",
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       dialogManager.add({
         title: "Delete account",
         description: "Click on the link in your email to delete your account",
         cancel: {
           label: "Ok",
-          onClick: () => {
-            // Nothing
-          },
+          onClick: () => {},
         },
       });
     },
@@ -35,11 +32,13 @@ export function DeleteAccountButton() {
   });
 
   return (
-    <CardFooter className="flex justify-end">
+    <CardFooter className="flex justify-end border-t">
       <LoadingButton
         onClick={() => deleteAccountMutation.mutate()}
         variant="destructive"
         loading={deleteAccountMutation.isPending}
+        disabled={deleteAccountMutation.isPending}
+        size="sm"
       >
         Delete account
       </LoadingButton>

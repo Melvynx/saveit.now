@@ -50,7 +50,7 @@ const { bookmarks, hasMore, nextCursor } = await saveit.bookmarks.list({
 
 // 2. Search by query and tags
 const matches = await saveit.bookmarks.list({
-  query: "next.js app router",
+  query: "react router",
   tags: ["frontend"],
   types: ["ARTICLE", "YOUTUBE"],
   special: "UNREAD",
@@ -58,7 +58,7 @@ const matches = await saveit.bookmarks.list({
 
 // 3. Save a new bookmark
 const created = await saveit.bookmarks.create({
-  url: "https://nextjs.org/docs/app",
+  url: "https://react.dev",
 });
 
 // 4. Pick a random unopened bookmark (and mark it opened)

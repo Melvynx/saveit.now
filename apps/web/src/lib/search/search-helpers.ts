@@ -1,9 +1,6 @@
-import {
-  BookmarkStatus,
-  BookmarkType,
-  prisma,
-  Prisma,
-} from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@workspace/database";
+import type { Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
 
 // Types for search results
 export type SearchResultChunk = {

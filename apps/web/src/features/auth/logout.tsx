@@ -1,8 +1,6 @@
-"use client";
-
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { ComponentPropsWithRef, useState } from "react";
 
 export const LogoutButton = (props: ComponentPropsWithRef<"button">) => {
@@ -21,8 +19,8 @@ export const LogoutButton = (props: ComponentPropsWithRef<"button">) => {
             },
             onSuccess: () => {
               setIsLoading(false);
-              router.push("/");
-              router.refresh();
+              void router.navigate({ to: "/" });
+              void router.invalidate();
             },
           },
         );

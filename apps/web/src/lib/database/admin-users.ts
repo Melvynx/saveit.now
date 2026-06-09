@@ -1,9 +1,17 @@
-import { Prisma, prisma } from "@workspace/database";
-import type { Filter, Order, SortBy } from "../../../app/admin/search-params";
+import type { Prisma } from "@workspace/database";
+import { prisma } from "@workspace/database/client";
+import type {
+  Filter,
+  Order,
+  SortBy,
+  UserRoleFilter,
+  UserStatus,
+} from "@/features/admin/search-params";
 
 const UserInclude = {
   subscriptions: {
     select: {
+      plan: true,
       status: true,
       periodEnd: true,
     },
@@ -27,6 +35,20 @@ type GetUsersOptions = {
   sortBy: SortBy;
   order: Order;
   filter: Filter;
+  status: UserStatus;
+  role: UserRoleFilter;
+};
+
+export type AdminOverview = {
+  totalUsers: number;
+  activeUsers: number;
+  bannedUsers: number;
+  adminUsers: number;
+  premiumUsers: number;
+  regularUsers: number;
+  totalBookmarks: number;
+  totalClicks: number;
+  marketingEligibleUsers: number;
 };
 
 export const getUsersWithStats = async ({
@@ -36,69 +58,131 @@ export const getUsersWithStats = async ({
   sortBy,
   order,
   filter,
+  status,
+  role,
 }: GetUsersOptions): Promise<{
   users: UserWithStats[];
   total: number;
   totalPages: number;
 }> => {
-  // Build where clause
-  const whereClause: Prisma.UserWhereInput = {};
+  const andConditions: Prisma.UserWhereInput[] = [];
 
-  // Search filter
   if (search) {
-    whereClause.email = {
-      contains: search,
-      mode: "insensitive",
-    };
+    andConditions.push({
+      OR: [
+        { id: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: "insensitive" } },
+      ],
+    });
   }
 
-  // Premium/Regular filter
   if (filter === "premium") {
-    whereClause.subscriptions = {
-      some: {
-        status: "active",
+    andConditions.push({
+      subscriptions: {
+        some: {
+          status: { in: ["active", "trialing"] },
+        },
       },
-    };
+    });
   }
 
-  // Build order clause - only support what Prisma can handle natively
-  let orderByClause: Prisma.UserOrderByWithRelationInput = {};
+  if (filter === "regular") {
+    andConditions.push({
+      subscriptions: {
+        none: {
+          status: { in: ["active", "trialing"] },
+        },
+      },
+    });
+  }
+
+  if (status === "banned") {
+    andConditions.push({ banned: true });
+  }
+
+  if (status === "active") {
+    andConditions.push({ OR: [{ banned: false }, { banned: null }] });
+  }
+
+  if (role === "admin") {
+    andConditions.push({ role: "admin" });
+  }
+
+  if (role === "user") {
+    andConditions.push({ OR: [{ role: "user" }, { role: null }] });
+  }
+
+  const where: Prisma.UserWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  let orderBy: Prisma.UserOrderByWithRelationInput = {};
 
   if (sortBy === "createdAt") {
-    orderByClause = { createdAt: order };
+    orderBy = { createdAt: order };
+  } else if (sortBy === "name") {
+    orderBy = { name: order };
   } else if (sortBy === "bookmarks") {
-    orderByClause = {
-      bookmarks: {
-        _count: order,
-      },
-    };
+    orderBy = { bookmarks: { _count: order } };
   } else if (sortBy === "clicks") {
-    orderByClause = {
-      bookmarkOpens: {
-        _count: order,
-      },
-    };
+    orderBy = { bookmarkOpens: { _count: order } };
   }
 
-  // Get users with basic info
-  const users = await prisma.user.findMany({
-    where: whereClause,
-    orderBy: orderByClause,
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-    include: UserInclude,
-  });
-
-  // Get total count
-  const total = await prisma.user.count({
-    where: whereClause,
-  });
-
-  const totalPages = Math.ceil(total / pageSize);
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: UserInclude,
+    }),
+    prisma.user.count({ where }),
+  ]);
 
   return {
     users,
     total,
-    totalPages,
+    totalPages: Math.ceil(total / pageSize),
+  };
+};
+
+export const getAdminOverview = async (): Promise<AdminOverview> => {
+  const premiumWhere: Prisma.UserWhereInput = {
+    subscriptions: { some: { status: { in: ["active", "trialing"] } } },
+  };
+  const activeUserWhere: Prisma.UserWhereInput = {
+    OR: [{ banned: false }, { banned: null }],
+  };
+
+  const [
+    totalUsers,
+    activeUsers,
+    bannedUsers,
+    adminUsers,
+    premiumUsers,
+    totalBookmarks,
+    totalClicks,
+    marketingEligibleUsers,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: activeUserWhere }),
+    prisma.user.count({ where: { banned: true } }),
+    prisma.user.count({ where: { role: "admin" } }),
+    prisma.user.count({ where: premiumWhere }),
+    prisma.bookmark.count(),
+    prisma.bookmarkOpen.count(),
+    prisma.user.count({ where: { unsubscribed: false } }),
+  ]);
+
+  return {
+    totalUsers,
+    activeUsers,
+    bannedUsers,
+    adminUsers,
+    premiumUsers,
+    regularUsers: Math.max(totalUsers - premiumUsers, 0),
+    totalBookmarks,
+    totalClicks,
+    marketingEligibleUsers,
   };
 };

@@ -1,7 +1,6 @@
 import { APP_LINKS } from "@/lib/app-links";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
 import { CheckIcon } from "lucide-react";
-import Link from "next/link";
 
 const tiers = [
   {
@@ -83,7 +82,7 @@ export const LandingPricing = () => {
               ))}
             </ul>
 
-            <Link
+            <a
               href={tier.href}
               aria-describedby={tier.id}
               className={`mt-8 inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium w-full text-center transition-colors ${
@@ -93,7 +92,7 @@ export const LandingPricing = () => {
               }`}
             >
               {tier.featured ? "Upgrade to Pro" : "Get Started Free"}
-            </Link>
+            </a>
           </div>
         ))}
       </div>

@@ -1,4 +1,4 @@
-/** SaveIt.now public types — mirrored from the v1 REST API. */
+/** SaveIt.now public types - mirrored from the v1 REST API. */
 
 export type BookmarkType =
   | "VIDEO"

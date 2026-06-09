@@ -105,22 +105,13 @@ test.describe("Process bookmarks tests", () => {
       },
     });
 
-    await page.goto("/app");
-    await expect(page.getByText(bookmark.title ?? "")).toBeVisible({
-      timeout: 10000,
-    });
+    await page.goto(`/app/b/${bookmark.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(new RegExp(`/app/b/${bookmark.id}$`));
+    await expect(
+      page.locator("p", { hasText: "Test Star Bookmark" }),
+    ).toBeVisible();
 
-    const bookmarkCard = page
-      .locator('[data-testid="bookmark-card-page"]')
-      .filter({ hasText: bookmark.title ?? "" })
-      .first();
-    await expect(bookmarkCard).toBeVisible();
-    await bookmarkCard.click();
-
-    await expect(page.locator('[role="dialog"]')).toBeVisible();
-
-    // Use getByRole('banner').getByTestId('star-button') as requested
-    const starButton = page.getByRole("banner").getByTestId("star-button");
+    const starButton = page.getByTestId("star-button");
     await expect(starButton).toBeVisible();
 
     const starIcon = starButton.locator("svg");

@@ -1,11 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
-
 import { APP_LINKS } from "@/lib/app-links";
 import { authClient } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -16,18 +14,24 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import { CreditCard, Gem, Key, Shield, User, UserX } from "lucide-react";
-import Link from "next/link";
-import { useMedia } from "react-use";
+import { type ComponentProps, useEffect, useState } from "react";
 import { LogoutButton } from "../auth/logout";
 
-export const HeaderUser = () => {
-  const plan = useUserPlan();
-  const session = authClient.useSession();
-  const isMobile = useMedia("(max-width: 768px)");
+type HeaderUserMenuContentProps = {
+  isAdmin: boolean;
+  isImpersonating: boolean;
+  isStoppingImpersonation: boolean;
+  onStopImpersonating: () => void;
+  side?: ComponentProps<typeof DropdownMenuContent>["side"];
+  align?: ComponentProps<typeof DropdownMenuContent>["align"];
+  className?: string;
+};
 
-  const isImpersonating = session.data?.session.impersonatedBy !== null;
-  const isAdmin = session.data?.user.role === "admin";
+export function useHeaderUserMenu() {
+  const session = authClient.useSession();
   const user = session.data?.user;
+  const isImpersonating = session.data?.session.impersonatedBy != null;
+  const isAdmin = user?.role === "admin";
 
   const stopImpersonatingMutation = useMutation({
     mutationFn: () => unwrapSafePromise(authClient.admin.stopImpersonating()),
@@ -35,6 +39,43 @@ export const HeaderUser = () => {
       window.location.reload();
     },
   });
+
+  return {
+    user,
+    isAdmin,
+    isImpersonating,
+    isStoppingImpersonation: stopImpersonatingMutation.isPending,
+    stopImpersonating: () => stopImpersonatingMutation.mutate(),
+  };
+}
+
+const useMobileMedia = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+};
+
+export const HeaderUser = () => {
+  const plan = useUserPlan();
+  const isMobile = useMobileMedia();
+  const {
+    user,
+    isAdmin,
+    isImpersonating,
+    isStoppingImpersonation,
+    stopImpersonating,
+  } = useHeaderUserMenu();
+
   return (
     <>
       {user ? (
@@ -79,63 +120,21 @@ export const HeaderUser = () => {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {isImpersonating && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => stopImpersonatingMutation.mutate()}
-                  disabled={stopImpersonatingMutation.isPending}
-                  className="text-orange-600"
-                >
-                  <UserX className="size-4 mr-2" />
-                  Stop Impersonating
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem asChild>
-              <Link href="/account">
-                <User className="size-4" />
-                Account
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/keys">
-                <Key className="size-4" />
-                API Keys
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/billing">
-                <CreditCard className="size-4" />
-                Billing
-              </Link>
-            </DropdownMenuItem>
-            {isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/admin">
-                    <Shield className="size-4" />
-                    Admin Panel
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="w-full">
-              <LogoutButton />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+          <HeaderUserMenuContent
+            isAdmin={isAdmin}
+            isImpersonating={isImpersonating}
+            isStoppingImpersonation={isStoppingImpersonation}
+            onStopImpersonating={stopImpersonating}
+          />
         </DropdownMenu>
       ) : (
         <Link
           className={buttonVariants({
             size: "sm",
             variant: "outline",
-            className: "font-inter",
+            className: "font-inter text-foreground",
           })}
-          href={APP_LINKS.signin}
+          to={APP_LINKS.signin}
         >
           Sign In
         </Link>
@@ -143,6 +142,74 @@ export const HeaderUser = () => {
     </>
   );
 };
+
+export function HeaderUserMenuContent({
+  isAdmin,
+  isImpersonating,
+  isStoppingImpersonation,
+  onStopImpersonating,
+  side,
+  align,
+  className,
+}: HeaderUserMenuContentProps) {
+  return (
+    <DropdownMenuContent
+      side={side}
+      align={align}
+      className={className}
+    >
+      {isImpersonating && (
+        <>
+          <DropdownMenuItem
+            onClick={onStopImpersonating}
+            disabled={isStoppingImpersonation}
+            className="text-orange-600"
+          >
+            <UserX className="mr-2 size-4" />
+            Stop Impersonating
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      )}
+      <DropdownMenuItem asChild>
+        <a href="/account">
+          <User className="size-4" />
+          Account
+        </a>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <a href="/account/keys">
+          <Key className="size-4" />
+          API Keys
+        </a>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <a href="/billing">
+          <CreditCard className="size-4" />
+          Billing
+        </a>
+      </DropdownMenuItem>
+      {isAdmin && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <a href="/admin">
+              <Shield className="size-4" />
+              Admin Panel
+            </a>
+          </DropdownMenuItem>
+        </>
+      )}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        asChild
+        className="w-full"
+      >
+        <LogoutButton />
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+}
 
 export const HeaderAppNameExtension = () => {
   const plan = useUserPlan();

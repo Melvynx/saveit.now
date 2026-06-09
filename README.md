@@ -1,6 +1,6 @@
 # SaveIt.now
 
-A modern bookmark management SaaS application built with TypeScript, Next.js, and Prisma.
+A modern bookmark management SaaS application built with TypeScript, TanStack Start, and Prisma.
 
 ## Architecture
 
@@ -8,7 +8,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 ### Applications
 
-- **apps/web** - Next.js 15 web application (main SaaS product)
+- **apps/web** - TanStack Start web application (main SaaS product)
 - **apps/chrome-extension** - Chrome browser extension
 - **apps/firefox-extension** - Firefox browser extension
 - **apps/worker** - Cloudflare Worker for background processing
@@ -22,7 +22,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 ## Technology Stack
 
-- **Frontend**: Next.js 15, TypeScript, shadcn/ui
+- **Frontend**: TanStack Start, TypeScript, shadcn/ui
 - **Authentication**: Better Auth with GitHub/Google OAuth, magic links, email OTP
 - **Database**: PostgreSQL with Prisma ORM
 - **Payments**: Stripe integration for subscriptions
@@ -72,7 +72,7 @@ pnpm format
 ### Web Application
 
 ```bash
-# Start Next.js dev server
+# Start the TanStack Start dev server
 pnpm dev
 
 # Run TypeScript checks

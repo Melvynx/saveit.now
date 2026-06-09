@@ -1,10 +1,7 @@
-"use client";
-
 import { usePostHog } from "posthog-js/react";
-import Link from "next/link";
 import { ComponentProps } from "react";
 
-interface PosthogLinkProps extends ComponentProps<typeof Link> {
+interface PosthogLinkProps extends ComponentProps<"a"> {
   event?: string;
   properties?: Record<string, unknown>;
 }
@@ -19,5 +16,5 @@ export function PosthogLink({ event, properties, onClick, ref, ...props }: Posth
     onClick?.(e);
   };
 
-  return <Link {...props} ref={ref} onClick={handleClick} />;
+  return <a {...props} ref={ref} onClick={handleClick} />;
 }

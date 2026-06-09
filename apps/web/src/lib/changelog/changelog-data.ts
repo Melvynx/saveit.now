@@ -39,7 +39,7 @@ export const changelogEntries: ChangelogEntry[] = [
         text: "Toggle to enable/disable public sharing",
       },
     ],
-    image: "/changelog/1.1.2.png",
+    image: "/changelog/changelog.png",
   },
   {
     version: "1.1.1",
