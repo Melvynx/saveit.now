@@ -1,27 +1,28 @@
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
 
-const RefactorInputSchema = z.object({
-  refactors: z.array(
-    z.object({
-      bestTag: z.string(),
-      refactorTagIds: z.array(z.string()),
-      createBestTag: z.boolean().optional(),
-    }),
-  ),
-});
-
-export type RefactorInput = z.infer<typeof RefactorInputSchema>;
+export type RefactorInput = {
+  refactors: Array<{
+    bestTag: string;
+    refactorTagIds: string[];
+    createBestTag?: boolean;
+  }>;
+};
 
 export function useTagRefactor() {
   const queryClient = useQueryClient();
+  const doRefactor = useConvexMutation(api.tags.mutations.refactor);
 
   const mutation = useMutation({
-    mutationFn: async (input: RefactorInput) =>
-      upfetch("/api/tags/refactor", {
-        method: "POST",
-        body: RefactorInputSchema.parse(input),
+    mutationFn: (input: RefactorInput) =>
+      doRefactor({
+        refactors: input.refactors.map((r) => ({
+          bestTag: r.bestTag,
+          refactorTagIds: r.refactorTagIds as Id<"tags">[],
+          createBestTag: r.createBestTag,
+        })),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
@@ -37,4 +38,3 @@ export function useTagRefactor() {
     reset: mutation.reset,
   };
 }
-

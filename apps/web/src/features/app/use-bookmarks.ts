@@ -1,9 +1,9 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import type { SearchResultDTO } from "@convex/search/helpers";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { Bookmark } from "@workspace/database";
-import { z } from "zod";
 
 export const useRefreshBookmarks = () => {
   const queryClient = useQueryClient();
@@ -20,7 +20,11 @@ export const useRefreshBookmarks = () => {
   return refresh;
 };
 
-const URL_SCHEMA = z.string().url();
+const URL_SCHEMA_REGEX = /^https?:\/\/.+/;
+
+function isUrl(str: string): boolean {
+  return URL_SCHEMA_REGEX.test(str);
+}
 
 export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const searchParams = useSearch({ strict: false }) as {
@@ -42,6 +46,8 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
   // Use debouncedQuery for the actual search, fallback to query if not provided
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
 
+  const search = useConvexAction(api.search.actions.search);
+
   const data = useInfiniteQuery({
     queryKey: [
       "bookmarks",
@@ -56,36 +62,29 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     enabled,
     refetchInterval: 1000 * 60 * 5, // 5 minutes
     queryFn: async ({ pageParam }) => {
-      if (URL_SCHEMA.safeParse(searchQuery).success) {
+      if (isUrl(searchQuery)) {
         return {
-          bookmarks: [],
+          bookmarks: [] as SearchResultDTO[],
           hasMore: false,
+          nextCursor: undefined as string | undefined,
         };
       }
 
-      const result = await upfetch("/api/bookmarks", {
-        params: {
-          query: searchQuery,
-          types: types.join(","),
-          tags: tags.join(","),
-          special: special.join(","),
-          limit: 20,
-          cursor: pageParam || undefined,
-          matchingDistance,
-        },
+      const result = await search({
+        query: searchQuery || undefined,
+        types: types.length > 0 ? (types as ("TWEET" | "YOUTUBE" | "ARTICLE" | "PAGE" | "IMAGE" | "PDF" | "PRODUCT")[]) : undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        specialFilters: special.length > 0 ? (special as ("READ" | "UNREAD" | "STAR")[]) : undefined,
+        limit: 20,
+        cursor: (pageParam as string) || undefined,
+        matchingDistance,
       });
 
-      const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
-
-      return json;
+      return result as { bookmarks: SearchResultDTO[]; hasMore: boolean; nextCursor?: string };
     },
     getNextPageParam: (lastPage) => {
-      if (lastPage.bookmarks.length === 0) return undefined;
-      if (!lastPage.hasMore) return;
-
-      return lastPage.bookmarks.length > 0
-        ? lastPage.bookmarks[lastPage.bookmarks.length - 1]?.id
-        : undefined;
+      if (!lastPage.hasMore) return undefined;
+      return (lastPage as { nextCursor?: string }).nextCursor ?? undefined;
     },
     initialPageParam: "",
   });
@@ -105,34 +104,4 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     matchingDistance,
     isTyping,
   };
-};
-
-export const usePrefetchBookmarks = () => {
-  const queryClient = useQueryClient();
-
-  const prefetch = (query: string, matchingDistance: number) => {
-    return queryClient.prefetchInfiniteQuery({
-      queryKey: ["bookmarks", query, matchingDistance],
-      getNextPageParam: () => {
-        return undefined;
-      },
-      initialPageParam: "",
-      queryFn: async () => {
-        const result = await upfetch("/api/bookmarks", {
-          params: {
-            query,
-            limit: 20,
-            cursor: undefined,
-            matchingDistance,
-          },
-        });
-
-        const json = result as { bookmarks: Bookmark[]; hasMore: boolean };
-
-        return json;
-      },
-    });
-  };
-
-  return prefetch;
 };

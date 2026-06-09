@@ -5,7 +5,8 @@ import {
 } from "@/features/page/header-user";
 import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
@@ -31,7 +32,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/features/dark-mode/theme-provider";
 import { useEffect, useState } from "react";
-import { z } from "zod";
+
 
 const useMobileMedia = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -53,15 +54,7 @@ export const BookmarkHeader = () => {
   const plan = useUserPlan();
   const isMobile = useMobileMedia();
 
-  const bookmarksInfo = useQuery({
-    queryKey: ["bookmarks", "info"],
-    queryFn: () =>
-      upfetch("/api/bookmarks/info", {
-        schema: z.object({
-          bookmarksCount: z.number(),
-        }),
-      }),
-  });
+  const bookmarksInfo = useQuery(convexQuery(api.bookmarks.queries.count, {}));
 
   return (
     <div className="flex items-center gap-2">
@@ -76,7 +69,7 @@ export const BookmarkHeader = () => {
       {!isMobile ? (
         <>
           <Button variant="outline" size="sm">
-            {bookmarksInfo.data?.bookmarksCount ?? 0}/
+            {bookmarksInfo.data ?? 0}/
             {plan.name === "pro" ? "∞" : (plan.limits.bookmarks ?? 10)}
           </Button>
           {plan.name === "free" && (
@@ -100,7 +93,7 @@ export const BookmarkHeader = () => {
           {isMobile ? (
             <>
               <DropdownMenuLabel>
-                Bookmarks: {bookmarksInfo.data?.bookmarksCount ?? 0}/
+                Bookmarks: {bookmarksInfo.data ?? 0}/
                 {plan.name === "pro" ? "∞" : (plan.limits.bookmarks ?? 10)}
               </DropdownMenuLabel>
               {plan.name === "free" && (

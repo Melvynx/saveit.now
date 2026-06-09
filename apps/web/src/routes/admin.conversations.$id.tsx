@@ -1,4 +1,6 @@
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
@@ -19,10 +21,7 @@ const getAdminConversationData = createServerFn({
 })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    const [{ getUser }, { getConversationAdmin }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/conversations"),
-    ]);
+    const { getUser } = await import("@/lib/auth-session");
     const user = await getUser();
     if (!user) {
       return { access: "signed-out" as const };
@@ -32,7 +31,11 @@ const getAdminConversationData = createServerFn({
       return { access: "forbidden" as const };
     }
 
-    const conversation = await getConversationAdmin(data.id);
+    const conversation = await fetchAuthQuery(
+      api.admin.queries.getConversation,
+      { conversationId: data.id },
+    );
+
     if (!conversation) {
       return { access: "not-found" as const };
     }
@@ -101,7 +104,7 @@ function AdminConversationDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {conversation.messages.map((message) => {
+          {conversation.messages.map((message: any) => {
             const isUser = message.role === "user";
             const textPart = message.parts?.find(
               (part: { type: string }) => part.type === "text",
@@ -122,7 +125,7 @@ function AdminConversationDetailPage() {
                       : "bg-muted border",
                   )}
                 >
-                  <div className="text-xs font-medium mb-1 opacity-70">
+                  <div className="mb-1 text-xs font-medium opacity-70">
                     {isUser ? "User" : "Assistant"}
                   </div>
                   <div

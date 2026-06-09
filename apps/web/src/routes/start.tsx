@@ -3,9 +3,10 @@ import { ImportForm } from "@/features/imports/import-form";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
 import { useSession } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -17,8 +18,6 @@ import {
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/start")({
   component: StartPage,
@@ -27,13 +26,11 @@ export const Route = createFileRoute("/start")({
 function StartPage() {
   const session = useSession();
   const navigate = useNavigate();
+  const setOnboarding = useConvexMutation(api.users.mutations.setOnboarding);
+
   const finishMutation = useMutation({
     mutationFn: async (params: "extension" | "app") => {
-      await upfetch("/api/start", {
-        method: "POST",
-        body: {},
-        schema: z.object({ success: z.boolean() }),
-      });
+      await setOnboarding({});
       return params;
     },
     onSuccess: (params) => {

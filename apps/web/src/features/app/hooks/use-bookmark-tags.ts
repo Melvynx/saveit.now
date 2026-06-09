@@ -1,143 +1,90 @@
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { TagType } from "@workspace/database";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const TagSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.nativeEnum(TagType),
-});
+import type { Id } from "@convex/_generated/dataModel";
 
 export interface Tag {
   id: string;
   name: string;
-  type: TagType;
+  type: "USER" | "IA";
 }
-
-const fetchBookmarkTags = async (bookmarkId: string): Promise<Tag[]> => {
-  const result = await upfetch(`/api/bookmarks/${bookmarkId}/tags`, {
-    schema: z.object({
-      tags: z.array(TagSchema),
-    }),
-  });
-  return result.tags;
-};
-
-const updateBookmarkTags = async ({
-  bookmarkId,
-  tags,
-}: {
-  bookmarkId: string;
-  tags: string[];
-}): Promise<Tag[]> => {
-  const result = await upfetch(`/api/bookmarks/${bookmarkId}/tags`, {
-    method: "PATCH",
-    body: JSON.stringify({ tags }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    schema: z.object({
-      tags: z.array(TagSchema),
-    }),
-  });
-  return result.tags;
-};
 
 export const useBookmarkTags = (bookmarkId?: string | null) => {
   const queryClient = useQueryClient();
+  const setBookmarkTagsByName = useConvexMutation(
+    api.tags.mutations.setBookmarkTagsByName,
+  );
 
   const query = useQuery({
-    queryKey: ["bookmark", bookmarkId, "tags"],
-    queryFn: () => {
-      if (!bookmarkId) {
-        return [];
-      }
-      return fetchBookmarkTags(bookmarkId);
-    },
+    ...convexQuery(
+      api.tags.queries.getByBookmark,
+      bookmarkId ? { bookmarkId: bookmarkId as Id<"bookmarks"> } : "skip",
+    ),
     enabled: !!bookmarkId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    select: (data): Tag[] =>
+      data
+        ? data.map((t) => ({ id: t._id, name: t.name, type: t.type as "USER" | "IA" }))
+        : [],
   });
 
   const mutation = useMutation({
-    mutationFn: updateBookmarkTags,
+    mutationFn: ({
+      bookmarkId: bId,
+      tags,
+    }: {
+      bookmarkId: string;
+      tags: string[];
+    }) =>
+      setBookmarkTagsByName({
+        bookmarkId: bId as Id<"bookmarks">,
+        tagNames: tags,
+      }),
     onMutate: async ({ bookmarkId: mutateBookmarkId, tags: newTags }) => {
       if (!mutateBookmarkId) return;
 
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: ["bookmark", mutateBookmarkId, "tags"],
+      const convexKey = convexQuery(api.tags.queries.getByBookmark, {
+        bookmarkId: mutateBookmarkId as Id<"bookmarks">,
       });
 
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries(convexKey);
+
       // Snapshot the previous value
-      const previousTags = queryClient.getQueryData([
-        "bookmark",
-        mutateBookmarkId,
-        "tags",
-      ]);
+      const previousTags = queryClient.getQueryData(convexKey.queryKey);
 
       // Optimistically update to the new value
       const optimisticTags: Tag[] = newTags.map((name) => ({
         id: `temp-${name}`,
         name,
-        type: "USER" as TagType,
+        type: "USER" as const,
       }));
 
-      queryClient.setQueryData(
-        ["bookmark", mutateBookmarkId, "tags"],
-        optimisticTags,
-      );
+      queryClient.setQueryData(convexKey.queryKey, optimisticTags);
 
       // Return a context object with the snapshotted value
       return { previousTags, bookmarkId: mutateBookmarkId };
     },
     onError: (_error, _variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousTags && context?.bookmarkId) {
-        queryClient.setQueryData(
-          ["bookmark", context.bookmarkId, "tags"],
-          context.previousTags,
-        );
+      if (context?.bookmarkId) {
+        const convexKey = convexQuery(api.tags.queries.getByBookmark, {
+          bookmarkId: context.bookmarkId as Id<"bookmarks">,
+        });
+        queryClient.setQueryData(convexKey.queryKey, context.previousTags);
       }
       toast.error("Failed to update tags");
     },
-    onSuccess: (data, { bookmarkId: successBookmarkId }) => {
-      // Update with real data from server
-      queryClient.setQueryData(
-        ["bookmark", successBookmarkId, "tags"],
-        data,
-      );
-
-      // Also update the main bookmark cache if it exists
-      queryClient.setQueryData(
-        ["bookmark", successBookmarkId],
-        (oldData: unknown) => {
-          if (
-            oldData &&
-            typeof oldData === "object" &&
-            "bookmark" in oldData
-          ) {
-            return {
-              ...oldData,
-              bookmark: {
-                ...(oldData.bookmark as Record<string, unknown>),
-                tags: data.map((tag) => ({ tag })),
-              },
-            };
-          }
-          return oldData;
-        },
-      );
-
+    onSuccess: (_data, { bookmarkId: successBookmarkId }) => {
       // Invalidate bookmark list queries to ensure consistency
       queryClient.invalidateQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey;
+        predicate: (q) => {
+          const qKey = q.queryKey;
           return (
-            Array.isArray(queryKey) &&
-            queryKey[0] === "bookmarks" &&
-            !queryKey.includes(successBookmarkId)
+            Array.isArray(qKey) &&
+            qKey[0] === "bookmarks" &&
+            !qKey.includes(successBookmarkId)
           );
         },
       });
@@ -146,9 +93,11 @@ export const useBookmarkTags = (bookmarkId?: string | null) => {
     },
     onSettled: (_data, _error, { bookmarkId: settledBookmarkId }) => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({
-        queryKey: ["bookmark", settledBookmarkId, "tags"],
-      });
+      queryClient.invalidateQueries(
+        convexQuery(api.tags.queries.getByBookmark, {
+          bookmarkId: settledBookmarkId as Id<"bookmarks">,
+        }),
+      );
     },
   });
 
@@ -207,11 +156,11 @@ export const usePrefetchBookmarkTags = () => {
     if (!bookmarkId) {
       return;
     }
-    void queryClient.prefetchQuery({
-      queryKey: ["bookmark", bookmarkId, "tags"],
-      queryFn: () => fetchBookmarkTags(bookmarkId),
-      staleTime: 1000 * 60 * 5,
-    });
+    void queryClient.prefetchQuery(
+      convexQuery(api.tags.queries.getByBookmark, {
+        bookmarkId: bookmarkId as Id<"bookmarks">,
+      }),
+    );
   };
 
   return prefetch;

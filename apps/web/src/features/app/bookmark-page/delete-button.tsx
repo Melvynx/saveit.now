@@ -2,7 +2,8 @@
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
@@ -11,6 +12,7 @@ import { Trash } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useRefreshBookmarks } from "../use-bookmarks";
+import type { Id } from "@convex/_generated/dataModel";
 
 export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
 
@@ -60,12 +62,11 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 
 export const useDeleteBookmark = () => {
   const refreshBookmarks = useRefreshBookmarks();
+  const removeBookmark = useConvexMutation(api.bookmarks.mutations.remove);
 
   const action = useMutation({
     mutationFn: async (bookmarkId: string) => {
-      return upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "DELETE",
-      });
+      return removeBookmark({ id: bookmarkId as Id<"bookmarks"> });
     },
     onSuccess: () => {
       refreshBookmarks();

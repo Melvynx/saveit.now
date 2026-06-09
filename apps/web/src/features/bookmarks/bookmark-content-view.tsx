@@ -4,7 +4,7 @@ import { Card, CardContent } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { LucideIcon, ShoppingBag, Sparkle, TagIcon } from "lucide-react";
 
-import { BookmarkViewType } from "@/lib/database/get-bookmark";
+import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import { BookmarkTagSelector } from "@/features/app/bookmark-card/bookmark-tag-selector";
 import { BookmarkFavicon } from "@/features/app/bookmark-favicon";
 import { BookmarkNote } from "@/features/app/bookmark-page/bookmark-note";
@@ -16,7 +16,7 @@ export const BookmarkContentView = ({
   bookmark,
   isPublic = false,
 }: {
-  bookmark: BookmarkViewType;
+  bookmark: BookmarkDetailDTO;
   isPublic?: boolean;
 }) => {
   // Extract transcript data from metadata
@@ -145,7 +145,7 @@ export const BookmarkContentView = ({
                 {bookmark.tags.length === 0 ? (
                   <Typography variant="muted">No tags</Typography>
                 ) : (
-                  bookmark.tags.map((tag) => (
+                  bookmark.tags.map((tag: { tag: { id: string; name: string; type: string } }) => (
                     <span
                       key={tag.tag.id}
                       className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium"

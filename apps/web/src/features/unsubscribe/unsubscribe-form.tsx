@@ -1,28 +1,41 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
-import { z } from "zod";
+
+const convexSiteUrl = import.meta.env?.VITE_CONVEX_SITE_URL ?? "";
 
 export function UnsubscribeForm({ userId }: { userId: string }) {
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async () =>
-      upfetch(`/api/unsubscribe/${userId}`, {
-        method: "POST",
-        body: {},
-        schema: z.object({
-          success: z.boolean(),
-          message: z.string(),
-        }),
-      }),
+    mutationFn: async () => {
+      // Token + timestamp supplied via URL search params from the email link.
+      const params = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : "",
+      );
+      const token = params.get("token");
+      const timestamp = params.get("timestamp");
+
+      const qs = new URLSearchParams({ userId });
+      if (token) qs.set("token", token);
+      if (timestamp) qs.set("timestamp", timestamp);
+
+      const res = await fetch(
+        `${convexSiteUrl}/unsubscribe/${userId}?${qs.toString()}`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as any)?.error ?? "Failed to unsubscribe");
+      }
+      return res.json() as Promise<{ success: boolean; message: string }>;
+    },
     onSuccess: () => {
       setIsUnsubscribed(true);
     },

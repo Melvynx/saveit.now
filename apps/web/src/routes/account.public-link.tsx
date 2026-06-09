@@ -4,20 +4,15 @@ import { createServerFn } from "@tanstack/react-start";
 
 const getPublicLinkData = createServerFn({ method: "GET" }).handler(
   async () => {
-    const [{ getRequiredUserOrRedirect }, { prisma }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@workspace/database/client"),
-    ]);
+    const { getRequiredUserOrRedirect } = await import("@/lib/auth-session");
     const user = await getRequiredUserOrRedirect();
-    const publicLinkSettings = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        publicLinkEnabled: true,
-        publicLinkSlug: true,
-      },
-    });
 
-    return { publicLinkSettings };
+    return {
+      publicLinkSettings: {
+        publicLinkEnabled: user.publicLinkEnabled ?? false,
+        publicLinkSlug: user.publicLinkSlug ?? null,
+      },
+    };
   },
 );
 

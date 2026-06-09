@@ -1,8 +1,8 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
+import { authClient } from "@/lib/auth-client";
 import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
-import { upfetch } from "@/lib/up-fetch";
 import { useMutation } from "@tanstack/react-query";
 import {
   Card,
@@ -16,7 +16,6 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 interface EmailChangeFormProps {
   currentEmail: string;
@@ -27,12 +26,15 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
   const [errors, setErrors] = useState<string[]>([]);
 
   const mutation = useMutation({
-    mutationFn: async (newEmail: string) =>
-      upfetch("/api/user/profile", {
-        method: "PATCH",
-        body: { email: newEmail },
-        schema: z.object({ success: z.boolean() }),
-      }),
+    mutationFn: async (newEmail: string) => {
+      const { error } = await authClient.changeEmail({
+        newEmail,
+        callbackURL: "/account",
+      });
+      if (error) {
+        throw new Error(error.message ?? "Failed to change email");
+      }
+    },
     onSuccess: () => {
       toast.success("Check your current email for verification link");
     },

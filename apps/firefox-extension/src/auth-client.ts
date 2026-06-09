@@ -1,13 +1,15 @@
 import { createAuthClient } from "better-auth/client";
 import { config } from "./config";
 
-const BASE_URL = config.BASE_URL;
+// CONVEX_SITE_URL: Convex .site domain — serves /api/auth/* and /api/bookmarks
+const CONVEX_SITE_URL = config.CONVEX_SITE_URL;
 
-// Configuration spécifique pour les CORS et cookies
+// Auth client: baseURL points at the Convex site URL where Better Auth routes are registered
+// (authComponent.registerRoutes mounts /api/auth/* on the .convex.site domain).
 export const authClient = createAuthClient({
-  baseURL: BASE_URL,
+  baseURL: CONVEX_SITE_URL,
   fetchOptions: {
-    credentials: "include", // Pour envoyer les cookies
+    credentials: "include", // Send session cookies cross-origin
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +28,7 @@ export interface Session {
 
 export async function getSession(): Promise<Session | null> {
   try {
-    console.log("Fetching session from", BASE_URL);
+    console.log("Fetching session from", CONVEX_SITE_URL);
     const { data, error } = await authClient.getSession();
 
     if (error) {
@@ -55,7 +57,7 @@ export async function saveBookmark(
   try {
     console.log("Saving bookmark for URL:", url);
     console.log("Auth client config:", {
-      baseURL: BASE_URL,
+      baseURL: CONVEX_SITE_URL,
       mode: "cors",
       credentials: "include"
     });
@@ -71,8 +73,8 @@ export async function saveBookmark(
       };
     }
 
-    // Envoyer la requête pour sauvegarder le bookmark
-    const response = await fetch(`${BASE_URL}/api/bookmarks`, {
+    // POST to the Convex site URL — the Prisma/Next endpoint is removed.
+    const response = await fetch(`${CONVEX_SITE_URL}/api/bookmarks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

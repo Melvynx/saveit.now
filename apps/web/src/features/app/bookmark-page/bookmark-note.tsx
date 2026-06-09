@@ -1,13 +1,15 @@
 "use client";
 
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "@workspace/ui/components/card";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Typography } from "@workspace/ui/components/typography";
 import { NotebookPen } from "lucide-react";
 import { toast } from "sonner";
+import type { Id } from "@convex/_generated/dataModel";
 
 export type BookmarkNoteProps = {
   note: string | null | undefined;
@@ -15,19 +17,22 @@ export type BookmarkNoteProps = {
 };
 
 export const BookmarkNote = ({ note, bookmarkId }: BookmarkNoteProps) => {
+  const updateBookmark = useConvexMutation(api.bookmarks.mutations.update);
+
   const updateNoteAction = useMutation({
-    mutationFn: (note: string) =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { note },
+    mutationFn: (noteValue: string) =>
+      updateBookmark({
+        id: bookmarkId as Id<"bookmarks">,
+        patch: { note: noteValue },
       }),
     onSuccess: () => {},
     onError: () => {
       toast.error("Failed to save note");
     },
   });
-  const onUpdate = useDebounceFn((note: string) =>
-    updateNoteAction.mutate(note),
+
+  const onUpdate = useDebounceFn((noteValue: string) =>
+    updateNoteAction.mutate(noteValue),
   );
 
   return (

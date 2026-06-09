@@ -1,16 +1,17 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
+import { Loader } from "@workspace/ui/components/loader";
+import { Text } from "@workspace/ui/components/text";
 import { toast } from "sonner";
 import {
   useBookmarkMetadata,
-  useBookmarkToken,
 } from "../bookmark-page/use-bookmark";
-import BookmarkProgress from "../bookmark-progress";
 import { useRefreshBookmarks } from "../use-bookmarks";
 import {
   BookmarkCardContainer,
@@ -20,6 +21,7 @@ import {
   BookmarkCardTitle,
 } from "./bookmark-card-base";
 import type { BookmarkCardData } from "./bookmark.types";
+import type { Id } from "@convex/_generated/dataModel";
 
 interface BookmarkCardPendingProps {
   bookmark: BookmarkCardData;
@@ -27,7 +29,6 @@ interface BookmarkCardPendingProps {
 
 export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
   const domainName = new URL(bookmark.url).hostname;
-  const token = useBookmarkToken(bookmark.id);
   const pageMetadata = useBookmarkMetadata(bookmark.id);
 
   return (
@@ -43,10 +44,7 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
             "--color-bg": `color-mix(in srgb, var(--border) 50%, transparent)`,
           }}
         >
-          <BookmarkProgress
-            bookmarkId={bookmark.id}
-            token={token.data?.token}
-          />
+          <ProcessingIndicator bookmarkId={bookmark.id} />
           <DeleteButtonAction bookmarkId={bookmark.id} />
         </div>
       </BookmarkCardHeader>
@@ -61,16 +59,39 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
   );
 };
 
+/**
+ * Shows a processing indicator using Convex reactive bookmark data.
+ * Replaces the old Inngest realtime token-based progress UI.
+ */
+function ProcessingIndicator({ bookmarkId }: { bookmarkId: string }) {
+  void bookmarkId;
+  return (
+    <div className="flex flex-col items-start w-fit mx-auto justify-center gap-2">
+      <div className="flex w-full items-center justify-center gap-2">
+        {Array.from({ length: 9 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="rounded-full bg-accent"
+            style={{ height: 3, width: 10, borderRadius: 2, opacity: 0.4 }}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2 relative -left-0.5">
+        <Loader className="text-muted-foreground size-4" />
+        <Text variant="shine">Processing...</Text>
+      </div>
+    </div>
+  );
+}
+
 export const DeleteButtonAction = ({
   bookmarkId,
   ...props
 }: ButtonProps & { bookmarkId: string }) => {
   const refreshBookmarks = useRefreshBookmarks();
+  const removeBookmark = useConvexMutation(api.bookmarks.mutations.remove);
   const deleteAction = useMutation({
-    mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "DELETE",
-      }),
+    mutationFn: () => removeBookmark({ id: bookmarkId as Id<"bookmarks"> }),
     onSuccess: () => {
       toast.success("Bookmark deleted");
       void refreshBookmarks();

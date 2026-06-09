@@ -16,7 +16,7 @@ import {
 } from "@workspace/ui/components/table";
 import type { ReactNode } from "react";
 
-type ApiKey = {
+export type ApiKey = {
   id: string;
   name: string | null;
   start?: string | null;

@@ -2,7 +2,7 @@
 
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { BookmarkStatus } from "@workspace/database";
+import { BookmarkStatus } from "@/lib/bookmark-types";
 import { Card } from "@workspace/ui/components/card";
 import {
   ContextMenu,

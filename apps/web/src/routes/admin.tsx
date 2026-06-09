@@ -1,6 +1,8 @@
 import { AdminShell } from "@/features/admin/admin-shell";
 import { AdminPageHeader, AdminStatCard } from "@/features/admin/admin-shared";
 import { parseAdminSearchParams } from "@/features/admin/search-params";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import {
   createFileRoute,
   Navigate,
@@ -30,10 +32,7 @@ import {
 const getAdminData = createServerFn({ method: "GET" })
   .validator((data: ReturnType<typeof parseAdminSearchParams>) => data)
   .handler(async () => {
-    const [{ getUser }, { getAdminOverview }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/admin-users"),
-    ]);
+    const { getUser } = await import("@/lib/auth-session");
     const user = await getUser();
     if (!user) {
       return { access: "signed-out" as const };
@@ -43,9 +42,11 @@ const getAdminData = createServerFn({ method: "GET" })
       return { access: "forbidden" as const };
     }
 
+    const overview = await fetchAuthQuery(api.admin.queries.getOverview, {});
+
     return {
       access: "granted" as const,
-      overview: await getAdminOverview(),
+      overview,
     };
   });
 

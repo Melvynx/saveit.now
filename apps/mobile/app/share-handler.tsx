@@ -1,8 +1,8 @@
 import { AlertTriangle, Bookmark, Check, X } from "@tamagui/lucide-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useShareIntentContext } from "expo-share-intent";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Circle,
@@ -14,38 +14,18 @@ import {
   XStack,
   YStack,
 } from "tamagui";
-import { apiClient } from "../src/lib/api-client";
+import { api } from "@convex/_generated/api";
+
+type MutationStatus = "idle" | "pending" | "success" | "error";
 
 export default function ShareHandler() {
   const { hasShareIntent, shareIntent, resetShareIntent, error } =
     useShareIntentContext();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const createBookmarkMutation = useMutation({
-    mutationFn: ({
-      url,
-      metadata,
-      imageFile,
-    }: {
-      url: string;
-      metadata: Record<string, any>;
-      imageFile?: { uri: string; name: string; type: string };
-    }) => apiClient.createBookmark({ url, metadata, imageFile }),
-    onSuccess: () => {
-      // Show success for 2 seconds, then close
-      setTimeout(() => {
-        resetShareIntent();
-        router.dismiss();
-      }, 2000);
-    },
-    onError: () => {
-      // Show error UI for 3 seconds, then close
-      setTimeout(() => {
-        resetShareIntent();
-        router.dismiss();
-      }, 3000);
-    },
-  });
+  const [status, setStatus] = useState<MutationStatus>("idle");
+
+  const createBookmark = useMutation(api.bookmarks.mutations.create);
 
   useEffect(() => {
     // If no share intent, immediately redirect to tabs
@@ -58,18 +38,18 @@ export default function ShareHandler() {
     if (
       hasShareIntent &&
       shareIntent &&
-      !createBookmarkMutation.isPending &&
-      !createBookmarkMutation.isSuccess &&
-      !createBookmarkMutation.isError
+      status === "idle"
     ) {
       handleSharedContent();
     }
   }, [hasShareIntent, shareIntent]);
 
-  const handleSharedContent = () => {
+  const handleSharedContent = async () => {
     if (!shareIntent) {
       return;
     }
+
+    setStatus("pending");
 
     let url = "";
     let metadata: Record<string, any> = {};
@@ -97,7 +77,8 @@ export default function ShareHandler() {
       // File content (images, etc.)
       const file = shareIntent.files[0];
       if (file && file.mimeType?.startsWith("image/")) {
-        // For images, we'll upload the file - URL will be replaced by S3 URL
+        // For images, use placeholder URL. The Convex backend will process later.
+        // TODO: When api.files.actions.uploadR2 is available, upload first then create.
         url = `placeholder-image-upload-${Date.now()}`;
         metadata = {
           type: "image",
@@ -105,20 +86,7 @@ export default function ShareHandler() {
           mimeType: file.mimeType,
           fileSize: file.size,
         };
-
-        // Create image file object for upload
-        const imageFile = {
-          uri: file.path,
-          name:
-            file.fileName ||
-            `image-${Date.now()}.${file.mimeType.split("/")[1]}`,
-          type: file.mimeType,
-        };
-
-        createBookmarkMutation.mutate({ url, metadata, imageFile });
-        return;
       } else if (file) {
-        // For non-image files, keep existing behavior
         url = file.path;
         metadata = {
           type: "file",
@@ -130,10 +98,26 @@ export default function ShareHandler() {
     }
 
     if (!url) {
+      setStatus("idle");
       return;
     }
 
-    createBookmarkMutation.mutate({ url, metadata });
+    try {
+      await createBookmark({ url, metadata });
+      setStatus("success");
+      // Show success for 2 seconds, then close
+      setTimeout(() => {
+        resetShareIntent();
+        router.dismiss();
+      }, 2000);
+    } catch {
+      setStatus("error");
+      // Show error UI for 3 seconds, then close
+      setTimeout(() => {
+        resetShareIntent();
+        router.dismiss();
+      }, 3000);
+    }
   };
 
   const handleCancel = () => {
@@ -141,7 +125,7 @@ export default function ShareHandler() {
     router.dismiss();
   };
 
-  // Error state
+  // Share-intent error state
   if (error) {
     return (
       <View flex={1} backgroundColor="$background">
@@ -189,8 +173,8 @@ export default function ShareHandler() {
     );
   }
 
-  // Error state from API call
-  if (createBookmarkMutation.isError) {
+  // Error state from Convex mutation (e.g. already exists)
+  if (status === "error") {
     return (
       <View flex={1} backgroundColor="$background">
         <YStack
@@ -236,7 +220,7 @@ export default function ShareHandler() {
   }
 
   // Success state
-  if (createBookmarkMutation.isSuccess) {
+  if (status === "success") {
     return (
       <View flex={1} backgroundColor="$background">
         <YStack
@@ -275,78 +259,63 @@ export default function ShareHandler() {
     );
   }
 
-  // Loading state
-  if (createBookmarkMutation.isPending) {
-    return (
-      <View flex={1} backgroundColor="$background">
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          padding="$4"
-          gap="$4"
-        >
-          <Circle
-            size={80}
-            backgroundColor="$primary"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Spinner size="large" color="$primaryForeground" />
-          </Circle>
-
-          <YStack gap="$2" alignItems="center">
-            <H2 color="$foreground" textAlign="center">
-              Saving Bookmark
-            </H2>
-            <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
-              Adding to your SaveIt collection...
-            </Paragraph>
-          </YStack>
-
-          <XStack alignItems="center" gap="$2" opacity={0.6}>
-            <View
-              width={4}
-              height={4}
-              borderRadius="$10"
-              backgroundColor="$primary"
-              animation="bouncy"
-              animateOnly={["scale"]}
-              scale={1.2}
-            />
-            <View
-              width={4}
-              height={4}
-              borderRadius="$10"
-              backgroundColor="$primary"
-              animation="bouncy"
-              animateOnly={["scale"]}
-              scale={1.2}
-              animationDelay={200}
-            />
-            <View
-              width={4}
-              height={4}
-              borderRadius="$10"
-              backgroundColor="$primary"
-              animation="bouncy"
-              animateOnly={["scale"]}
-              scale={1.2}
-              animationDelay={400}
-            />
-          </XStack>
-        </YStack>
-      </View>
-    );
-  }
-
-  // This should never be reached now since we redirect immediately
-  // if there's no share intent, but just in case show a loading state
-
+  // Loading / pending state
   return (
     <View flex={1} backgroundColor="$background">
-      <YStack flex={1} justifyContent="center" alignItems="center" padding="$4">
-        <Spinner size="large" color="$primary" />
+      <YStack
+        flex={1}
+        justifyContent="center"
+        alignItems="center"
+        padding="$4"
+        gap="$4"
+      >
+        <Circle
+          size={80}
+          backgroundColor="$primary"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Spinner size="large" color="$primaryForeground" />
+        </Circle>
+
+        <YStack gap="$2" alignItems="center">
+          <H2 color="$foreground" textAlign="center">
+            Saving Bookmark
+          </H2>
+          <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
+            Adding to your SaveIt collection...
+          </Paragraph>
+        </YStack>
+
+        <XStack alignItems="center" gap="$2" opacity={0.6}>
+          <View
+            width={4}
+            height={4}
+            borderRadius="$10"
+            backgroundColor="$primary"
+            animation="bouncy"
+            animateOnly={["scale"]}
+            scale={1.2}
+          />
+          <View
+            width={4}
+            height={4}
+            borderRadius="$10"
+            backgroundColor="$primary"
+            animation="bouncy"
+            animateOnly={["scale"]}
+            scale={1.2}
+          />
+          <View
+            width={4}
+            height={4}
+            borderRadius="$10"
+            backgroundColor="$primary"
+            animation="bouncy"
+            animateOnly={["scale"]}
+            scale={1.2}
+          />
+        </XStack>
       </YStack>
     </View>
   );

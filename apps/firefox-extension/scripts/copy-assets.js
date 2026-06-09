@@ -45,9 +45,13 @@ async function compileTypeScript() {
     // Check if --dev flag is passed
     const isDev = process.argv.includes('--dev');
     const baseUrl = isDev ? 'http://localhost:3000' : 'https://saveit.now';
-    
+    // CONVEX_SITE_URL: set via env var or fall back to the production Convex site URL.
+    // During dev you can point to the dev deployment (e.g. https://<dev-slug>.convex.site).
+    const convexSiteUrl = process.env.CONVEX_SITE_URL || (isDev ? 'http://localhost:3001' : 'https://tough-chameleon-916.convex.site');
+
     console.log(`Building for ${isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
     console.log(`Base URL: ${baseUrl}`);
+    console.log(`Convex Site URL: ${convexSiteUrl}`);
 
     // Build background and content scripts with IIFE format for Firefox compatibility
     await build({
@@ -66,6 +70,7 @@ async function compileTypeScript() {
         // Define global variables for Firefox compatibility
         global: "globalThis",
         '__BASE_URL__': JSON.stringify(baseUrl),
+        '__CONVEX_SITE_URL__': JSON.stringify(convexSiteUrl),
         '__IS_DEV__': JSON.stringify(isDev),
       },
       banner: {

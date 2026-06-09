@@ -2,7 +2,8 @@
 
 import { AvatarUploader } from "@/features/auth/avatar-uploader";
 import { useSession } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -15,7 +16,6 @@ import {
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 interface AvatarSectionProps {
   user: {
@@ -26,26 +26,21 @@ interface AvatarSectionProps {
   };
 }
 
-async function uploadAvatar({ file }: { file: File }) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  return upfetch(`/api/user/avatar`, {
-    method: "POST",
-    body: formData,
-    schema: z.object({
-      avatarUrl: z.string(),
-      success: z.boolean(),
-    }),
-  });
-}
-
 export function AvatarSection({ user }: AvatarSectionProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const session = useSession();
+  const uploadAvatarAction = useConvexAction(api.users.actions.uploadAvatar);
 
   const uploadMutation = useMutation({
-    mutationFn: uploadAvatar,
+    mutationFn: async ({ file }: { file: File }) => {
+      const fileData = await file.arrayBuffer();
+      return uploadAvatarAction({
+        fileData,
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      });
+    },
     onSuccess: () => {
       toast.success("Avatar updated successfully!");
       void session.refetch();

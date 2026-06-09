@@ -4,7 +4,8 @@ import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
 import { useUserPlan } from "@/lib/auth/user-plan";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import {
   Alert,
@@ -33,9 +34,6 @@ import {
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const CheckoutResponseSchema = z.object({ url: z.string() });
 
 export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
@@ -45,6 +43,7 @@ export function UpgradePage() {
   const error = searchParams.get("error");
   const plan = useUserPlan();
   const posthog = usePostHog();
+  const createCheckout = useConvexAction(api.stripe.actions.createCheckout);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -52,15 +51,11 @@ export function UpgradePage() {
         plan: monthly ? "monthly" : "yearly",
       });
 
-      const result = await upfetch("/api/upgrade", {
-        method: "POST",
-        body: {
-          plan: "pro",
-          successUrl: "/upgrade/success",
-          cancelUrl: "/upgrade?error=true",
-          annual: !monthly,
-        },
-        schema: CheckoutResponseSchema,
+      const result = await createCheckout({
+        plan: "pro",
+        successUrl: "/upgrade/success",
+        cancelUrl: "/upgrade?error=true",
+        annual: !monthly,
       });
 
       window.location.href = result.url;

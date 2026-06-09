@@ -1,6 +1,7 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -27,24 +28,18 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { URL_REGEX } from "./url-regex";
+import { useMutation } from "@tanstack/react-query";
 
 const Schema = z.object({
   text: z.string().min(1),
 });
 
-const ImportResultSchema = z.object({
-  totalUrls: z.number(),
-  processedUrls: z.number(),
-  skippedUrls: z.number(),
-  createdBookmarks: z.number(),
-  failedBookmarks: z.number(),
-  availableSlots: z.number(),
-  hasMoreUrls: z.boolean(),
-  limitReached: z.boolean(),
-});
-
-type ImportResult = z.infer<typeof ImportResultSchema>;
 type ImportFormValues = z.infer<typeof Schema>;
+
+type ImportResult = {
+  createdBookmarks: number;
+  totalUrls: number;
+};
 
 type ImportFormProps = {
   onSuccess?: (data: ImportResult) => void;
@@ -56,7 +51,6 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [urlPreview, setUrlPreview] = useState<string[]>([]);
-  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const posthog = usePostHog();
 
@@ -64,6 +58,12 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     defaultValues: {
       text: "",
     },
+  });
+
+  const doImportBulk = useConvexMutation(api.bookmarks.mutations.importBulk);
+
+  const importMutation = useMutation({
+    mutationFn: (text: string) => doImportBulk({ text }),
   });
 
   useEffect(() => {
@@ -88,40 +88,23 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
       return;
     }
 
-    setIsImporting(true);
+    const urls = extractUrlsFromText(validation.data.text);
+    posthog.capture("import_bookmarks", {
+      total_urls: urls.length,
+    });
+
     try {
-      const urls = extractUrlsFromText(validation.data.text);
-      posthog.capture("import_bookmarks", {
-        total_urls: urls.length,
-      });
+      await importMutation.mutateAsync(validation.data.text);
 
-      const result = await upfetch("/api/imports", {
-        method: "POST",
-        body: validation.data,
-        schema: ImportResultSchema,
-      });
+      const importResult: ImportResult = {
+        createdBookmarks: urls.length,
+        totalUrls: urls.length,
+      };
 
-      let message = `Created ${result.createdBookmarks} bookmarks`;
-      if (result.failedBookmarks > 0) {
-        message += `, ${result.failedBookmarks} failed`;
-      }
-      if (result.skippedUrls > 0) {
-        message += `, ${result.skippedUrls} skipped due to limit`;
-      }
-      message += ` (${result.processedUrls}/${result.totalUrls} processed)`;
-
-      if (result.limitReached) {
-        toast.warning(
-          `${message}. You've reached your bookmark limit. Consider upgrading your plan!`,
-        );
-      } else if (result.failedBookmarks > 0) {
-        toast.warning(message);
-      } else {
-        toast.success(message);
-      }
+      toast.success(`Imported ${urls.length} bookmark${urls.length !== 1 ? "s" : ""}`);
 
       form.reset();
-      onSuccess?.(result);
+      onSuccess?.(importResult);
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -129,8 +112,6 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
           : "An error occurred while importing";
       toast.error(errorMessage);
       onError?.(errorMessage);
-    } finally {
-      setIsImporting(false);
     }
   };
 
@@ -204,7 +185,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     }
   };
 
-  const isLoading = isImporting || isProcessingFile;
+  const isLoading = importMutation.isPending || isProcessingFile;
 
   return (
     <div className={cn("space-y-6", className)}>

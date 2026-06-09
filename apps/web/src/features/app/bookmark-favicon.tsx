@@ -1,4 +1,4 @@
-import { BookmarkStatus, BookmarkType } from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@/lib/bookmark-types";
 import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { CircleDashed, CircleX, File, Image, ShoppingBag } from "lucide-react";
 import { DEFAULT_FAVICON } from "./bookmark.default";

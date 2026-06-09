@@ -1,23 +1,37 @@
 import { ArticleReader } from "@/features/public-bookmarks/article-reader";
-import { getMarkdownContent } from "@/lib/bookmark-content";
+import { getUser } from "@/lib/auth-session";
+import { api } from "@convex/_generated/api";
+
+/** Extract article markdown from a bookmark's metadata (client-safe). */
+function getMarkdownContent(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const m = metadata as Record<string, unknown>;
+  const content = m.articleContent ?? m.markdown ?? m.content;
+  return typeof content === "string" && content.trim() ? content : null;
+}
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { ConvexHttpClient } from "convex/browser";
+
+const convexUrl =
+  (import.meta.env?.VITE_CONVEX_URL ?? process.env.VITE_CONVEX_URL) || "";
 
 const getReadArticleData = createServerFn({ method: "GET" })
   .validator((data: { bookmarkId: string }) => data)
   .handler(async ({ data }) => {
-    const [{ getUser }, { getPublicBookmark }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/get-bookmark"),
+    const convex = new ConvexHttpClient(convexUrl);
+    const [bookmark, user] = await Promise.all([
+      convex.query(api.bookmarks.queries.getPublic, {
+        id: data.bookmarkId as any,
+      }),
+      getUser(),
     ]);
-    const bookmark = await getPublicBookmark(data.bookmarkId);
-    const user = await getUser();
 
-    return { bookmark, user };
+    return { bookmark, user: user ?? null };
   });
 
 export const Route = createFileRoute("/p/$bookmarkId/read")({

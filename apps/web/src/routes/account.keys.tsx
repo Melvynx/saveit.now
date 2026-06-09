@@ -1,35 +1,43 @@
-import { ApiKeyList } from "@/features/account/api-keys/api-key-list";
+import { ApiKeyList, type ApiKey } from "@/features/account/api-keys/api-key-list";
 import { CreateApiKeyForm } from "@/features/account/api-keys/create-api-key-form";
 import { APP_LINKS } from "@/lib/app-links";
+import { authClient, useSession } from "@/lib/auth-client";
+import { useUserPlan } from "@/lib/auth/user-plan";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 
-const getApiKeysData = createServerFn({ method: "GET" }).handler(async () => {
-  const [{ auth }, { getUserLimitsOrRedirect }, { getRequestHeaders }] =
-    await Promise.all([
-      import("@/lib/auth"),
-      import("@/lib/auth-session"),
-      import("@tanstack/react-start/server"),
-    ]);
-  const plan = await getUserLimitsOrRedirect();
-  const apiKeys =
-    plan.limits.apiAccess === 0
-      ? []
-      : await auth.api.listApiKeys({
-          headers: getRequestHeaders(),
-        });
-
-  return { plan, apiKeys };
-});
-
 export const Route = createFileRoute("/account/keys")({
-  loader: () => getApiKeysData(),
   component: ApiKeysPage,
 });
 
 function ApiKeysPage() {
-  const { plan, apiKeys } = Route.useLoaderData();
+  const session = useSession();
+  const plan = useUserPlan();
+  const userId = session.data?.user?.id;
+
+  const apiKeysQuery = useQuery({
+    queryKey: ["api-keys", userId],
+    queryFn: async () => {
+      if (plan.limits.apiAccess === 0) return [] as ApiKey[];
+      const { data, error } = await authClient.apiKey.list();
+      if (error) throw new Error(error.message ?? "Failed to load API keys");
+      const list = Array.isArray(data)
+        ? data
+        : ((data as { apiKeys?: unknown[] } | null)?.apiKeys ?? []);
+      return list as unknown as ApiKey[];
+    },
+    enabled: Boolean(userId) && !plan.isLoading,
+  });
+
+  if (plan.isLoading || apiKeysQuery.isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="h-6 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-32 animate-pulse rounded bg-muted" />
+      </div>
+    );
+  }
 
   if (plan.limits.apiAccess === 0) {
     return (
@@ -50,7 +58,10 @@ function ApiKeysPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <ApiKeyList apiKeys={apiKeys} action={<CreateApiKeyForm />} />
+      <ApiKeyList
+        apiKeys={apiKeysQuery.data ?? []}
+        action={<CreateApiKeyForm />}
+      />
     </div>
   );
 }

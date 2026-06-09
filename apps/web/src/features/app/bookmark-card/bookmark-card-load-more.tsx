@@ -5,7 +5,7 @@ import { Typography } from "@workspace/ui/components/typography";
 import { ChevronDown, Package } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import { BookmarkStatus, BookmarkType } from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@/lib/bookmark-types";
 import {
   BookmarkCardContainer,
   BookmarkCardContent,

@@ -7,7 +7,7 @@ import {
   downloadJSON,
   generateFilenameFromURL,
 } from "@/lib/tools/tool-utils";
-import { upfetch } from "@/lib/up-fetch";
+import { callConvexTool } from "@/lib/tools/convex-tool-client";
 import { useMutation } from "@tanstack/react-query";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -41,14 +41,7 @@ export function YoutubeMetadataTool() {
 
   const mutation = useMutation({
     mutationFn: async (urlToFetch: string) => {
-      return upfetch("/api/tools/youtube-metadata", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        schema: extractYoutubeMetadataResponseSchema,
-        body: JSON.stringify({ url: urlToFetch }),
-      });
+      return callConvexTool("youtube-metadata", urlToFetch, extractYoutubeMetadataResponseSchema);
     },
   });
 

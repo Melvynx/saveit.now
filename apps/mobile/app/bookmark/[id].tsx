@@ -8,33 +8,29 @@ import {
   Trash2,
   X,
 } from "@tamagui/lucide-icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, ScrollView } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { Button, Card, H3, H4, Image, Text, XStack, YStack } from "tamagui";
-import { apiClient, type Bookmark } from "../../src/lib/api-client";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 export default function BookmarkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [copying, setCopying] = useState(false);
 
-  // Fetch bookmark details
-  const {
-    data: bookmark,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["bookmark", id],
-    queryFn: async () => {
-      if (!id) throw new Error("No bookmark ID provided");
-      return await apiClient.getBookmark(id);
-    },
-    enabled: !!id,
-  });
+  // Reactive query — updates automatically during processing.
+  const bookmark = useQuery(
+    api.bookmarks.queries.get,
+    id ? { id: id as Id<"bookmarks"> } : "skip",
+  );
+  const isLoading = bookmark === undefined;
+
+  const updateBookmarkMutation = useMutation(api.bookmarks.mutations.update);
+  const deleteBookmarkMutation = useMutation(api.bookmarks.mutations.remove);
 
   const preview =
     bookmark?.preview ||
@@ -43,79 +39,34 @@ export default function BookmarkDetailScreen() {
     bookmark?.faviconUrl ||
     "https://codelynx.mlvcdn.com/images/2025-07-28/placeholder-favicon.png";
 
-  // Update bookmark mutation
-  const updateBookmarkMutation = useMutation({
-    mutationFn: async (updates: Partial<Bookmark>) => {
-      if (!id) throw new Error("No bookmark ID");
-      return await apiClient.updateBookmark(id, updates);
-    },
-    onSuccess: (updatedBookmark) => {
-      // Update cache
-      queryClient.setQueryData(["bookmark", id], updatedBookmark);
-
-      // Update bookmarks list cache
-      queryClient.setQueryData(
-        ["bookmarks"],
-        (oldData: { pages: Array<{ bookmarks: Bookmark[] }> }) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              bookmarks: page.bookmarks.map((b: Bookmark) =>
-                b.id === updatedBookmark.id ? updatedBookmark : b,
-              ),
-            })),
-          };
-        },
-      );
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to update bookmark");
-    },
-  });
-
-  // Delete bookmark mutation
-  const deleteBookmarkMutation = useMutation({
-    mutationFn: async () => {
-      if (!id) throw new Error("No bookmark ID");
-      return await apiClient.deleteBookmark(id);
-    },
-    onSuccess: () => {
-      // Remove from cache
-      queryClient.removeQueries({ queryKey: ["bookmark", id] });
-
-      // Invalidate all bookmarks queries to force a refresh
-      queryClient.invalidateQueries({
-        queryKey: ["bookmarks"],
-        exact: false,
-      });
-
-      // Navigate back
-      router.back();
-      Alert.alert("Success", "Bookmark deleted successfully");
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to delete bookmark");
-    },
-  });
-
-  const handleToggleStar = () => {
+  const handleToggleStar = async () => {
     if (!bookmark) return;
-    updateBookmarkMutation.mutate({ starred: !bookmark.starred });
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id,
+        patch: { starred: !bookmark.starred },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
-  const handleToggleRead = () => {
+  const handleToggleRead = async () => {
     if (!bookmark) return;
-    updateBookmarkMutation.mutate({ read: !bookmark.read });
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id,
+        patch: { read: !bookmark.read },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
   const handleCopyLink = async () => {
     if (!bookmark) return;
     setCopying(true);
     try {
-      // Note: In React Native, you'd typically use @react-native-clipboard/clipboard
-      // For now, we'll show an alert
       Alert.alert("Link Copied", bookmark.url);
     } finally {
       setCopying(false);
@@ -143,14 +94,19 @@ export default function BookmarkDetailScreen() {
       "Delete Bookmark",
       "Are you sure you want to delete this bookmark? This action cannot be undone.",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => deleteBookmarkMutation.mutate(),
+          onPress: async () => {
+            try {
+              await deleteBookmarkMutation({ id: bookmark._id });
+              router.back();
+              Alert.alert("Success", "Bookmark deleted successfully");
+            } catch {
+              Alert.alert("Error", "Failed to delete bookmark");
+            }
+          },
         },
       ],
     );
@@ -164,7 +120,7 @@ export default function BookmarkDetailScreen() {
     );
   }
 
-  if (error || !bookmark) {
+  if (!bookmark) {
     return (
       <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
         <Text color="$red10">Failed to load bookmark</Text>
@@ -175,7 +131,23 @@ export default function BookmarkDetailScreen() {
     );
   }
 
-  const domainName = new URL(bookmark.url).hostname;
+  // Adapt Convex bookmark to the shape expected by sub-components.
+  const bookmarkView = {
+    ...bookmark,
+    id: bookmark._id as string,
+    createdAt:
+      typeof bookmark.createdAt === "number"
+        ? new Date(bookmark.createdAt).toISOString()
+        : bookmark.createdAt,
+  };
+
+  const domainName = (() => {
+    try {
+      return new URL(bookmarkView.url).hostname;
+    } catch {
+      return bookmarkView.url;
+    }
+  })();
 
   return (
     <YStack flex={1}>
@@ -189,7 +161,7 @@ export default function BookmarkDetailScreen() {
         backgroundColor="$background"
       >
         <H3 flex={1} numberOfLines={1} fontSize="$5">
-          {bookmark.title || domainName}
+          {bookmarkView.title || domainName}
         </H3>
         <Button
           size="$3"
@@ -207,27 +179,27 @@ export default function BookmarkDetailScreen() {
       >
         <YStack padding="$4" gap="$4">
           <BookmarkDetailContent
-            bookmark={bookmark}
+            bookmark={bookmarkView as any}
             preview={preview}
             faviconUrl={faviconUrl}
           />
 
           {/* Summary */}
-          {bookmark.summary && (
+          {bookmarkView.summary && (
             <Card padding="$4" gap="$3">
               <H4>Summary</H4>
               <Text color="$gray11" lineHeight="$1">
-                {bookmark.summary}
+                {bookmarkView.summary}
               </Text>
             </Card>
           )}
 
           {/* Tags */}
-          {bookmark.tags && bookmark.tags.length > 0 && (
+          {bookmarkView.tags && bookmarkView.tags.length > 0 && (
             <Card padding="$4" gap="$3">
               <H4>Tags</H4>
               <XStack flexWrap="wrap" gap="$2">
-                {bookmark.tags.map((tagWrapper) => (
+                {bookmarkView.tags.map((tagWrapper: any) => (
                   <Button
                     key={tagWrapper.tag.id}
                     size="$2"
@@ -272,26 +244,24 @@ export default function BookmarkDetailScreen() {
           size="$3"
           backgroundColor="transparent"
           onPress={handleToggleStar}
-          theme={bookmark.starred ? "yellow" : undefined}
-          disabled={updateBookmarkMutation.isPending}
+          theme={bookmarkView.starred ? "yellow" : undefined}
         >
           <Star
             size={20}
-            color={bookmark.starred ? "$yellow10" : "$gray10"}
-            fill={bookmark.starred ? "$yellow10" : "transparent"}
+            color={bookmarkView.starred ? "$yellow10" : "$gray10"}
+            fill={bookmarkView.starred ? "$yellow10" : "transparent"}
           />
         </Button>
 
-        {(bookmark.type === "ARTICLE" || bookmark.type === "YOUTUBE") && (
+        {(bookmarkView.type === "ARTICLE" || bookmarkView.type === "YOUTUBE") && (
           <Button
             circular
             size="$3"
             backgroundColor="transparent"
             onPress={handleToggleRead}
-            theme={bookmark.read ? "green" : undefined}
-            disabled={updateBookmarkMutation.isPending}
+            theme={bookmarkView.read ? "green" : undefined}
           >
-            {bookmark.read ? (
+            {bookmarkView.read ? (
               <Check size={20} color="$green10" />
             ) : (
               <Circle size={20} color="$gray10" />
@@ -325,7 +295,6 @@ export default function BookmarkDetailScreen() {
           backgroundColor="transparent"
           onPress={handleDeleteBookmark}
           theme="red"
-          disabled={deleteBookmarkMutation.isPending}
         >
           <Trash2 size={20} color="$red10" />
         </Button>
@@ -339,7 +308,7 @@ function BookmarkDetailContent({
   preview,
   faviconUrl,
 }: {
-  bookmark: Bookmark;
+  bookmark: any;
   preview: string;
   faviconUrl: string;
 }) {
@@ -364,7 +333,7 @@ function TweetDetailContent({
   bookmark,
   faviconUrl,
 }: {
-  bookmark: Bookmark;
+  bookmark: any;
   faviconUrl: string;
 }) {
   const metadata = bookmark.metadata;
@@ -460,7 +429,7 @@ function TweetDetailContent({
   );
 }
 
-function YoutubeDetailContent({ bookmark }: { bookmark: Bookmark }) {
+function YoutubeDetailContent({ bookmark }: { bookmark: any }) {
   const youtubeId = bookmark.metadata?.youtubeId;
 
   if (!youtubeId) return null;
@@ -506,11 +475,17 @@ function DefaultDetailContent({
   preview,
   faviconUrl,
 }: {
-  bookmark: Bookmark;
+  bookmark: any;
   preview: string;
   faviconUrl: string;
 }) {
-  const domainName = new URL(bookmark.url).hostname;
+  const domainName = (() => {
+    try {
+      return new URL(bookmark.url).hostname;
+    } catch {
+      return bookmark.url;
+    }
+  })();
 
   return (
     <>

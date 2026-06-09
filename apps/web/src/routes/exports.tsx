@@ -9,22 +9,16 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { AlertCircle } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-
-const getExportLimits = createServerFn({ method: "GET" }).handler(async () => {
-  const { getUserLimitsOrRedirect } = await import("@/lib/auth-session");
-  return getUserLimitsOrRedirect();
-});
+import { useUserPlan } from "@/lib/auth/user-plan";
 
 export const Route = createFileRoute("/exports")({
-  loader: () => getExportLimits(),
   component: ExportsPage,
 });
 
 function ExportsPage() {
-  const user = Route.useLoaderData();
+  const { limits } = useUserPlan();
 
-  if (!user.limits.canExport) {
+  if (!limits.canExport) {
     return (
       <AccountShell>
         <Alert>

@@ -1,4 +1,4 @@
-import { BookmarkType, BookmarkStatus } from "@workspace/database";
+import { BookmarkType, BookmarkStatus } from "@/lib/bookmark-types";
 
 export type BookmarkTag = {
   tag: {
@@ -28,6 +28,6 @@ export type BookmarkCardData = {
   vectorSummary?: string | null;
   preview?: string | null;
   ogDescription?: string | null;
-  createdAt?: Date;
+  createdAt?: Date | number;
   tags?: BookmarkTag[];
 };

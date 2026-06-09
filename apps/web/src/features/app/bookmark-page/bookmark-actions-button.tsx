@@ -2,7 +2,8 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Button, ButtonProps } from "@workspace/ui/components/button";
@@ -10,6 +11,7 @@ import { Check, Copy, RefreshCcw, Share, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { usePostHog } from "posthog-js/react";
 import React from "react";
+import type { Id } from "@convex/_generated/dataModel";
 
 export const BackButton = () => {
   const router = useRouter();
@@ -134,12 +136,10 @@ export const ReBookmarkButton = ({
   const queryClient = useQueryClient();
   const router = useRouter();
   const posthog = usePostHog();
+  const reprocess = useConvexMutation(api.bookmarks.mutations.reprocess);
+
   const action = useMutation({
-    mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { status: "PENDING" },
-      }),
+    mutationFn: () => reprocess({ id: bookmarkId as Id<"bookmarks"> }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         predicate: (query) =>

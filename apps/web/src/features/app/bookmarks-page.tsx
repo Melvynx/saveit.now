@@ -1,4 +1,5 @@
 import { AlertExtensions } from "@/features/extensions/alert-extensions";
+import type { BookmarkCardData } from "./bookmark-card/bookmark.types";
 import { useSession } from "@/lib/auth-client";
 import { logger } from "@/lib/logger";
 import {
@@ -113,7 +114,7 @@ export function BookmarksPage() {
           <>
             {!query && <BookmarkCardInput />}
 
-            {bookmarks.map((bookmark, i) => {
+            {(bookmarks as unknown as BookmarkCardData[]).map((bookmark, i) => {
               if (query && i === 0) {
                 return (
                   <div className="relative" key={bookmark.id}>

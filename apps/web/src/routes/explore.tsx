@@ -1,14 +1,16 @@
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
-import type { BookmarkType, Prisma } from "@workspace/database";
+import type { BookmarkType } from "@/lib/bookmark-types";
+import { api } from "@convex/_generated/api";
+import { convexQuery } from "@convex-dev/react-query";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -59,108 +61,9 @@ type ExploreBookmark = {
   summary: string | null;
   ogDescription: string | null;
   type: BookmarkType | null;
-  createdAt: Date;
+  createdAt: number;
   tags: Array<{ tag: { name: string } }>;
 };
-
-const getExploreData = createServerFn({ method: "GET" })
-  .validator((data: ExploreSearch) => data)
-  .handler(async ({ data }) => {
-    const [{ BookmarkType: BookmarkTypeValues }, { prisma }, { getServerUrl }] =
-      await Promise.all([
-        import("@workspace/database"),
-        import("@workspace/database/client"),
-        import("@/lib/server-url"),
-      ]);
-    const currentPage = Math.max(1, Number(data.page) || 1);
-    const offset = (currentPage - 1) * BOOKMARKS_PER_PAGE;
-    const validTypes = Object.values(BookmarkTypeValues);
-    const validatedType =
-      data.type && validTypes.includes(data.type as BookmarkType)
-        ? (data.type as BookmarkType)
-        : undefined;
-
-    const where = {
-      status: "READY" as const,
-      title: { not: null },
-      ...(validatedType && { type: validatedType }),
-      ...(data.tag && {
-        tags: {
-          some: {
-            tag: { name: { equals: data.tag, mode: "insensitive" as const } },
-          },
-        },
-      }),
-    } satisfies Prisma.BookmarkWhereInput;
-
-    const [bookmarks, totalCount, popularTags] = await Promise.all([
-      prisma.bookmark.findMany({
-        where,
-        select: {
-          id: true,
-          title: true,
-          url: true,
-          ogImageUrl: true,
-          faviconUrl: true,
-          summary: true,
-          ogDescription: true,
-          type: true,
-          createdAt: true,
-          tags: {
-            select: { tag: { select: { name: true } } },
-            take: 3,
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        skip: offset,
-        take: BOOKMARKS_PER_PAGE,
-      }),
-      prisma.bookmark.count({ where }),
-      prisma.bookmarkTag.groupBy({
-        by: ["tagId"],
-        _count: { tagId: true },
-        orderBy: { _count: { tagId: "desc" } },
-        take: 20,
-      }),
-    ]);
-
-    const tagIds = popularTags.map((tag) => tag.tagId);
-    const tagNames =
-      tagIds.length > 0
-        ? await prisma.tag.findMany({
-            where: { id: { in: tagIds } },
-            select: { id: true, name: true },
-          })
-        : [];
-    const tagNameMap = new Map(tagNames.map((tag) => [tag.id, tag.name]));
-    const topTags = popularTags
-      .map((tag) => tagNameMap.get(tag.tagId))
-      .filter(Boolean) as string[];
-    const baseUrl = getServerUrl();
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: "Explore Bookmarks",
-      description:
-        "Browse thousands of curated bookmarks saved by the SaveIt.now community.",
-      url: `${baseUrl}/explore`,
-      isPartOf: {
-        "@type": "WebSite",
-        name: "SaveIt.now",
-        url: baseUrl,
-      },
-      numberOfItems: totalCount,
-    };
-
-    return {
-      bookmarks: bookmarks as ExploreBookmark[],
-      currentPage,
-      totalCount,
-      totalPages: Math.ceil(totalCount / BOOKMARKS_PER_PAGE),
-      uniqueTags: [...new Set(topTags)],
-      jsonLd,
-    };
-  });
 
 export const Route = createFileRoute("/explore")({
   validateSearch: (search: Record<string, unknown>): ExploreSearch => ({
@@ -168,8 +71,6 @@ export const Route = createFileRoute("/explore")({
     type: typeof search.type === "string" ? search.type : undefined,
     tag: typeof search.tag === "string" ? search.tag : undefined,
   }),
-  loaderDeps: ({ search }) => search,
-  loader: ({ deps }) => getExploreData({ data: deps }),
   component: ExplorePage,
 });
 
@@ -197,17 +98,38 @@ function buildUrl(params: Record<string, string | undefined>) {
 }
 
 function ExplorePage() {
-  const { bookmarks, currentPage, totalCount, totalPages, uniqueTags, jsonLd } =
-    Route.useLoaderData();
-  const { type, tag } = Route.useSearch();
+  const { type, tag, page: pageParam } = Route.useSearch();
+  const currentPage = Math.max(1, Number(pageParam) || 1);
+
+  const bookmarksQuery = useQuery(
+    convexQuery(api.bookmarks.queries.list, {
+      paginationOpts: { numItems: BOOKMARKS_PER_PAGE, cursor: null },
+      ...(type ? { filter: { types: [type as BookmarkType] } } : {}),
+    }),
+  );
+
+  const allBookmarks = (bookmarksQuery.data?.page ?? []) as ExploreBookmark[];
+
+  // Client-side tag filter
+  const bookmarks = tag
+    ? allBookmarks.filter((b) =>
+        b.tags.some((t) => t.tag.name.toLowerCase() === tag.toLowerCase()),
+      )
+    : allBookmarks;
+
+  const totalCount = bookmarks.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / BOOKMARKS_PER_PAGE));
+  const offset = (currentPage - 1) * BOOKMARKS_PER_PAGE;
+  const pagedBookmarks = bookmarks.slice(offset, offset + BOOKMARKS_PER_PAGE);
+
+  // Collect unique tags from results for the tag filter UI
+  const uniqueTagsSet = new Set<string>();
+  allBookmarks.forEach((b) => b.tags.forEach((t) => uniqueTagsSet.add(t.tag.name)));
+  const uniqueTags = Array.from(uniqueTagsSet).slice(0, 15);
 
   return (
     <div>
       <Header />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
 
       <MaxWidthContainer className="py-12">
         <div className="flex flex-col gap-8">
@@ -248,7 +170,7 @@ function ExplorePage() {
           {uniqueTags.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="text-sm text-muted-foreground">Tags:</span>
-              {uniqueTags.slice(0, 15).map((tagName) => (
+              {uniqueTags.map((tagName) => (
                 <a
                   key={tagName}
                   href={buildUrl({
@@ -268,7 +190,7 @@ function ExplorePage() {
           )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {bookmarks.map((bookmark) => {
+            {pagedBookmarks.map((bookmark) => {
               const domain = getDomain(bookmark.url);
               const description =
                 bookmark.summary || bookmark.ogDescription || "";
@@ -334,7 +256,7 @@ function ExplorePage() {
             })}
           </div>
 
-          {bookmarks.length === 0 && (
+          {pagedBookmarks.length === 0 && (
             <div className="py-12 text-center">
               <Typography variant="h3" className="text-muted-foreground">
                 No bookmarks found

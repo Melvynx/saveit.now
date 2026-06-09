@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BookmarkType } from "@workspace/database";
+import { BookmarkType } from "@/lib/bookmark-types";
 import {
   parseAtMention,
   parseHashMention,

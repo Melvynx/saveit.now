@@ -1,8 +1,8 @@
 "use client";
 
 import { AdminStatusBadge } from "@/features/admin/admin-shared";
+import type { AdminUserListItem } from "@/features/admin/types";
 import { authClient } from "@/lib/auth-client";
-import type { UserWithStats } from "@/lib/database/admin-users";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
@@ -27,7 +27,7 @@ import {
 import { toast } from "sonner";
 
 type UserRowProps = {
-  user: UserWithStats;
+  user: AdminUserListItem;
 };
 
 export const UserRow = ({ user }: UserRowProps) => {

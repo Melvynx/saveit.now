@@ -1,6 +1,7 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -32,16 +33,15 @@ export function EmailComposer({
       "# Hello!\n\nWelcome to our newsletter update.\n\n**What's new:**\n\n- Feature 1\n- Feature 2\n- Feature 3\n\nThanks for being part of our community!",
   });
 
+  const sendBroadcastEmailFn = useConvexAction(
+    api.admin.actions.sendBroadcastEmail,
+  );
   const sendEmailMutation = useMutation({
     mutationFn: async (data: EmailFormData) => {
-      return upfetch("/api/admin/send-email", {
-        method: "POST",
-        body: {
-          subject: data.subject.trim(),
-          preview: data.preview.trim(),
-          markdown: data.markdown.trim(),
-        },
-        schema: z.object({ success: z.boolean() }),
+      return sendBroadcastEmailFn({
+        subject: data.subject.trim(),
+        subheadline: data.preview.trim(),
+        markdown: data.markdown.trim(),
       });
     },
     onSuccess: () => {
@@ -150,7 +150,9 @@ export function EmailComposer({
             )}
           </Button>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[400px]">
+        <div
+          className={`grid min-h-[400px] grid-cols-1 gap-4 lg:grid-cols-2`}
+        >
           <div className={`space-y-2 ${showPreview ? "" : "lg:col-span-2"}`}>
             <Textarea
               id="markdown"
@@ -167,12 +169,12 @@ export function EmailComposer({
           </div>
           {showPreview && (
             <div className="space-y-2">
-              <div className="text-sm font-medium text-muted-foreground">
+              <div className="text-muted-foreground text-sm font-medium">
                 Preview
               </div>
-              <div className="border rounded-md p-4 min-h-[400px] bg-background overflow-auto">
+              <div className="bg-background min-h-[400px] overflow-auto rounded-md border p-4">
                 <div
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-sm dark:prose-invert max-w-none"
                   dangerouslySetInnerHTML={{
                     __html: renderMarkdownPreview(formData.markdown),
                   }}
@@ -182,8 +184,8 @@ export function EmailComposer({
           )}
         </div>
       </div>
-      <div className="flex items-center justify-between pt-4 border-t">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between border-t pt-4">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Users className="size-4" />
           <span>{eligibleUsersCount} recipients</span>
         </div>

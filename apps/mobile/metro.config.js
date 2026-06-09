@@ -7,11 +7,20 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 const config = getDefaultConfig(projectRoot);
 
 // Enable monorepo support
-config.watchFolders = [monorepoRoot];
+config.watchFolders = [
+  monorepoRoot,
+  path.resolve(monorepoRoot, 'packages/backend'),
+];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(monorepoRoot, 'node_modules'),
 ];
+
+// Add resolver alias for @convex/* so Metro can resolve generated types
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  '@convex': path.resolve(monorepoRoot, 'packages/backend/convex'),
+};
 
 // Add support for workspace packages
 config.resolver.platforms = ['native', 'android', 'ios', 'web'];

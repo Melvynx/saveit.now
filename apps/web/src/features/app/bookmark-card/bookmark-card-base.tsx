@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark } from "@workspace/database";
+import type { BookmarkCardData } from "./bookmark.types";
 import { ReactNode } from "react";
 
 import { BookmarkCardActions } from "./bookmark-card-actions";
@@ -11,7 +11,7 @@ import { BookmarkCardHeader, HEADER_HEIGHT } from "./bookmark-card-header";
 import { BookmarkCardTitle } from "./bookmark-card-title";
 
 interface BookmarkCardBaseProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkCardData;
   headerContent:
     | ReactNode
     | ((bounds: { width: number; height: number }) => ReactNode);

@@ -1,7 +1,8 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -16,6 +17,7 @@ import { Typography } from "@workspace/ui/components/typography";
 import { Bot, Hash, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useTagsManagement,
   type TagWithCount,
@@ -125,13 +127,10 @@ function TagCompactCard({ tag, onClick }: TagCompactCardProps) {
   const isAI = tag.type === "IA";
   const bookmarkCount = tag._count.bookmarks;
   const queryClient = useQueryClient();
+  const doBulkDelete = useConvexMutation(api.tags.mutations.bulkDelete);
 
   const deleteMutation = useMutation({
-    mutationFn: async () =>
-      upfetch("/api/tags/bulk-delete", {
-        method: "POST",
-        body: { tagIds: [tag.id] },
-      }),
+    mutationFn: () => doBulkDelete({ tagIds: [tag._id as Id<"tags">] }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
       void queryClient.invalidateQueries({ queryKey: ["tags-infinite"] });
@@ -181,4 +180,3 @@ function TagCompactCard({ tag, onClick }: TagCompactCardProps) {
     </ContextMenu>
   );
 }
-

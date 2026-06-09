@@ -1,7 +1,8 @@
 "use client";
 
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -30,7 +31,6 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 type PublicLinkSettingsProps = {
   initialEnabled: boolean;
@@ -45,14 +45,11 @@ export function PublicLinkSettings({
   const [slug, setSlug] = useState(initialSlug ?? "");
   const [error, setError] = useState<string | null>(null);
   const { isCopied, copyToClipboard } = useCopyToClipboard();
+  const updatePublicLinkMutation = useConvexMutation(api.users.mutations.updatePublicLink);
 
   const mutation = useMutation({
     mutationFn: async () =>
-      upfetch("/api/user/public-link", {
-        method: "PATCH",
-        body: { enabled, slug: enabled ? slug : null },
-        schema: z.object({ success: z.boolean() }),
-      }),
+      updatePublicLinkMutation({ enabled, slug: enabled ? slug : null }),
     onSuccess: () => {
       toast.success("Public link settings updated");
       setError(null);

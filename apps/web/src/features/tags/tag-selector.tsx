@@ -2,7 +2,7 @@
 
 import { AnimateChangeInHeight } from "@/components/animate-change-in-height";
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
-import { TagType } from "@workspace/database";
+import { TagType } from "@/lib/bookmark-types";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Checkbox } from "@workspace/ui/components/checkbox";
@@ -85,12 +85,10 @@ export function TagSelector({
     
     // If found in fetched data, use that; otherwise create a minimal object
     return fetchedTag || {
+      _id: tagId,
       id: tagId,
       name: tagName,
       type: tagType as TagType,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: "",
     };
   });
 

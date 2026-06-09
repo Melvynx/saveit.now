@@ -1,23 +1,20 @@
 import { DialogManagerRenderer } from "@/features/dialog-manager/dialog-manager-renderer";
 import { ThemeProvider } from "@/features/dark-mode/theme-provider";
 import { PostHogProvider } from "@/features/posthog/pohsthog-provider";
+import { authClient, useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
-import { useSession } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
-import { Toaster } from "@workspace/ui/components/sonner";
-import { TooltipProvider } from "@workspace/ui/components/tooltip";
-import { ConvexQueryClient } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexQueryClient, convexQuery } from "@convex-dev/react-query";
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
 import { ClientOnly } from "@tanstack/react-router";
-import { ConvexProvider } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { TchaoProvider } from "tchao/react";
 import { useEffect } from "react";
-import { z } from "zod";
 
 const convexUrl =
   import.meta.env.VITE_CONVEX_URL ?? "https://tough-chameleon-916.convex.cloud";
@@ -41,49 +38,40 @@ convexQueryClient.connect(queryClient);
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <PostHogProvider>
-      <ConvexProvider client={convexQueryClient.convexClient}>
+      {/* ConvexBetterAuthProvider supplies the Convex client + exchanges the
+          Better Auth session for a Convex token. Keep it OUTSIDE the query provider. */}
+      <ConvexBetterAuthProvider
+        client={convexQueryClient.convexClient}
+        authClient={authClient}
+      >
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="system">
             <NuqsAdapter>
-              <TooltipProvider>
-                {children}
-                <Toaster />
-                <DialogManagerRenderer />
-                <UserPlanSync />
-                <ClientOnly>
-                  <ChatSnippet />
-                </ClientOnly>
-              </TooltipProvider>
+              {children}
+              <Toaster />
+              <DialogManagerRenderer />
+              <UserPlanSync />
+              <ClientOnly>
+                <ChatSnippet />
+              </ClientOnly>
             </NuqsAdapter>
           </ThemeProvider>
         </QueryClientProvider>
-      </ConvexProvider>
+      </ConvexBetterAuthProvider>
     </PostHogProvider>
   );
 };
 
-const userLimitsSchema = z.object({
-  plan: z.enum(["free", "pro"]),
-  limits: z.object({
-    bookmarks: z.number(),
-    monthlyBookmarkRuns: z.number(),
-    monthlyChatQueries: z.number(),
-    canExport: z.number(),
-    apiAccess: z.number(),
-  }),
-});
+import { Toaster } from "@workspace/ui/components/sonner";
+import { TooltipProvider } from "@workspace/ui/components/tooltip";
 
 const UserPlanSync = () => {
   const session = useSession();
   const userId = session.data?.user?.id;
 
   const planQuery = useQuery({
-    queryKey: ["user", "limits", userId],
+    ...convexQuery(api.users.queries.getLimits, {}),
     enabled: Boolean(userId),
-    queryFn: () =>
-      upfetch("/api/user/limits", {
-        schema: userLimitsSchema,
-      }),
   });
 
   useEffect(() => {
@@ -126,7 +114,7 @@ export const ChatSnippet = () => {
       visitorName={user?.name ?? "Anonymous"}
       visitorAvatar={user?.image ?? undefined}
       visitorId={user?.id}
-      visitorRole={user?.role ?? "user"}
+      visitorRole={(user as { role?: string } | undefined)?.role ?? "user"}
       visitorMetadata={impersonatedBy ? { impersonatedBy } : undefined}
       impersonate={Boolean(impersonatedBy)}
     />

@@ -10,9 +10,9 @@ import {
   Trash2,
   User,
 } from "@tamagui/lucide-icons";
-import { useMutation } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Alert, ScrollView } from "react-native";
 import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
 
@@ -24,40 +24,30 @@ import { useAppTheme } from "../_layout";
 export default function TabTwoScreen() {
   const { user, plan, signOutWithNavigation } = useAuth();
   const { currentTheme, toggleTheme } = useAppTheme();
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
       const result = await authClient.deleteUser({
         callbackURL: "/goodbye",
       });
       if (result.data) {
-        return result.data;
+        Alert.alert(
+          "Delete Account",
+          "We've sent you an email with a confirmation link. Click on the link in your email to permanently delete your account. You will be signed out now.",
+          [{ text: "OK" }],
+        );
+      } else {
+        throw new Error(result.error?.message || "Something went wrong");
       }
-      throw new Error(result.error?.message || "Something went wrong");
-    },
-    onSuccess: () => {
-      Alert.alert(
-        "Delete Account",
-        "We've sent you an email with a confirmation link. Click on the link in your email to permanently delete your account. You will be signed out now.",
-        [
-          {
-            text: "OK",
-            onPress: async () => {
-              try {
-                // await signOut();
-              } catch {
-                Alert.alert("Error", "Failed to sign out");
-              }
-            },
-          },
-        ],
-      );
-    },
-    onError: (error: Error) => {
+    } catch (error: any) {
       console.error("Failed to delete account:", error);
       Alert.alert("Error", `Failed to delete account: ${error.message}`);
-    },
-  });
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const openDocumentation = async () => {
     await WebBrowser.openBrowserAsync("https://saveit.now/docs");
@@ -276,20 +266,18 @@ export default function TabTwoScreen() {
                   {
                     text: "Send Email",
                     style: "destructive",
-                    onPress: () => deleteAccountMutation.mutate(),
+                    onPress: handleDeleteAccount,
                   },
                 ],
               );
             }}
-            opacity={deleteAccountMutation.isPending ? 0.5 : 1}
-            disabled={deleteAccountMutation.isPending}
+            opacity={isDeletingAccount ? 0.5 : 1}
+            disabled={isDeletingAccount}
           >
             <XStack alignItems="center" gap="$3">
               <Trash2 size={20} color="$red10" />
               <Text fontSize="$4" color="$red10">
-                {deleteAccountMutation.isPending
-                  ? "Deleting..."
-                  : "Delete Account"}
+                {isDeletingAccount ? "Deleting..." : "Delete Account"}
               </Text>
             </XStack>
           </Button>

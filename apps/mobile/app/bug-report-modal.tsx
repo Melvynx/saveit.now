@@ -1,61 +1,59 @@
-import { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { 
-  Platform, 
+import { useState } from "react";
+import { StatusBar } from "expo-status-bar";
+import {
+  Platform,
   Alert,
   KeyboardAvoidingView,
-  ScrollView 
-} from 'react-native';
-import { router } from 'expo-router';
-import { Bug, X } from '@tamagui/lucide-icons';
-import { 
-  Button, 
-  Card, 
-  Text, 
-  TextArea, 
-  XStack, 
-  YStack 
-} from 'tamagui';
-import Constants from 'expo-constants';
+  ScrollView,
+} from "react-native";
+import { router } from "expo-router";
+import { Bug, X } from "@tamagui/lucide-icons";
+import { Button, Card, Text, TextArea, XStack, YStack } from "tamagui";
+import Constants from "expo-constants";
+import { useAction } from "convex/react";
+import { api } from "@convex/_generated/api";
 
-import { useAuth } from '../src/contexts/AuthContext';
-import { apiClient } from '../src/lib/api-client';
+import { useAuth } from "../src/contexts/AuthContext";
 
 export default function BugReportModal() {
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const sendBugReport = useAction(api.users.actions.sendBugReport);
 
   const handleSubmitBugReport = async () => {
     if (!description.trim() || description.trim().length < 10) {
-      Alert.alert('Error', 'Please provide a detailed description (at least 10 characters)');
+      Alert.alert(
+        "Error",
+        "Please provide a detailed description (at least 10 characters)",
+      );
       return;
     }
 
     if (!user) {
-      Alert.alert('Error', 'Please sign in to submit a bug report');
+      Alert.alert("Error", "Please sign in to submit a bug report");
       return;
     }
 
     setIsLoading(true);
     try {
       const deviceInfo = `${Platform.OS} ${Platform.Version}`;
-      const appVersion = Constants.expoConfig?.version || 'Unknown';
+      const appVersion = Constants.expoConfig?.version || "Unknown";
 
-      await apiClient.submitBugReport({
+      await sendBugReport({
         description: description.trim(),
         deviceInfo,
         appVersion,
       });
-      
+
       Alert.alert(
-        'Bug Report Sent', 
-        'Thank you for your feedback! We\'ve received your bug report and will investigate it.',
-        [{ text: 'OK', onPress: () => router.back() }]
+        "Bug Report Sent",
+        "Thank you for your feedback! We've received your bug report and will investigate it.",
+        [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (error) {
-      console.error('Error submitting bug report:', error);
-      Alert.alert('Error', 'Failed to submit bug report. Please try again.');
+      console.error("Error submitting bug report:", error);
+      Alert.alert("Error", "Failed to submit bug report. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +65,13 @@ export default function BugReportModal() {
 
   if (!user) {
     return (
-      <YStack flex={1} padding="$4" justifyContent="center" alignItems="center" gap="$4">
+      <YStack
+        flex={1}
+        padding="$4"
+        justifyContent="center"
+        alignItems="center"
+        gap="$4"
+      >
         <Bug size={48} color="$gray10" />
         <Text fontSize="$6" fontWeight="bold" textAlign="center">
           Sign In Required
@@ -79,20 +83,25 @@ export default function BugReportModal() {
           <X size={16} />
           Close
         </Button>
-        <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+        <StatusBar style={Platform.OS === "ios" ? "light" : "auto"} />
       </YStack>
     );
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <YStack flex={1} padding="$4" backgroundColor="$background">
-        <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-        
-        <XStack justifyContent="space-between" alignItems="center" marginBottom="$6" marginTop="$4">
+        <StatusBar style={Platform.OS === "ios" ? "light" : "auto"} />
+
+        <XStack
+          justifyContent="space-between"
+          alignItems="center"
+          marginBottom="$6"
+          marginTop="$4"
+        >
           <YStack gap="$2">
             <Text fontSize="$8" fontWeight="bold" color="$color">
               Report Bug
@@ -138,9 +147,10 @@ export default function BugReportModal() {
                 What's the issue?
               </Text>
               <Text fontSize="$3" color="$gray10">
-                Please describe the bug in detail. Include steps to reproduce if possible.
+                Please describe the bug in detail. Include steps to reproduce if
+                possible.
               </Text>
-              
+
               <TextArea
                 placeholder="Describe the bug you encountered..."
                 value={description}
@@ -157,7 +167,7 @@ export default function BugReportModal() {
                 placeholderTextColor="$gray10"
                 textAlignVertical="top"
               />
-              
+
               <Text fontSize="$2" color="$gray10" textAlign="right">
                 {description.length} characters (minimum 10)
               </Text>
@@ -177,7 +187,7 @@ export default function BugReportModal() {
                   Platform: {Platform.OS} {Platform.Version}
                 </Text>
                 <Text fontSize="$3" color="$gray10">
-                  App Version: {Constants.expoConfig?.version || 'Unknown'}
+                  App Version: {Constants.expoConfig?.version || "Unknown"}
                 </Text>
               </YStack>
             </Card>
@@ -195,7 +205,7 @@ export default function BugReportModal() {
           >
             <Bug size={20} />
             <Text color="white" fontSize="$4" fontWeight="bold">
-              {isLoading ? 'Sending...' : 'Submit Bug Report'}
+              {isLoading ? "Sending..." : "Submit Bug Report"}
             </Text>
           </Button>
         </YStack>

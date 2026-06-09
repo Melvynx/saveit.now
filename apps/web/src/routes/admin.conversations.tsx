@@ -1,4 +1,6 @@
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -21,10 +23,7 @@ import { MessageSquareIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 
 const getAdminConversationsData = createServerFn({ method: "GET" }).handler(
   async () => {
-    const [{ getUser }, { getConversationsWithLikes }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/conversations"),
-    ]);
+    const { getUser } = await import("@/lib/auth-session");
     const user = await getUser();
     if (!user) {
       return { access: "signed-out" as const };
@@ -34,9 +33,14 @@ const getAdminConversationsData = createServerFn({ method: "GET" }).handler(
       return { access: "forbidden" as const };
     }
 
+    const conversations = await fetchAuthQuery(
+      api.admin.queries.listConversations,
+      {},
+    );
+
     return {
       access: "granted" as const,
-      conversations: await getConversationsWithLikes(),
+      conversations,
     };
   },
 );
@@ -71,7 +75,7 @@ function AdminConversationsPage() {
         </CardHeader>
         <CardContent>
           {conversations.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
+            <p className="text-muted-foreground py-8 text-center">
               No conversations with feedback yet
             </p>
           ) : (
@@ -90,7 +94,7 @@ function AdminConversationsPage() {
                     <TableCell>
                       <a
                         href={`/admin/conversations/${conversation.id}`}
-                        className="hover:underline font-medium"
+                        className="font-medium hover:underline"
                       >
                         {conversation.title || "Untitled"}
                       </a>

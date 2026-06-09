@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkType } from "@workspace/database";
+import { BookmarkType } from "@/lib/bookmark-types";
 import { Input } from "@workspace/ui/components/input";
 import { cn } from "@workspace/ui/lib/utils";
 import { Search } from "lucide-react";

@@ -4,8 +4,9 @@ import { Input } from "@workspace/ui/components/input";
 import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Typography } from "@workspace/ui/components/typography";
 import {
   BookmarkCardContainer,
@@ -17,6 +18,7 @@ import {
 } from "./bookmark-card-base";
 import { DeleteButtonAction } from "./bookmark-card-pending";
 import type { BookmarkCardData } from "./bookmark.types";
+import type { Id } from "@convex/_generated/dataModel";
 
 interface BookmarkCardErrorProps {
   bookmark: BookmarkCardData;
@@ -29,19 +31,9 @@ const ReBookmarkButton = ({
   bookmarkId: string;
   children?: React.ReactNode;
 }) => {
-  const queryClient = useQueryClient();
+  const reprocessFn = useConvexMutation(api.bookmarks.mutations.reprocess);
   const action = useMutation({
-    mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { status: "PENDING" },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
-      });
-    },
+    mutationFn: () => reprocessFn({ id: bookmarkId as Id<"bookmarks"> }),
   });
 
   return (

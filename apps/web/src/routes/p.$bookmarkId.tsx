@@ -3,58 +3,56 @@ import {
   BookmarkSectionTitle,
 } from "@/features/bookmarks/bookmark-content-view";
 import { RelatedBookmarks } from "@/features/public-bookmarks/related-bookmarks";
+import { getUser } from "@/lib/auth-session";
+import { getServerUrl } from "@/lib/server-url";
+import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { Gem } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { ConvexHttpClient } from "convex/browser";
+import { Gem } from "lucide-react";
+
+const convexUrl =
+  (import.meta.env?.VITE_CONVEX_URL ?? process.env.VITE_CONVEX_URL) || "";
+
+function getDomain(url: string) {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
+}
 
 const getPublicBookmarkData = createServerFn({ method: "GET" })
   .validator((data: { bookmarkId: string }) => data)
   .handler(async ({ data }) => {
-    const [{ getUser }, { getPublicBookmark }, { getServerUrl }] =
-      await Promise.all([
-        import("@/lib/auth-session"),
-        import("@/lib/database/get-bookmark"),
-        import("@/lib/server-url"),
-      ]);
-    const bookmark = await getPublicBookmark(data.bookmarkId);
-    const user = await getUser();
+    const convex = new ConvexHttpClient(convexUrl);
+    const [bookmark, user] = await Promise.all([
+      convex.query(api.bookmarks.queries.getPublic, {
+        id: data.bookmarkId as any,
+      }),
+      getUser(),
+    ]);
 
     if (!bookmark) {
-      return { bookmark: null, relatedBookmarks: [], user, jsonLd: null };
+      return { bookmark: null, relatedBookmarks: [], user: user ?? null, jsonLd: null };
     }
 
-    const tagIds = bookmark.tags.map((tag) => tag.tag.id);
-    const { prisma } = await import("@workspace/database/client");
-    const where = {
-      id: { not: data.bookmarkId },
-      status: "READY" as const,
-      title: { not: null },
-      ...(tagIds.length > 0 && {
-        tags: { some: { tagId: { in: tagIds } } },
-      }),
-    };
-    const relatedBookmarks = await prisma.bookmark.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        url: true,
-        ogImageUrl: true,
-        faviconUrl: true,
-        summary: true,
-        ogDescription: true,
-        type: true,
-        tags: {
-          select: { tag: { select: { name: true } } },
-          take: 3,
-        },
+    const tagIds = (bookmark.tags ?? []).map(
+      (t: { tag: { id: string } }) => t.tag.id,
+    );
+
+    const relatedBookmarks = await convex.query(
+      api.bookmarks.queries.getRelated,
+      {
+        id: data.bookmarkId as any,
+        tagIds,
+        take: 6,
       },
-      take: 6,
-      orderBy: { createdAt: "desc" },
-    });
+    );
+
     const domain = getDomain(bookmark.url);
     const baseUrl = getServerUrl();
     const title = bookmark.title || "Untitled Bookmark";
@@ -62,13 +60,13 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
       bookmark.summary ||
       bookmark.ogDescription ||
       `Saved bookmark from ${domain}`;
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: title,
       description: description.slice(0, 200),
       url: `${baseUrl}/p/${data.bookmarkId}`,
-      dateModified: bookmark.updatedAt.toISOString(),
       isPartOf: {
         "@type": "WebSite",
         name: "SaveIt.now",
@@ -105,16 +103,13 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
       },
     };
 
-    return { bookmark, relatedBookmarks, user, jsonLd };
+    return {
+      bookmark,
+      relatedBookmarks: relatedBookmarks ?? [],
+      user: user ?? null,
+      jsonLd,
+    };
   });
-
-function getDomain(url: string) {
-  try {
-    return new URL(url).hostname.replace("www.", "");
-  } catch {
-    return url;
-  }
-}
 
 export const Route = createFileRoute("/p/$bookmarkId")({
   loader: ({ params }) => getPublicBookmarkData({ data: params }),

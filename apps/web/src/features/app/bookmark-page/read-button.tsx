@@ -1,28 +1,15 @@
 "use client";
 
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { upfetch } from "@/lib/up-fetch";
 import { Button } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
-import { Bookmark } from "@workspace/database";
 import { BookOpen } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-interface BookmarksPage {
-  bookmarks: Bookmark[];
-  hasMore: boolean;
-}
-
-interface BookmarksQueryData {
-  pages: BookmarksPage[];
-  pageParams: string[];
-}
-
-interface BookmarkQueryData {
-  bookmark: Bookmark;
-}
+import type { Id } from "@convex/_generated/dataModel";
 
 interface ReadButtonProps {
   bookmarkId: string;
@@ -42,16 +29,16 @@ export const ReadButton = ({
   showTooltip = true,
 }: ReadButtonProps) => {
   const queryClient = useQueryClient();
+  const setRead = useConvexMutation(api.bookmarks.mutations.setRead);
 
   const toggleReadAction = useMutation({
     mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { read: !read },
+      setRead({
+        id: bookmarkId as Id<"bookmarks">,
+        read: !read,
       }),
     onError: (error) => {
       queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-      queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
       toast.error(
         error instanceof Error ? error.message : "Failed to update read state",
       );
@@ -60,34 +47,6 @@ export const ReadButton = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: BookmarksQueryData | undefined) => {
-      if (!oldData?.pages) return oldData;
-
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page) => ({
-          ...page,
-          bookmarks: page.bookmarks.map((bookmark) =>
-            bookmark.id === bookmarkId
-              ? { ...bookmark, read: !read }
-              : bookmark,
-          ),
-        })),
-      };
-    });
-
-    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: BookmarkQueryData | undefined) => {
-      if (!oldData?.bookmark) return oldData;
-      return {
-        ...oldData,
-        bookmark: {
-          ...oldData.bookmark,
-          read: !read,
-        },
-      };
-    });
-
     toggleReadAction.mutate();
   };
 

@@ -1,4 +1,4 @@
-import { BookmarkType } from "@workspace/database";
+import { BookmarkType } from "@/lib/bookmark-types";
 
 export type MentionType = "type" | "tag" | "special";
 

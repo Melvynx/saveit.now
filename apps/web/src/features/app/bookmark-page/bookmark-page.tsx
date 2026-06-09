@@ -1,6 +1,11 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
-import { hasMarkdownContent } from "@/lib/bookmark-content";
-import { BookmarkViewType } from "@/lib/database/get-bookmark";
+import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
+
+function hasMarkdownContent(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") return false;
+  const m = metadata as Record<string, unknown>;
+  return typeof m.markdown === "string" && m.markdown.length > 0;
+}
 import { Button } from "@workspace/ui/components/button";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
 import {
@@ -133,7 +138,7 @@ function BookmarkDetail({
         </ButtonGroup>
       </header>
       <div className="px-6 py-4">
-        <BookmarkContentView bookmark={bookmark as BookmarkViewType} />
+        <BookmarkContentView bookmark={bookmark as unknown as BookmarkDetailDTO} />
       </div>
       <footer className="flex items-center gap-2 border-t-2 p-6">
         <div className="flex-1"></div>

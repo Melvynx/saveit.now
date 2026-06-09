@@ -4,7 +4,6 @@ import { cleanup } from "@testing-library/react";
 import { fetch } from "cross-fetch";
 import React from "react";
 import { beforeEach, vi } from "vitest";
-import { mockDeep, mockReset } from "vitest-mock-extended";
 
 beforeEach(() => {
   cleanup();
@@ -47,30 +46,7 @@ vi.mock("react-hotkeys-hook", () => ({
   useHotkeys: vi.fn(),
 }));
 
-// Mock up-fetch
-vi.mock("@/lib/up-fetch", () => ({
-  upfetch: vi.fn(),
-}));
-
-// Mock @workspace packages
-vi.mock("@workspace/database", () => ({
-  prisma: mockDeep(),
-  BookmarkType: {
-    VIDEO: "VIDEO",
-    PAGE: "PAGE",
-    IMAGE: "IMAGE",
-    YOUTUBE: "YOUTUBE",
-    TWEET: "TWEET",
-    ARTICLE: "ARTICLE",
-    PDF: "PDF",
-    PRODUCT: "PRODUCT",
-  },
-  BookmarkStatus: {
-    PROCESSING: "PROCESSING",
-    COMPLETED: "COMPLETED",
-    FAILED: "FAILED",
-  },
-}));
+// (Prisma/up-fetch mocks removed — the backend now lives in Convex.)
 
 // Mock external APIs and services
 vi.mock("@tanstack/react-query", () => ({

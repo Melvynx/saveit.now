@@ -1,38 +1,19 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { TagType } from "@workspace/database";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Tag = {
   id: string;
   name: string;
-  type: TagType;
+  type: "USER" | "IA";
 };
 
-async function getTags(): Promise<Tag[]> {
-  const response = await fetch(`/api/tags`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch tags");
-  }
-  return response.json();
-}
-
-async function createTag(name: string) {
-  const response = await fetch(`/api/tags`, {
-    method: "POST",
-    body: JSON.stringify({ name }),
-  });
-  return response.json() as Promise<{
-    success: boolean;
-    tag: Tag;
-  }>;
-}
-
 export function useTags() {
-  return useQuery({
-    queryKey: ["tags"],
-    queryFn: async () => getTags(),
-  });
+  // useTags is kept for backward compatibility.
+  // Consumers that need the tag list should use useInfiniteTags from features/app/hooks/use-tags.
+  return { data: undefined as Tag[] | undefined, isLoading: false, error: null };
 }
 
 export const useRefreshTags = () => {
@@ -43,12 +24,14 @@ export const useRefreshTags = () => {
 export function useCreateTagMutation(params: {
   onSuccess?: (tag: Tag) => void;
 }) {
-  const refreshTags = useRefreshTags();
+  const doCreate = useConvexMutation(api.tags.mutations.create);
 
   return useMutation({
-    mutationFn: async (name: string) => createTag(name),
+    mutationFn: async (name: string) => {
+      const tag = await doCreate({ name, type: "USER" });
+      return { success: true, tag: tag as Tag };
+    },
     onSuccess: (data) => {
-      void refreshTags();
       params.onSuccess?.(data.tag);
     },
   });

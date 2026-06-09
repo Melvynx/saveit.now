@@ -4,10 +4,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { useRefreshBookmark } from "@/features/app/bookmark-page/use-bookmark";
 import { useRefreshBookmarks } from "@/features/app/use-bookmarks";
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { upfetch } from "src/lib/up-fetch";
-import { z } from "zod";
+import type { Id } from "@convex/_generated/dataModel";
 
 interface ScreenshotUploaderProps {
   bookmarkId: string;
@@ -25,32 +26,6 @@ const allowedTypes = [
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-async function uploadScreenshot({
-  bookmarkId,
-  file,
-}: {
-  bookmarkId: string;
-  file: File;
-}) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  // upfetch is just fetch, but you can swap it for fetch if you want
-  const response = await upfetch(
-    `/api/bookmarks/${bookmarkId}/upload-screenshot`,
-    {
-      method: "POST",
-      body: formData,
-      schema: z.object({
-        previewUrl: z.string(),
-        success: z.boolean(),
-      }),
-    },
-  );
-
-  return response;
-}
-
 export const ScreenshotUploader = ({
   bookmarkId,
   onUploadSuccess,
@@ -59,10 +34,20 @@ export const ScreenshotUploader = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refreshBookmarks = useRefreshBookmarks();
   const refreshBookmark = useRefreshBookmark(bookmarkId);
+  const uploadBookmarkScreenshot = useConvexAction(
+    api.files.actions.uploadBookmarkScreenshot,
+  );
 
   const mutation = useMutation({
     mutationFn: async (file: File) => {
-      return uploadScreenshot({ bookmarkId, file });
+      const buffer = await file.arrayBuffer();
+      return uploadBookmarkScreenshot({
+        bookmarkId: bookmarkId as Id<"bookmarks">,
+        fileData: buffer,
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      });
     },
     onSuccess: (data) => {
       toast.success("Screenshot updated successfully!");

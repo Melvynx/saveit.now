@@ -5,8 +5,13 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
+    // App (not a library): no declaration emit. Prevents TS from serializing
+    // huge cross-package inferred types (e.g. Better Auth) it can't name.
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@convex/*": ["../../packages/backend/convex/*"]
     }
   },
   "include": [

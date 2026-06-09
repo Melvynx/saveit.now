@@ -3,7 +3,8 @@
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { authClient } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -16,7 +17,6 @@ import { TableCell, TableRow } from "@workspace/ui/components/table";
 import { Check, Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 interface ApiKeyRowProps {
   apiKey: {
@@ -38,6 +38,7 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
   const router = useRouter();
   const displayKey = getDisplayKey(apiKey);
   const { isCopied, copyToClipboard } = useCopyToClipboard(2000);
+  const renameKeyMutation = useConvexMutation(api.apiKeys.mutations.renameKey);
 
   const handleRename = () => {
     dialogManager.add({
@@ -59,11 +60,7 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
 
           setIsRenaming(true);
           try {
-            await upfetch(`/api/account/keys/${apiKey.id}`, {
-              method: "PATCH",
-              body: { name },
-              schema: z.object({ success: z.boolean() }),
-            });
+            await renameKeyMutation({ keyId: apiKey.id, name });
 
             toast.success("API key renamed");
             void router.invalidate();

@@ -1,14 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { upfetch } from "@/lib/up-fetch";
 import { Button } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
 import { Star } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { Id } from "@convex/_generated/dataModel";
 
 interface StarButtonProps {
   bookmarkId: string;
@@ -28,17 +29,17 @@ export const StarButton = ({
   showTooltip = true,
 }: StarButtonProps) => {
   const queryClient = useQueryClient();
+  const setStarred = useConvexMutation(api.bookmarks.mutations.setStarred);
 
   const toggleStarAction = useMutation({
     mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { starred: !starred },
+      setStarred({
+        id: bookmarkId as Id<"bookmarks">,
+        starred: !starred,
       }),
     onError: (error) => {
       // Revert optimistic updates on error
       queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-      queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
       toast.error(
         error instanceof Error ? error.message : "Failed to update star",
       );
@@ -47,36 +48,6 @@ export const StarButton = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // Optimistic update for bookmarks list
-    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: any) => {
-      if (!oldData?.pages) return oldData;
-
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page: any) => ({
-          ...page,
-          bookmarks: page.bookmarks.map((bookmark: any) =>
-            bookmark.id === bookmarkId
-              ? { ...bookmark, starred: !starred }
-              : bookmark,
-          ),
-        })),
-      };
-    });
-
-    // Optimistic update for individual bookmark
-    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: any) => {
-      if (!oldData?.bookmark) return oldData;
-      return {
-        ...oldData,
-        bookmark: {
-          ...oldData.bookmark,
-          starred: !starred,
-        },
-      };
-    });
-
     toggleStarAction.mutate();
   };
 

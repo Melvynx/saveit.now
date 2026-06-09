@@ -1,7 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { apiClient, UserLimits } from "../lib/api-client";
+import { useQuery } from "convex/react";
+import { createContext, useContext } from "react";
+import { api } from "@convex/_generated/api";
 import { authClient } from "../lib/auth-client";
-import { getServerUrl } from "../lib/server-url";
+
+export type UserLimits = {
+  bookmarks: number;
+  monthlyBookmarkRuns: number;
+  canExport: number;
+  apiAccess: number;
+};
 
 interface User {
   id: string;
@@ -28,195 +35,101 @@ interface AuthContextType {
   isLoading: boolean;
   isPlanLoading: boolean;
   isSigningOut: boolean;
+  isAuthenticated: boolean;
   sendOTP: (email: string) => Promise<void>;
   verifyOTP: (email: string, otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   signOutWithNavigation: (navigate: () => void) => Promise<void>;
+  /** @deprecated Convex queries are reactive — no manual refresh needed */
   refreshPlan: () => Promise<void>;
+  /** @deprecated Convex queries are reactive — no polling needed */
   refreshPlanWithRetry: (expectedPlan?: "pro" | "free") => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [plan, setPlan] = useState<UserPlan>({
-    name: "free",
-    limits: DEFAULT_LIMITS,
-  });
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return true;
-  });
-  const [isPlanLoading, setIsPlanLoading] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const session = authClient.useSession();
+  const baUser = session.data?.user ?? null;
 
-  const fetchUserPlan = async () => {
-    setIsPlanLoading(true);
-    try {
-      const response = await apiClient.getUserLimits();
-      setPlan({
-        name: response.plan,
-        limits: response.limits,
-      });
-    } catch (error) {
-      console.error("Error fetching user plan:", error);
-    } finally {
-      setIsPlanLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const checkSession = async () => {
-      console.log("🔐 AuthContext - Checking session at:", getServerUrl());
-      setIsLoading(true);
-      try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Session check timeout")), 5000),
-        );
-        const sessionPromise = authClient.getSession();
-
-        const session = (await Promise.race([
-          sessionPromise,
-          timeoutPromise,
-        ])) as Awaited<typeof sessionPromise>;
-        const currentUser = session?.data?.user || null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          fetchUserPlan();
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
+  // Build a User shape compatible with the existing consumers.
+  const user: User | null = baUser
+    ? {
+        id: baUser.id,
+        email: baUser.email,
+        name: baUser.name ?? undefined,
+        image: (baUser as any).image ?? null,
       }
-    };
+    : null;
 
-    checkSession();
-  }, []);
+  const isAuthenticated = !!user;
+  const isLoading = session.isPending;
+
+  // Reactive plan query — automatically updated when Stripe webhook lands.
+  const userLimits = useQuery(
+    api.users.queries.getLimits,
+    isAuthenticated ? {} : "skip",
+  );
+
+  const plan: UserPlan = userLimits
+    ? {
+        name: (userLimits.plan as "free" | "pro") ?? "free",
+        limits: {
+          bookmarks: userLimits.limits.bookmarks,
+          monthlyBookmarkRuns: userLimits.limits.monthlyBookmarkRuns,
+          canExport: userLimits.limits.canExport,
+          apiAccess: userLimits.limits.apiAccess,
+        },
+      }
+    : { name: "free", limits: DEFAULT_LIMITS };
+
+  const isPlanLoading = isAuthenticated && userLimits === undefined;
 
   const sendOTP = async (email: string) => {
-    try {
-      const result = await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: "sign-in",
-      });
+    const result = await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: "sign-in",
+    });
 
-      if (result.error) {
-        console.error("Send OTP error:", JSON.stringify(result.error));
-        throw new Error(result.error.message);
-      }
-    } catch (error) {
-      console.error("Send OTP error:", JSON.stringify(error));
-      throw error;
+    if (result.error) {
+      throw new Error(result.error.message);
     }
   };
 
   const verifyOTP = async (email: string, otp: string) => {
-    setIsLoading(true);
-    try {
-      const result = await authClient.signIn.emailOtp({
-        email,
-        otp,
-      });
+    const result = await authClient.signIn.emailOtp({ email, otp });
 
-      if (result.data?.user) {
-        setUser(result.data.user);
-      } else if (result.error) {
-        throw new Error(result.error.message);
-      }
-    } catch (error) {
-      console.error("Verify OTP error:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+    if (result.error) {
+      throw new Error(result.error.message);
     }
   };
 
   const signOut = async () => {
-    console.log("🔐 AuthContext - Starting sign out...");
-    try {
-      const result = await authClient.signOut();
-      console.log("🔐 AuthContext - Sign out result:", JSON.stringify(result));
-
-      if (result?.error) {
-        console.error(
-          "🔐 AuthContext - Sign out error from server:",
-          result.error,
-        );
-        throw new Error(result.error.message || "Sign out failed");
-      }
-
-      setUser(null);
-      setPlan({ name: "free", limits: DEFAULT_LIMITS });
-      console.log("🔐 AuthContext - Sign out completed, user cleared");
-    } catch (error) {
-      console.error("🔐 AuthContext - Sign out error:", error);
-      throw error;
+    const result = await authClient.signOut();
+    if (result?.error) {
+      throw new Error(result.error.message || "Sign out failed");
     }
   };
 
   const signOutWithNavigation = async (navigate: () => void) => {
-    console.log("🔐 AuthContext - Starting sign out with navigation...");
-    setIsSigningOut(true);
-
     navigate();
-
     await new Promise((resolve) => setTimeout(resolve, 100));
-
-    try {
-      await signOut();
-    } finally {
-      setIsSigningOut(false);
-    }
+    await signOut();
   };
 
+  // Convex queries are reactive — no manual refresh needed. Keep API surface
+  // for backwards compatibility.
   const refreshPlan = async () => {
-    await fetchUserPlan();
+    // No-op: Convex subscription handles updates automatically.
   };
 
   const refreshPlanWithRetry = async (
-    expectedPlan: "pro" | "free" = "pro",
+    _expectedPlan: "pro" | "free" = "pro",
   ): Promise<boolean> => {
-    const maxRetries = 10;
-    const retryDelay = 2000;
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      console.log(
-        `🔄 Plan refresh attempt ${attempt + 1}/${maxRetries}, expecting: ${expectedPlan}`,
-      );
-
-      try {
-        const response = await apiClient.getUserLimits();
-
-        if (response.plan === expectedPlan) {
-          console.log(`✅ Plan updated to ${expectedPlan}`);
-          setPlan({
-            name: response.plan,
-            limits: response.limits,
-          });
-          return true;
-        }
-
-        console.log(
-          `⏳ Plan still ${response.plan}, retrying in ${retryDelay}ms...`,
-        );
-      } catch (error) {
-        console.error("Error fetching plan during retry:", error);
-      }
-
-      if (attempt < maxRetries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-      }
-    }
-
-    console.log("❌ Plan refresh failed after max retries");
-    await fetchUserPlan();
-    return false;
+    // No-op: Convex subscription handles updates automatically.
+    // The caller (e.g. upgrade/success redirect) should watch the reactive
+    // query value instead of polling.
+    return true;
   };
 
   return (
@@ -226,7 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         plan,
         isLoading,
         isPlanLoading,
-        isSigningOut,
+        isSigningOut: false,
+        isAuthenticated,
         sendOTP,
         verifyOTP,
         signOut,

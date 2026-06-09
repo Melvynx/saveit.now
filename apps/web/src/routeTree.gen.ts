@@ -53,7 +53,6 @@ import { Route as LandingHeaderRouteImport } from "./routes/landing.header";
 import { Route as DocsSlugRouteImport } from "./routes/docs.$slug";
 import { Route as ChangelogVersionsRouteImport } from "./routes/changelog.versions";
 import { Route as AppAgentsRouteImport } from "./routes/app.agents";
-import { Route as ApiUpgradeRouteImport } from "./routes/api.upgrade";
 import { Route as ApiTagsRouteImport } from "./routes/api.tags";
 import { Route as ApiStartRouteImport } from "./routes/api.start";
 import { Route as ApiInngestRouteImport } from "./routes/api.inngest";
@@ -75,10 +74,6 @@ import { Route as AppBBookmarkIdRouteImport } from "./routes/app.b.$bookmarkId";
 import { Route as ApiWebhooksStripeRouteImport } from "./routes/api.webhooks.stripe";
 import { Route as ApiV1TagsRouteImport } from "./routes/api.v1.tags";
 import { Route as ApiV1BookmarksRouteImport } from "./routes/api.v1.bookmarks";
-import { Route as ApiUserPublicLinkRouteImport } from "./routes/api.user.public-link";
-import { Route as ApiUserProfileRouteImport } from "./routes/api.user.profile";
-import { Route as ApiUserLimitsRouteImport } from "./routes/api.user.limits";
-import { Route as ApiUserAvatarRouteImport } from "./routes/api.user.avatar";
 import { Route as ApiUnsubscribeUserIdRouteImport } from "./routes/api.unsubscribe.$userId";
 import { Route as ApiToolsYoutubeMetadataRouteImport } from "./routes/api.tools.youtube-metadata";
 import { Route as ApiToolsOgImagesRouteImport } from "./routes/api.tools.og-images";
@@ -89,7 +84,6 @@ import { Route as ApiTagsRefactorRouteImport } from "./routes/api.tags.refactor"
 import { Route as ApiTagsManagementRouteImport } from "./routes/api.tags.management";
 import { Route as ApiTagsCleanupRouteImport } from "./routes/api.tags.cleanup";
 import { Route as ApiTagsBulkDeleteRouteImport } from "./routes/api.tags.bulk-delete";
-import { Route as ApiMobileCheckoutRouteImport } from "./routes/api.mobile.checkout";
 import { Route as ApiFakeWorkerYoutubeRouteImport } from "./routes/api.fake-worker.youtube";
 import { Route as ApiFakeWorkerPdfRouteImport } from "./routes/api.fake-worker.pdf";
 import { Route as ApiChatUsageRouteImport } from "./routes/api.chat.usage";
@@ -110,7 +104,6 @@ import { Route as ApiBookmarksBookmarkIdUploadScreenshotRouteImport } from "./ro
 import { Route as ApiBookmarksBookmarkIdTagsRouteImport } from "./routes/api.bookmarks.$bookmarkId.tags";
 import { Route as ApiBookmarksBookmarkIdSubscribeRouteImport } from "./routes/api.bookmarks.$bookmarkId.subscribe";
 import { Route as ApiBookmarksBookmarkIdMetadataRouteImport } from "./routes/api.bookmarks.$bookmarkId.metadata";
-import { Route as ApiAccountKeysKeyIdRouteImport } from "./routes/api.account.keys.$keyId";
 import { Route as ApiV1PublicSlugBookmarksRouteImport } from "./routes/api.v1.public.$slug.bookmarks";
 import { Route as ApiChatConversationsIdLikeRouteImport } from "./routes/api.chat.conversations.$id.like";
 import { Route as ApiChatConversationsIdDislikeRouteImport } from "./routes/api.chat.conversations.$id.dislike";
@@ -336,11 +329,6 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: "/agents",
   getParentRoute: () => AppRoute,
 } as any);
-const ApiUpgradeRoute = ApiUpgradeRouteImport.update({
-  id: "/api/upgrade",
-  path: "/api/upgrade",
-  getParentRoute: () => rootRouteImport,
-} as any);
 const ApiTagsRoute = ApiTagsRouteImport.update({
   id: "/api/tags",
   path: "/api/tags",
@@ -446,26 +434,6 @@ const ApiV1BookmarksRoute = ApiV1BookmarksRouteImport.update({
   path: "/api/v1/bookmarks",
   getParentRoute: () => rootRouteImport,
 } as any);
-const ApiUserPublicLinkRoute = ApiUserPublicLinkRouteImport.update({
-  id: "/api/user/public-link",
-  path: "/api/user/public-link",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiUserProfileRoute = ApiUserProfileRouteImport.update({
-  id: "/api/user/profile",
-  path: "/api/user/profile",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiUserLimitsRoute = ApiUserLimitsRouteImport.update({
-  id: "/api/user/limits",
-  path: "/api/user/limits",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiUserAvatarRoute = ApiUserAvatarRouteImport.update({
-  id: "/api/user/avatar",
-  path: "/api/user/avatar",
-  getParentRoute: () => rootRouteImport,
-} as any);
 const ApiUnsubscribeUserIdRoute = ApiUnsubscribeUserIdRouteImport.update({
   id: "/api/unsubscribe/$userId",
   path: "/api/unsubscribe/$userId",
@@ -515,11 +483,6 @@ const ApiTagsBulkDeleteRoute = ApiTagsBulkDeleteRouteImport.update({
   id: "/bulk-delete",
   path: "/bulk-delete",
   getParentRoute: () => ApiTagsRoute,
-} as any);
-const ApiMobileCheckoutRoute = ApiMobileCheckoutRouteImport.update({
-  id: "/api/mobile/checkout",
-  path: "/api/mobile/checkout",
-  getParentRoute: () => rootRouteImport,
 } as any);
 const ApiFakeWorkerYoutubeRoute = ApiFakeWorkerYoutubeRouteImport.update({
   id: "/youtube",
@@ -627,11 +590,6 @@ const ApiBookmarksBookmarkIdMetadataRoute =
     path: "/metadata",
     getParentRoute: () => ApiBookmarksBookmarkIdRoute,
   } as any);
-const ApiAccountKeysKeyIdRoute = ApiAccountKeysKeyIdRouteImport.update({
-  id: "/api/account/keys/$keyId",
-  path: "/api/account/keys/$keyId",
-  getParentRoute: () => rootRouteImport,
-} as any);
 const ApiV1PublicSlugBookmarksRoute =
   ApiV1PublicSlugBookmarksRouteImport.update({
     id: "/api/v1/public/$slug/bookmarks",
@@ -1349,7 +1307,6 @@ export interface RootRouteChildren {
   ApiInngestRoute: typeof ApiInngestRoute;
   ApiStartRoute: typeof ApiStartRoute;
   ApiTagsRoute: typeof ApiTagsRouteWithChildren;
-  ApiUpgradeRoute: typeof ApiUpgradeRoute;
   LandingHeaderRoute: typeof LandingHeaderRoute;
   LandingHeader2Route: typeof LandingHeader2Route;
   PBookmarkIdRoute: typeof PBookmarkIdRouteWithChildren;
@@ -1359,21 +1316,15 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   ApiChangelogCheckDismissedRoute: typeof ApiChangelogCheckDismissedRoute;
   ApiChangelogDismissRoute: typeof ApiChangelogDismissRoute;
-  ApiMobileCheckoutRoute: typeof ApiMobileCheckoutRoute;
   ApiToolsExtractContentRoute: typeof ApiToolsExtractContentRoute;
   ApiToolsExtractFaviconsRoute: typeof ApiToolsExtractFaviconsRoute;
   ApiToolsExtractMetadataRoute: typeof ApiToolsExtractMetadataRoute;
   ApiToolsOgImagesRoute: typeof ApiToolsOgImagesRoute;
   ApiToolsYoutubeMetadataRoute: typeof ApiToolsYoutubeMetadataRoute;
   ApiUnsubscribeUserIdRoute: typeof ApiUnsubscribeUserIdRoute;
-  ApiUserAvatarRoute: typeof ApiUserAvatarRoute;
-  ApiUserLimitsRoute: typeof ApiUserLimitsRoute;
-  ApiUserProfileRoute: typeof ApiUserProfileRoute;
-  ApiUserPublicLinkRoute: typeof ApiUserPublicLinkRoute;
   ApiV1BookmarksRoute: typeof ApiV1BookmarksRouteWithChildren;
   ApiV1TagsRoute: typeof ApiV1TagsRoute;
   ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute;
-  ApiAccountKeysKeyIdRoute: typeof ApiAccountKeysKeyIdRoute;
   ApiOgBookmarkBookmarkIdRoute: typeof ApiOgBookmarkBookmarkIdRoute;
   ApiAdminUsersUserIdCustomLimitsRoute: typeof ApiAdminUsersUserIdCustomLimitsRoute;
   ApiV1PublicSlugBookmarksRoute: typeof ApiV1PublicSlugBookmarksRoute;
@@ -2423,7 +2374,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiInngestRoute: ApiInngestRoute,
   ApiStartRoute: ApiStartRoute,
   ApiTagsRoute: ApiTagsRouteWithChildren,
-  ApiUpgradeRoute: ApiUpgradeRoute,
   LandingHeaderRoute: LandingHeaderRoute,
   LandingHeader2Route: LandingHeader2Route,
   PBookmarkIdRoute: PBookmarkIdRouteWithChildren,
@@ -2433,21 +2383,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiChangelogCheckDismissedRoute: ApiChangelogCheckDismissedRoute,
   ApiChangelogDismissRoute: ApiChangelogDismissRoute,
-  ApiMobileCheckoutRoute: ApiMobileCheckoutRoute,
   ApiToolsExtractContentRoute: ApiToolsExtractContentRoute,
   ApiToolsExtractFaviconsRoute: ApiToolsExtractFaviconsRoute,
   ApiToolsExtractMetadataRoute: ApiToolsExtractMetadataRoute,
   ApiToolsOgImagesRoute: ApiToolsOgImagesRoute,
   ApiToolsYoutubeMetadataRoute: ApiToolsYoutubeMetadataRoute,
   ApiUnsubscribeUserIdRoute: ApiUnsubscribeUserIdRoute,
-  ApiUserAvatarRoute: ApiUserAvatarRoute,
-  ApiUserLimitsRoute: ApiUserLimitsRoute,
-  ApiUserProfileRoute: ApiUserProfileRoute,
-  ApiUserPublicLinkRoute: ApiUserPublicLinkRoute,
   ApiV1BookmarksRoute: ApiV1BookmarksRouteWithChildren,
   ApiV1TagsRoute: ApiV1TagsRoute,
   ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
-  ApiAccountKeysKeyIdRoute: ApiAccountKeysKeyIdRoute,
   ApiOgBookmarkBookmarkIdRoute: ApiOgBookmarkBookmarkIdRoute,
   ApiAdminUsersUserIdCustomLimitsRoute: ApiAdminUsersUserIdCustomLimitsRoute,
   ApiV1PublicSlugBookmarksRoute: ApiV1PublicSlugBookmarksRoute,

@@ -1,5 +1,7 @@
 import { EmailComposer } from "@/features/admin/email-composer";
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -12,10 +14,7 @@ import {
 import { Mail } from "lucide-react";
 
 const getSendEmailData = createServerFn({ method: "GET" }).handler(async () => {
-  const [{ getUser }, { getMarketingEligibleUsersCount }] = await Promise.all([
-    import("@/lib/auth-session"),
-    import("@/lib/database/marketing-users"),
-  ]);
+  const { getUser } = await import("@/lib/auth-session");
   const user = await getUser();
   if (!user) {
     return { access: "signed-out" as const };
@@ -25,9 +24,11 @@ const getSendEmailData = createServerFn({ method: "GET" }).handler(async () => {
     return { access: "forbidden" as const };
   }
 
+  const stats = await fetchAuthQuery(api.admin.queries.getMarketingStats, {});
+
   return {
     access: "granted" as const,
-    eligibleUsersCount: await getMarketingEligibleUsersCount(),
+    eligibleUsersCount: stats.eligibleUsersCount,
   };
 });
 

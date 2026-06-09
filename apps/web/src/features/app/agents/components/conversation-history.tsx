@@ -1,6 +1,9 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { convexQuery } from "@convex-dev/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Popover,
@@ -15,22 +18,16 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { HistoryIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 dayjs.extend(relativeTime);
 
-const conversationsSchema = z.object({
-  conversations: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string().nullable(),
-      updatedAt: z.coerce.date(),
-      createdAt: z.coerce.date(),
-    }),
-  ),
-});
-
-type ConversationItem = z.infer<typeof conversationsSchema>["conversations"][0];
+type ConversationItem = {
+  _id: string;
+  title: string | null;
+  updatedAt: number;
+  createdAt: number;
+  likes: number;
+};
 
 type ConversationHistoryProps = {
   currentConversationId: string | null;
@@ -44,18 +41,21 @@ export function ConversationHistory({
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  // Convex reactive query — only active when the popover is open
   const { data, isLoading } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: () =>
-      upfetch("/api/chat/conversations", { schema: conversationsSchema }),
+    ...convexQuery(api.chat.queries.listConversations, {}),
     enabled: open,
   });
 
+  // Convex mutation for deleting a conversation
+  const deleteConvex = useConvexMutation(api.chat.mutations.deleteConversation);
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      upfetch(`/api/chat/conversations/${id}`, { method: "DELETE" }),
+      deleteConvex({ conversationId: id as Id<"chatConversations"> }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: convexQuery(api.chat.queries.listConversations, {}).queryKey,
+      });
       toast.success("Conversation deleted");
     },
     onError: () => {
@@ -98,7 +98,8 @@ export function ConversationHistory({
     return groups.filter((g) => g.items.length > 0);
   };
 
-  const groups = data ? groupConversations(data.conversations) : [];
+  const conversations = data ?? [];
+  const groups = groupConversations(conversations);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -130,11 +131,11 @@ export function ConversationHistory({
                   </div>
                   {group.items.map((conv) => (
                     <button
-                      key={conv.id}
-                      onClick={() => handleSelect(conv.id)}
+                      key={conv._id}
+                      onClick={() => handleSelect(conv._id)}
                       className={cn(
                         "group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/50",
-                        currentConversationId === conv.id && "bg-muted",
+                        currentConversationId === conv._id && "bg-muted",
                       )}
                     >
                       <div className="min-w-0 flex-1">
@@ -149,7 +150,7 @@ export function ConversationHistory({
                         size="icon"
                         variant="ghost"
                         className="size-6 opacity-0 group-hover:opacity-100"
-                        onClick={(e) => handleDelete(e, conv.id)}
+                        onClick={(e) => handleDelete(e, conv._id)}
                         disabled={deleteMutation.isPending}
                       >
                         <TrashIcon className="size-3" />

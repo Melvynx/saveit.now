@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Plus } from "lucide-react";
-import { usePrefetchBookmarks } from "./use-bookmarks";
 
 export function MoreResultsButton() {
   const navigate = useNavigate();
@@ -21,18 +20,17 @@ export function MoreResultsButton() {
     String(searchParams.matchingDistance ?? "0.1"),
   );
   const query = searchParams.query;
-  const prefetch = usePrefetchBookmarks();
 
   const mutation = useMutation({
     mutationFn: async ({ n }: { n: number; prefetchOnly?: boolean }) => {
-      await prefetch(query ?? "", n);
+      void n;
     },
     onSuccess: (_, params) => {
       if (params.prefetchOnly) return;
       void navigate({
         to: "/app",
         search: (previous) =>
-          ({ ...previous, matchingDistance: params.n.toFixed(1) }) as any,
+          ({ ...previous, matchingDistance: params.n.toFixed(1) }) as never,
       });
     },
   });

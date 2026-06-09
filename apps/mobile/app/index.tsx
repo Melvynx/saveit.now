@@ -1,5 +1,5 @@
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useShareIntent } from "expo-share-intent";
 import { View, ActivityIndicator, Modal, useColorScheme } from "react-native";
 import { Text, YStack } from "tamagui";
@@ -11,7 +11,7 @@ export default function IndexPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { hasShareIntent } = useShareIntent();
-  const { user, isLoading, isSigningOut } = useAuth();
+  const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const colorScheme = useColorScheme();
@@ -19,7 +19,7 @@ export default function IndexPage() {
 
   useFocusEffect(
     useCallback(() => {
-      if (isLoading || !user || isNavigating || isSigningOut) return;
+      if (isLoading || !user || isNavigating) return;
 
       const handleNavigation = () => {
         if (hasShareIntent || params.dataUrl) {
@@ -41,15 +41,8 @@ export default function IndexPage() {
       isLoading,
       user,
       router,
-      isSigningOut,
     ]),
   );
-
-  useEffect(() => {
-    if (!user) {
-      setIsNavigating(false);
-    }
-  }, [user]);
 
   // Show onboarding/sign-in when user is not authenticated
   if (!user && !isLoading) {

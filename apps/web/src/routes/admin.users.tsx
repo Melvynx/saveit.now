@@ -4,7 +4,8 @@ import {
   AdminTableSkeleton,
 } from "@/features/admin/admin-shared";
 import { parseAdminSearchParams } from "@/features/admin/search-params";
-import { UserTable } from "@/features/admin/user-table";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -16,14 +17,12 @@ import {
 } from "@workspace/ui/components/card";
 import { Users } from "lucide-react";
 import { Suspense } from "react";
+import { UserTable } from "@/features/admin/user-table";
 
 const getAdminUsersData = createServerFn({ method: "GET" })
   .validator((data: ReturnType<typeof parseAdminSearchParams>) => data)
   .handler(async ({ data }) => {
-    const [{ getUser }, { getUsersWithStats }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/admin-users"),
-    ]);
+    const { getUser } = await import("@/lib/auth-session");
     const user = await getUser();
     if (!user) {
       return { access: "signed-out" as const };
@@ -34,22 +33,24 @@ const getAdminUsersData = createServerFn({ method: "GET" })
     }
 
     const pageSize = 10;
-    const usersData = await getUsersWithStats({
+    const usersData = await fetchAuthQuery(api.admin.queries.listUsers, {
       page: data.page,
       pageSize,
       search: data.search || undefined,
       sortBy: data.sortBy,
       order: data.order,
-      filter: data.filter,
-      status: data.status,
-      role: data.role,
+      filter: data.filter !== "all" ? data.filter : undefined,
+      status: data.status !== "all" ? data.status : undefined,
+      role: data.role !== "all" ? data.role : undefined,
     });
 
     return {
       access: "granted" as const,
       pageSize,
       searchParams: data,
-      ...usersData,
+      users: usersData.users,
+      total: usersData.total,
+      totalPages: usersData.totalPages,
     };
   });
 

@@ -3,7 +3,7 @@
 import { CopyableField } from "@/components/tools/copyable-field";
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
-import { upfetch } from "@/lib/up-fetch";
+import { callConvexTool } from "@/lib/tools/convex-tool-client";
 import { useMutation } from "@tanstack/react-query";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -39,14 +39,7 @@ export function ExtractContentTool() {
 
   const mutation = useMutation({
     mutationFn: async (urlToFetch: string) => {
-      return upfetch("/api/tools/extract-content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        schema: extractContentResponseSchema,
-        body: JSON.stringify({ url: urlToFetch }),
-      });
+      return callConvexTool("extract-content", urlToFetch, extractContentResponseSchema);
     },
   });
 

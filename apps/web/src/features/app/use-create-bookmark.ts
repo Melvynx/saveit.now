@@ -1,6 +1,7 @@
 import { APP_LINKS } from "@/lib/app-links";
 import { BookmarkErrorType } from "@/lib/errors";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -9,12 +10,10 @@ import { useRefreshBookmarks } from "./use-bookmarks";
 export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
   const refreshBookmark = useRefreshBookmarks();
   const navigate = useNavigate();
+  const createBookmark = useConvexMutation(api.bookmarks.mutations.create);
+
   const action = useMutation({
-    mutationFn: (input: { url: string }) =>
-      upfetch("/api/bookmarks", {
-        method: "POST",
-        body: input,
-      }),
+    mutationFn: (input: { url: string }) => createBookmark(input),
     onSuccess: () => {
       props.onSuccess?.();
 
@@ -27,9 +26,9 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
         | { message?: string; type?: string }
         | undefined;
 
-      if (
-        typedError?.type === BookmarkErrorType.MAX_BOOKMARKS
-      ) {
+      const message = typedError?.message ?? "";
+
+      if (message.includes("maximum number of bookmarks")) {
         toast.error("You have reached the maximum number of bookmarks", {
           action: {
             label: "Upgrade",
@@ -38,15 +37,32 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
             },
           },
         });
+        return;
       }
 
-      if (
-        typedError?.type === BookmarkErrorType.BOOKMARK_ALREADY_EXISTS
-      ) {
+      if (message.includes("already exists")) {
         toast.error("Bookmark already exists", {});
+        return;
       }
 
-      toast.error(typedError?.message);
+      if (typedError?.type === BookmarkErrorType.MAX_BOOKMARKS) {
+        toast.error("You have reached the maximum number of bookmarks", {
+          action: {
+            label: "Upgrade",
+            onClick: () => {
+              void navigate({ to: APP_LINKS.upgrade });
+            },
+          },
+        });
+        return;
+      }
+
+      if (typedError?.type === BookmarkErrorType.BOOKMARK_ALREADY_EXISTS) {
+        toast.error("Bookmark already exists", {});
+        return;
+      }
+
+      toast.error(typedError?.message ?? "Failed to create bookmark");
     },
   });
 

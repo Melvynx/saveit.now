@@ -1,6 +1,13 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { authClient } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import {
+  convexQuery,
+  useConvexMutation,
+  useConvexAction,
+} from "@convex-dev/react-query";
 import { useChat } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -16,7 +23,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { cn } from "@workspace/ui/lib/utils";
@@ -24,34 +30,14 @@ import { BookmarkDialog } from "../bookmark-page/bookmark-page";
 import { ChatHeader } from "./components/chat-header";
 import { MessageItem } from "./components/message-item";
 
+const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
+
 const SUGGESTIONS = [
   "Search my bookmarks",
   "Show me recent articles",
   "Find programming resources",
   "What have I saved about React?",
 ];
-
-const chatUsageSchema = z.object({
-  used: z.number(),
-  limit: z.number(),
-  remaining: z.number(),
-  plan: z.string(),
-});
-
-const conversationSchema = z.object({
-  conversation: z.object({
-    id: z.string(),
-    title: z.string().nullable(),
-    messages: z.array(z.any()),
-    updatedAt: z.coerce.date(),
-    createdAt: z.coerce.date(),
-  }),
-});
-
-const createConversationSchema = z.object({
-  id: z.string(),
-  title: z.string().nullable(),
-});
 
 function EmptyState({
   onSuggestionClick,
@@ -163,9 +149,6 @@ export function ChatPage() {
   const [conversationId, setConversationId] = useState<string | null>(
     searchParams.get("c"),
   );
-  const [conversationTitle, setConversationTitle] = useState<string | null>(
-    null,
-  );
   const [isLoadingConversation, setIsLoadingConversation] = useState(
     !!searchParams.get("c"),
   );
@@ -202,47 +185,39 @@ export function ChatPage() {
     );
   }, [conversationId, setSearchParams]);
 
+  // Convex reactive query for chat usage
   const { data: usage, refetch: refetchUsage } = useQuery({
-    queryKey: ["chat", "usage"],
-    queryFn: () => upfetch("/api/chat/usage", { schema: chatUsageSchema }),
+    ...convexQuery(api.chat.queries.getChatUsage, {}),
   });
 
+  // Convex action for creating a conversation with AI-generated title
+  const createConversationConvex = useConvexAction(
+    api.chat.actions.createConversationWithTitle,
+  );
   const createConversationMutation = useMutation({
     mutationFn: (firstMessage: string) =>
-      upfetch("/api/chat/conversations", {
-        method: "POST",
-        body: { firstMessage },
-        schema: createConversationSchema,
-      }),
+      createConversationConvex({ firstMessage }),
     onSuccess: (data) => {
       setConversationId(data.id);
-      setConversationTitle(data.title);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 
-  const saveMessagesMutation = useMutation({
-    mutationFn: ({ id, messages }: { id: string; messages: UIMessage[] }) =>
-      upfetch(`/api/chat/conversations/${id}`, {
-        method: "PATCH",
-        body: { messages },
-      }),
-    onError: () => {
-      toast.error("Failed to save conversation");
-    },
-  });
-
+  // Convex mutation for liking a conversation
+  const likeConvex = useConvexMutation(api.chat.mutations.likeConversation);
   const likeMutation = useMutation({
-    mutationFn: (id: string) =>
-      upfetch(`/api/chat/conversations/${id}/like`, {
-        method: "POST",
-      }),
+    mutationFn: (conversationId: string) =>
+      likeConvex({ conversationId: conversationId as Id<"chatConversations"> }),
   });
 
+  // Convex mutation for disliking a conversation
+  const dislikeConvex = useConvexMutation(
+    api.chat.mutations.dislikeConversation,
+  );
   const dislikeMutation = useMutation({
-    mutationFn: (id: string) =>
-      upfetch(`/api/chat/conversations/${id}/dislike`, {
-        method: "POST",
+    mutationFn: (conversationId: string) =>
+      dislikeConvex({
+        conversationId: conversationId as Id<"chatConversations">,
       }),
   });
 
@@ -268,8 +243,20 @@ export function ChatPage() {
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/chat",
+      api: `${CONVEX_SITE_URL}/chat`,
       credentials: "include",
+      async headers() {
+        // Get the Convex JWT token from the Better Auth convex plugin
+        const tokenResult = await authClient.convex.token({
+          fetchOptions: { throw: false },
+        });
+        const token = tokenResult.data?.token;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        return headers;
+      },
       prepareSendMessagesRequest({ messages }) {
         return {
           body: {
@@ -289,18 +276,26 @@ export function ChatPage() {
     },
   });
 
-  // Load conversation from URL on mount
+  // Load conversation from URL on mount — use the queryClient to run a one-shot
+  // convexQuery for the conversation data
   useEffect(() => {
     const urlConversationId = searchParams.get("c");
     if (urlConversationId && isLoadingConversation) {
-      upfetch(`/api/chat/conversations/${urlConversationId}`, {
-        schema: conversationSchema,
-      })
+      queryClient
+        .fetchQuery({
+          ...convexQuery(api.chat.queries.getConversation, {
+            conversationId: urlConversationId as Id<"chatConversations">,
+          }),
+        })
         .then((data) => {
-          setConversationId(data.conversation.id);
-          setConversationTitle(data.conversation.title);
-          setMessages(data.conversation.messages as UIMessage[]);
-          conversationIdRef.current = data.conversation.id;
+          if (!data) {
+            toast.error("Conversation not found");
+            setSearchParams({}, { replace: true });
+            return;
+          }
+          setConversationId(data._id as string);
+          setMessages(data.messages as UIMessage[]);
+          conversationIdRef.current = data._id as string;
         })
         .catch(() => {
           toast.error("Failed to load conversation");
@@ -312,18 +307,6 @@ export function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (
-      conversationId &&
-      messages.length > 0 &&
-      status === "ready" &&
-      !isLoadingConversation
-    ) {
-      saveMessagesMutation.mutate({ id: conversationId, messages });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, messages, status, isLoadingConversation]);
 
   const isGenerating = status === "submitted" || status === "streaming";
 
@@ -394,7 +377,6 @@ export function ChatPage() {
 
   const handleNewConversation = useCallback(() => {
     setConversationId(null);
-    setConversationTitle(null);
     setMessages([]);
     setInput("");
     conversationIdRef.current = null;
@@ -404,18 +386,23 @@ export function ChatPage() {
   const handleSelectConversation = useCallback(
     async (id: string) => {
       try {
-        const data = await upfetch(`/api/chat/conversations/${id}`, {
-          schema: conversationSchema,
+        const data = await queryClient.fetchQuery({
+          ...convexQuery(api.chat.queries.getConversation, {
+            conversationId: id as Id<"chatConversations">,
+          }),
         });
-        setConversationId(data.conversation.id);
-        setConversationTitle(data.conversation.title);
-        setMessages(data.conversation.messages as UIMessage[]);
-        conversationIdRef.current = data.conversation.id;
+        if (!data) {
+          toast.error("Conversation not found");
+          return;
+        }
+        setConversationId(data._id as string);
+        setMessages(data.messages as UIMessage[]);
+        conversationIdRef.current = data._id as string;
       } catch {
         toast.error("Failed to load conversation");
       }
     },
-    [setMessages],
+    [setMessages, queryClient],
   );
 
   const handleEditMessage = useCallback(

@@ -1,58 +1,62 @@
-import { prisma } from "@workspace/database/client";
-import { getRequestHeaders } from "@tanstack/react-start/server";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { redirect } from "@tanstack/react-router";
-import { auth } from "./auth";
-import { getAuthLimits, parseCustomAuthLimits } from "./auth-limits";
-import { getUserMetadata } from "./database/user-metadata.utils";
 
-export const getUser = async () => {
-  const session = await auth.api.getSession({
-    headers: getRequestHeaders(),
-  });
+/**
+ * SSR auth helpers — sourced entirely from Convex (Better Auth on Convex).
+ * No Prisma, no local server auth. Function names are kept stable so every
+ * route loader / beforeLoad guard keeps working after the data-layer swap.
+ */
 
-  return session?.user;
+export type SsrUser = {
+  id: string;
+  email: string;
+  name: string;
+  image?: string | null;
+  emailVerified?: boolean;
+  role?: string | null;
+  banned?: boolean | null;
+  banExpires?: number | null;
+  stripeCustomerId?: string | null;
+  onboarding?: boolean | null;
+  unsubscribed?: boolean | null;
+  publicLinkSlug?: string | null;
+  publicLinkEnabled?: boolean | null;
 };
 
-export const getRequiredUser = async () => {
-  const user = await getUser();
+export const getUser = async (): Promise<SsrUser | undefined> => {
+  try {
+    const session = await fetchAuthQuery(api.auth.queries.getSession);
+    return (session?.user as SsrUser | undefined) ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
 
+export const getRequiredUser = async (): Promise<SsrUser> => {
+  const user = await getUser();
   if (!user) {
     throw new Response("Unauthorized", { status: 401 });
   }
-
   return user;
 };
 
-const getLimitsForUser = async (user: Awaited<ReturnType<typeof getUser>>) => {
-  if (!user) {
-    throw new Response("Unauthorized", { status: 401 });
-  }
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      referenceId: user.id,
-      status: { in: ["active", "trialing"] },
-    },
-  });
-
-  const metadata = await getUserMetadata(user.id);
-  const limits = getAuthLimits(subscription, metadata);
-
-  return {
-    ...user,
-    limits,
-    customLimits: parseCustomAuthLimits(metadata),
-    plan: (subscription?.plan ?? "free") as "free" | "pro",
-  };
-};
-
-export const getRequiredUserOrRedirect = async () => {
+export const getRequiredUserOrRedirect = async (): Promise<SsrUser> => {
   const user = await getUser();
-
   if (!user) {
     throw redirect({ to: "/signin" });
   }
-
   return user;
+};
+
+const getLimitsForUser = async (user: SsrUser) => {
+  const limits = await fetchAuthQuery(api.users.queries.getLimits);
+  return {
+    ...user,
+    limits: limits.limits,
+    customLimits: limits.customLimits,
+    plan: limits.plan,
+  };
 };
 
 export const getUserLimits = async () => {

@@ -1,12 +1,11 @@
 import { expoClient } from "@better-auth/expo/client";
-import { stripeClient } from "@better-auth/stripe/client";
+import { convexClient } from "@convex-dev/better-auth/client/plugins";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as SecureStore from "expo-secure-store";
-import { getServerUrl } from "./server-url";
 
 export const authClient = createAuthClient({
-  baseURL: getServerUrl(),
+  baseURL: process.env.EXPO_PUBLIC_CONVEX_SITE_URL,
   plugins: [
     expoClient({
       scheme: "saveit",
@@ -14,7 +13,7 @@ export const authClient = createAuthClient({
       storage: SecureStore,
     }),
     emailOTPClient(),
-    stripeClient({ subscription: true }),
+    convexClient(),
   ],
 });
 

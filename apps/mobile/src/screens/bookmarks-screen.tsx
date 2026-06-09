@@ -1,8 +1,4 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, usePaginatedQuery, useAction } from "convex/react";
 import {
   Share2,
   Globe,
@@ -10,18 +6,15 @@ import {
   X,
 } from "@tamagui/lucide-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Alert, FlatList, RefreshControl } from "react-native";
 import { Button, Text, XStack, YStack } from "tamagui";
+import { api } from "@convex/_generated/api";
 import { BookmarkItem } from "../components/bookmark-item";
 import { TypeFilterBadges } from "../components/type-filter-badges";
 import { TagSuggestions } from "../components/tag-suggestions";
-import {
-  apiClient,
-  BookmarksResponse,
-  type Bookmark,
-  type BookmarkType,
-} from "../lib/api-client";
+import { useAuth } from "../contexts/AuthContext";
+import type { BookmarkType } from "../lib/api-client";
 
 interface BookmarksScreenProps {
   searchQuery?: string;
@@ -39,14 +32,27 @@ function parseHashtagQuery(query: string): {
   return { cleanQuery: query, hashtagSearch: null };
 }
 
+// Convex bookmark shape mapped to the legacy Bookmark interface expected by components.
+function toBookmarkShape(b: any) {
+  return {
+    ...b,
+    id: b._id as string,
+    createdAt: typeof b.createdAt === "number"
+      ? new Date(b.createdAt).toISOString()
+      : b.createdAt,
+  };
+}
+
 export default function BookmarksScreen({
   searchQuery = "",
 }: BookmarksScreenProps) {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [selectedTypes, setSelectedTypes] = useState<BookmarkType[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+  const [searchResults, setSearchResults] = useState<any[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const { cleanQuery, hashtagSearch } = useMemo(
     () => parseHashtagQuery(searchQuery),
@@ -62,6 +68,58 @@ export default function BookmarksScreen({
 
     return () => clearTimeout(timer);
   }, [cleanQuery]);
+
+  // Paginated list query (used when no search query).
+  const {
+    results: convexBookmarks,
+    loadMore,
+    status,
+  } = usePaginatedQuery(
+    api.bookmarks.queries.list,
+    isAuthenticated && !debouncedSearchQuery
+      ? {
+          filter:
+            selectedTypes.length > 0
+              ? { types: selectedTypes as any[] }
+              : undefined,
+        }
+      : "skip",
+    { initialNumItems: 20 },
+  );
+
+  // Search action (used when query present).
+  const searchAction = useAction(api.search.actions.search);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (!debouncedSearchQuery && selectedTags.length === 0) {
+      setSearchResults(null);
+      return;
+    }
+
+    if (debouncedSearchQuery || selectedTags.length > 0) {
+      setIsSearching(true);
+      searchAction({
+        query: debouncedSearchQuery || undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        types: selectedTypes.length > 0 ? (selectedTypes as any[]) : undefined,
+        limit: 20,
+      })
+        .then((res) => {
+          setSearchResults(res.bookmarks ?? []);
+        })
+        .catch((err) => {
+          console.error("Search error:", err);
+          setSearchResults([]);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
+    }
+  }, [debouncedSearchQuery, selectedTypes, selectedTags, isAuthenticated]);
+
+  const updateBookmarkMutation = useMutation(api.bookmarks.mutations.update);
 
   const handleToggleType = (type: BookmarkType) => {
     setSelectedTypes((prev) =>
@@ -79,96 +137,64 @@ export default function BookmarksScreen({
     setSelectedTags((prev) => prev.filter((t) => t !== tagName));
   };
 
-  const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useInfiniteQuery({
-    queryKey: ["bookmarks", debouncedSearchQuery, selectedTypes, selectedTags],
-    queryFn: async ({ pageParam }) => {
-      return await apiClient.getBookmarks({
+  const rawBookmarks = searchResults ?? convexBookmarks ?? [];
+  const bookmarks = rawBookmarks.map(toBookmarkShape);
+
+  const isLoading =
+    (status === "LoadingFirstPage" && !debouncedSearchQuery) || isSearching;
+  const isFetchingNextPage = status === "LoadingMore";
+  const hasNextPage = status === "CanLoadMore";
+
+  const handleRefresh = useCallback(() => {
+    // Convex queries are reactive — refreshing is automatic.
+    // For search results we re-trigger by clearing and re-setting.
+    if (debouncedSearchQuery || selectedTags.length > 0) {
+      setIsSearching(true);
+      searchAction({
         query: debouncedSearchQuery || undefined,
-        cursor: pageParam,
-        limit: 20,
-        types: selectedTypes.length > 0 ? selectedTypes : undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
-      });
-    },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
-  });
-
-  const updateBookmarkMutation = useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: string;
-      updates: Partial<Bookmark>;
-    }) => {
-      return await apiClient.updateBookmark(id, updates);
-    },
-    onSuccess: (updatedBookmark) => {
-      // Update the bookmark in all pages of the cache
-      queryClient.setQueryData(
-        ["bookmarks", debouncedSearchQuery],
-        (oldData: { pages: BookmarksResponse[] }) => {
-          if (!oldData) return oldData;
-
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              bookmarks: page.bookmarks.map((bookmark: Bookmark) =>
-                bookmark.id === updatedBookmark.id ? updatedBookmark : bookmark,
-              ),
-            })),
-          };
-        },
-      );
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to update bookmark");
-    },
-  });
-
-  const bookmarks = data?.pages.flatMap((page) => page.bookmarks) ?? [];
-
-  const handleRefresh = async () => {
-    await refetch();
-  };
+        types: selectedTypes.length > 0 ? (selectedTypes as any[]) : undefined,
+        limit: 20,
+      })
+        .then((res) => setSearchResults(res.bookmarks ?? []))
+        .catch(() => setSearchResults([]))
+        .finally(() => setIsSearching(false));
+    }
+  }, [debouncedSearchQuery, selectedTags, selectedTypes, searchAction]);
 
   const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    if (hasNextPage && !isFetchingNextPage && !searchResults) {
+      loadMore(20);
     }
   };
 
-  const handleBookmarkPress = (bookmark: Bookmark) => {
+  const handleBookmarkPress = (bookmark: any) => {
     router.push(`/bookmark/${bookmark.id}`);
   };
 
-  const handleToggleStar = async (bookmark: Bookmark) => {
-    updateBookmarkMutation.mutate({
-      id: bookmark.id,
-      updates: { starred: !bookmark.starred },
-    });
+  const handleToggleStar = async (bookmark: any) => {
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id ?? bookmark.id,
+        patch: { starred: !bookmark.starred },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
-  const handleToggleRead = async (bookmark: Bookmark) => {
-    updateBookmarkMutation.mutate({
-      id: bookmark.id,
-      updates: { read: !bookmark.read },
-    });
+  const handleToggleRead = async (bookmark: any) => {
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id ?? bookmark.id,
+        patch: { read: !bookmark.read },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
-  const renderBookmark = ({ item }: { item: Bookmark }) => (
+  const renderBookmark = ({ item }: { item: any }) => (
     <BookmarkItem
       bookmark={item}
       onPress={() => handleBookmarkPress(item)}
@@ -176,23 +202,6 @@ export default function BookmarksScreen({
       onToggleRead={() => handleToggleRead(item)}
     />
   );
-
-  if (error) {
-    return (
-      <YStack
-        flex={1}
-        justifyContent="center"
-        alignItems="center"
-        backgroundColor="$background"
-        space="$4"
-      >
-        <Text color="$red10">Failed to load bookmarks</Text>
-        <Button onPress={() => refetch()} theme="blue">
-          Retry
-        </Button>
-      </YStack>
-    );
-  }
 
   return (
     <YStack flex={1} paddingTop="$2">
@@ -236,12 +245,12 @@ export default function BookmarksScreen({
       ) : (
         <FlatList
           data={bookmarks}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id ?? item._id}
           renderItem={renderBookmark}
           contentContainerStyle={{ padding: 16 }}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
+              refreshing={false}
               onRefresh={handleRefresh}
               tintColor="#007AFF"
               colors={["#007AFF"]}

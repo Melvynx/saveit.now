@@ -1,4 +1,4 @@
-import type { UserWithStats } from "@/lib/database/admin-users";
+import type { AdminUserListItem } from "@/features/admin/types";
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import { UserRow } from "./user-row";
 
 type UserTableProps = {
   searchParams: AdminSearchParams;
-  users: UserWithStats[];
+  users: AdminUserListItem[];
   total: number;
   totalPages: number;
   pageSize: number;

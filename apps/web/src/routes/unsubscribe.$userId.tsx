@@ -4,16 +4,27 @@ import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { ConvexHttpClient } from "convex/browser";
+import { type FunctionReference, makeFunctionReference } from "convex/server";
+
+const convexUrl =
+  (import.meta.env?.VITE_CONVEX_URL ?? process.env.VITE_CONVEX_URL) || "";
+
+// api.email.queries.getUnsubscribeStatus — defined in email/queries.ts (added in this migration).
+// Types regenerate after `convex dev`; we use a typed FunctionReference here.
+const getUnsubscribeStatusRef = makeFunctionReference<
+  "query",
+  { userId: string },
+  { id: string; email: string; unsubscribed: boolean } | null
+>("email/queries:getUnsubscribeStatus");
 
 const getUnsubscribeData = createServerFn({ method: "GET" })
   .validator((data: { userId: string }) => data)
   .handler(async ({ data }) => {
-    const { prisma } = await import("@workspace/database/client");
-    const user = await prisma.user.findUnique({
-      where: { id: data.userId },
-      select: { id: true, email: true, unsubscribed: true },
+    const convex = new ConvexHttpClient(convexUrl);
+    const user = await convex.query(getUnsubscribeStatusRef, {
+      userId: data.userId,
     });
-
     return { user };
   });
 

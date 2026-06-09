@@ -2,7 +2,8 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -12,7 +13,6 @@ import { Typography } from "@workspace/ui/components/typography";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 const freeFeatures = [
   `${AUTH_LIMITS.free?.bookmarks ?? 20} bookmarks`,
@@ -30,22 +30,17 @@ const proFeatures = [
   "Advanced AI summary",
 ];
 
-const CheckoutResponseSchema = z.object({ url: z.string() });
-
 export function PricingSection() {
   const [monthly, setMonthly] = useState(false);
+  const createCheckout = useConvexAction(api.stripe.actions.createCheckout);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const result = await upfetch("/api/upgrade", {
-        method: "POST",
-        body: {
-          plan: "pro",
-          successUrl: "/upgrade/success",
-          cancelUrl: "/upgrade?error=true",
-          annual: !monthly,
-        },
-        schema: CheckoutResponseSchema,
+      const result = await createCheckout({
+        plan: "pro",
+        successUrl: "/upgrade/success",
+        cancelUrl: "/upgrade?error=true",
+        annual: !monthly,
       });
 
       window.location.href = result.url;

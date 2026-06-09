@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "convex/react";
 import { ScrollView } from "react-native";
 import { XStack, YStack, Text, Button, Spinner } from "tamagui";
-import { apiClient, Tag } from "../lib/api-client";
+import { api } from "@convex/_generated/api";
+import { useAuth } from "../contexts/AuthContext";
 
 interface TagSuggestionsProps {
   searchText: string;
@@ -14,14 +15,21 @@ export function TagSuggestions({
   selectedTags,
   onSelectTag,
 }: TagSuggestionsProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["tags", searchText],
-    queryFn: () => apiClient.getTags({ q: searchText, limit: 20 }),
-    enabled: true,
-  });
+  const { isAuthenticated } = useAuth();
 
+  const result = useQuery(
+    api.tags.queries.list,
+    isAuthenticated
+      ? {
+          paginationOpts: { numItems: 20, cursor: null },
+          query: searchText || undefined,
+        }
+      : "skip",
+  );
+
+  const isLoading = result === undefined;
   const filteredTags =
-    data?.tags.filter((tag) => !selectedTags.includes(tag.name)) ?? [];
+    result?.page.filter((tag: any) => !selectedTags.includes(tag.name)) ?? [];
 
   if (isLoading) {
     return (
@@ -49,9 +57,9 @@ export function TagSuggestions({
       contentContainerStyle={{ paddingHorizontal: 16 }}
     >
       <XStack gap="$2" paddingVertical="$2">
-        {filteredTags.map((tag: Tag) => (
+        {filteredTags.map((tag: any) => (
           <Button
-            key={tag.id}
+            key={tag._id}
             size="$2"
             paddingHorizontal="$3"
             backgroundColor="$purple4"

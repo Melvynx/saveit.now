@@ -1,60 +1,64 @@
+import { api } from "@convex/_generated/api";
+import { useConvexAction } from "@convex-dev/react-query";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-
-const getBillingPortalUrl = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const [
-      { getRequiredUserOrRedirect },
-      { getServerUrl },
-      { stripeClient },
-      { prisma },
-    ] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/server-url"),
-      import("@/lib/stripe"),
-      import("@workspace/database/client"),
-    ]);
-    const user = await getRequiredUserOrRedirect();
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { stripeCustomerId: true },
-    });
-
-    if (!dbUser?.stripeCustomerId) {
-      return { error: true, url: null };
-    }
-
-    const stripe = await stripeClient.billingPortal.sessions.create({
-      customer: dbUser.stripeCustomerId,
-      return_url: `${getServerUrl()}/app`,
-    });
-
-    return { error: false, url: stripe.url };
-  },
-);
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/billing")({
-  loader: async () => {
-    const data = await getBillingPortalUrl();
-    if (data.url) throw redirect({ href: data.url });
-    return data;
-  },
   component: BillingPage,
 });
 
 function BillingPage() {
+  const createBillingPortal = useConvexAction(
+    api.stripe.actions.createBillingPortal,
+  );
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const result = await createBillingPortal({});
+      return result;
+    },
+    onSuccess: (data) => {
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to open billing portal",
+      );
+    },
+  });
+
+  useEffect(() => {
+    mutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (mutation.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Billing portal unavailable</AlertTitle>
+        <AlertDescription>
+          {mutation.error instanceof Error
+            ? mutation.error.message
+            : "No billing account found. Please contact support."}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <Alert variant="destructive">
-      <AlertTitle>No stripe customer id</AlertTitle>
-      <AlertDescription>
-        Please contact support to get your stripe customer id
-      </AlertDescription>
-    </Alert>
+    <div className="flex items-center justify-center min-h-32">
+      <div className="text-muted-foreground text-sm">
+        Redirecting to billing portal...
+      </div>
+    </div>
   );
 }
