@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { signInWithEmail } from "e2e/utils/auth-test";
-import { prisma, seedTestBookmarks } from "e2e/utils/database";
-import { getUserEmail, TEST_EMAIL } from "e2e/utils/test-data";
 import { nanoid } from "nanoid";
+import { signInWithEmail } from "../utils/auth-test";
+import { prisma, seedTestBookmarks } from "../utils/database";
+import { getUserEmail, TEST_EMAIL } from "../utils/test-data";
 
 test.describe("Process bookmarks tests", () => {
   test.skip("should process bookmark", async ({ page }) => {

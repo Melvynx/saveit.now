@@ -16,6 +16,9 @@
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.148 0.004 228.8);
+  --scrollbar-track: var(--background);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 22%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 32%, transparent);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.148 0.004 228.8);
   --popover: oklch(1 0 0);
@@ -69,6 +72,9 @@
 .dark {
   --background: oklch(0.148 0.004 228.8);
   --foreground: oklch(0.987 0.002 197.1);
+  --scrollbar-track: var(--background);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 18%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 28%, transparent);
   --card: oklch(0.218 0.008 223.9);
   --card-foreground: oklch(0.987 0.002 197.1);
   --popover: oklch(0.218 0.008 223.9);
@@ -176,9 +182,34 @@
 
 @layer base {
   * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     font-feature-settings: "ss02" 1;
     @apply border-border outline-ring/50;
   }
+
+  *::-webkit-scrollbar {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 3px solid var(--scrollbar-track);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+  }
+
   body {
     @apply bg-background text-foreground;
   }

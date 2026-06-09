@@ -3,7 +3,7 @@ import { Bookmark, BookmarkType } from "@workspace/database";
 import { prisma } from "@workspace/database/client";
 import { generateObject } from "ai";
 import * as cheerio from "cheerio";
-import TurndownService from "turndown";
+import TurndownService from "@/lib/server-turndown";
 import { z } from "zod";
 import { logger } from "../../logger";
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInWith } from "@/features/auth/sign-in-with";
+import { LandingAppButton } from "./landing-app-button";
 import { CheckIcon, Loader2Icon, SearchIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -123,13 +123,7 @@ export const LandingHero = () => {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <SignInWith
-                buttonProps={{
-                  className:
-                    "h-10 rounded-full bg-white/10 px-6 border border-white/10 text-white backdrop-blur-sm hover:bg-white/20 transition-colors text-sm font-medium",
-                }}
-                type="google"
-              />
+              <LandingAppButton className="h-10 rounded-full border border-white/10 bg-white/10 px-6 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20" />
               <a
                 href="#demo"
                 className="inline-flex h-10 items-center rounded-full border border-white/10 bg-transparent px-6 text-sm font-medium text-[#8eafc8] transition-colors hover:bg-white/5 hover:text-white"
@@ -281,8 +275,8 @@ export const LandingHero = () => {
                             <SparklesIcon className="size-3 text-[#93c5fd]" />
                           </div>
                           <p className="pt-0.5 text-[14px] leading-relaxed text-[#c9d1d9]">
-                            I found 3 database resources in your bookmarks.
-                            Want me to summarize any of these?
+                            I found 3 database resources in your bookmarks. Want
+                            me to summarize any of these?
                           </p>
                         </div>
                       )}

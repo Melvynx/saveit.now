@@ -23,10 +23,7 @@ export const Route = createFileRoute("/api/bookmarks/$bookmarkId/subscribe")({
           return Response.json({ error: "Bookmark not found" }, { status: 404 });
         }
 
-        const realtimeEnabled =
-          process.env.NODE_ENV === "production" &&
-          !process.env.CI &&
-          !!process.env.INNGEST_EVENT_KEY;
+        const realtimeEnabled = !process.env.CI;
 
         if (!realtimeEnabled) {
           return Response.json({ token: null });

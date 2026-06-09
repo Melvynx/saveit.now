@@ -1,9 +1,9 @@
 import { realtimeMiddleware } from "@inngest/realtime/middleware";
 import { Inngest } from "inngest";
 
-const middleware = process.env.NODE_ENV === "production" && !process.env.CI
-  ? [realtimeMiddleware()]
-  : [];
+const realtimeEnabled = !process.env.CI;
+
+const middleware = realtimeEnabled ? [realtimeMiddleware()] : [];
 
 const baseInngest = new Inngest({
   id: "saveit.now",

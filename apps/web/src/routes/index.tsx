@@ -9,6 +9,7 @@ import { LandingPricing } from "@/features/marketing/landing-pricing";
 import { LandingStats } from "@/features/marketing/landing-stats";
 import { WhySaveIt } from "@/features/marketing/why-saveit";
 import { Footer } from "@/features/page/footer";
+import { SignInDialog } from "@/features/auth/sign-in-dialog";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -26,6 +27,7 @@ function HomePage() {
       <LandingPricing />
       <FAQ />
       <Footer />
+      <SignInDialog />
     </div>
   );
 }

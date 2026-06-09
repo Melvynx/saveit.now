@@ -32,7 +32,10 @@ export function BookmarksPage() {
   const router = useRouter();
   const navigate = useNavigate();
   const location = useLocation();
-  const search = useSearch({ strict: false }) as { bookmarkId?: string };
+  const search = useSearch({ strict: false }) as {
+    bookmarkId?: string;
+    modal?: string;
+  };
   const {
     bookmarks,
     isPending,
@@ -49,13 +52,16 @@ export function BookmarksPage() {
   });
 
   useEffect(() => {
-    if (!session.isPending && !session.data?.user) {
+    if (
+      !session.isPending &&
+      !session.data?.user &&
+      search.modal !== "signin"
+    ) {
       logger.debug("Redirecting unauthenticated user to signin");
       toast.error("You need to be logged in to access this page");
-      void navigate({ to: "/signin" });
+      void navigate({ to: "/signin", search: { redirectUrl: "/app" } });
     }
-
-  }, [navigate, session.data?.user, session.isPending]);
+  }, [navigate, search.modal, session.data?.user, session.isPending]);
 
   const closeBookmarkDialog = () => {
     if (location.maskedLocation) {

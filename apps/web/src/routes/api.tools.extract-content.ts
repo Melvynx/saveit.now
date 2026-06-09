@@ -10,7 +10,7 @@ import {
 } from "@/lib/tools/schemas/extract-content";
 import { createFileRoute } from "@tanstack/react-router";
 import * as cheerio from "cheerio";
-import TurndownService from "turndown";
+import TurndownService from "@/lib/server-turndown";
 
 function calculateReadingTime(wordCount: number) {
   return Math.ceil(wordCount / 225);

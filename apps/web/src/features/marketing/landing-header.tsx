@@ -1,4 +1,5 @@
 import { HeaderUser } from "../page/header-user";
+import { LandingAppButton } from "./landing-app-button";
 
 export const LandingHeader = () => {
   return (
@@ -12,28 +13,23 @@ export const LandingHeader = () => {
         </a>
 
         <nav className="hidden items-center gap-8 text-[13px] text-[#888] md:flex">
-          <a
-            href="/tools"
-            className="transition-colors hover:text-[#fafafa]"
-          >
+          <a href="/tools" className="transition-colors hover:text-[#fafafa]">
             Tools
           </a>
-          <a
-            href="/pricing"
-            className="transition-colors hover:text-[#fafafa]"
-          >
+          <a href="/pricing" className="transition-colors hover:text-[#fafafa]">
             Pricing
           </a>
-          <a
-            href="/docs"
-            className="transition-colors hover:text-[#fafafa]"
-          >
+          <a href="/docs" className="transition-colors hover:text-[#fafafa]">
             Docs
           </a>
         </nav>
 
         <div className="flex items-center gap-3">
           <HeaderUser />
+          <LandingAppButton
+            className="hidden rounded-full px-4 text-xs sm:inline-flex"
+            variant="default"
+          />
         </div>
       </div>
     </header>

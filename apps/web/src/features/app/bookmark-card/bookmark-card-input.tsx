@@ -32,14 +32,14 @@ export const BookmarkCardInput = () => {
   const isUrl = URL_SCHEMA.safeParse(url).success;
 
   return (
-    <Card className="h-full overflow-hidden p-0">
-      <CardHeader className="pt-4">
+    <Card className="aspect-[384/290] overflow-hidden gap-0 p-0">
+      <CardHeader className="flex-1 content-start gap-2 px-4 pt-4">
         <div className="flex items-center gap-2">
           <Bookmark className="text-primary size-4" />
           <CardTitle>Add a bookmark</CardTitle>
         </div>
-        <CardDescription>
-          Paste any URL and it's safely stored - no friction.
+        <CardDescription className="line-clamp-2">
+          Paste any URL and it&apos;s safely stored - no friction.
         </CardDescription>
         <div className="flex items-center gap-2">
           <Input
@@ -60,24 +60,24 @@ export const BookmarkCardInput = () => {
         </div>
       </CardHeader>
 
-      <CardFooter className="flex flex-col gap-2 border-t !pt-4">
-        <Typography variant="muted">
-          Looking for quickly add a bookmark? Install our browser extension.
+      <CardFooter className="mt-auto flex items-center justify-between gap-3 border-t p-3">
+        <Typography variant="muted" className="text-xs leading-snug">
+          Add faster with extensions.
         </Typography>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <Link
             to={APP_LINKS.extensions}
-            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+            className="rounded-md hover:bg-accent/50 transition-colors p-1.5"
           >
-            <img src="https://svgl.app/library/chrome.svg" className="size-8" />
+            <img src="https://svgl.app/library/chrome.svg" className="size-6" />
           </Link>
           <Link
             to={APP_LINKS.extensions}
-            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+            className="rounded-md hover:bg-accent/50 transition-colors p-1.5"
           >
             <img
               src="https://svgl.app/library/firefox.svg"
-              className="size-8"
+              className="size-6"
             />
           </Link>
           <PosthogLink
@@ -85,9 +85,9 @@ export const BookmarkCardInput = () => {
             event={ANALYTICS.IOS_DOWNLOAD}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md hover:bg-accent/50 transition-colors p-2"
+            className="rounded-md hover:bg-accent/50 transition-colors p-1.5"
           >
-            <img src="https://svgl.app/library/apple.svg" className="size-8" />
+            <img src="https://svgl.app/library/apple.svg" className="size-6" />
           </PosthogLink>
         </div>
       </CardFooter>

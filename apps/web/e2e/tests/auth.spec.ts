@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { getUserEmail } from "e2e/utils/test-data";
 import { getOTPCodeFromDatabase } from "../utils/otp-helper";
+import { getUserEmail } from "../utils/test-data";
 
 test.describe("Authentication Flow - Simple Tests", () => {
   test("unauthenticated user visiting /app should redirect to /signin", async ({
