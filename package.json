@@ -3,8 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/postinstall-codegen.mjs",
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:port": "bash scripts/dev.sh",
     "start-all": "bash scripts/start-all.sh",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

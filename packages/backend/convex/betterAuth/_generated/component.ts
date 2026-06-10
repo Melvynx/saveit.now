@@ -1539,6 +1539,47 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      insertAccount: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          accessToken?: null | string;
+          accountId: string;
+          createdAt: number;
+          idToken?: null | string;
+          providerId: string;
+          refreshToken?: null | string;
+          scope?: null | string;
+          updatedAt: number;
+          userId: string;
+        },
+        any,
+        Name
+      >;
+      insertUser: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          banExpires?: null | number;
+          banReason?: null | string;
+          banned?: null | boolean;
+          createdAt: number;
+          email: string;
+          emailVerified: boolean;
+          image?: null | string;
+          metadata?: any;
+          name: string;
+          onboarding?: null | boolean;
+          publicLinkEnabled?: null | boolean;
+          publicLinkSlug?: null | string;
+          role?: null | string;
+          stripeCustomerId?: null | string;
+          unsubscribed?: null | boolean;
+          updatedAt: number;
+        },
+        any,
+        Name
+      >;
       listAccountsByUser: FunctionReference<
         "query",
         "internal",

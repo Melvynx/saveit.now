@@ -123,6 +123,112 @@ export const patchUser = mutationGeneric({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Migration helpers — called from convex/migration/import.ts via
+// ctx.runMutation(components.betterAuth.data.insertUser, {...})
+// These are mutationGeneric (run inside the betterAuth component namespace).
+// ---------------------------------------------------------------------------
+
+/**
+ * insertUser — idempotent. Skips insert and returns the existing _id if a user
+ * with the same email is already present. Otherwise inserts and returns the new _id.
+ */
+export const insertUser = mutationGeneric({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    emailVerified: v.boolean(),
+    image: v.optional(v.union(v.null(), v.string())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    role: v.optional(v.union(v.null(), v.string())),
+    banned: v.optional(v.union(v.null(), v.boolean())),
+    banReason: v.optional(v.union(v.null(), v.string())),
+    banExpires: v.optional(v.union(v.null(), v.number())),
+    stripeCustomerId: v.optional(v.union(v.null(), v.string())),
+    onboarding: v.optional(v.union(v.null(), v.boolean())),
+    unsubscribed: v.optional(v.union(v.null(), v.boolean())),
+    publicLinkSlug: v.optional(v.union(v.null(), v.string())),
+    publicLinkEnabled: v.optional(v.union(v.null(), v.boolean())),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    // Idempotent: return existing user _id if email already present.
+    const existing = await ctx.db
+      .query("user")
+      .withIndex("email", (q) => q.eq("email", args.email))
+      .first();
+    if (existing) {
+      return existing._id as string;
+    }
+
+    const id = await ctx.db.insert("user", {
+      name: args.name,
+      email: args.email,
+      emailVerified: args.emailVerified,
+      image: args.image ?? null,
+      createdAt: args.createdAt,
+      updatedAt: args.updatedAt,
+      role: args.role ?? null,
+      banned: args.banned ?? null,
+      banReason: args.banReason ?? null,
+      banExpires: args.banExpires ?? null,
+      stripeCustomerId: args.stripeCustomerId ?? null,
+      onboarding: args.onboarding ?? null,
+      unsubscribed: args.unsubscribed ?? null,
+      publicLinkSlug: args.publicLinkSlug ?? null,
+      publicLinkEnabled: args.publicLinkEnabled ?? null,
+      metadata: args.metadata,
+    });
+
+    return id as string;
+  },
+});
+
+/**
+ * insertAccount — idempotent. Skips insert and returns the existing _id if an
+ * account with the same (accountId, providerId) already exists. Otherwise inserts
+ * and returns the new _id.
+ */
+export const insertAccount = mutationGeneric({
+  args: {
+    userId: v.string(),
+    accountId: v.string(),
+    providerId: v.string(),
+    accessToken: v.optional(v.union(v.null(), v.string())),
+    refreshToken: v.optional(v.union(v.null(), v.string())),
+    idToken: v.optional(v.union(v.null(), v.string())),
+    scope: v.optional(v.union(v.null(), v.string())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Idempotent: return existing account _id if (accountId, providerId) already present.
+    const existing = await ctx.db
+      .query("account")
+      .withIndex("accountId_providerId", (q) =>
+        q.eq("accountId", args.accountId).eq("providerId", args.providerId),
+      )
+      .first();
+    if (existing) {
+      return existing._id as string;
+    }
+
+    const id = await ctx.db.insert("account", {
+      userId: args.userId,
+      accountId: args.accountId,
+      providerId: args.providerId,
+      accessToken: args.accessToken ?? null,
+      refreshToken: args.refreshToken ?? null,
+      idToken: args.idToken ?? null,
+      scope: args.scope ?? null,
+      createdAt: args.createdAt,
+      updatedAt: args.updatedAt,
+    });
+    return id as string;
+  },
+});
+
 export const getSessionById = queryGeneric({
   args: { sessionId: v.string() },
   handler: async (ctx, args) => {
