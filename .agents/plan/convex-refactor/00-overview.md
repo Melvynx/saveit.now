@@ -85,7 +85,7 @@ crons.ts                    # scheduled maintenance + batch marketing
 
 ### Realtime: free
 Inngest Realtime (token endpoint + `@inngest/realtime`) is **removed**. The bookmark detail page
-just does `useQuery(convexQuery(api.bookmarks.queries.get, { id }))`; as the pipeline patches
+just does `useQuery(api.bookmarks.queries.get, { id })`; as the pipeline patches
 `status`/`processingStep`, Convex pushes updates automatically.
 
 ---
@@ -134,9 +134,12 @@ folded into the relevant phases. The most important confirmed fixes:
 - Custom user fields need `additionalFields` in `createAuth` to appear on `getSession().user` — Phase 02.
 - `ctx.auth.getUserIdentity()` **throws** (not null) in httpActions — Phase 08.
 - Chat messages must be a separate `chatMessages` table, not an array field — Phases 04/08.
-- Correct `@convex-dev/react-query` call patterns (`convexAction`, `useConvexMutation`) — Phases 05/07/16.
+- Use native Convex React hooks directly (`useQuery`, `useMutation`, `useAction`, `useConvex`) and do
+  not add a TanStack Query / `@convex-dev/react-query` layer — Phases 05/07/16.
 - Server billing uses **manual Stripe SDK hooks**, not a Better Auth Stripe plugin — Phase 09.
 - The TanStack page migration is already complete (data-layer swap, not rebuild) — Phases 00/16.
+- 2026-06-10 app-web sweep: removed `createServerFn` data loaders/actions, retired the React Query
+  bridge/dependencies from `apps/web`, and left only the Better Auth `/api/auth/$` proxy route.
 
 ---
 

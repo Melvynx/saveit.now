@@ -1,7 +1,7 @@
 import { AdminShell } from "@/features/admin/admin-shell";
 import { AdminPageHeader, AdminStatCard } from "@/features/admin/admin-shared";
 import { parseAdminSearchParams } from "@/features/admin/search-params";
-import { fetchAuthQuery } from "@/lib/auth-server";
+import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import {
   createFileRoute,
@@ -9,7 +9,6 @@ import {
   Outlet,
   useLocation,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -28,44 +27,30 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-
-const getAdminData = createServerFn({ method: "GET" })
-  .validator((data: ReturnType<typeof parseAdminSearchParams>) => data)
-  .handler(async () => {
-    const { getUser } = await import("@/lib/auth-session");
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    const overview = await fetchAuthQuery(api.admin.queries.getOverview, {});
-
-    return {
-      access: "granted" as const,
-      overview,
-    };
-  });
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/admin")({
   validateSearch: parseAdminSearchParams,
-  loaderDeps: ({ search }) => ({ search }),
-  loader: ({ deps }) => getAdminData({ data: deps.search }),
   component: AdminPage,
 });
 
 function AdminPage() {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const data = Route.useLoaderData();
+  const session = useSession();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const overview = useQuery(
+    api.admin.queries.getOverview,
+    isAdmin && pathname === "/admin" ? {} : "skip",
+  );
 
-  if (data.access === "signed-out") {
+  if (session.isPending) return null;
+
+  if (!session.data?.user) {
     return <Navigate to="/signin" />;
   }
 
-  if (data.access === "forbidden") {
+  if (!isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="max-w-sm text-center">
@@ -78,8 +63,6 @@ function AdminPage() {
     );
   }
 
-  const { overview } = data;
-
   if (pathname !== "/admin") {
     return (
       <AdminShell pathname={pathname}>
@@ -87,6 +70,8 @@ function AdminPage() {
       </AdminShell>
     );
   }
+
+  if (!overview) return null;
 
   return (
     <AdminShell pathname={pathname}>

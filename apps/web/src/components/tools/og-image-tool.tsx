@@ -3,7 +3,7 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
 import { callConvexTool } from "@/lib/tools/convex-tool-client";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -23,17 +23,15 @@ import { ogImageResponseSchema } from "@/lib/tools/schemas/og-images";
 export function OGImageTool() {
   const [url, setUrl] = useState("");
 
-  const mutation = useMutation({
-    mutationFn: async (urlToFetch: string) => {
-      return callConvexTool("og-images", urlToFetch, ogImageResponseSchema);
-    },
-  });
+  const mutation = useAsyncTask(async (urlToFetch: string) =>
+    callConvexTool("og-images", urlToFetch, ogImageResponseSchema),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    mutation.mutate(url.trim());
+    void mutation.run(url.trim());
   };
 
   return (

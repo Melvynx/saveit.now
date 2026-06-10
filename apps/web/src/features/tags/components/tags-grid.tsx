@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "convex/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -15,9 +15,8 @@ import {
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Typography } from "@workspace/ui/components/typography";
 import { Bot, Hash, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useTagsManagement,
   type TagWithCount,
@@ -126,21 +125,16 @@ interface TagCompactCardProps {
 function TagCompactCard({ tag, onClick }: TagCompactCardProps) {
   const isAI = tag.type === "IA";
   const bookmarkCount = tag._count.bookmarks;
-  const queryClient = useQueryClient();
-  const doBulkDelete = useConvexMutation(api.tags.mutations.bulkDelete);
+  const doBulkDelete = useMutation(api.tags.mutations.bulkDelete);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const deleteMutation = useMutation({
-    mutationFn: () => doBulkDelete({ tagIds: [tag._id as Id<"tags">] }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags-infinite"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags"] });
-      toast.success(`Deleted tag "${tag.name}"`);
-    },
-    onError: () => {
-      toast.error("Failed to delete tag");
-    },
-  });
+  const deleteTag = () => {
+    setIsDeleting(true);
+    void doBulkDelete({ tagIds: [tag._id as Id<"tags">] })
+      .then(() => toast.success(`Deleted tag "${tag.name}"`))
+      .catch(() => toast.error("Failed to delete tag"))
+      .finally(() => setIsDeleting(false));
+  };
 
   return (
     <ContextMenu>
@@ -170,9 +164,9 @@ function TagCompactCard({ tag, onClick }: TagCompactCardProps) {
           variant="destructive"
           onSelect={(event) => {
             event.preventDefault();
-            deleteMutation.mutate();
+            deleteTag();
           }}
-          disabled={deleteMutation.isPending}
+          disabled={isDeleting}
         >
           <Trash2 className="h-4 w-4" /> Delete tag
         </ContextMenuItem>

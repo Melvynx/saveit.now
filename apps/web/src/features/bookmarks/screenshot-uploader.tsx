@@ -1,12 +1,9 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
-import { useRefreshBookmark } from "@/features/app/bookmark-page/use-bookmark";
-import { useRefreshBookmarks } from "@/features/app/use-bookmarks";
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useRef } from "react";
+import { useAction } from "convex/react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -32,38 +29,33 @@ export const ScreenshotUploader = ({
   className = "",
 }: ScreenshotUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const refreshBookmarks = useRefreshBookmarks();
-  const refreshBookmark = useRefreshBookmark(bookmarkId);
-  const uploadBookmarkScreenshot = useConvexAction(
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadBookmarkScreenshot = useAction(
     api.files.actions.uploadBookmarkScreenshot,
   );
 
-  const mutation = useMutation({
-    mutationFn: async (file: File) => {
+  const uploadFile = async (file: File) => {
+    setIsUploading(true);
+    try {
       const buffer = await file.arrayBuffer();
-      return uploadBookmarkScreenshot({
+      const data = await uploadBookmarkScreenshot({
         bookmarkId: bookmarkId as Id<"bookmarks">,
         fileData: buffer,
         fileName: file.name,
         contentType: file.type,
         fileSize: file.size,
       });
-    },
-    onSuccess: (data) => {
       toast.success("Screenshot updated successfully!");
       onUploadSuccess(data.previewUrl);
-      refreshBookmarks();
-      refreshBookmark();
-    },
-    onError: (error: unknown) => {
+    } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
-    },
-    onSettled: () => {
+    } finally {
+      setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    },
-  });
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -79,7 +71,7 @@ export const ScreenshotUploader = ({
       return;
     }
 
-    mutation.mutate(file);
+    void uploadFile(file);
   };
 
   const openFilePicker = () => {
@@ -90,8 +82,8 @@ export const ScreenshotUploader = ({
     <div
       className={`absolute top-4 right-4 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${className}`}
     >
-      <Button onClick={openFilePicker} disabled={mutation.isPending} size="sm">
-        {mutation.isPending ? "Uploading..." : "Update Preview"}
+      <Button onClick={openFilePicker} disabled={isUploading} size="sm">
+        {isUploading ? "Uploading..." : "Update Preview"}
       </Button>
       <input
         ref={fileInputRef}

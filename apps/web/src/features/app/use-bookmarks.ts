@@ -1,23 +1,12 @@
 import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@convex/_generated/api";
 import type { SearchResultDTO } from "@convex/search/helpers";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
+import { useAction } from "convex/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const useRefreshBookmarks = () => {
-  const queryClient = useQueryClient();
-
-  // This will invalidate all queries that start with "bookmarks", i.e., all pages
-  const refresh = () => {
-    void queryClient.invalidateQueries({
-      predicate: (query) =>
-        Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
-    });
-    void queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-  };
-
-  return refresh;
+  return () => {};
 };
 
 const URL_SCHEMA_REGEX = /^https?:\/\/.+/;
@@ -46,28 +35,49 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
   // Use debouncedQuery for the actual search, fallback to query if not provided
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
 
-  const search = useConvexAction(api.search.actions.search);
+  const search = useAction(api.search.actions.search);
+  const [pages, setPages] = useState<
+    Array<{ bookmarks: SearchResultDTO[]; hasMore: boolean; nextCursor?: string }>
+  >([]);
+  const [isPending, setIsPending] = useState(false);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const requestKey = useMemo(
+    () =>
+      JSON.stringify({
+        searchQuery,
+        types,
+        tags,
+        special,
+        matchingDistance,
+        query: Boolean(query),
+      }),
+    [matchingDistance, query, searchQuery, special, tags, types],
+  );
+  const latestRequestRef = useRef(requestKey);
 
-  const data = useInfiniteQuery({
-    queryKey: [
-      "bookmarks",
-      searchQuery,
-      types,
-      tags,
-      special,
-      matchingDistance,
-      Boolean(query),
-    ],
-    refetchOnWindowFocus: true,
-    enabled,
-    refetchInterval: 1000 * 60 * 5, // 5 minutes
-    queryFn: async ({ pageParam }) => {
+  const fetchPage = useCallback(
+    async (cursor?: string, append = false) => {
+      if (!enabled) return;
+      if (append) {
+        setIsFetchingNextPage(true);
+      } else {
+        setIsPending(true);
+      }
+      setError(null);
+
+      const activeRequest = requestKey;
+      latestRequestRef.current = activeRequest;
+
+      try {
       if (isUrl(searchQuery)) {
-        return {
+          const empty = {
           bookmarks: [] as SearchResultDTO[],
           hasMore: false,
           nextCursor: undefined as string | undefined,
         };
+          setPages([empty]);
+          return;
       }
 
       const result = await search({
@@ -76,26 +86,56 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         tags: tags.length > 0 ? tags : undefined,
         specialFilters: special.length > 0 ? (special as ("READ" | "UNREAD" | "STAR")[]) : undefined,
         limit: 20,
-        cursor: (pageParam as string) || undefined,
+          cursor,
         matchingDistance,
       });
 
-      return result as { bookmarks: SearchResultDTO[]; hasMore: boolean; nextCursor?: string };
+        if (latestRequestRef.current !== activeRequest) return;
+        const page = result as {
+          bookmarks: SearchResultDTO[];
+          hasMore: boolean;
+          nextCursor?: string;
+        };
+        setPages((current) => (append ? [...current, page] : [page]));
+      } catch (err) {
+        if (latestRequestRef.current === activeRequest) {
+          setError(err);
+        }
+      } finally {
+        if (latestRequestRef.current === activeRequest) {
+          setIsPending(false);
+          setIsFetchingNextPage(false);
+        }
+      }
     },
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore) return undefined;
-      return (lastPage as { nextCursor?: string }).nextCursor ?? undefined;
-    },
-    initialPageParam: "",
-  });
+    [enabled, matchingDistance, requestKey, search, searchQuery, special, tags, types],
+  );
 
-  const bookmarks = data.data?.pages.flatMap((page) => page.bookmarks) ?? [];
+  useEffect(() => {
+    setPages([]);
+    if (!enabled) return;
+    void fetchPage();
+  }, [enabled, fetchPage, requestKey]);
+
+  const bookmarks = pages.flatMap((page) => page.bookmarks);
+  const lastPage = pages[pages.length - 1];
+  const hasNextPage = Boolean(lastPage?.hasMore);
+  const fetchNextPage = () => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    void fetchPage(lastPage?.nextCursor, true);
+  };
 
   // Detect if user is typing (query changed but debounced hasn't caught up)
   const isTyping = query !== "" && query !== debouncedQuery;
 
   return {
-    ...data,
+    data: { pages },
+    error,
+    isPending,
+    isLoading: isPending,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
     bookmarks,
     query,
     types,

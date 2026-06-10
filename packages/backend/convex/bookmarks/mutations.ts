@@ -6,25 +6,19 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import {
-  authMutation,
-  internalMutation,
-} from "../functions";
+import { authMutation, internalMutation } from "../functions";
 import {
   throwLimitReached,
   throwNotFound,
   throwValidationError,
 } from "../utils/errors";
-import { cleanUrl } from "../utils/url";
+import { assertSafeHttpUrl, cleanUrl } from "../utils/url";
 import {
   assertCanCreateBookmark,
   assertCanRunProcessing,
   shouldSendLimitEmail,
 } from "../billing/limits";
-import {
-  getLimits,
-  isActiveSubscriptionStatus,
-} from "../billing/plans";
+import { getLimits, isActiveSubscriptionStatus } from "../billing/plans";
 import {
   buildBookmarkDetailDTO,
   type BookmarkDetailDTO,
@@ -122,7 +116,7 @@ async function createBookmarkCore(
   metadata?: any,
 ): Promise<BookmarkDetailDTO> {
   // 1. Clean URL.
-  const cleanedUrl = cleanUrl(url);
+  const cleanedUrl = assertSafeHttpUrl(cleanUrl(url));
 
   // 2. Check limits (total bookmarks + monthly runs).
   await assertCanCreateBookmark(ctx, userId);
@@ -180,11 +174,10 @@ async function createBookmarkCore(
   }
 
   // 8. Schedule pipeline processing.
-  await ctx.scheduler.runAfter(
-    0,
-    internal.processing.pipeline.run,
-    { bookmarkId, userId },
-  );
+  await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+    bookmarkId,
+    userId,
+  });
 
   return getDetailDTO(ctx, bookmarkId);
 }
@@ -204,6 +197,26 @@ export const create = authMutation({
     return createBookmarkCore(
       ctx,
       ctx.user.id,
+      args.url,
+      args.note,
+      args.transcript,
+      args.metadata,
+    );
+  },
+});
+
+export const createInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    url: v.string(),
+    note: v.optional(v.string()),
+    transcript: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args): Promise<BookmarkDetailDTO> => {
+    return createBookmarkCore(
+      ctx,
+      args.userId,
       args.url,
       args.note,
       args.transcript,
@@ -251,7 +264,8 @@ export const update = authMutation({
       updatedAt: Date.now(),
     };
 
-    if (args.patch.starred !== undefined) patchData.starred = args.patch.starred;
+    if (args.patch.starred !== undefined)
+      patchData.starred = args.patch.starred;
     if (args.patch.read !== undefined) patchData.read = args.patch.read;
     if (args.patch.note !== undefined) patchData.note = args.patch.note;
 
@@ -265,11 +279,10 @@ export const update = authMutation({
     await ctx.db.patch(args.id, patchData);
 
     if (args.patch.status === "PENDING") {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.processing.pipeline.run,
-        { bookmarkId: args.id, userId },
-      );
+      await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+        bookmarkId: args.id,
+        userId,
+      });
     }
 
     return getDetailDTO(ctx, args.id);
@@ -300,9 +313,7 @@ export const remove = authMutation({
     // Delete bookmarkOpens rows.
     const openRows = await ctx.db
       .query("bookmarkOpens")
-      .withIndex("by_bookmark_user", (q: any) =>
-        q.eq("bookmarkId", args.id),
-      )
+      .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", args.id))
       .take(500);
     for (const row of openRows) {
       await ctx.db.delete(row._id);
@@ -312,21 +323,17 @@ export const remove = authMutation({
     await bumpBookmarkCount(ctx, userId, -1);
 
     // Schedule R2 cleanup for bookmark files.
-    await ctx.scheduler.runAfter(
-      0,
-      internal.files.actions.deleteObjects,
-      {
-        keys: [
-          `users/${userId}/bookmarks/${args.id}/screenshot.png`,
-          `users/${userId}/bookmarks/${args.id}/pdf-screenshot.png`,
-          `users/${userId}/bookmarks/${args.id}/og-image.jpg`,
-          `users/${userId}/bookmarks/${args.id}/og-image.png`,
-          `users/${userId}/bookmarks/${args.id}/og-image.webp`,
-          `users/${userId}/bookmarks/${args.id}/favicon.ico`,
-          `users/${userId}/bookmarks/${args.id}/favicon.png`,
-        ],
-      },
-    );
+    await ctx.scheduler.runAfter(0, internal.files.actions.deleteObjects, {
+      keys: [
+        `users/${userId}/bookmarks/${args.id}/screenshot.png`,
+        `users/${userId}/bookmarks/${args.id}/pdf-screenshot.png`,
+        `users/${userId}/bookmarks/${args.id}/og-image.jpg`,
+        `users/${userId}/bookmarks/${args.id}/og-image.png`,
+        `users/${userId}/bookmarks/${args.id}/og-image.webp`,
+        `users/${userId}/bookmarks/${args.id}/favicon.ico`,
+        `users/${userId}/bookmarks/${args.id}/favicon.png`,
+      ],
+    });
 
     // Delete the bookmark.
     await ctx.db.delete(args.id);
@@ -423,11 +430,10 @@ export const reprocess = authMutation({
       updatedAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.processing.pipeline.run,
-      { bookmarkId: args.id, userId },
-    );
+    await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+      bookmarkId: args.id,
+      userId,
+    });
 
     return null;
   },
@@ -469,8 +475,7 @@ export const exportCsv = authMutation({
       .first();
 
     const plan =
-      subscription &&
-      isActiveSubscriptionStatus(subscription.status)
+      subscription && isActiveSubscriptionStatus(subscription.status)
         ? "pro"
         : "free";
     const limits = getLimits(plan);
@@ -568,11 +573,10 @@ export const insertWelcomeBookmark = internalMutation({
     await bumpBookmarkCount(ctx, args.userId, 1);
 
     // Schedule pipeline.
-    await ctx.scheduler.runAfter(
-      0,
-      internal.processing.pipeline.run,
-      { bookmarkId, userId: args.userId },
-    );
+    await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+      bookmarkId,
+      userId: args.userId,
+    });
 
     return null;
   },

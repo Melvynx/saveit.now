@@ -2,8 +2,7 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { Loader } from "@workspace/ui/components/loader";
@@ -12,7 +11,6 @@ import { toast } from "sonner";
 import {
   useBookmarkMetadata,
 } from "../bookmark-page/use-bookmark";
-import { useRefreshBookmarks } from "../use-bookmarks";
 import {
   BookmarkCardContainer,
   BookmarkCardContent,
@@ -22,6 +20,7 @@ import {
 } from "./bookmark-card-base";
 import type { BookmarkCardData } from "./bookmark.types";
 import type { Id } from "@convex/_generated/dataModel";
+import { useState } from "react";
 
 interface BookmarkCardPendingProps {
   bookmark: BookmarkCardData;
@@ -88,22 +87,22 @@ export const DeleteButtonAction = ({
   bookmarkId,
   ...props
 }: ButtonProps & { bookmarkId: string }) => {
-  const refreshBookmarks = useRefreshBookmarks();
-  const removeBookmark = useConvexMutation(api.bookmarks.mutations.remove);
-  const deleteAction = useMutation({
-    mutationFn: () => removeBookmark({ id: bookmarkId as Id<"bookmarks"> }),
-    onSuccess: () => {
-      toast.success("Bookmark deleted");
-      void refreshBookmarks();
-    },
-  });
+  const removeBookmark = useMutation(api.bookmarks.mutations.remove);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleDelete = () => {
+    setIsPending(true);
+    void removeBookmark({ id: bookmarkId as Id<"bookmarks"> })
+      .then(() => toast.success("Bookmark deleted"))
+      .finally(() => setIsPending(false));
+  };
 
   return (
     <LoadingButton
-      loading={deleteAction.isPending}
+      loading={isPending}
       variant="ghost"
       size="sm"
-      onClick={() => deleteAction.mutate()}
+      onClick={handleDelete}
       {...props}
     >
       {props.children ?? "Stop"}

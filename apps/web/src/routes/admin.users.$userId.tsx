@@ -4,10 +4,9 @@ import {
   AdminStatCard,
   AdminStatusBadge,
 } from "@/features/admin/admin-shared";
-import { fetchAuthQuery } from "@/lib/auth-server";
+import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
   CardContent,
@@ -17,48 +16,30 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Bookmark, MousePointerClick, UserCog, Users } from "lucide-react";
-
-const getAdminUserData = createServerFn({ method: "GET" })
-  .validator((data: { userId: string }) => data)
-  .handler(async ({ data }) => {
-    const { getUser } = await import("@/lib/auth-session");
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    const userDetail = await fetchAuthQuery(api.admin.queries.getUserDetail, {
-      userId: data.userId,
-    });
-
-    if (!userDetail) {
-      return { access: "not-found" as const };
-    }
-
-    return {
-      access: "granted" as const,
-      userDetail,
-    };
-  });
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/admin/users/$userId")({
-  loader: ({ params }) => getAdminUserData({ data: params }),
   component: AdminUserPage,
 });
 
 function AdminUserPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
-  if (data.access === "not-found") {
+  const session = useSession();
+  const { userId } = Route.useParams();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const userDetail = useQuery(
+    api.admin.queries.getUserDetail,
+    isAdmin ? { userId } : "skip",
+  );
+
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (userDetail === undefined) return null;
+  if (!userDetail) {
     return <p className="text-muted-foreground">User not found.</p>;
   }
 
-  const { userDetail } = data;
   const { bookmarkCount, clickCount, baseLimits, customLimits, effectiveLimits } = userDetail;
   const isPremium = baseLimits.bookmarks > 20;
 

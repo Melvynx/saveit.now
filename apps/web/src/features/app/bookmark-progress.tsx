@@ -1,8 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader } from "@workspace/ui/components/loader";
 import { Text } from "@workspace/ui/components/text";
 import { motion } from "motion/react";
-import { useEffect } from "react";
 
 // Processing steps matching the Convex pipeline
 const BOOKMARK_STEPS: Array<{ id: string; order: number; name: string }> = [
@@ -23,22 +21,13 @@ const BOOKMARK_STEPS: Array<{ id: string; order: number; name: string }> = [
 const TOTAL_VISIBLE_STEPS = 9;
 
 export default function BookmarkProgress({
-  bookmarkId,
   processingStep,
 }: {
   bookmarkId: string;
   processingStep?: number | null;
 }) {
-  const router = useQueryClient();
   const currentStepIdx = processingStep ?? 0;
   const currentStep = BOOKMARK_STEPS.find((b) => b.order === currentStepIdx);
-
-  useEffect(() => {
-    if (currentStepIdx >= 8) {
-      void router.invalidateQueries({ queryKey: ["bookmarks"] });
-      void router.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
-    }
-  }, [bookmarkId, currentStepIdx, router]);
 
   return (
     <div className="flex flex-col items-start w-fit mx-auto justify-center gap-2">

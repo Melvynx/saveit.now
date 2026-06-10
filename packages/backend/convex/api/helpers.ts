@@ -8,10 +8,13 @@
  */
 
 import { v } from "convex/values";
-import { internalAction, internalMutation, internalQuery } from "../_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "../_generated/server";
 import { internal, components } from "../_generated/api";
 import { throwNotFound } from "../utils/errors";
-import { cleanUrl } from "../utils/url";
 
 type BookmarkTypeLiteral =
   | "VIDEO"
@@ -49,7 +52,10 @@ export const searchBookmarksForUser = internalAction({
     cursor: v.optional(v.string()),
     matchingDistance: v.optional(v.number()),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     bookmarks: Array<Record<string, unknown>>;
     hasMore: boolean;
     nextCursor: string | null;
@@ -57,46 +63,53 @@ export const searchBookmarksForUser = internalAction({
     const limit = Math.min(args.limit ?? 20, 100);
     const paginationOpts = { numItems: limit, cursor: args.cursor ?? null };
 
-    if (args.tags && args.tags.length > 0) {
-      const result: Array<Record<string, unknown>> = await ctx.runQuery(
-        internal.search.queries.searchByTags,
+    if (
+      args.query ||
+      (args.tags && args.tags.length > 0) ||
+      (args.specialFilters && args.specialFilters.length > 0)
+    ) {
+      const result = await ctx.runAction(
+        internal.search.actions.searchForChat,
         {
           userId: args.userId,
+          query: args.query,
           tags: args.tags,
           types: args.types as BookmarkTypeLiteral[] | undefined,
           specialFilters: args.specialFilters as
             | SpecialFilterLiteral[]
             | undefined,
+          limit,
+          cursor: args.cursor,
+          matchingDistance: args.matchingDistance,
         },
       );
-      const all: Array<Record<string, unknown>> = result ?? [];
-      const start = args.cursor ? parseInt(args.cursor, 10) || 0 : 0;
-      const page: Array<Record<string, unknown>> = all.slice(start, start + limit);
-      const hasMore = all.length > start + limit;
       return {
-        bookmarks: page,
-        hasMore,
-        nextCursor: hasMore ? String(start + limit) : null,
+        bookmarks: (result.bookmarks ?? []) as Array<Record<string, unknown>>,
+        hasMore: result.hasMore,
+        nextCursor: result.nextCursor ?? null,
       };
     }
 
     // Default list
-    const result: { page: Array<Record<string, unknown>>; isDone: boolean; continueCursor?: string } = await ctx.runQuery(
-      internal.bookmarks.queries.listDefault,
-      {
-        userId: args.userId,
-        paginationOpts,
-        filter:
-          args.types && args.types.length > 0
-            ? { types: args.types as BookmarkTypeLiteral[] }
-            : undefined,
-      },
-    );
+    const result: {
+      page: Array<Record<string, unknown>>;
+      isDone: boolean;
+      continueCursor?: string;
+    } = await ctx.runQuery(internal.bookmarks.queries.listDefault, {
+      userId: args.userId,
+      paginationOpts,
+      filter:
+        args.types && args.types.length > 0
+          ? { types: args.types as BookmarkTypeLiteral[] }
+          : undefined,
+    });
 
     return {
-      bookmarks: (result as { page: Array<Record<string, unknown>> }).page ?? [],
+      bookmarks:
+        (result as { page: Array<Record<string, unknown>> }).page ?? [],
       hasMore: !(result as { isDone: boolean }).isDone,
-      nextCursor: (result as { continueCursor?: string }).continueCursor ?? null,
+      nextCursor:
+        (result as { continueCursor?: string }).continueCursor ?? null,
     };
   },
 });
@@ -124,81 +137,10 @@ export const createBookmarkForUser = internalAction({
     note: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Record<string, unknown> | null> => {
-    // Delegate to bookmarks internal create mutation
-    const id: Record<string, unknown> | null = await ctx.runMutation(
-      internal.api.helpers.createBookmarkMutation,
+    const bookmark: Record<string, unknown> | null = await ctx.runMutation(
+      internal.bookmarks.mutations.createInternal,
       args,
     );
-    return id;
-  },
-});
-
-export const createBookmarkMutation = internalMutation({
-  args: {
-    userId: v.string(),
-    url: v.string(),
-    transcript: v.optional(v.string()),
-    metadata: v.optional(v.any()),
-    note: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const cleanedUrl = cleanUrl(args.url);
-
-    // Dedupe check
-    const existing = await ctx.db
-      .query("bookmarks")
-      .withIndex("by_user_url", (q) =>
-        q.eq("userId", args.userId).eq("url", cleanedUrl),
-      )
-      .first();
-
-    if (existing) {
-      throw new Error(`Bookmark already exists for this URL`);
-    }
-
-    // Check user counters for limit
-    const counters = await ctx.db
-      .query("userCounters")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-
-    // Insert bookmark
-    const bookmarkId = await ctx.db.insert("bookmarks", {
-      userId: args.userId,
-      url: cleanedUrl,
-      status: "PENDING",
-      starred: false,
-      read: false,
-      createdAt: now,
-      updatedAt: now,
-      ...(args.note ? { note: args.note } : {}),
-      ...(args.metadata ? { metadata: args.metadata } : {}),
-    });
-
-    // Update counter
-    if (counters) {
-      await ctx.db.patch(counters._id, {
-        bookmarkCount: counters.bookmarkCount + 1,
-      });
-    } else {
-      const monthKey = `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, "0")}`;
-      await ctx.db.insert("userCounters", {
-        userId: args.userId,
-        bookmarkCount: 1,
-        monthKey,
-        monthlyRuns: 0,
-        monthlyChatQueries: 0,
-      });
-    }
-
-    // Schedule processing
-    await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
-      bookmarkId,
-      userId: args.userId,
-    });
-
-    const bookmark = await ctx.db.get(bookmarkId);
     return bookmark;
   },
 });
@@ -213,10 +155,7 @@ export const deleteBookmarkForUser = internalAction({
     bookmarkId: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.runMutation(
-      internal.api.helpers.deleteBookmarkMutation,
-      args,
-    );
+    await ctx.runMutation(internal.api.helpers.deleteBookmarkMutation, args);
     return { id: args.bookmarkId };
   },
 });
@@ -281,10 +220,7 @@ export const recordBookmarkOpenForUser = internalAction({
     bookmarkId: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.runMutation(
-      internal.api.helpers.recordOpenMutation,
-      args,
-    );
+    await ctx.runMutation(internal.api.helpers.recordOpenMutation, args);
     return null;
   },
 });
@@ -339,28 +275,14 @@ export const listTagsForUser = internalQuery({
   handler: async (ctx, args) => {
     const limit = Math.max(1, Math.min(args.limit, 100));
 
-    // Cursor-based pagination: cursor is the _id of the last tag
-    let query = ctx.db
+    const page = await ctx.db
       .query("tags")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId));
-
-    // Take limit + 1 to determine hasMore
-    const rows = await query.take(limit + 1);
-
-    // Apply cursor offset if provided
-    let startIndex = 0;
-    if (args.cursor) {
-      const idx = rows.findIndex((r) => r._id.toString() === args.cursor);
-      if (idx >= 0) startIndex = idx + 1;
-    }
-
-    const slice = rows.slice(startIndex, startIndex + limit + 1);
-    const hasMore = slice.length > limit;
-    const items = slice.slice(0, limit);
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .paginate({ numItems: limit, cursor: args.cursor ?? null });
 
     // For each tag, count bookmarks
     const tagsWithCount = await Promise.all(
-      items.map(async (tag) => {
+      page.page.map(async (tag) => {
         const bts = await ctx.db
           .query("bookmarkTags")
           .withIndex("by_tag", (q) => q.eq("tagId", tag._id))
@@ -376,8 +298,8 @@ export const listTagsForUser = internalQuery({
 
     return {
       tags: tagsWithCount,
-      hasMore,
-      nextCursor: hasMore ? (items[items.length - 1]?._id as string) : null,
+      hasMore: !page.isDone,
+      nextCursor: page.isDone ? null : page.continueCursor,
     };
   },
 });
@@ -403,14 +325,22 @@ export const publicSlugSearchAction = internalAction({
     limit: v.number(),
     cursor: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     user: { name: string; image: string | null };
     bookmarks: Array<Record<string, unknown>>;
     hasMore: boolean;
     nextCursor: string | null;
   } | null> => {
     // Look up user by public slug via betterAuth component
-    const user: { _id: string; name: string; image?: string | null; publicLinkEnabled?: boolean } | null = await ctx.runQuery(
+    const user: {
+      _id: string;
+      name: string;
+      image?: string | null;
+      publicLinkEnabled?: boolean;
+    } | null = await ctx.runQuery(
       components.betterAuth.data.getUserByPublicSlug,
       { slug: args.slug },
     );
@@ -420,19 +350,20 @@ export const publicSlugSearchAction = internalAction({
     }
 
     // Run search for this user's bookmarks
-    const result: { bookmarks: Array<Record<string, unknown>>; hasMore: boolean; nextCursor: string | null } = await ctx.runAction(
-      internal.api.helpers.searchBookmarksForUser,
-      {
-        userId: user._id as string,
-        query: args.query,
-        tags: args.tags,
-        types: args.types,
-        limit: args.limit,
-        cursor: args.cursor,
-        matchingDistance: 0.3,
-        specialFilters: [],
-      },
-    );
+    const result: {
+      bookmarks: Array<Record<string, unknown>>;
+      hasMore: boolean;
+      nextCursor: string | null;
+    } = await ctx.runAction(internal.api.helpers.searchBookmarksForUser, {
+      userId: user._id as string,
+      query: args.query,
+      tags: args.tags,
+      types: args.types,
+      limit: args.limit,
+      cursor: args.cursor,
+      matchingDistance: 0.3,
+      specialFilters: [],
+    });
 
     return {
       user: {

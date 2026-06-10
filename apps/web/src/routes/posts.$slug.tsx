@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
@@ -9,17 +8,15 @@ import { marked } from "marked";
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
+import { getPostBySlug } from "@/lib/mdx/posts-manager";
 
-const getPostData = createServerFn({ method: "GET" })
-  .validator((data: { slug: string }) => data)
-  .handler(async ({ data }) => {
-    const { getPostBySlug } = await import("@/lib/mdx/posts-manager");
-    const post = await getPostBySlug(data.slug);
-    return { post, html: post ? marked.parse(post.content) : "" };
-  });
+async function getPostData(data: { slug: string }) {
+  const post = await getPostBySlug(data.slug);
+  return { post, html: post ? marked.parse(post.content) : "" };
+}
 
 export const Route = createFileRoute("/posts/$slug")({
-  loader: ({ params }) => getPostData({ data: params }),
+  loader: ({ params }) => getPostData(params),
   component: BlogPostPage,
 });
 

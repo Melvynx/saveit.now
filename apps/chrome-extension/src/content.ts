@@ -19,24 +19,25 @@ function isTwitterXUrl(url: string): boolean {
 
 function isImageUrl(url: string): boolean {
   // Check for common image file extensions
-  const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)(\?|$)/i;
+  const imageExtensions =
+    /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)(\?|$)/i;
   if (imageExtensions.test(url)) {
     return true;
   }
-  
+
   // Check for common image hosting domains
   const imageHosts = [
-    'pbs.twimg.com',
-    'imgur.com',
-    'i.imgur.com',
-    'media.giphy.com',
-    'images.unsplash.com',
-    'cdn.pixabay.com'
+    "pbs.twimg.com",
+    "imgur.com",
+    "i.imgur.com",
+    "media.giphy.com",
+    "images.unsplash.com",
+    "cdn.pixabay.com",
   ];
-  
+
   try {
     const urlObj = new URL(url);
-    return imageHosts.some(host => urlObj.hostname.includes(host));
+    return imageHosts.some((host) => urlObj.hostname.includes(host));
   } catch {
     return false;
   }
@@ -48,10 +49,12 @@ function isImageSaveContext(): boolean {
 }
 
 function shouldSkipScreenshot(): boolean {
-  return isYouTubeVideoPage() || 
-         isTwitterXUrl(currentUrl) || 
-         isImageUrl(currentUrl) || 
-         isImageSaveContext();
+  return (
+    isYouTubeVideoPage() ||
+    isTwitterXUrl(currentUrl) ||
+    isImageUrl(currentUrl) ||
+    isImageSaveContext()
+  );
 }
 
 // Types de contenu à sauvegarder
@@ -97,6 +100,7 @@ async function saveBookmarkViaBackground(
   error?: string;
   errorType?: string;
   itemType?: SaveType;
+  bookmarkId?: string;
 }> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(
@@ -228,7 +232,9 @@ function setState(state: SaverState) {
       break;
     case SaverState.CAPTURING_SCREENSHOT:
       container.classList.remove("hidden");
-      const capturingEl = document.getElementById("saveit-capturing-screenshot");
+      const capturingEl = document.getElementById(
+        "saveit-capturing-screenshot",
+      );
       if (capturingEl) capturingEl.style.display = "flex";
       break;
     case SaverState.SUCCESS:
@@ -300,7 +306,7 @@ function setLoadingMessage(message: string) {
 // Upload screenshot via background script
 async function uploadScreenshotViaBackground(
   bookmarkId: string,
-  screenshotBlob: Blob
+  screenshotBlob: Blob,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Convert blob to data URL for serialization
@@ -310,31 +316,37 @@ async function uploadScreenshotViaBackground(
       reader.onerror = reject;
       reader.readAsDataURL(screenshotBlob);
     });
-    
+
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({
-        type: "UPLOAD_SCREENSHOT",
-        bookmarkId,
-        screenshotDataUrl: dataUrl
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          resolve({
-            success: false,
-            error: chrome.runtime.lastError.message
-          });
-          return;
-        }
-        
-        resolve(response || {
-          success: false,
-          error: "No response from background script"
-        });
-      });
+      chrome.runtime.sendMessage(
+        {
+          type: "UPLOAD_SCREENSHOT",
+          bookmarkId,
+          screenshotDataUrl: dataUrl,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            resolve({
+              success: false,
+              error: chrome.runtime.lastError.message,
+            });
+            return;
+          }
+
+          resolve(
+            response || {
+              success: false,
+              error: "No response from background script",
+            },
+          );
+        },
+      );
     });
   } catch (error) {
     return {
       success: false,
-      error: error.message || "Failed to upload screenshot"
+      error:
+        error instanceof Error ? error.message : "Failed to upload screenshot",
     };
   }
 }
@@ -342,7 +354,6 @@ async function uploadScreenshotViaBackground(
 // Capturer une capture d'écran de la page actuelle
 async function captureScreenshot(): Promise<Blob | null> {
   try {
-    
     // Demander au background script de capturer la capture d'écran
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({ type: "CAPTURE_SCREENSHOT" }, (response) => {
@@ -350,12 +361,12 @@ async function captureScreenshot(): Promise<Blob | null> {
           resolve(null);
           return;
         }
-        
+
         if (response && response.success && response.screenshotDataUrl) {
           // Convertir le data URL en Blob
           fetch(response.screenshotDataUrl)
-            .then(res => res.blob())
-            .then(blob => resolve(blob))
+            .then((res) => res.blob())
+            .then((blob) => resolve(blob))
             .catch(() => resolve(null));
         } else {
           resolve(null);
@@ -396,14 +407,14 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
       try {
         // Show loading message for YouTube player wait
         setLoadingMessage("Waiting for YouTube player...");
-        
+
         // Wait for YouTube player to be ready
         const playerReady = await waitForYouTubePlayer(5000);
 
         if (playerReady) {
           // Show loading message for transcript extraction
           setLoadingMessage("Extracting YouTube transcript...");
-          
+
           const transcriptResult = await extractYouTubeTranscript(url);
 
           if (transcriptResult) {
@@ -450,24 +461,24 @@ async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
         try {
           // Hide extension UI before capturing screenshot to avoid it appearing in the image
           setState(SaverState.HIDDEN);
-          
+
           // Wait a bit to ensure UI is hidden before capturing
-          await new Promise(resolve => setTimeout(resolve, 150));
-          
+          await new Promise((resolve) => setTimeout(resolve, 150));
+
           const screenshot = await captureScreenshot();
-          
+
           if (screenshot) {
             // Show standard loading state during upload
             setState(SaverState.LOADING);
             setLoadingMessage("Uploading screenshot...");
-            
+
             await uploadScreenshotViaBackground(result.bookmarkId, screenshot);
           }
         } catch (error) {
           // Continue to success even if screenshot process fails
         }
       }
-      
+
       setState(SaverState.SUCCESS);
     } else {
       // Gérer les différents types d'erreurs basé sur errorType

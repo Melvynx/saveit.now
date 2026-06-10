@@ -6,7 +6,7 @@
 - `pg` and `@types/pg` in devDependencies (already added to packages/backend/package.json)
 - Access to the source Postgres database (`DATABASE_URL`)
 - The target Convex deployment URL (`CONVEX_URL`)
-- `ALLOW_MIGRATION=true` set on the Convex deployment environment
+- `ALLOW_MIGRATION=true` and a high-entropy `MIGRATION_SECRET` set on the Convex deployment environment
 
 ---
 
@@ -16,9 +16,11 @@ In the Convex dashboard (or via `npx convex env set`), set:
 
 ```
 ALLOW_MIGRATION=true
+MIGRATION_SECRET="generate-a-long-random-value"
 ```
 
-This enables the gated import mutations. **Remove it when the migration is done.**
+This enables the gated import mutations for callers that also know the secret.
+**Remove both values when the migration is done.**
 
 ---
 
@@ -44,10 +46,12 @@ Tables exported: `user`, `account`, `tag`, `bookmark` (no embeddings), `bookmark
 cd packages/backend
 
 CONVEX_URL="https://your-deployment.convex.cloud" \
+MIGRATION_SECRET="same-value-as-convex-env" \
   tsx scripts/migrate/import-convex.ts
 ```
 
 The script:
+
 1. Reads all JSONL files.
 2. Imports in dependency order, threading `legacyId → convexId` maps.
 3. Rewrites all foreign-key references (userId, bookmarkId, tagId).
@@ -61,14 +65,16 @@ After the import completes, kick off the background re-embed pass:
 
 ```bash
 # Via the Convex CLI:
-npx convex run migration/reembed_helpers:startReembed
+npx convex run migration/reembed_helpers:startReembed '{"migrationSecret":"same-value-as-convex-env"}'
 
 # Or programmatically (add to your import script or run separately):
 node -e "
 const { ConvexHttpClient } = require('convex/browser');
 const { api } = require('./convex/_generated/api');
 const client = new ConvexHttpClient(process.env.CONVEX_URL);
-client.mutation(api.migration.reembed_helpers.startReembed, {}).then(console.log);
+client.mutation(api.migration.reembed_helpers.startReembed, {
+  migrationSecret: process.env.MIGRATION_SECRET,
+}).then(console.log);
 "
 ```
 
@@ -92,6 +98,7 @@ The `reembedBatch` action pages through bookmarks with a missing/stale
 
 ```bash
 npx convex env set ALLOW_MIGRATION false
+npx convex env remove MIGRATION_SECRET
 # or remove the variable entirely
 ```
 
@@ -99,42 +106,42 @@ npx convex env set ALLOW_MIGRATION false
 
 ## Field Mapping Reference
 
-| Postgres table | Postgres column | Convex table | Convex field |
-|---|---|---|---|
-| user | id | betterAuth/user | _id (new) |
-| user | name | betterAuth/user | name |
-| user | email | betterAuth/user | email |
-| user | emailVerified | betterAuth/user | emailVerified |
-| user | image | betterAuth/user | image |
-| user | createdAt | betterAuth/user | createdAt (ms) |
-| user | updatedAt | betterAuth/user | updatedAt (ms) |
-| user | role | betterAuth/user | role |
-| user | banned/banReason/banExpires | betterAuth/user | banned/banReason/banExpires |
-| user | stripeCustomerId | betterAuth/user | stripeCustomerId |
-| user | onboarding | betterAuth/user | onboarding |
-| user | unsubscribed | betterAuth/user | unsubscribed |
-| user | publicLinkSlug | betterAuth/user | publicLinkSlug |
-| user | publicLinkEnabled | betterAuth/user | publicLinkEnabled |
-| account | accountId | betterAuth/account | accountId |
-| account | providerId | betterAuth/account | providerId |
-| account | accessToken/refreshToken/idToken/scope | betterAuth/account | same |
-| "Tag" | id | tags | _id (new) |
-| "Tag" | userId | tags | userId (rewritten) |
-| "Tag" | name/type | tags | name/type |
-| "Bookmark" | id | bookmarks | _id (new) |
-| "Bookmark" | userId | bookmarks | userId (rewritten) |
-| "Bookmark" | url/type/title/summary/note/preview | bookmarks | same |
-| "Bookmark" | vectorSummary/faviconUrl/ogImageUrl/ogDescription/imageDescription | bookmarks | same |
-| "Bookmark" | metadata | bookmarks | metadata |
-| "Bookmark" | status/starred/read | bookmarks | same |
-| "Bookmark" | createdAt/updatedAt | bookmarks | createdAt/updatedAt (ms) |
-| "Bookmark" | titleEmbedding/vectorSummaryEmbedding | — | SKIPPED (re-embedded) |
-| "BookmarkTag" | bookmarkId/tagId/userId | bookmarkTags | rewritten IDs |
-| "BookmarkOpen" | bookmarkId/userId/openedAt | bookmarkOpens | rewritten IDs, openedAt (ms) |
-| subscription | userId (referenceId) | subscriptions | userId (rewritten) |
-| subscription | plan/stripeCustomerId/stripeSubscriptionId | subscriptions | same |
-| subscription | status/currentPeriodStart/currentPeriodEnd | subscriptions | status/periodStart/periodEnd (ms) |
-| subscription | cancelAtPeriodEnd/seats | subscriptions | same |
-| "ChatConversation" | userId/title/likes | chatConversations | userId (rewritten)/title/likes |
-| "ChatConversation" | createdAt/updatedAt | chatConversations | createdAt/updatedAt (ms) |
-| "ChatConversation".messages[] | role/content | chatMessages | role/content/conversationId |
+| Postgres table                | Postgres column                                                    | Convex table       | Convex field                      |
+| ----------------------------- | ------------------------------------------------------------------ | ------------------ | --------------------------------- |
+| user                          | id                                                                 | betterAuth/user    | \_id (new)                        |
+| user                          | name                                                               | betterAuth/user    | name                              |
+| user                          | email                                                              | betterAuth/user    | email                             |
+| user                          | emailVerified                                                      | betterAuth/user    | emailVerified                     |
+| user                          | image                                                              | betterAuth/user    | image                             |
+| user                          | createdAt                                                          | betterAuth/user    | createdAt (ms)                    |
+| user                          | updatedAt                                                          | betterAuth/user    | updatedAt (ms)                    |
+| user                          | role                                                               | betterAuth/user    | role                              |
+| user                          | banned/banReason/banExpires                                        | betterAuth/user    | banned/banReason/banExpires       |
+| user                          | stripeCustomerId                                                   | betterAuth/user    | stripeCustomerId                  |
+| user                          | onboarding                                                         | betterAuth/user    | onboarding                        |
+| user                          | unsubscribed                                                       | betterAuth/user    | unsubscribed                      |
+| user                          | publicLinkSlug                                                     | betterAuth/user    | publicLinkSlug                    |
+| user                          | publicLinkEnabled                                                  | betterAuth/user    | publicLinkEnabled                 |
+| account                       | accountId                                                          | betterAuth/account | accountId                         |
+| account                       | providerId                                                         | betterAuth/account | providerId                        |
+| account                       | accessToken/refreshToken/idToken/scope                             | betterAuth/account | same                              |
+| "Tag"                         | id                                                                 | tags               | \_id (new)                        |
+| "Tag"                         | userId                                                             | tags               | userId (rewritten)                |
+| "Tag"                         | name/type                                                          | tags               | name/type                         |
+| "Bookmark"                    | id                                                                 | bookmarks          | \_id (new)                        |
+| "Bookmark"                    | userId                                                             | bookmarks          | userId (rewritten)                |
+| "Bookmark"                    | url/type/title/summary/note/preview                                | bookmarks          | same                              |
+| "Bookmark"                    | vectorSummary/faviconUrl/ogImageUrl/ogDescription/imageDescription | bookmarks          | same                              |
+| "Bookmark"                    | metadata                                                           | bookmarks          | metadata                          |
+| "Bookmark"                    | status/starred/read                                                | bookmarks          | same                              |
+| "Bookmark"                    | createdAt/updatedAt                                                | bookmarks          | createdAt/updatedAt (ms)          |
+| "Bookmark"                    | titleEmbedding/vectorSummaryEmbedding                              | —                  | SKIPPED (re-embedded)             |
+| "BookmarkTag"                 | bookmarkId/tagId/userId                                            | bookmarkTags       | rewritten IDs                     |
+| "BookmarkOpen"                | bookmarkId/userId/openedAt                                         | bookmarkOpens      | rewritten IDs, openedAt (ms)      |
+| subscription                  | userId (referenceId)                                               | subscriptions      | userId (rewritten)                |
+| subscription                  | plan/stripeCustomerId/stripeSubscriptionId                         | subscriptions      | same                              |
+| subscription                  | status/currentPeriodStart/currentPeriodEnd                         | subscriptions      | status/periodStart/periodEnd (ms) |
+| subscription                  | cancelAtPeriodEnd/seats                                            | subscriptions      | same                              |
+| "ChatConversation"            | userId/title/likes                                                 | chatConversations  | userId (rewritten)/title/likes    |
+| "ChatConversation"            | createdAt/updatedAt                                                | chatConversations  | createdAt/updatedAt (ms)          |
+| "ChatConversation".messages[] | role/content                                                       | chatMessages       | role/content/conversationId       |

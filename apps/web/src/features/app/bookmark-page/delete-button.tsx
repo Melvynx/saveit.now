@@ -3,16 +3,15 @@
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Trash } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useRefreshBookmarks } from "../use-bookmarks";
 import type { Id } from "@convex/_generated/dataModel";
+import { useState } from "react";
 
 export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
 
@@ -32,7 +31,7 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
           posthog.capture("bookmark+delete", {
             bookmark_id: bookmarkId,
           });
-          action.mutate(bookmarkId);
+          action.execute(bookmarkId);
           void navigate({ to: "/app", search });
         },
       },
@@ -61,17 +60,15 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
 };
 
 export const useDeleteBookmark = () => {
-  const refreshBookmarks = useRefreshBookmarks();
-  const removeBookmark = useConvexMutation(api.bookmarks.mutations.remove);
+  const removeBookmark = useMutation(api.bookmarks.mutations.remove);
+  const [isPending, setIsPending] = useState(false);
 
-  const action = useMutation({
-    mutationFn: async (bookmarkId: string) => {
-      return removeBookmark({ id: bookmarkId as Id<"bookmarks"> });
-    },
-    onSuccess: () => {
-      refreshBookmarks();
-    },
-  });
+  const execute = (bookmarkId: string) => {
+    setIsPending(true);
+    void removeBookmark({ id: bookmarkId as Id<"bookmarks"> }).finally(() =>
+      setIsPending(false),
+    );
+  };
 
-  return action;
+  return { execute, isPending };
 };

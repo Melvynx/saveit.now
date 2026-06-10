@@ -52,7 +52,7 @@ httpAction.) If you later want a Convex-native component, evaluate **`@convex-de
 - `app.agents.tsx` / chat components keep the AI SDK `useChat`, but point its transport at the Convex
   HTTP action URL (`${VITE_CONVEX_SITE_URL}/chat`) with the auth token attached (the Better Auth client
   provides it; pass `Authorization`/cookies as the transport requires).
-- Conversation list / usage badges switch to `convexQuery(api.chat.queries.*)`.
+- Conversation list / usage badges switch to native `useQuery(api.chat.queries.*, args)`.
 - Remove the old `/api/chat*` routes.
 
 ## Acceptance criteria

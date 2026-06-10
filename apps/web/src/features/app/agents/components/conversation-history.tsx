@@ -2,8 +2,6 @@
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { convexQuery } from "@convex-dev/react-query";
-import { useConvexMutation } from "@convex-dev/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Popover,
@@ -12,7 +10,7 @@ import {
 } from "@workspace/ui/components/popover";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "convex/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { HistoryIcon, Loader2Icon, TrashIcon } from "lucide-react";
@@ -39,29 +37,16 @@ export function ConversationHistory({
   onSelect,
 }: ConversationHistoryProps) {
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Convex reactive query — only active when the popover is open
-  const { data, isLoading } = useQuery({
-    ...convexQuery(api.chat.queries.listConversations, {}),
-    enabled: open,
-  });
+  const data = useQuery(
+    api.chat.queries.listConversations,
+    open ? {} : "skip",
+  );
 
   // Convex mutation for deleting a conversation
-  const deleteConvex = useConvexMutation(api.chat.mutations.deleteConversation);
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      deleteConvex({ conversationId: id as Id<"chatConversations"> }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: convexQuery(api.chat.queries.listConversations, {}).queryKey,
-      });
-      toast.success("Conversation deleted");
-    },
-    onError: () => {
-      toast.error("Failed to delete conversation");
-    },
-  });
+  const deleteConversation = useMutation(api.chat.mutations.deleteConversation);
 
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -70,7 +55,11 @@ export function ConversationHistory({
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    deleteMutation.mutate(id);
+    setIsDeleting(true);
+    void deleteConversation({ conversationId: id as Id<"chatConversations"> })
+      .then(() => toast.success("Conversation deleted"))
+      .catch(() => toast.error("Failed to delete conversation"))
+      .finally(() => setIsDeleting(false));
   };
 
   const groupConversations = (conversations: ConversationItem[]) => {
@@ -114,7 +103,7 @@ export function ConversationHistory({
           <h3 className="text-sm font-medium">Conversation History</h3>
         </div>
         <ScrollArea className="h-[300px]">
-          {isLoading ? (
+          {data === undefined ? (
             <div className="flex items-center justify-center py-8">
               <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
@@ -151,7 +140,7 @@ export function ConversationHistory({
                         variant="ghost"
                         className="size-6 opacity-0 group-hover:opacity-100"
                         onClick={(e) => handleDelete(e, conv._id)}
-                        disabled={deleteMutation.isPending}
+                        disabled={isDeleting}
                       >
                         <TrashIcon className="size-3" />
                       </Button>

@@ -49,20 +49,17 @@ fi
 log_dir="$root/debug-logs/start-all"
 web_log="$log_dir/web.txt"
 convex_log="$log_dir/convex.txt"
-inngest_log="$log_dir/inngest.txt"
 stripe_log="$log_dir/stripe.txt"
 
 mkdir -p "$log_dir"
 : > "$web_log"
 : > "$convex_log"
-: > "$inngest_log"
 : > "$stripe_log"
 
 printf '[start-all] port=%s\n' "$port"
 printf '[start-all] web -> http://localhost:%s\n' "$port"
 printf '[start-all] web log -> %s\n' "$web_log"
 printf '[start-all] convex log -> %s\n' "$convex_log"
-printf '[start-all] inngest log -> %s\n' "$inngest_log"
 if (( start_stripe )); then
   printf '[start-all] stripe log -> %s\n' "$stripe_log"
 else
@@ -121,17 +118,17 @@ start_service() {
 }
 
 app_url="http://localhost:$port"
+convex_site_url="${CONVEX_SITE_URL:-${VITE_CONVEX_SITE_URL:-}}"
 
 start_service "convex" "36" "$convex_log" \
   pnpm --filter @workspace/backend dev
 
-start_service "inngest" "33" "$inngest_log" \
-  pnpm --dir "$root/apps/web" dlx inngest-cli@latest dev --no-discovery -u "$app_url/api/inngest"
-
 if (( start_stripe )); then
-  if command -v stripe >/dev/null 2>&1; then
+  if [[ -z "$convex_site_url" ]]; then
+    echo "[start-all] WARN: CONVEX_SITE_URL or VITE_CONVEX_SITE_URL is required for Stripe forwarding; skipping" >&2
+  elif command -v stripe >/dev/null 2>&1; then
     start_service "stripe" "34" "$stripe_log" \
-      stripe listen --forward-to "$app_url/api/webhooks/stripe"
+      stripe listen --forward-to "$convex_site_url/stripe/webhook"
   else
     echo "[start-all] WARN: stripe CLI not found; skipping Stripe webhook listener" >&2
   fi

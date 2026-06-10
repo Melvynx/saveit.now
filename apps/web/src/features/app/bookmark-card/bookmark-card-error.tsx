@@ -5,8 +5,7 @@ import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import { Typography } from "@workspace/ui/components/typography";
 import {
   BookmarkCardContainer,
@@ -19,6 +18,7 @@ import {
 import { DeleteButtonAction } from "./bookmark-card-pending";
 import type { BookmarkCardData } from "./bookmark.types";
 import type { Id } from "@convex/_generated/dataModel";
+import { useState } from "react";
 
 interface BookmarkCardErrorProps {
   bookmark: BookmarkCardData;
@@ -31,19 +31,24 @@ const ReBookmarkButton = ({
   bookmarkId: string;
   children?: React.ReactNode;
 }) => {
-  const reprocessFn = useConvexMutation(api.bookmarks.mutations.reprocess);
-  const action = useMutation({
-    mutationFn: () => reprocessFn({ id: bookmarkId as Id<"bookmarks"> }),
-  });
+  const reprocess = useMutation(api.bookmarks.mutations.reprocess);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleReprocess = () => {
+    setIsPending(true);
+    void reprocess({ id: bookmarkId as Id<"bookmarks"> }).finally(() =>
+      setIsPending(false),
+    );
+  };
 
   return (
     <LoadingButton
       data-testid="rebookmark-button"
-      loading={action.isPending}
+      loading={isPending}
       size={children ? "sm" : "icon"}
       variant="outline"
       className={children ? "" : "size-8"}
-      onClick={() => action.mutate()}
+      onClick={handleReprocess}
     >
       {children ?? <RefreshCcw className="text-muted-foreground size-4" />}
     </LoadingButton>

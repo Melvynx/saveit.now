@@ -2,7 +2,6 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup } from "@testing-library/react";
 import { fetch } from "cross-fetch";
-import React from "react";
 import { beforeEach, vi } from "vitest";
 
 beforeEach(() => {
@@ -47,15 +46,6 @@ vi.mock("react-hotkeys-hook", () => ({
 }));
 
 // (Prisma/up-fetch mocks removed — the backend now lives in Convex.)
-
-// Mock external APIs and services
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: vi.fn(() => ({ data: null, isLoading: false, error: null })),
-  QueryClient: vi.fn(() => ({
-    defaultOptions: {},
-  })),
-  QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
 
 // Set global fetch
 global.fetch = fetch;

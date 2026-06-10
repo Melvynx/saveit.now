@@ -22,6 +22,7 @@
  *    into memory at once.
  */
 
+import "./_env"; // loads scripts/migrate/.env (DATABASE_URL) into process.env — keep first
 import fs from "node:fs";
 import path from "node:path";
 import { Client } from "pg";

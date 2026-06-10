@@ -8,7 +8,7 @@ import {
   generateFilenameFromURL,
 } from "@/lib/tools/tool-utils";
 import { callConvexTool } from "@/lib/tools/convex-tool-client";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -39,17 +39,15 @@ import { extractYoutubeMetadataResponseSchema } from "@/lib/tools/schemas/youtub
 export function YoutubeMetadataTool() {
   const [url, setUrl] = useState("");
 
-  const mutation = useMutation({
-    mutationFn: async (urlToFetch: string) => {
-      return callConvexTool("youtube-metadata", urlToFetch, extractYoutubeMetadataResponseSchema);
-    },
-  });
+  const mutation = useAsyncTask(async (urlToFetch: string) =>
+    callConvexTool("youtube-metadata", urlToFetch, extractYoutubeMetadataResponseSchema),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    mutation.mutate(url.trim());
+    void mutation.run(url.trim());
   };
 
   const handleDownloadJSON = () => {
@@ -211,7 +209,7 @@ export function YoutubeMetadataTool() {
                   key={thumbnail.quality}
                   thumbnail={thumbnail}
                   index={index}
-                  videoTitle={mutation.data.data!.title}
+                  videoTitle={mutation.data!.data!.title}
                   isRecommended={thumbnail.quality === "maxresdefault"}
                 />
               ))}

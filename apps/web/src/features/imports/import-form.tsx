@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -28,7 +27,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { URL_REGEX } from "./url-regex";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 
 const Schema = z.object({
   text: z.string().min(1),
@@ -50,6 +49,7 @@ type ImportFormProps = {
 export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [urlPreview, setUrlPreview] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const posthog = usePostHog();
@@ -60,11 +60,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     },
   });
 
-  const doImportBulk = useConvexMutation(api.bookmarks.mutations.importBulk);
-
-  const importMutation = useMutation({
-    mutationFn: (text: string) => doImportBulk({ text }),
-  });
+  const importBulk = useMutation(api.bookmarks.mutations.importBulk);
 
   useEffect(() => {
     const subscription = form.watch((value) => {
@@ -93,8 +89,9 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
       total_urls: urls.length,
     });
 
+    setIsImporting(true);
     try {
-      await importMutation.mutateAsync(validation.data.text);
+      await importBulk({ text: validation.data.text });
 
       const importResult: ImportResult = {
         createdBookmarks: urls.length,
@@ -112,6 +109,8 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
           : "An error occurred while importing";
       toast.error(errorMessage);
       onError?.(errorMessage);
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -185,7 +184,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     }
   };
 
-  const isLoading = importMutation.isPending || isProcessingFile;
+  const isLoading = isImporting || isProcessingFile;
 
   return (
     <div className={cn("space-y-6", className)}>

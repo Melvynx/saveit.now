@@ -8,11 +8,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import {
-  internalQuery,
-  query,
-  authQuery,
-} from "../functions";
+import { internalQuery, query, authQuery } from "../functions";
 import { bookmarkType } from "../schema";
 import { throwNotFound } from "../utils/errors";
 import {
@@ -80,7 +76,19 @@ export const list = authQuery({
     let paginatedResult: any;
 
     // Choose the most selective index for the active filter.
-    if (filter?.starred !== undefined) {
+    if (
+      filter?.types?.length === 1 &&
+      filter.starred === undefined &&
+      filter.read === undefined
+    ) {
+      paginatedResult = await ctx.db
+        .query("bookmarks")
+        .withIndex("by_user_type_created", (q: any) =>
+          q.eq("userId", userId).eq("type", filter.types![0]),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    } else if (filter?.starred !== undefined) {
       paginatedResult = await ctx.db
         .query("bookmarks")
         .withIndex("by_user_starred", (q: any) =>
@@ -106,10 +114,8 @@ export const list = authQuery({
 
     // Post-filter for types (no dedicated index).
     let docs = paginatedResult.page as any[];
-    if (filter?.types && filter.types.length > 0) {
-      docs = docs.filter(
-        (doc) => doc.type && filter.types!.includes(doc.type),
-      );
+    if (filter?.types && filter.types.length > 1) {
+      docs = docs.filter((doc) => doc.type && filter.types!.includes(doc.type));
     }
 
     // Post-filter for tagIds.
@@ -241,7 +247,7 @@ export const getByPublicSlug = query({
 /**
  * getPublic — unauthenticated single public bookmark by ID.
  * Returns a PublicBookmarkDTO (whitelist only — no userId, note, transcript).
- * Any bookmark can be fetched by ID (no ownership gate — it is intentionally public).
+ * The owner must have public sharing enabled.
  */
 export const getPublic = query({
   args: {
@@ -250,6 +256,12 @@ export const getPublic = query({
   handler: async (ctx, args): Promise<any> => {
     const doc = await ctx.db.get(args.id);
     if (!doc) {
+      return null;
+    }
+    const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId: doc.userId as string,
+    });
+    if (!user || !(user as any).publicLinkEnabled) {
       return null;
     }
     const tags = await resolveTagsForBookmark(ctx, doc._id);
@@ -274,6 +286,10 @@ export const getRelated = query({
 
     const limit = args.take ?? 6;
     const userId = doc.userId as string;
+    const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId,
+    });
+    if (!user || !(user as any).publicLinkEnabled) return [];
 
     if (args.tagIds.length === 0) {
       // Fallback: just return recent bookmarks from the same user (excluding this one)
@@ -402,18 +418,14 @@ export const listDefault = internalQuery({
     } else {
       paginatedResult = await ctx.db
         .query("bookmarks")
-        .withIndex("by_user_created", (q: any) =>
-          q.eq("userId", args.userId),
-        )
+        .withIndex("by_user_created", (q: any) => q.eq("userId", args.userId))
         .order("desc")
         .paginate(args.paginationOpts);
     }
 
     let docs = paginatedResult.page as any[];
     if (filter?.types && filter.types.length > 0) {
-      docs = docs.filter(
-        (doc) => doc.type && filter.types!.includes(doc.type),
-      );
+      docs = docs.filter((doc) => doc.type && filter.types!.includes(doc.type));
     }
 
     const bookmarkDTOs: BookmarkDTO[] = [];
@@ -421,9 +433,7 @@ export const listDefault = internalQuery({
       const tags = await resolveTagsForBookmark(ctx, doc._id);
       const opens = await ctx.db
         .query("bookmarkOpens")
-        .withIndex("by_bookmark_user", (q: any) =>
-          q.eq("bookmarkId", doc._id),
-        )
+        .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
         .take(10000);
       bookmarkDTOs.push(buildBookmarkDTO(doc as any, tags, opens.length));
     }
@@ -454,9 +464,7 @@ export const listByType = internalQuery({
       const tags = await resolveTagsForBookmark(ctx, doc._id);
       const opens = await ctx.db
         .query("bookmarkOpens")
-        .withIndex("by_bookmark_user", (q: any) =>
-          q.eq("bookmarkId", doc._id),
-        )
+        .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
         .take(10000);
       bookmarkDTOs.push(buildBookmarkDTO(doc as any, tags, opens.length));
     }
@@ -482,7 +490,9 @@ export const getRandom = internalQuery({
       .query("bookmarkOpens")
       .withIndex("by_user_opened", (q: any) => q.eq("userId", args.userId))
       .take(5000);
-    const openedBookmarkIds = new Set(openedRows.map((r: any) => r.bookmarkId as string));
+    const openedBookmarkIds = new Set(
+      openedRows.map((r: any) => r.bookmarkId as string),
+    );
 
     // Load READY bookmarks (bounded).
     const readyBookmarks = await ctx.db
@@ -506,9 +516,7 @@ export const getRandom = internalQuery({
     const tags = await resolveTagsForBookmark(ctx, doc._id);
     const opens = await ctx.db
       .query("bookmarkOpens")
-      .withIndex("by_bookmark_user", (q: any) =>
-        q.eq("bookmarkId", doc._id),
-      )
+      .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
       .take(10000);
 
     return {

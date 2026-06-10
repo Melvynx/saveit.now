@@ -12,9 +12,13 @@ import { throwForbidden } from "../utils/errors";
 // Keep in sync with processing/embeddings.ts (cannot import "use node" module here).
 const CURRENT_EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
 
-function assertMigrationAllowed(): void {
+function assertMigrationAllowed(migrationSecret: string): void {
   if (process.env.ALLOW_MIGRATION !== "true") {
     throwForbidden("Migration not enabled");
+  }
+  const expectedSecret = process.env.MIGRATION_SECRET;
+  if (!expectedSecret || migrationSecret !== expectedSecret) {
+    throwForbidden("Migration not authorized");
   }
 }
 
@@ -23,10 +27,10 @@ function assertMigrationAllowed(): void {
  * Call from the migration script after all data is imported.
  */
 export const startReembed = mutation({
-  args: {},
+  args: { migrationSecret: v.string() },
   returns: v.null(),
-  handler: async (ctx) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
     await ctx.scheduler.runAfter(0, internal.migration.reembed.reembedBatch, {
       cursor: null,
     });

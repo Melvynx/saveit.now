@@ -1,6 +1,7 @@
 import { ArticleReader } from "@/features/public-bookmarks/article-reader";
-import { getUser } from "@/lib/auth-session";
+import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 /** Extract article markdown from a bookmark's metadata (client-safe). */
 function getMarkdownContent(metadata: unknown): string | null {
@@ -14,35 +15,20 @@ import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { ConvexHttpClient } from "convex/browser";
-
-const convexUrl =
-  (import.meta.env?.VITE_CONVEX_URL ?? process.env.VITE_CONVEX_URL) || "";
-
-const getReadArticleData = createServerFn({ method: "GET" })
-  .validator((data: { bookmarkId: string }) => data)
-  .handler(async ({ data }) => {
-    const convex = new ConvexHttpClient(convexUrl);
-    const [bookmark, user] = await Promise.all([
-      convex.query(api.bookmarks.queries.getPublic, {
-        id: data.bookmarkId as any,
-      }),
-      getUser(),
-    ]);
-
-    return { bookmark, user: user ?? null };
-  });
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/p/$bookmarkId/read")({
-  loader: ({ params }) => getReadArticleData({ data: params }),
   component: ReadArticlePage,
 });
 
 function ReadArticlePage() {
-  const { bookmark, user } = Route.useLoaderData();
   const { bookmarkId } = Route.useParams();
+  const session = useSession();
+  const bookmark = useQuery(api.bookmarks.queries.getPublic, {
+    id: bookmarkId as Id<"bookmarks">,
+  });
 
+  if (bookmark === undefined) return null;
   if (!bookmark || bookmark.type !== "ARTICLE") {
     return (
       <div className="container mx-auto max-w-4xl p-6">
@@ -117,7 +103,7 @@ function ReadArticlePage() {
         <ArticleReader content={markdownContent} />
       </div>
 
-      {!user && (
+      {!session.data?.user && (
         <Card className="p-6 text-center">
           <Typography variant="h3" className="mb-2">
             Discover More Articles

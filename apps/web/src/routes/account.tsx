@@ -16,31 +16,19 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import {
   createFileRoute,
+  Navigate,
   Outlet,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const getAccountData = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRequiredUserOrRedirect } = await import("@/lib/auth-session");
-  const user = await getRequiredUserOrRedirect();
-
-  return {
-    user,
-  };
-});
-
 export const Route = createFileRoute("/account")({
-  loader: () => getAccountData(),
   component: AccountPage,
 });
 
 function AccountPage() {
-  const { user } = Route.useLoaderData();
   const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,16 +37,13 @@ function AccountPage() {
     location.pathname === "/account" &&
     (location.hash === "#public-link" || location.hash === "public-link");
 
-  // Use live session data when available, fall back to SSR loader data
   const liveUser = session.data?.user;
-  const displayUser = liveUser
-    ? {
-        id: liveUser.id,
-        name: liveUser.name ?? "",
-        email: liveUser.email,
-        image: liveUser.image ?? null,
-      }
-    : user;
+  const displayUser = liveUser && {
+    id: liveUser.id,
+    name: liveUser.name ?? "",
+    email: liveUser.email,
+    image: liveUser.image ?? null,
+  };
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -67,6 +52,9 @@ function AccountPage() {
       void navigate({ to: "/account/public-link", replace: true });
     }
   }, [navigate]);
+
+  if (session.isPending) return null;
+  if (!displayUser) return <Navigate to="/signin" />;
 
   return (
     <AccountShell user={displayUser}>
@@ -95,9 +83,11 @@ function AccountPage() {
 
 function NameForm({ defaultName }: { defaultName: string }) {
   const session = useSession();
+  const [isPending, setIsPending] = useState(false);
 
-  const mutation = useMutation({
-    mutationFn: async (formData: FormData) => {
+  async function updateName(formData: FormData) {
+    setIsPending(true);
+    try {
       const name = formData.get("name");
       const { error } = await authClient.updateUser({
         name: String(name ?? ""),
@@ -105,19 +95,20 @@ function NameForm({ defaultName }: { defaultName: string }) {
       if (error) {
         throw new Error(error.message ?? "Failed to update name");
       }
-    },
-    onSuccess: () => {
       toast.success("Name updated");
       void session.refetch();
-    },
-    onError: () => toast.error("Failed to update name"),
-  });
+    } catch {
+      toast.error("Failed to update name");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        mutation.mutate(new FormData(event.currentTarget));
+        void updateName(new FormData(event.currentTarget));
       }}
     >
       <Card>
@@ -139,8 +130,8 @@ function NameForm({ defaultName }: { defaultName: string }) {
         </CardContent>
         <CardFooter className="flex justify-end border-t">
           <LoadingButton
-            loading={mutation.isPending}
-            disabled={mutation.isPending}
+            loading={isPending}
+            disabled={isPending}
             size="sm"
             variant="outline"
           >

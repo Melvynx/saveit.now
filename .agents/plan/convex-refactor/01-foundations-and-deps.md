@@ -38,9 +38,10 @@ Add `devDependencies`: `convex-test`, `@edge-runtime/vm`, `vitest` (for backend 
 
 ## 2. App-side dependencies
 
-- `apps/web`: already has `convex`, `@convex-dev/react-query`, `@workspace/backend`. Add
-  `@convex-dev/better-auth`, `better-auth`, and `@better-auth/api-key` (the web auth client imports
-  `apiKeyClient` from `@better-auth/api-key/client`).
+- `apps/web`: keep `convex`, `@workspace/backend`, `@convex-dev/better-auth`, `better-auth`, and
+  `@better-auth/api-key` (the web auth client imports `apiKeyClient` from
+  `@better-auth/api-key/client`). Do **not** add `@convex-dev/react-query` or
+  `@tanstack/react-query`; the web app calls Convex directly from native Convex React hooks.
 - `apps/mobile`: add `convex`, `@convex-dev/better-auth`, `better-auth`, `@better-auth/expo`,
   `expo-secure-store`, `expo-web-browser`, `@workspace/backend`. (Keep `expo-apple-authentication`
   if Apple sign-in is wanted.)

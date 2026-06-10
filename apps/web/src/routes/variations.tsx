@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VariationsClient } from "@/features/variations/variations-client";
 import { api } from "@convex/_generated/api";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "convex/react";
 import type { VariationBookmark } from "@/features/variations/types";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 
@@ -11,15 +10,16 @@ export const Route = createFileRoute("/variations")({
 });
 
 function VariationsPage() {
-  const bookmarksQuery = useQuery(
-    convexQuery(api.bookmarks.queries.list, {
+  const bookmarksData = useQuery(
+    api.bookmarks.queries.list,
+    {
       paginationOpts: { numItems: 50, cursor: null },
       filter: { types: ["PAGE"] },
-    }),
+    },
   );
 
   const bookmarks: VariationBookmark[] = (
-    (bookmarksQuery.data?.page ?? []) as BookmarkDetailDTO[]
+    (bookmarksData?.page ?? []) as BookmarkDetailDTO[]
   ).map((b) => ({
     id: b.id,
     url: b.url,

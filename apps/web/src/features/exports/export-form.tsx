@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -11,11 +10,11 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { cn } from "@workspace/ui/lib/utils";
+import { useMutation } from "convex/react";
 import { Download, FileText, Package } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
 
 type ExportFormProps = {
   className?: string;
@@ -24,18 +23,14 @@ type ExportFormProps = {
 export function ExportForm({ className }: ExportFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const posthog = usePostHog();
-  const doExportCsv = useConvexMutation(api.bookmarks.mutations.exportCsv);
-
-  const exportMutation = useMutation({
-    mutationFn: () => doExportCsv({}),
-  });
+  const exportCsv = useMutation(api.bookmarks.mutations.exportCsv);
 
   const handleExport = async () => {
     setIsExporting(true);
     posthog.capture("export_bookmarks");
 
     try {
-      const csvContent = await exportMutation.mutateAsync();
+      const csvContent = await exportCsv({});
 
       const blob = new Blob([csvContent as string], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);

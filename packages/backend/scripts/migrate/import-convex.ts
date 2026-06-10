@@ -7,11 +7,13 @@
  *   tsx packages/backend/scripts/migrate/import-convex.ts
  *
  * Prerequisites:
- *   1. Set ALLOW_MIGRATION=true in the Convex environment for the target deployment.
- *   2. Run export-postgres.ts first to generate ./migration-export/*.jsonl
- *   3. After this script completes, call startReembed (see README.md).
+ *   1. Set ALLOW_MIGRATION=true and MIGRATION_SECRET in the Convex environment.
+ *   2. Set the same MIGRATION_SECRET in this shell.
+ *   3. Run export-postgres.ts first to generate ./migration-export/*.jsonl
+ *   4. After this script completes, call startReembed (see README.md).
  */
 
+import "./_env"; // loads scripts/migrate/.env (CONVEX_URL, MIGRATION_SECRET) — keep first
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
@@ -24,6 +26,11 @@ import { api } from "../../convex/_generated/api";
 
 const EXPORT_DIR = path.resolve(process.cwd(), "migration-export");
 const CHUNK_SIZE = 100; // rows per mutation call (safe for Convex write limits)
+const migrationSecret = process.env.MIGRATION_SECRET;
+
+if (!migrationSecret) {
+  throw new Error("MIGRATION_SECRET must be set before importing into Convex");
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -102,8 +109,16 @@ async function main(): Promise<void> {
   // 1. Read raw JSONL data
   // -------------------------------------------------------------------------
   console.log("Reading export files...");
-  const [rawUsers, rawAccounts, rawTags, rawBookmarks, rawBookmarkTags,
-    rawBookmarkOpens, rawSubscriptions, rawConversations] = await Promise.all([
+  const [
+    rawUsers,
+    rawAccounts,
+    rawTags,
+    rawBookmarks,
+    rawBookmarkTags,
+    rawBookmarkOpens,
+    rawSubscriptions,
+    rawConversations,
+  ] = await Promise.all([
     readJsonl("user.jsonl"),
     readJsonl("account.jsonl"),
     readJsonl("tag.jsonl"),
@@ -131,10 +146,12 @@ async function main(): Promise<void> {
     if (!accountsByUserId.has(uid)) accountsByUserId.set(uid, []);
     accountsByUserId.get(uid)!.push(acc);
   }
-  const usersWithAccounts = (rawUsers as Record<string, unknown>[]).map((u) => ({
-    ...u,
-    _accounts: accountsByUserId.get(String(u.id)) ?? [],
-  }));
+  const usersWithAccounts = (rawUsers as Record<string, unknown>[]).map(
+    (u) => ({
+      ...u,
+      _accounts: accountsByUserId.get(String(u.id)) ?? [],
+    }),
+  );
 
   // -------------------------------------------------------------------------
   // 3. Import users — build legacyId → convexId map
@@ -146,12 +163,15 @@ async function main(): Promise<void> {
   for (const batch of userBatches) {
     const result = await client.mutation(api.migration.import.importUsers, {
       users: batch,
+      migrationSecret,
     });
     for (const { legacyId, convexId } of result) {
       userMap.set(legacyId, convexId);
     }
     usersProcessed += batch.length;
-    process.stdout.write(`\r  users: ${usersProcessed}/${rawUsers.length} imported`);
+    process.stdout.write(
+      `\r  users: ${usersProcessed}/${rawUsers.length} imported`,
+    );
   }
   console.log(`\n  Built user map: ${userMap.size} entries.`);
 
@@ -169,12 +189,15 @@ async function main(): Promise<void> {
   for (const batch of tagBatches) {
     const result = await client.mutation(api.migration.import.importTags, {
       tags: batch,
+      migrationSecret,
     });
     for (const { legacyId, convexId } of result) {
       tagMap.set(legacyId, convexId);
     }
     tagsProcessed += batch.length;
-    process.stdout.write(`\r  tags: ${tagsProcessed}/${rawTags.length} imported`);
+    process.stdout.write(
+      `\r  tags: ${tagsProcessed}/${rawTags.length} imported`,
+    );
   }
   console.log(`\n  Built tag map: ${tagMap.size} entries.`);
 
@@ -183,21 +206,26 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   console.log("\nImporting bookmarks...");
   const bookmarkMap = new Map<string, string>(); // legacyId → convexId
-  const bookmarksRewritten = (rawBookmarks as Record<string, unknown>[]).map((b) => ({
-    ...b,
-    userId: userMap.get(String(b.userId)) ?? b.userId,
-  }));
+  const bookmarksRewritten = (rawBookmarks as Record<string, unknown>[]).map(
+    (b) => ({
+      ...b,
+      userId: userMap.get(String(b.userId)) ?? b.userId,
+    }),
+  );
   const bookmarkBatches = chunk(bookmarksRewritten, CHUNK_SIZE);
   let bookmarksProcessed = 0;
   for (const batch of bookmarkBatches) {
     const result = await client.mutation(api.migration.import.importBookmarks, {
       bookmarks: batch,
+      migrationSecret,
     });
     for (const { legacyId, convexId } of result) {
       bookmarkMap.set(legacyId, convexId);
     }
     bookmarksProcessed += batch.length;
-    process.stdout.write(`\r  bookmarks: ${bookmarksProcessed}/${rawBookmarks.length} imported`);
+    process.stdout.write(
+      `\r  bookmarks: ${bookmarksProcessed}/${rawBookmarks.length} imported`,
+    );
   }
   console.log(`\n  Built bookmark map: ${bookmarkMap.size} entries.`);
 
@@ -216,7 +244,10 @@ async function main(): Promise<void> {
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   await runChunked("bookmarkTags", bookmarkTagsRewritten, (batch) =>
-    client.mutation(api.migration.import.importBookmarkTags, { rows: batch }),
+    client.mutation(api.migration.import.importBookmarkTags, {
+      rows: batch,
+      migrationSecret,
+    }),
   );
 
   // -------------------------------------------------------------------------
@@ -233,43 +264,52 @@ async function main(): Promise<void> {
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   await runChunked("bookmarkOpens", bookmarkOpensRewritten, (batch) =>
-    client.mutation(api.migration.import.importBookmarkOpens, { rows: batch }),
+    client.mutation(api.migration.import.importBookmarkOpens, {
+      rows: batch,
+      migrationSecret,
+    }),
   );
 
   // -------------------------------------------------------------------------
   // 8. Import subscriptions
   // -------------------------------------------------------------------------
   console.log("Importing subscriptions...");
-  const subscriptionsRewritten = (rawSubscriptions as Record<string, unknown>[]).map(
-    (row) => ({
-      ...row,
-      userId:
-        userMap.get(String(row.userId ?? row.referenceId)) ??
-        row.userId ??
-        row.referenceId,
-    }),
-  );
+  const subscriptionsRewritten = (
+    rawSubscriptions as Record<string, unknown>[]
+  ).map((row) => ({
+    ...row,
+    userId:
+      userMap.get(String(row.userId ?? row.referenceId)) ??
+      row.userId ??
+      row.referenceId,
+  }));
 
   await runChunked("subscriptions", subscriptionsRewritten, (batch) =>
-    client.mutation(api.migration.import.importSubscriptions, { rows: batch }),
+    client.mutation(api.migration.import.importSubscriptions, {
+      rows: batch,
+      migrationSecret,
+    }),
   );
 
   // -------------------------------------------------------------------------
   // 9. Import chatConversations (+ embedded messages)
   // -------------------------------------------------------------------------
   console.log("Importing chatConversations...");
-  const conversationsRewritten = (rawConversations as Record<string, unknown>[]).map(
-    (row) => ({
-      ...row,
-      userId: userMap.get(String(row.userId)) ?? row.userId,
-      // Postgres stores messages as a JSON column (`messages`). Re-key to `_messages`
-      // so the import mutation finds it consistently regardless of schema variants.
-      _messages: row.messages ?? row._messages ?? [],
-    }),
-  );
+  const conversationsRewritten = (
+    rawConversations as Record<string, unknown>[]
+  ).map((row) => ({
+    ...row,
+    userId: userMap.get(String(row.userId)) ?? row.userId,
+    // Postgres stores messages as a JSON column (`messages`). Re-key to `_messages`
+    // so the import mutation finds it consistently regardless of schema variants.
+    _messages: row.messages ?? row._messages ?? [],
+  }));
 
   await runChunked("conversations", conversationsRewritten, (batch) =>
-    client.mutation(api.migration.import.importConversations, { rows: batch }),
+    client.mutation(api.migration.import.importConversations, {
+      rows: batch,
+      migrationSecret,
+    }),
   );
 
   // -------------------------------------------------------------------------
@@ -282,6 +322,7 @@ async function main(): Promise<void> {
   for (const batch of userIdBatches) {
     await client.mutation(api.migration.import.rebuildUserCounters, {
       userIds: batch,
+      migrationSecret,
     });
     countersProcessed += batch.length;
     process.stdout.write(
@@ -305,9 +346,9 @@ async function main(): Promise<void> {
 
   console.log(`
 Next step: trigger re-embedding by running:
-  npx convex run migration/reembed_helpers:startReembed
+  npx convex run migration/reembed_helpers:startReembed '{"migrationSecret":"'$MIGRATION_SECRET'"}'
 OR call:
-  client.mutation(api.migration.reembed_helpers.startReembed, {})
+  client.mutation(api.migration.reembed_helpers.startReembed, { migrationSecret })
 Then verify counts and set ALLOW_MIGRATION back to "false".
 `);
 }

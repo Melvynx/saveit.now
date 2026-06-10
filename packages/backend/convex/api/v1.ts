@@ -21,38 +21,35 @@ const VALID_BOOKMARK_TYPES = [
 
 type BookmarkType = (typeof VALID_BOOKMARK_TYPES)[number];
 
-const ALLOWED_ORIGIN_PATTERNS = [
-  "saveit://*",
-  "saveit://",
-  "http://localhost:8081",
-  "http://localhost:8081/*",
-  "http://localhost:3000",
-  "http://localhost:3000/*",
-  "http://localhost:3001",
-  "http://localhost:3001/*",
-  "http://localhost:3002",
-  "http://localhost:3002/*",
-  "http://localhost:3003",
-  "http://localhost:3003/*",
-  "http://localhost:*",
-  "http://127.0.0.1:*",
-  "https://saveit.now",
-  "https://saveit.now/*",
-  "https://*.saveit.now",
-  "https://saveit-now-web-codelynx.vercel.app",
-  "https://saveit-now-web-git-main-codelynx.vercel.app",
-  "https://saveit-now-*",
-];
-
 function isAllowedOrigin(origin: string): boolean {
-  for (const pattern of ALLOWED_ORIGIN_PATTERNS) {
-    if (pattern.endsWith("*")) {
-      if (origin.startsWith(pattern.slice(0, -1))) return true;
-    } else if (origin === pattern) {
-      return true;
-    }
+  if (origin === "saveit://") return true;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    return false;
   }
-  return false;
+
+  if (
+    parsed.protocol === "http:" &&
+    ["localhost", "127.0.0.1"].includes(parsed.hostname)
+  ) {
+    return true;
+  }
+
+  if (parsed.protocol !== "https:") return false;
+
+  if (
+    parsed.hostname === "saveit.now" ||
+    parsed.hostname.endsWith(".saveit.now")
+  ) {
+    return true;
+  }
+
+  return /^saveit-now(?:-[a-z0-9-]+)?-codelynx\.vercel\.app$/.test(
+    parsed.hostname,
+  );
 }
 
 function corsHeaders(origin?: string | null): Record<string, string> {
@@ -80,7 +77,10 @@ function errResponse(
   });
 }
 
-type AuthResult = { user: { id: string }; apiKey: { id: string; name: string } };
+type AuthResult = {
+  user: { id: string };
+  apiKey: { id: string; name: string };
+};
 
 /**
  * Validates the Authorization: Bearer header and resolves user + apiKey
@@ -190,9 +190,12 @@ export const listBookmarks = httpAction(async (ctx, request) => {
   const p = pr.data;
   const types = parseTypes(p.types ?? null);
   const tagsList = p.tags
-    ? p.tags.split(",").map((t) => t.trim()).filter(Boolean)
+    ? p.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : [];
-  const specialFilters: string[] = p.special ? [p.special.toLowerCase()] : [];
+  const specialFilters: string[] = p.special ? [p.special] : [];
 
   try {
     // Use internal.api.helpers.searchBookmarksForUser (internalAction, accepts userId)
@@ -203,8 +206,7 @@ export const listBookmarks = httpAction(async (ctx, request) => {
         query: p.query,
         tags: tagsList.length > 0 ? tagsList : undefined,
         types: types.length > 0 ? (types as string[]) : undefined,
-        specialFilters:
-          specialFilters.length > 0 ? specialFilters : undefined,
+        specialFilters: specialFilters.length > 0 ? specialFilters : undefined,
         limit: p.limit,
         cursor: p.cursor,
         matchingDistance: p.matchingDistance,
@@ -277,7 +279,11 @@ export const createBookmark = httpAction(async (ctx, request) => {
     transcript = (fd.get("transcript") as string) || undefined;
     const metaRaw = fd.get("metadata") as string | null;
     if (metaRaw) {
-      try { metadata = JSON.parse(metaRaw); } catch { /* ignore */ }
+      try {
+        metadata = JSON.parse(metaRaw);
+      } catch {
+        /* ignore */
+      }
     }
     const imageFile = fd.get("image");
     if (imageFile instanceof File) {
@@ -298,7 +304,9 @@ export const createBookmark = httpAction(async (ctx, request) => {
     }
   } else {
     let body: unknown;
-    try { body = await request.json(); } catch {
+    try {
+      body = await request.json();
+    } catch {
       return errResponse("URL is required", 400, origin);
     }
     const pr = z
@@ -315,7 +323,9 @@ export const createBookmark = httpAction(async (ctx, request) => {
   }
 
   if (!bookmarkUrl) return errResponse("URL is required", 400, origin);
-  try { new URL(bookmarkUrl); } catch {
+  try {
+    new URL(bookmarkUrl);
+  } catch {
     return errResponse("Invalid URL format", 400, origin);
   }
 
@@ -337,7 +347,9 @@ export const createBookmark = httpAction(async (ctx, request) => {
       JSON.stringify({
         success: true,
         bookmark: {
-          id: (bookmark as Record<string, unknown>)._id ?? (bookmark as Record<string, unknown>).id,
+          id:
+            (bookmark as Record<string, unknown>)._id ??
+            (bookmark as Record<string, unknown>).id,
           url: (bookmark as Record<string, unknown>).url,
           title: (bookmark as Record<string, unknown>).title ?? null,
           summary: (bookmark as Record<string, unknown>).summary ?? null,
@@ -347,11 +359,15 @@ export const createBookmark = httpAction(async (ctx, request) => {
           read: (bookmark as Record<string, unknown>).read,
           createdAt:
             typeof (bookmark as Record<string, unknown>).createdAt === "number"
-              ? new Date((bookmark as Record<string, unknown>).createdAt as number).toISOString()
+              ? new Date(
+                  (bookmark as Record<string, unknown>).createdAt as number,
+                ).toISOString()
               : (bookmark as Record<string, unknown>).createdAt,
           updatedAt:
             typeof (bookmark as Record<string, unknown>).updatedAt === "number"
-              ? new Date((bookmark as Record<string, unknown>).updatedAt as number).toISOString()
+              ? new Date(
+                  (bookmark as Record<string, unknown>).updatedAt as number,
+                ).toISOString()
               : (bookmark as Record<string, unknown>).updatedAt,
         },
       }),
@@ -359,7 +375,10 @@ export const createBookmark = httpAction(async (ctx, request) => {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("already exists") || msg.includes("maximum number of bookmarks")) {
+    if (
+      msg.includes("already exists") ||
+      msg.includes("maximum number of bookmarks")
+    ) {
       return errResponse(msg, 400, origin);
     }
     console.error("[api/v1 POST /bookmarks]", err);
@@ -386,10 +405,10 @@ export const deleteBookmark = httpAction(async (ctx, request) => {
   if (!bookmarkId) return errResponse("Bookmark ID is required", 400, origin);
 
   try {
-    await ctx.runAction(
-      internal.api.helpers.deleteBookmarkForUser,
-      { userId: auth.user.id, bookmarkId },
-    );
+    await ctx.runAction(internal.api.helpers.deleteBookmarkForUser, {
+      userId: auth.user.id,
+      bookmarkId,
+    });
 
     return new Response(
       JSON.stringify({ success: true, bookmark: { id: bookmarkId } }),
@@ -419,10 +438,9 @@ export const randomBookmark = httpAction(async (ctx, request) => {
 
   try {
     // internal.bookmarks.queries.getRandom — internalQuery per Contract §A
-    const result = await ctx.runQuery(
-      internal.bookmarks.queries.getRandom,
-      { userId: auth.user.id },
-    );
+    const result = await ctx.runQuery(internal.bookmarks.queries.getRandom, {
+      userId: auth.user.id,
+    });
 
     if (!result || !result.bookmark) {
       // Count total opened for the response
@@ -433,8 +451,7 @@ export const randomBookmark = httpAction(async (ctx, request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error:
-            "No more bookmarks available. All bookmarks have been opened.",
+          error: "No more bookmarks available. All bookmarks have been opened.",
           totalOpened,
         }),
         { status: 404, headers: corsHeaders(origin) },
@@ -444,16 +461,18 @@ export const randomBookmark = httpAction(async (ctx, request) => {
     const { bookmark, remaining } = result;
 
     // Record the open — use recordOpen authMutation via internal helper
-    await ctx.runAction(
-      internal.api.helpers.recordBookmarkOpenForUser,
-      { userId: auth.user.id, bookmarkId: (bookmark as Record<string, unknown>)._id as string },
-    );
+    await ctx.runAction(internal.api.helpers.recordBookmarkOpenForUser, {
+      userId: auth.user.id,
+      bookmarkId: (bookmark as Record<string, unknown>)._id as string,
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
         bookmark: {
-          id: (bookmark as Record<string, unknown>)._id ?? (bookmark as Record<string, unknown>).id,
+          id:
+            (bookmark as Record<string, unknown>)._id ??
+            (bookmark as Record<string, unknown>).id,
           url: (bookmark as Record<string, unknown>).url,
           title: (bookmark as Record<string, unknown>).title ?? null,
           summary: (bookmark as Record<string, unknown>).summary ?? null,
@@ -464,14 +483,19 @@ export const randomBookmark = httpAction(async (ctx, request) => {
           preview: (bookmark as Record<string, unknown>).preview ?? null,
           faviconUrl: (bookmark as Record<string, unknown>).faviconUrl ?? null,
           ogImageUrl: (bookmark as Record<string, unknown>).ogImageUrl ?? null,
-          ogDescription: (bookmark as Record<string, unknown>).ogDescription ?? null,
+          ogDescription:
+            (bookmark as Record<string, unknown>).ogDescription ?? null,
           createdAt:
             typeof (bookmark as Record<string, unknown>).createdAt === "number"
-              ? new Date((bookmark as Record<string, unknown>).createdAt as number).toISOString()
+              ? new Date(
+                  (bookmark as Record<string, unknown>).createdAt as number,
+                ).toISOString()
               : (bookmark as Record<string, unknown>).createdAt,
-          tags: ((bookmark as Record<string, unknown>).tags as Array<{ tag: { name: string } } | string> ?? []).map(
-            (t) => (typeof t === "string" ? t : t.tag?.name ?? t),
-          ),
+          tags: (
+            ((bookmark as Record<string, unknown>).tags as Array<
+              { tag: { name: string } } | string
+            >) ?? []
+          ).map((t) => (typeof t === "string" ? t : (t.tag?.name ?? t))),
         },
         remaining,
       }),
@@ -506,17 +530,19 @@ export const listTags = httpAction(async (ctx, request) => {
   const { limit, cursor } = pr.data;
 
   try {
-    const result = await ctx.runQuery(
-      internal.api.helpers.listTagsForUser,
-      { userId: auth.user.id, limit, cursor },
-    );
+    const result = await ctx.runQuery(internal.api.helpers.listTagsForUser, {
+      userId: auth.user.id,
+      limit,
+      cursor,
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
         tags: (result as { tags: unknown[] }).tags,
         hasMore: (result as { hasMore: boolean }).hasMore,
-        nextCursor: (result as { nextCursor: string | null }).nextCursor ?? null,
+        nextCursor:
+          (result as { nextCursor: string | null }).nextCursor ?? null,
       }),
       { status: 200, headers: corsHeaders(origin) },
     );
@@ -559,7 +585,10 @@ export const publicSlugBookmarks = httpAction(async (ctx, request) => {
   const p = pr.data;
   const types = parseTypes(p.types ?? null);
   const tagsList = p.tags
-    ? p.tags.split(",").map((t) => t.trim()).filter(Boolean)
+    ? p.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : [];
 
   try {

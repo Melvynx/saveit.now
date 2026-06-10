@@ -1,8 +1,8 @@
 # Phase 05 — Bookmarks & Tags CRUD
 
 **Goal:** port bookmark + tag read/write logic from the TanStack API routes into Convex functions,
-enforce plan limits, and switch the web frontend hooks from `up-fetch` to `convexQuery` /
-`useConvexMutation`.
+enforce plan limits, and switch the web frontend hooks from `up-fetch` / TanStack Query to native
+Convex React hooks.
 
 **Current logic to port:**
 `apps/web/src/routes/api.bookmarks.ts`, `api.bookmarks.$bookmarkId.ts`,
@@ -72,16 +72,15 @@ typed error (`throwLimitReached`) when exceeded, and schedule the limit-reached 
 ## 5. Wire the web frontend
 
 Replace `up-fetch` hooks with Convex (keep hook names/signatures so components don't change much):
-- `use-bookmarks.ts` → `useInfiniteQuery` over `convexQuery(api.bookmarks.queries.list, …)` using the
-  `@convex-dev/react-query` paginated helper (or `usePaginatedQuery` from `convex/react`). Filters map
-  to the `filter` arg. Debounced text search routes to the **search action** (Phase 07).
-- `use-create-bookmark.ts` → CORRECTED pattern (`useConvexMutation` is a hook — call it at top level,
-  never inside `useMutation`'s argument):
+- `use-bookmarks.ts` → native Convex reads. Use `useQuery` / `usePaginatedQuery` for reactive list
+  reads or `useConvex().query` for explicit pagination state. Filters map to the `filter` arg.
+  Debounced text search routes to the **search action** (Phase 07).
+- `use-create-bookmark.ts` → native Convex mutation:
   ```ts
-  const create = useConvexMutation(api.bookmarks.mutations.create);
-  const { mutate } = useMutation({ mutationFn: (args) => create(args) }); // or call create(args) directly
+  const create = useMutation(api.bookmarks.mutations.create);
+  await create(args);
   ```
-- `bookmark-page/use-bookmark.ts` → `useQuery(convexQuery(api.bookmarks.queries.get, { id }))` —
+- `bookmark-page/use-bookmark.ts` → `useQuery(api.bookmarks.queries.get, { id })` —
   this replaces both `useBookmark` and the realtime `useBookmarkToken`/subscribe flow (now reactive).
 - `use-tags.ts`, `use-bookmark-tags.ts` → Convex equivalents.
 - Delete the now-dead routes: `api.bookmarks*.ts`, `api.tags.ts`, and the `subscribe` token route.

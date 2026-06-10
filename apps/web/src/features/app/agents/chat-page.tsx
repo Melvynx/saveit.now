@@ -3,14 +3,9 @@
 import { authClient } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import {
-  convexQuery,
-  useConvexMutation,
-  useConvexAction,
-} from "@convex-dev/react-query";
 import { useChat } from "@ai-sdk/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useAction, useConvex, useMutation, useQuery } from "convex/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ArrowDownIcon,
@@ -154,7 +149,9 @@ export function ChatPage() {
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationIdRef = useRef(conversationId);
-  const queryClient = useQueryClient();
+  const convex = useConvex();
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [isRatingConversation, setIsRatingConversation] = useState(false);
 
   const bookmarkId = searchParams.get("b");
 
@@ -186,60 +183,49 @@ export function ChatPage() {
   }, [conversationId, setSearchParams]);
 
   // Convex reactive query for chat usage
-  const { data: usage, refetch: refetchUsage } = useQuery({
-    ...convexQuery(api.chat.queries.getChatUsage, {}),
-  });
+  const usage = useQuery(api.chat.queries.getChatUsage, {});
 
   // Convex action for creating a conversation with AI-generated title
-  const createConversationConvex = useConvexAction(
+  const createConversation = useAction(
     api.chat.actions.createConversationWithTitle,
   );
-  const createConversationMutation = useMutation({
-    mutationFn: (firstMessage: string) =>
-      createConversationConvex({ firstMessage }),
-    onSuccess: (data) => {
-      setConversationId(data.id);
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+  const createConversationFromMessage = useCallback(
+    (firstMessage: string) => {
+      setIsCreatingConversation(true);
+      void createConversation({ firstMessage })
+        .then((data) => {
+          setConversationId(data.id);
+        })
+        .finally(() => setIsCreatingConversation(false));
     },
-  });
+    [createConversation],
+  );
 
   // Convex mutation for liking a conversation
-  const likeConvex = useConvexMutation(api.chat.mutations.likeConversation);
-  const likeMutation = useMutation({
-    mutationFn: (conversationId: string) =>
-      likeConvex({ conversationId: conversationId as Id<"chatConversations"> }),
-  });
+  const likeConversation = useMutation(api.chat.mutations.likeConversation);
 
   // Convex mutation for disliking a conversation
-  const dislikeConvex = useConvexMutation(
+  const dislikeConversation = useMutation(
     api.chat.mutations.dislikeConversation,
   );
-  const dislikeMutation = useMutation({
-    mutationFn: (conversationId: string) =>
-      dislikeConvex({
-        conversationId: conversationId as Id<"chatConversations">,
-      }),
-  });
 
   const handleLike = useCallback(() => {
-    if (
-      conversationId &&
-      !likeMutation.isPending &&
-      !dislikeMutation.isPending
-    ) {
-      likeMutation.mutate(conversationId);
+    if (conversationId && !isRatingConversation) {
+      setIsRatingConversation(true);
+      void likeConversation({
+        conversationId: conversationId as Id<"chatConversations">,
+      }).finally(() => setIsRatingConversation(false));
     }
-  }, [conversationId, likeMutation, dislikeMutation]);
+  }, [conversationId, isRatingConversation, likeConversation]);
 
   const handleDislike = useCallback(() => {
-    if (
-      conversationId &&
-      !likeMutation.isPending &&
-      !dislikeMutation.isPending
-    ) {
-      dislikeMutation.mutate(conversationId);
+    if (conversationId && !isRatingConversation) {
+      setIsRatingConversation(true);
+      void dislikeConversation({
+        conversationId: conversationId as Id<"chatConversations">,
+      }).finally(() => setIsRatingConversation(false));
     }
-  }, [conversationId, likeMutation, dislikeMutation]);
+  }, [conversationId, dislikeConversation, isRatingConversation]);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -268,7 +254,6 @@ export function ChatPage() {
       },
     }),
     onFinish: () => {
-      void refetchUsage();
       setTimeout(() => textareaRef.current?.focus(), 0);
     },
     onError: (err) => {
@@ -276,16 +261,13 @@ export function ChatPage() {
     },
   });
 
-  // Load conversation from URL on mount — use the queryClient to run a one-shot
-  // convexQuery for the conversation data
+  // Load conversation from URL on mount with the Convex client.
   useEffect(() => {
     const urlConversationId = searchParams.get("c");
     if (urlConversationId && isLoadingConversation) {
-      queryClient
-        .fetchQuery({
-          ...convexQuery(api.chat.queries.getConversation, {
-            conversationId: urlConversationId as Id<"chatConversations">,
-          }),
+      convex
+        .query(api.chat.queries.getConversation, {
+          conversationId: urlConversationId as Id<"chatConversations">,
         })
         .then((data) => {
           if (!data) {
@@ -323,14 +305,15 @@ export function ChatPage() {
     });
 
     // Create conversation in parallel if needed (non-blocking)
-    if (!conversationId) {
-      createConversationMutation.mutate(messageText);
+    if (!conversationId && !isCreatingConversation) {
+      createConversationFromMessage(messageText);
     }
   }, [
     input,
     isGenerating,
     conversationId,
-    createConversationMutation,
+    isCreatingConversation,
+    createConversationFromMessage,
     sendMessage,
   ]);
 
@@ -352,11 +335,11 @@ export function ChatPage() {
       });
 
       // Create conversation in parallel if needed (non-blocking)
-      if (!conversationId) {
-        createConversationMutation.mutate(s);
+      if (!conversationId && !isCreatingConversation) {
+        createConversationFromMessage(s);
       }
     },
-    [conversationId, createConversationMutation, sendMessage],
+    [conversationId, createConversationFromMessage, isCreatingConversation, sendMessage],
   );
 
   // Handle ?q= param for auto-submit from agentic search card
@@ -386,10 +369,8 @@ export function ChatPage() {
   const handleSelectConversation = useCallback(
     async (id: string) => {
       try {
-        const data = await queryClient.fetchQuery({
-          ...convexQuery(api.chat.queries.getConversation, {
-            conversationId: id as Id<"chatConversations">,
-          }),
+        const data = await convex.query(api.chat.queries.getConversation, {
+          conversationId: id as Id<"chatConversations">,
         });
         if (!data) {
           toast.error("Conversation not found");
@@ -402,7 +383,7 @@ export function ChatPage() {
         toast.error("Failed to load conversation");
       }
     },
-    [setMessages, queryClient],
+    [convex, setMessages],
   );
 
   const handleEditMessage = useCallback(

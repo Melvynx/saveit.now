@@ -1,9 +1,8 @@
 "use client";
 
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -28,6 +27,7 @@ import {
 } from "@workspace/ui/components/input-group";
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
+import { useMutation } from "convex/react";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -45,21 +45,22 @@ export function PublicLinkSettings({
   const [slug, setSlug] = useState(initialSlug ?? "");
   const [error, setError] = useState<string | null>(null);
   const { isCopied, copyToClipboard } = useCopyToClipboard();
-  const updatePublicLinkMutation = useConvexMutation(api.users.mutations.updatePublicLink);
+  const updatePublicLink = useMutation(api.users.mutations.updatePublicLink);
 
-  const mutation = useMutation({
-    mutationFn: async () =>
-      updatePublicLinkMutation({ enabled, slug: enabled ? slug : null }),
-    onSuccess: () => {
-      toast.success("Public link settings updated");
-      setError(null);
+  const saveTask = useAsyncTask(
+    async () => updatePublicLink({ enabled, slug: enabled ? slug : null }),
+    {
+      onSuccess: () => {
+        toast.success("Public link settings updated");
+        setError(null);
+      },
+      onError: (error) => {
+        setError(
+          error instanceof Error ? error.message : "Failed to update settings",
+        );
+      },
     },
-    onError: (error) => {
-      setError(
-        error instanceof Error ? error.message : "Failed to update settings",
-      );
-    },
-  });
+  );
 
   const publicUrl = `https://saveit.now/u/${slug || "your-slug"}`;
   const canUsePublicUrl = enabled && Boolean(slug);
@@ -70,7 +71,7 @@ export function PublicLinkSettings({
       setError("Slug is required when enabling public link");
       return;
     }
-    mutation.mutate();
+    void saveTask.run();
   };
 
   return (
@@ -161,11 +162,11 @@ export function PublicLinkSettings({
 
           <Button
             onClick={handleSave}
-            disabled={mutation.isPending}
+            disabled={saveTask.isPending}
             size="sm"
             className="w-fit"
           >
-            {mutation.isPending ? "Saving..." : "Save public link"}
+            {saveTask.isPending ? "Saving..." : "Save public link"}
           </Button>
         </FieldGroup>
       </CardContent>

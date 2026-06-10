@@ -1,11 +1,11 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { useAction } from "convex/react";
 import { Eye, EyeOff, Send, Users } from "lucide-react";
 import { marked } from "marked";
 import { useState } from "react";
@@ -33,36 +33,35 @@ export function EmailComposer({
       "# Hello!\n\nWelcome to our newsletter update.\n\n**What's new:**\n\n- Feature 1\n- Feature 2\n- Feature 3\n\nThanks for being part of our community!",
   });
 
-  const sendBroadcastEmailFn = useConvexAction(
-    api.admin.actions.sendBroadcastEmail,
-  );
-  const sendEmailMutation = useMutation({
-    mutationFn: async (data: EmailFormData) => {
-      return sendBroadcastEmailFn({
+  const sendBroadcastEmail = useAction(api.admin.actions.sendBroadcastEmail);
+  const sendEmailTask = useAsyncTask(
+    async (data: EmailFormData) =>
+      sendBroadcastEmail({
         subject: data.subject.trim(),
         subheadline: data.preview.trim(),
         markdown: data.markdown.trim(),
-      });
+      }),
+    {
+      onSuccess: () => {
+        toast.success(
+          `Email campaign started! Sending to ${eligibleUsersCount} recipients.`,
+        );
+        setFormData({
+          subject: "",
+          preview: "",
+          markdown: "",
+        });
+      },
+      onError: (error) => {
+        console.error("Failed to send email campaign:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to start email campaign. Please try again.",
+        );
+      },
     },
-    onSuccess: () => {
-      toast.success(
-        `Email campaign started! Sending to ${eligibleUsersCount} recipients.`,
-      );
-      setFormData({
-        subject: "",
-        preview: "",
-        markdown: "",
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to send email campaign:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start email campaign. Please try again.",
-      );
-    },
-  });
+  );
 
   const handleSend = (data: EmailFormData) => {
     const parsed = emailSchema.safeParse(data);
@@ -73,7 +72,7 @@ export function EmailComposer({
 
     const confirmMessage = `Are you sure you want to send this email to ${eligibleUsersCount} recipients?`;
     if (!confirm(confirmMessage)) return;
-    sendEmailMutation.mutate(parsed.data);
+    void sendEmailTask.run(parsed.data);
   };
 
   const renderMarkdownPreview = (text: string) => {
@@ -191,11 +190,11 @@ export function EmailComposer({
         </div>
         <Button
           type="submit"
-          disabled={sendEmailMutation.isPending}
+          disabled={sendEmailTask.isPending}
           className="flex items-center gap-2"
         >
           <Send className="size-4" />
-          {sendEmailMutation.isPending ? "Sending..." : "Send Campaign"}
+          {sendEmailTask.isPending ? "Sending..." : "Send Campaign"}
         </Button>
       </div>
     </form>

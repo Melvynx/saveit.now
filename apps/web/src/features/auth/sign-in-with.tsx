@@ -3,7 +3,7 @@
 import { SvglImg } from "@/components/svgl-auto-dark-mode-image";
 import { authClient, useSession } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { usePostHog } from "posthog-js/react";
@@ -33,8 +33,8 @@ export const SignInWith = (props: {
   const posthog = usePostHog();
   const session = useSession();
   const isMonochrome = props.variant === "monochrome";
-  const mutation = useMutation({
-    mutationFn: () => {
+  const signInTask = useAsyncTask(
+    async () => {
       posthog.capture("sign_in_with_social", {
         provider: props.type,
       });
@@ -45,20 +45,31 @@ export const SignInWith = (props: {
         }),
       );
     },
-    onSuccess: () => {
-      session.refetch();
-      toast.success(
-        `Signed in with ${props.type === "github" ? "GitHub" : "Google"}`,
-      );
+    {
+      onSuccess: () => {
+        session.refetch();
+        toast.success(
+          `Signed in with ${props.type === "github" ? "GitHub" : "Google"}`,
+        );
+      },
+      onError: (ctx) => {
+        const message =
+          ctx &&
+          typeof ctx === "object" &&
+          "error" in ctx &&
+          typeof ctx.error === "object" &&
+          ctx.error &&
+          "message" in ctx.error
+            ? String(ctx.error.message)
+            : "Failed to sign in";
+        toast.error(message);
+      },
     },
-    onError: (ctx: { error: { message: string } }) => {
-      toast.error(ctx.error.message);
-    },
-  });
+  );
 
   return (
     <LoadingButton
-      loading={mutation.isPending}
+      loading={signInTask.isPending}
       className={cn(
         "flex-1 max-lg:py-2 w-full",
         isMonochrome &&
@@ -67,7 +78,7 @@ export const SignInWith = (props: {
       )}
       variant="outline"
       onClick={() => {
-        mutation.mutate();
+        void signInTask.run();
       }}
       {...props.buttonProps}
     >

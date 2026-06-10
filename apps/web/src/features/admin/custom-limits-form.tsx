@@ -3,9 +3,7 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import type { AuthLimits, CustomAuthLimits } from "@/lib/auth-limits";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { useMutation } from "convex/react";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { useState } from "react";
@@ -66,26 +64,9 @@ export const CustomLimitsForm = ({
   effectiveLimits,
   customLimits,
 }: CustomLimitsFormProps) => {
-  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
 
-  const setCustomLimitsFn = useConvexMutation(api.admin.mutations.setCustomLimits);
-  const setCustomLimitsMutation = useMutation({
-    mutationFn: (args: Parameters<typeof setCustomLimitsFn>[0]) =>
-      setCustomLimitsFn(args),
-    onSuccess: () => {
-      toast.success("Custom limits updated");
-      void router.invalidate();
-    },
-    onError: (error: Error) => {
-      toast.error(
-        error.message ? error.message : "Failed to update custom limits",
-      );
-    },
-    onSettled: () => {
-      setIsSaving(false);
-    },
-  });
+  const setCustomLimits = useMutation(api.admin.mutations.setCustomLimits);
 
   return (
     <form
@@ -95,7 +76,7 @@ export const CustomLimitsForm = ({
         const formData = new FormData(event.currentTarget);
 
         setIsSaving(true);
-        setCustomLimitsMutation.mutate({
+        void setCustomLimits({
           userId,
           customLimits: {
             bookmarks: parseOptionalLimit(formData, "bookmarks"),
@@ -110,7 +91,14 @@ export const CustomLimitsForm = ({
             canExport: parseOptionalLimit(formData, "canExport"),
             apiAccess: parseOptionalLimit(formData, "apiAccess"),
           },
-        });
+        })
+          .then(() => toast.success("Custom limits updated"))
+          .catch((error: Error) => {
+            toast.error(
+              error.message ? error.message : "Failed to update custom limits",
+            );
+          })
+          .finally(() => setIsSaving(false));
       }}
     >
       <div className="grid gap-4 md:grid-cols-2">

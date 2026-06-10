@@ -1,13 +1,12 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
+import { useMutation } from "convex/react";
 import { Star } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -28,27 +27,26 @@ export const StarButton = ({
   className = "",
   showTooltip = true,
 }: StarButtonProps) => {
-  const queryClient = useQueryClient();
-  const setStarred = useConvexMutation(api.bookmarks.mutations.setStarred);
+  const setStarred = useMutation(api.bookmarks.mutations.setStarred);
+  const [isPending, setIsPending] = useState(false);
 
-  const toggleStarAction = useMutation({
-    mutationFn: () =>
-      setStarred({
+  const toggleStar = () => {
+    setIsPending(true);
+    void setStarred({
         id: bookmarkId as Id<"bookmarks">,
         starred: !starred,
-      }),
-    onError: (error) => {
-      // Revert optimistic updates on error
-      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update star",
-      );
-    },
-  });
+      })
+      .catch((error) => {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update star",
+        );
+      })
+      .finally(() => setIsPending(false));
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleStarAction.mutate();
+    toggleStar();
   };
 
   const button = (
@@ -57,7 +55,7 @@ export const StarButton = ({
       size={size}
       className={cn(size === "icon" && "size-8", className)}
       onClick={handleClick}
-      disabled={toggleStarAction.isPending}
+      disabled={isPending}
       data-testid="star-button"
     >
       <Star

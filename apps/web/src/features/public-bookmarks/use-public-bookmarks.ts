@@ -1,13 +1,9 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { api } from "@convex/_generated/api";
 import { useSearch } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
 import type { BookmarkStatus, BookmarkType } from "@/lib/bookmark-types";
-
-// Convex site URL — set via VITE_CONVEX_SITE_URL env var.
-const convexSiteUrl =
-  typeof window !== "undefined"
-    ? (import.meta.env?.VITE_CONVEX_SITE_URL ?? "")
-    : "";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type PublicBookmark = {
   id: string;
@@ -27,16 +23,15 @@ type PublicBookmark = {
   metadata: unknown;
 };
 
-type PublicBookmarksResponse = {
+type PublicBookmarksPage = {
+  user: { name: string; image: string | null };
   bookmarks: PublicBookmark[];
   hasMore: boolean;
-  user: {
-    name: string;
-    image: string | null;
-  };
+  nextCursor?: string;
 };
 
 export const usePublicBookmarks = (slug: string) => {
+  const convex = useConvex();
   const search = useSearch({ strict: false }) as {
     query?: string;
     types?: string;
@@ -47,41 +42,81 @@ export const usePublicBookmarks = (slug: string) => {
   const tags = search.tags?.split(",").filter(Boolean) ?? [];
   const debouncedQuery = useDebounce(query);
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
+  const type = types[0] as BookmarkType | undefined;
+  const [pages, setPages] = useState<PublicBookmarksPage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const requestKey = useMemo(
+    () => JSON.stringify({ slug, type, searchQuery, tags }),
+    [searchQuery, slug, tags, type],
+  );
 
-  const data = useInfiniteQuery({
-    queryKey: ["public-bookmarks", slug, searchQuery, types, tags],
-    refetchOnWindowFocus: false,
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams();
-      if (searchQuery) params.set("query", searchQuery);
-      if (types.length > 0) params.set("types", types.join(","));
-      if (tags.length > 0) params.set("tags", tags.join(","));
-      params.set("limit", "20");
-      if (pageParam) params.set("cursor", pageParam as string);
+  const loadPage = useCallback(
+    async (cursor: string | null = null, append = false) => {
+      if (append) {
+        setIsFetchingNextPage(true);
+      } else {
+        setIsLoading(true);
+      }
 
-      const base = convexSiteUrl || "";
-      const res = await fetch(
-        `${base}/api/v1/public/${slug}/bookmarks?${params.toString()}`,
+      try {
+        const result = await convex.query(api.bookmarks.queries.getByPublicSlug, {
+          slug,
+          type,
+          paginationOpts: { numItems: 20, cursor },
+        });
+        setPages((current) =>
+          append
+            ? [...current, result as PublicBookmarksPage]
+            : [result as PublicBookmarksPage],
+        );
+      } finally {
+        setIsLoading(false);
+        setIsFetchingNextPage(false);
+      }
+    },
+    [convex, slug, type],
+  );
+
+  useEffect(() => {
+    setPages([]);
+    void loadPage();
+  }, [loadPage, requestKey]);
+
+  const user = pages[0]?.user;
+  const allBookmarks = pages.flatMap((result) =>
+    (result.bookmarks ?? []) as PublicBookmark[],
+  );
+  const bookmarks = allBookmarks.filter((bookmark) => {
+    const matchesQuery =
+      !searchQuery ||
+      [bookmark.title, bookmark.summary, bookmark.ogDescription, bookmark.url]
+        .filter(Boolean)
+        .some((value) =>
+          String(value).toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+    const matchesTags =
+      tags.length === 0 ||
+      tags.some((tag) =>
+        JSON.stringify(bookmark.metadata ?? {})
+          .toLowerCase()
+          .includes(tag.toLowerCase()),
       );
-      if (!res.ok) throw new Error("Failed to fetch public bookmarks");
-      return res.json() as Promise<PublicBookmarksResponse>;
-    },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.bookmarks.length === 0) return undefined;
-      if (!lastPage.hasMore) return undefined;
-      return lastPage.bookmarks.length > 0
-        ? lastPage.bookmarks[lastPage.bookmarks.length - 1]?.id
-        : undefined;
-    },
-    initialPageParam: "",
+    return matchesQuery && matchesTags;
   });
-
-  const bookmarks = data.data?.pages.flatMap((page) => page.bookmarks) ?? [];
-  const user = data.data?.pages[0]?.user;
   const isTyping = query !== "" && query !== debouncedQuery;
 
   return {
-    ...data,
+    data: { pages },
+    isLoading,
+    isPending: isLoading,
+    isFetchingNextPage,
+    hasNextPage: Boolean(pages[pages.length - 1]?.hasMore),
+    fetchNextPage: () => {
+      const cursor = pages[pages.length - 1]?.nextCursor ?? null;
+      if (cursor) void loadPage(cursor, true);
+    },
+    error: null,
     bookmarks,
     user,
     query,
@@ -90,4 +125,3 @@ export const usePublicBookmarks = (slug: string) => {
     isTyping,
   };
 };
-

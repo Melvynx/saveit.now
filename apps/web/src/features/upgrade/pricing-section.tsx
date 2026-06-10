@@ -2,14 +2,14 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
+import { useAction } from "convex/react";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,10 +32,10 @@ const proFeatures = [
 
 export function PricingSection() {
   const [monthly, setMonthly] = useState(false);
-  const createCheckout = useConvexAction(api.stripe.actions.createCheckout);
+  const createCheckout = useAction(api.stripe.actions.createCheckout);
 
-  const mutation = useMutation({
-    mutationFn: async () => {
+  const checkoutTask = useAsyncTask(
+    async () => {
       const result = await createCheckout({
         plan: "pro",
         successUrl: "/upgrade/success",
@@ -45,10 +45,14 @@ export function PricingSection() {
 
       window.location.href = result.url;
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to upgrade");
+    {
+      onError: (error) => {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to upgrade",
+        );
+      },
     },
-  });
+  );
 
   return (
     <div className="py-12 sm:py-24">
@@ -196,8 +200,8 @@ export function PricingSection() {
             </ul>
 
             <LoadingButton
-              loading={mutation.isPending}
-              onClick={() => mutation.mutate()}
+              loading={checkoutTask.isPending}
+              onClick={() => void checkoutTask.run()}
               className="mt-10 w-full"
             >
               Upgrade Now
@@ -216,4 +220,3 @@ export function PricingSection() {
     </div>
   );
 }
-

@@ -1,33 +1,24 @@
 import { PublicLinkSettings } from "@/features/auth/public-link-settings";
-import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-
-const getPublicLinkData = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { getRequiredUserOrRedirect } = await import("@/lib/auth-session");
-    const user = await getRequiredUserOrRedirect();
-
-    return {
-      publicLinkSettings: {
-        publicLinkEnabled: user.publicLinkEnabled ?? false,
-        publicLinkSlug: user.publicLinkSlug ?? null,
-      },
-    };
-  },
-);
+import { useSession } from "@/lib/auth-client";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/account/public-link")({
-  loader: () => getPublicLinkData(),
   component: PublicLinkPage,
 });
 
 function PublicLinkPage() {
-  const { publicLinkSettings } = Route.useLoaderData();
+  const session = useSession();
+  const user = session.data?.user as
+    | { publicLinkEnabled?: boolean | null; publicLinkSlug?: string | null }
+    | undefined;
+
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
 
   return (
     <PublicLinkSettings
-      initialEnabled={publicLinkSettings?.publicLinkEnabled ?? false}
-      initialSlug={publicLinkSettings?.publicLinkSlug ?? null}
+      initialEnabled={user?.publicLinkEnabled ?? false}
+      initialSlug={user?.publicLinkSlug ?? null}
     />
   );
 }

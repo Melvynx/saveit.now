@@ -13,6 +13,7 @@ import {
 import { z } from "zod";
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { authComponent, createAuth } from "../auth/config";
 
 // ---------------------------------------------------------------------------
 // System prompt (verbatim from Spec 06 §2.1)
@@ -129,18 +130,24 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
     });
   }
 
-  // ---- Auth (ctx.auth.getUserIdentity() THROWS when unauthenticated) ----
-  let identity: Awaited<ReturnType<typeof ctx.auth.getUserIdentity>>;
+  // ---- Auth ----
+  let userId: string | undefined;
   try {
-    identity = await ctx.auth.getUserIdentity();
+    const { auth } = await authComponent.getAuth(createAuth, ctx);
+    const session = await auth.api.getSession({ headers: request.headers });
+    userId = session?.user?.id;
   } catch {
-    return new Response("Unauthorized", { status: 401, headers: corsHeaders() });
+    return new Response("Unauthorized", {
+      status: 401,
+      headers: corsHeaders(),
+    });
   }
-  if (!identity) {
-    return new Response("Unauthorized", { status: 401, headers: corsHeaders() });
+  if (!userId) {
+    return new Response("Unauthorized", {
+      status: 401,
+      headers: corsHeaders(),
+    });
   }
-
-  const userId = identity.subject;
 
   // ---- Parse + validate request body ----
   let body: unknown;
@@ -203,11 +210,23 @@ You can filter by:
 - tags: array of tag names to filter by
 - filters: READ (already read), UNREAD (not read yet), STAR (starred/favorite)`,
       inputSchema: z.object({
-        query: z.string().describe("The search query to find relevant bookmarks"),
-        limit: z.number().optional().default(6).describe("Maximum number of results to return"),
-        types: z.array(bookmarkTypeEnum).optional().describe("Filter by bookmark types"),
+        query: z
+          .string()
+          .describe("The search query to find relevant bookmarks"),
+        limit: z
+          .number()
+          .optional()
+          .default(6)
+          .describe("Maximum number of results to return"),
+        types: z
+          .array(bookmarkTypeEnum)
+          .optional()
+          .describe("Filter by bookmark types"),
         tags: z.array(z.string()).optional().describe("Filter by tag names"),
-        filters: z.array(specialFilterEnum).optional().describe("Special filters: READ, UNREAD, STAR"),
+        filters: z
+          .array(specialFilterEnum)
+          .optional()
+          .describe("Special filters: READ, UNREAD, STAR"),
       }),
       execute: async ({ query, limit, types, tags, filters }) => {
         type SearchResult = {
@@ -229,7 +248,7 @@ You can filter by:
           tags?: unknown[];
         };
 
-        const results = await ctx.runAction(
+        const results = (await ctx.runAction(
           internal.search.actions.searchForChat,
           {
             userId,
@@ -252,7 +271,7 @@ You can filter by:
               | ("READ" | "UNREAD" | "STAR")[]
               | undefined,
           },
-        ) as { bookmarks: SearchResult[] };
+        )) as { bookmarks: SearchResult[] };
 
         const bookmarks = Array.isArray(results)
           ? (results as SearchResult[])
@@ -343,8 +362,13 @@ You can filter by:
       description:
         "Display a grid of bookmark cards to the user. Pass the bookmark IDs from your search results. The server will fetch and display them.",
       inputSchema: z.object({
-        bookmarkIds: z.array(z.string()).describe("Array of bookmark IDs to display"),
-        title: z.string().optional().describe("Optional title to display above the grid"),
+        bookmarkIds: z
+          .array(z.string())
+          .describe("Array of bookmark IDs to display"),
+        title: z
+          .string()
+          .optional()
+          .describe("Optional title to display above the grid"),
       }),
       execute: async ({ bookmarkIds, title }) => {
         type BookmarkItem = {
@@ -457,16 +481,26 @@ You can filter by:
       description:
         "Add or remove tags from one or more bookmarks. Use this to organize bookmarks by adding relevant tags or removing irrelevant ones.",
       inputSchema: z.object({
-        bookmarkIds: z.array(z.string()).describe("Array of bookmark IDs to update"),
-        add: z.array(z.string()).optional().describe("Tag names to add to the bookmarks"),
-        remove: z.array(z.string()).optional().describe("Tag names to remove from the bookmarks"),
+        bookmarkIds: z
+          .array(z.string())
+          .describe("Array of bookmark IDs to update"),
+        add: z
+          .array(z.string())
+          .optional()
+          .describe("Tag names to add to the bookmarks"),
+        remove: z
+          .array(z.string())
+          .optional()
+          .describe("Tag names to remove from the bookmarks"),
       }),
       execute: async ({ bookmarkIds, add = [], remove = [] }) => {
-        if (bookmarkIds.length === 0) return { error: "No bookmark IDs provided" };
-        if (add.length === 0 && remove.length === 0) return { error: "No tags to add or remove" };
+        if (bookmarkIds.length === 0)
+          return { error: "No bookmark IDs provided" };
+        if (add.length === 0 && remove.length === 0)
+          return { error: "No tags to add or remove" };
 
         // Delegate to the internal applyTagsDiff mutation (transactional).
-        const result = await ctx.runMutation(
+        const result = (await ctx.runMutation(
           internal.chat.mutations.applyTagsDiff,
           {
             bookmarkIds,
@@ -474,7 +508,7 @@ You can filter by:
             remove: remove.filter(Boolean),
             userId,
           },
-        ) as {
+        )) as {
           success: boolean;
           bookmarksUpdated: number;
           tagsAdded: number;
@@ -495,12 +529,22 @@ You can filter by:
       description:
         "Generate a downloadable file (CSV or JSON) containing specific bookmarks. The user will see a download button they can click. Use this after searching when the user asks to export, download, or save their bookmarks to a file.",
       inputSchema: z.object({
-        bookmarkIds: z.array(z.string()).describe("Array of bookmark IDs to include in the download"),
-        filename: z.string().optional().describe("Custom filename without extension"),
-        format: z.enum(["csv", "json"]).optional().default("csv").describe("File format: csv or json"),
+        bookmarkIds: z
+          .array(z.string())
+          .describe("Array of bookmark IDs to include in the download"),
+        filename: z
+          .string()
+          .optional()
+          .describe("Custom filename without extension"),
+        format: z
+          .enum(["csv", "json"])
+          .optional()
+          .default("csv")
+          .describe("File format: csv or json"),
       }),
       execute: async ({ bookmarkIds, filename, format }) => {
-        if (bookmarkIds.length === 0) return { error: "No bookmark IDs provided" };
+        if (bookmarkIds.length === 0)
+          return { error: "No bookmark IDs provided" };
 
         type BookmarkItem = {
           _id?: string;
@@ -536,9 +580,7 @@ You can filter by:
           description: b.ogDescription ?? "",
           tags: (b.tags ?? []).map((t) => t.tag.name).join(", "),
           starred: b.starred ?? false,
-          createdAt: b.createdAt
-            ? new Date(b.createdAt).toISOString()
-            : "",
+          createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : "",
         }));
 
         let content: string;

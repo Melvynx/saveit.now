@@ -3,7 +3,7 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { authClient } from "@/lib/auth-client";
 import { EmailChangeSchema } from "@/lib/schemas/email-change.schema";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import {
   Card,
   CardContent,
@@ -25,8 +25,8 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
   const [email, setEmail] = useState(currentEmail);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const mutation = useMutation({
-    mutationFn: async (newEmail: string) => {
+  const changeEmailTask = useAsyncTask(
+    async (newEmail: string) => {
       const { error } = await authClient.changeEmail({
         newEmail,
         callbackURL: "/account",
@@ -35,13 +35,19 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
         throw new Error(error.message ?? "Failed to change email");
       }
     },
-    onSuccess: () => {
-      toast.success("Check your current email for verification link");
+    {
+      onSuccess: () => {
+        toast.success("Check your current email for verification link");
+      },
+      onError: (error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to change email. Please try again.",
+        );
+      },
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to change email. Please try again.");
-    },
-  });
+  );
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,7 +64,7 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
       return;
     }
 
-    mutation.mutate(email);
+    void changeEmailTask.run(email);
   };
 
   return (
@@ -94,8 +100,8 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
         </CardContent>
         <CardFooter className="flex justify-end border-t">
           <LoadingButton
-            loading={mutation.isPending}
-            disabled={mutation.isPending}
+            loading={changeEmailTask.isPending}
+            disabled={changeEmailTask.isPending}
             size="sm"
             variant="outline"
           >

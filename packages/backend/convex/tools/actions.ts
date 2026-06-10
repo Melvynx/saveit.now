@@ -1,6 +1,7 @@
 // httpActions MUST run in the default (V8) runtime — never "use node".
 import { httpAction } from "../_generated/server";
 import { z } from "zod";
+import { assertSafeHttpUrl } from "../utils/url";
 
 // ---------------------------------------------------------------------------
 // Shared constants / utilities
@@ -8,6 +9,9 @@ import { z } from "zod";
 
 const TOOL_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+const MAX_HTML_BYTES = 1_000_000;
+const FETCH_TIMEOUT_MS = 8_000;
+const MAX_REDIRECTS = 5;
 
 function resolveUrl(
   baseUrl: URL,
@@ -23,14 +27,31 @@ function resolveUrl(
   }
 }
 
-async function fetchHtml(url: string): Promise<string> {
-  const response = await fetch(url, {
+async function fetchHtml(url: string, redirects = 0): Promise<string> {
+  const safeUrl = assertSafeHttpUrl(url);
+  const response = await fetch(safeUrl, {
     headers: { "User-Agent": TOOL_USER_AGENT },
+    redirect: "manual",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
+  if (response.status >= 300 && response.status < 400) {
+    if (redirects >= MAX_REDIRECTS) throw new Error("Too many redirects");
+    const location = response.headers.get("location");
+    if (!location) throw new Error("Redirect missing location");
+    return fetchHtml(new URL(location, safeUrl).toString(), redirects + 1);
+  }
   if (!response.ok) {
     throw new Error("Failed to fetch the webpage");
   }
-  return response.text();
+  const contentLength = Number(response.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_HTML_BYTES) {
+    throw new Error("Response is too large");
+  }
+  const text = await response.text();
+  if (new TextEncoder().encode(text).byteLength > MAX_HTML_BYTES) {
+    throw new Error("Response is too large");
+  }
+  return text;
 }
 
 function toolErrorResponse(error: unknown): Response {
@@ -46,8 +67,7 @@ function toolErrorResponse(error: unknown): Response {
       { status: 400 },
     );
   }
-  const msg =
-    error instanceof Error ? error.message : "Tool request failed";
+  const msg = error instanceof Error ? error.message : "Tool request failed";
   return Response.json({ error: msg }, { status: 400 });
 }
 
@@ -126,9 +146,8 @@ export const extractContent = httpAction(async (_ctx, request) => {
           ? $("main")
           : $('[role="main"]').length > 0
             ? $('[role="main"]')
-            : $(
-                ".content,.post-content,.entry-content,.article-content",
-              ).length > 0
+            : $(".content,.post-content,.entry-content,.article-content")
+                  .length > 0
               ? $(".content,.post-content,.entry-content,.article-content")
               : $("body");
 
@@ -144,9 +163,7 @@ export const extractContent = httpAction(async (_ctx, request) => {
     $("nav, header, footer, aside").remove();
     const plainText = $("body").text().replace(/\s+/g, " ").trim();
 
-    const wordCount = plainText
-      .split(/\s+/)
-      .filter((w) => w.length > 0).length;
+    const wordCount = plainText.split(/\s+/).filter((w) => w.length > 0).length;
     const charCount = plainText.length;
     const readingTime = Math.ceil(wordCount / 225);
     const paragraphCount = plainText
@@ -282,7 +299,7 @@ export const extractMetadata = httpAction(async (_ctx, request) => {
         $("meta[charset]").attr("charset") ||
         $('meta[http-equiv="Content-Type"]').attr("content") ||
         null,
-      httpEquiv: $('meta[http-equiv]').first().attr("content") || null,
+      httpEquiv: $("meta[http-equiv]").first().attr("content") || null,
       robots: getMeta("robots"),
       canonical: $('link[rel="canonical"]').attr("href") || null,
       ampHtml: $('link[rel="amphtml"]').attr("href") || null,
@@ -375,10 +392,7 @@ const STANDARD_FAVICON_PATHS = [
 
 const FAVICON_FORMATS = ["ico", "png", "svg", "jpg", "jpeg", "gif", "webp"];
 
-function categorizeFaviconType(
-  rel: string,
-  href: string,
-): string {
+function categorizeFaviconType(rel: string, href: string): string {
   if (rel.includes("apple-touch-icon-precomposed"))
     return "apple-touch-icon-precomposed";
   if (rel.includes("apple-touch-icon")) return "apple-touch-icon";
@@ -394,9 +408,11 @@ async function validateFavicon(
   url: string,
 ): Promise<{ isValid: boolean; contentType?: string; errorMessage?: string }> {
   try {
-    const resp = await fetch(url, {
+    const safeUrl = assertSafeHttpUrl(url);
+    const resp = await fetch(safeUrl, {
       method: "HEAD",
       headers: { "User-Agent": TOOL_USER_AGENT },
+      redirect: "manual",
       signal: AbortSignal.timeout(5000),
     });
     if (!resp.ok) {
@@ -478,8 +494,7 @@ export const extractFavicons = httpAction(async (_ctx, request) => {
     for (const stdPath of STANDARD_FAVICON_PATHS) {
       const resolved = `${baseUrl.origin}${stdPath}`;
       if (!candidates.find((c) => c.url === resolved)) {
-        const ext =
-          stdPath.split(".").pop()?.toLowerCase() ?? "ico";
+        const ext = stdPath.split(".").pop()?.toLowerCase() ?? "ico";
         candidates.push({
           url: resolved,
           type: "favicon",
@@ -521,16 +536,14 @@ export const extractFavicons = httpAction(async (_ctx, request) => {
       validItems
         .filter((r) => r.type === "android-icon")
         .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0]?.url ?? null;
-    const svgIcon =
-      validItems.find((r) => r.format === "svg")?.url ?? null;
+    const svgIcon = validItems.find((r) => r.format === "svg")?.url ?? null;
     const largestIcon =
       validItems
         .filter((r) => r.width)
         .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0]?.url ?? null;
     const standardFavicon =
-      validItems.find(
-        (r) => r.type === "favicon" || r.format === "ico",
-      )?.url ?? null;
+      validItems.find((r) => r.type === "favicon" || r.format === "ico")?.url ??
+      null;
 
     return Response.json(
       {
@@ -614,8 +627,7 @@ export const extractOgImages = httpAction(async (_ctx, request) => {
           },
           page: {
             title: $("title").text().trim() || null,
-            description:
-              $('meta[name="description"]').attr("content") || null,
+            description: $('meta[name="description"]').attr("content") || null,
           },
           images: {
             ogImage,
@@ -659,9 +671,7 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
     const body = await request.json();
     const { url } = z
       .object({
-        url: z
-          .string()
-          .url("Please provide a valid YouTube URL"),
+        url: z.string().url("Please provide a valid YouTube URL"),
       })
       .parse(body);
 
@@ -687,18 +697,16 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
     }
 
     // Fetch YouTube page
-    const pageResp = await fetch(
-      `https://www.youtube.com/watch?v=${videoId}`,
-      {
-        headers: {
-          "User-Agent": TOOL_USER_AGENT,
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5",
-          DNT: "1",
-        },
+    const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        "User-Agent": TOOL_USER_AGENT,
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        DNT: "1",
       },
-    );
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (!pageResp.ok) {
       return Response.json(
@@ -712,6 +720,9 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
 
     const cheerio = await import("cheerio");
     const html = await pageResp.text();
+    if (new TextEncoder().encode(html).byteLength > MAX_HTML_BYTES) {
+      throw new Error("Response is too large");
+    }
     const $ = cheerio.load(html);
 
     // Parse JSON-LD for VideoObject
@@ -768,8 +779,7 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
     let viewCount: string | null = null;
     if (Array.isArray(interactionStats)) {
       const watchAction = interactionStats.find(
-        (s: InteractionStat) =>
-          s?.interactionType?.["@type"] === "WatchAction",
+        (s: InteractionStat) => s?.interactionType?.["@type"] === "WatchAction",
       );
       if (watchAction?.userInteractionCount != null) {
         viewCount = String(watchAction.userInteractionCount);

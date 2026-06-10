@@ -3,14 +3,13 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import { useRouter } from "@tanstack/react-router";
 import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, Share, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { usePostHog } from "posthog-js/react";
-import React from "react";
+import React, { useState } from "react";
 import type { Id } from "@convex/_generated/dataModel";
 
 export const BackButton = () => {
@@ -133,34 +132,30 @@ export const ReBookmarkButton = ({
   bookmarkId: string;
   children?: React.ReactNode;
 }) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const posthog = usePostHog();
-  const reprocess = useConvexMutation(api.bookmarks.mutations.reprocess);
+  const reprocess = useMutation(api.bookmarks.mutations.reprocess);
+  const [isPending, setIsPending] = useState(false);
 
-  const action = useMutation({
-    mutationFn: () => reprocess({ id: bookmarkId as Id<"bookmarks"> }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
-      });
-      router.history.back();
-    },
-  });
+  const handleReprocess = () => {
+    posthog.capture("bookmark+rebookmark", {
+      bookmark_id: bookmarkId,
+    });
+    setIsPending(true);
+    void reprocess({ id: bookmarkId as Id<"bookmarks"> })
+      .then(() => router.history.back())
+      .finally(() => setIsPending(false));
+  };
 
   return (
     <LoadingButton
       data-testid="rebookmark-button"
-      loading={action.isPending}
+      loading={isPending}
       size={children ? "sm" : "icon"}
       variant="outline"
       className={children ? "" : "size-8"}
       onClick={() => {
-        posthog.capture("bookmark+rebookmark", {
-          bookmark_id: bookmarkId,
-        });
-        action.mutate();
+        handleReprocess();
       }}
     >
       {children ? (

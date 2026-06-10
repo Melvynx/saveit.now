@@ -26,9 +26,13 @@ import { throwForbidden } from "../utils/errors";
 // Gate
 // ---------------------------------------------------------------------------
 
-function assertMigrationAllowed(): void {
+function assertMigrationAllowed(migrationSecret: string): void {
   if (process.env.ALLOW_MIGRATION !== "true") {
     throwForbidden("Migration not enabled");
+  }
+  const expectedSecret = process.env.MIGRATION_SECRET;
+  if (!expectedSecret || migrationSecret !== expectedSecret) {
+    throwForbidden("Migration not authorized");
   }
 }
 
@@ -82,10 +86,10 @@ const idMapEntry = v.object({ legacyId: v.string(), convexId: v.string() });
  *   updatedAt       → updatedAt (number ms)
  */
 export const importUsers = mutation({
-  args: { users: v.array(v.any()) },
+  args: { users: v.array(v.any()), migrationSecret: v.string() },
   returns: v.array(idMapEntry),
-  handler: async (ctx, { users }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { users, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     const result: { legacyId: string; convexId: string }[] = [];
 
@@ -154,10 +158,10 @@ export const importUsers = mutation({
  *   type    → type ("USER" | "IA")
  */
 export const importTags = mutation({
-  args: { tags: v.array(v.any()) },
+  args: { tags: v.array(v.any()), migrationSecret: v.string() },
   returns: v.array(idMapEntry),
-  handler: async (ctx, { tags }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { tags, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     const result: { legacyId: string; convexId: string }[] = [];
 
@@ -207,10 +211,10 @@ export const importTags = mutation({
  *   titleEmbedding / vectorSummaryEmbedding → SKIPPED (re-embed pass)
  */
 export const importBookmarks = mutation({
-  args: { bookmarks: v.array(v.any()) },
+  args: { bookmarks: v.array(v.any()), migrationSecret: v.string() },
   returns: v.array(idMapEntry),
-  handler: async (ctx, { bookmarks }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { bookmarks, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     const result: { legacyId: string; convexId: string }[] = [];
 
@@ -230,7 +234,7 @@ export const importBookmarks = mutation({
         ogDescription: bm.ogDescription ?? undefined,
         imageDescription: bm.imageDescription ?? undefined,
         metadata: bm.metadata ?? undefined,
-        status: (bm.status as string) as
+        status: bm.status as string as
           | "PENDING"
           | "PROCESSING"
           | "READY"
@@ -262,10 +266,10 @@ export const importBookmarks = mutation({
  *   userId     → userId (rewritten)
  */
 export const importBookmarkTags = mutation({
-  args: { rows: v.array(v.any()) },
+  args: { rows: v.array(v.any()), migrationSecret: v.string() },
   returns: v.number(),
-  handler: async (ctx, { rows }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { rows, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
       await ctx.db.insert("bookmarkTags", {
@@ -293,10 +297,10 @@ export const importBookmarkTags = mutation({
  *   openedAt   → openedAt (number ms); falls back to createdAt
  */
 export const importBookmarkOpens = mutation({
-  args: { rows: v.array(v.any()) },
+  args: { rows: v.array(v.any()), migrationSecret: v.string() },
   returns: v.number(),
-  handler: async (ctx, { rows }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { rows, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
       await ctx.db.insert("bookmarkOpens", {
@@ -333,10 +337,10 @@ export const importBookmarkOpens = mutation({
  *   updatedAt             → updatedAt (number ms)
  */
 export const importSubscriptions = mutation({
-  args: { rows: v.array(v.any()) },
+  args: { rows: v.array(v.any()), migrationSecret: v.string() },
   returns: v.number(),
-  handler: async (ctx, { rows }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { rows, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
       await ctx.db.insert("subscriptions", {
@@ -391,10 +395,10 @@ export const importSubscriptions = mutation({
  *   createdAt → createdAt (number ms; falls back to conversation.createdAt)
  */
 export const importConversations = mutation({
-  args: { rows: v.array(v.any()) },
+  args: { rows: v.array(v.any()), migrationSecret: v.string() },
   returns: v.number(),
-  handler: async (ctx, { rows }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { rows, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     let count = 0;
 
@@ -425,7 +429,10 @@ export const importConversations = mutation({
           userId: String(row.userId),
           role: validRole as "user" | "assistant" | "system",
           content: m.content ?? m,
-          createdAt: m.createdAt != null ? toMs(m.createdAt as any) : toMs(row.createdAt),
+          createdAt:
+            m.createdAt != null
+              ? toMs(m.createdAt as any)
+              : toMs(row.createdAt),
         });
       }
     }
@@ -446,10 +453,10 @@ export const importConversations = mutation({
  * Called once at the end of the import with all convex userIds.
  */
 export const rebuildUserCounters = mutation({
-  args: { userIds: v.array(v.string()) },
+  args: { userIds: v.array(v.string()), migrationSecret: v.string() },
   returns: v.number(),
-  handler: async (ctx, { userIds }) => {
-    assertMigrationAllowed();
+  handler: async (ctx, { userIds, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
 
     const now = new Date();
     const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;

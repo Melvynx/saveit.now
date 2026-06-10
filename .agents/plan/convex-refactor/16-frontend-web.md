@@ -19,7 +19,8 @@ this phase is overwhelmingly a **data-layer swap**, plus filling two genuinely-m
 ## A. Two layers to migrate per feature
 Each feature currently has **(1) a UI route** (`*.tsx`) using `up-fetch` hooks, and **(2) a TanStack API
 route handler** (`api.*.ts`) that runs Prisma/business-logic server-side. Convex collapses both:
-- UI hooks: `up-fetch` → `convexQuery` / `useConvexMutation` / `convexAction`.
+- UI hooks: `up-fetch` / TanStack Query → native Convex React hooks (`useQuery`, `useMutation`,
+  `useAction`, `useConvex`).
 - `api.*.ts` handlers: delete (logic now lives in Convex functions) — except the few that must stay HTTP
   (Better Auth `api.auth.$`, Stripe webhook → moves to `convex/http.ts`, `/api/v1/*` → Phase 12).
 
@@ -62,19 +63,27 @@ Build the corresponding `convex/admin/*` functions (mirror nowstack-saas `convex
 
 ## E. Shared plumbing (verify, Phase 03)
 Single `ConvexReactClient` from router context; `ConvexBetterAuthProvider` in `__root.tsx`; keep
-`ConvexQueryClient` + `QueryClient` in `providers.tsx` (drop raw `ConvexProvider`); `nuqs`, dialog-manager,
-dark-mode, posthog kept. Client guard `useSession()` + SSR `getRequiredUser()`. Remove
+native Convex hooks in client components; do not add `ConvexQueryClient`, `QueryClient`, or
+`@convex-dev/react-query`. `nuqs`, dialog-manager, dark-mode, posthog kept. Client guard
+`useSession()` + SSR `getRequiredUser()`. Remove
 `apps/web/src/lib/up-fetch.ts` and the `api.*.ts` Prisma handlers once each feature is migrated.
 
 ## F. Correct Convex client call patterns (verified)
 ```ts
 // Reactive read
-const { data } = useQuery(convexQuery(api.bookmarks.queries.list, args));
-// Action via TanStack Query (convexAction returns full options — do NOT nest in { queryFn })
-const { data } = useQuery(convexAction(api.search.actions.search, { query }));
-// Mutation — useConvexMutation is a hook; call at top level, never inside useMutation's arg
-const create = useConvexMutation(api.bookmarks.mutations.create);
-const { mutate } = useMutation({ mutationFn: (a) => create(a) });   // or call create(a) directly
+const bookmarks = useQuery(api.bookmarks.queries.list, args);
+
+// Mutation
+const create = useMutation(api.bookmarks.mutations.create);
+await create(args);
+
+// Action
+const search = useAction(api.search.actions.search);
+const result = await search(args);
+
+// Imperative query for explicit pagination/state machines
+const convex = useConvex();
+const page = await convex.query(api.bookmarks.queries.list, args);
 ```
 
 ## G. Migration order
@@ -86,6 +95,8 @@ const { mutate } = useMutation({ mutationFn: (a) => create(a) });   // or call c
 
 ## Acceptance criteria
 - No `up-fetch` or Prisma-backed `api.*` data calls remain in `apps/web/src` (only auth/webhook/v1 HTTP).
+- No `@tanstack/react-query`, `@convex-dev/react-query`, `convexQuery`, `convexAction`, or
+  `useConvexMutation` usage remains in `apps/web`.
 - Every page above reads/writes via Convex; admin panel works via `adminQuery/Mutation`.
 - Public bookmark/profile pages render via public Convex queries.
 - `pnpm ts` + `pnpm lint` clean; Playwright e2e: sign-in → save → search → upgrade → account → admin.

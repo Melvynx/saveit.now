@@ -117,10 +117,9 @@ export const sendMarketingEmail = internalAction({
   },
   handler: async (ctx, args) => {
     // Fetch user to check unsubscribed flag.
-    const user = await ctx.runQuery(
-      components.betterAuth.data.getUserById,
-      { userId: args.userId },
-    );
+    const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId: args.userId,
+    });
 
     // If user was deleted during a long drip chain, log and return gracefully.
     if (!user) {
@@ -133,10 +132,13 @@ export const sendMarketingEmail = internalAction({
     // Unsubscribe guard — return early (no throw) so the scheduler chain
     // continues gracefully on subsequent steps.
     if (user.unsubscribed === true) {
-      console.log("[email.sendMarketingEmail] user is unsubscribed — skipping", {
-        userId: args.userId,
-        to: args.to,
-      });
+      console.log(
+        "[email.sendMarketingEmail] user is unsubscribed — skipping",
+        {
+          userId: args.userId,
+          to: args.to,
+        },
+      );
       return null;
     }
 
@@ -149,7 +151,7 @@ export const sendMarketingEmail = internalAction({
       .update(`${args.userId}:${timestamp}`)
       .digest("hex");
 
-    const unsubscribeUrl = `${siteUrl}/unsubscribe/${args.userId}?token=${token}&ts=${timestamp}`;
+    const unsubscribeUrl = `${siteUrl}/unsubscribe/${args.userId}?token=${token}&timestamp=${timestamp}`;
     const contentWithLink =
       args.text +
       `\n\n---\n\n[Unsubscribe from marketing emails](${unsubscribeUrl})`;

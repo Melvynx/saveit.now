@@ -4,9 +4,8 @@ import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
 import { useUserPlan } from "@/lib/auth/user-plan";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import {
   Alert,
   AlertDescription,
@@ -31,6 +30,7 @@ import {
   Infinity as InfinityIcon,
   Phone,
 } from "lucide-react";
+import { useAction } from "convex/react";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,10 +43,10 @@ export function UpgradePage() {
   const error = searchParams.get("error");
   const plan = useUserPlan();
   const posthog = usePostHog();
-  const createCheckout = useConvexAction(api.stripe.actions.createCheckout);
+  const createCheckout = useAction(api.stripe.actions.createCheckout);
 
-  const mutation = useMutation({
-    mutationFn: async () => {
+  const checkoutTask = useAsyncTask(
+    async () => {
       posthog.capture("upgrade_subscription", {
         plan: monthly ? "monthly" : "yearly",
       });
@@ -60,10 +60,14 @@ export function UpgradePage() {
 
       window.location.href = result.url;
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to upgrade");
+    {
+      onError: (error) => {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to upgrade",
+        );
+      },
     },
-  });
+  );
 
   return (
     <MaxWidthContainer className="flex flex-row gap-12 w-full my-8 lg:my-12">
@@ -149,8 +153,8 @@ export function UpgradePage() {
             </ul>
             {plan.name === "free" ? (
               <LoadingButton
-                loading={mutation.isPending}
-                onClick={() => mutation.mutate()}
+                loading={checkoutTask.isPending}
+                onClick={() => void checkoutTask.run()}
                 className="w-full"
               >
                 Upgrade
@@ -171,4 +175,3 @@ export function UpgradePage() {
     </MaxWidthContainer>
   );
 }
-

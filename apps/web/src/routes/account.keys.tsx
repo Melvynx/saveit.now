@@ -4,8 +4,8 @@ import { APP_LINKS } from "@/lib/app-links";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
+import { useCallback, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/account/keys")({
   component: ApiKeysPage,
@@ -15,22 +15,44 @@ function ApiKeysPage() {
   const session = useSession();
   const plan = useUserPlan();
   const userId = session.data?.user?.id;
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(true);
 
-  const apiKeysQuery = useQuery({
-    queryKey: ["api-keys", userId],
-    queryFn: async () => {
-      if (plan.limits.apiAccess === 0) return [] as ApiKey[];
+  const loadKeys = useCallback(
+    async (isCancelled: () => boolean = () => false) => {
+      if (!userId || plan.isLoading) return;
+      setIsLoadingKeys(true);
+      if (plan.limits.apiAccess === 0) {
+        setApiKeys([]);
+        setIsLoadingKeys(false);
+        return;
+      }
+
       const { data, error } = await authClient.apiKey.list();
-      if (error) throw new Error(error.message ?? "Failed to load API keys");
+      if (isCancelled()) return;
+      if (error) {
+        setApiKeys([]);
+        setIsLoadingKeys(false);
+        return;
+      }
       const list = Array.isArray(data)
         ? data
         : ((data as { apiKeys?: unknown[] } | null)?.apiKeys ?? []);
-      return list as unknown as ApiKey[];
+      setApiKeys(list as unknown as ApiKey[]);
+      setIsLoadingKeys(false);
     },
-    enabled: Boolean(userId) && !plan.isLoading,
-  });
+    [plan.isLoading, plan.limits.apiAccess, userId],
+  );
 
-  if (plan.isLoading || apiKeysQuery.isLoading) {
+  useEffect(() => {
+    let cancelled = false;
+    void loadKeys(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [loadKeys]);
+
+  if (plan.isLoading || isLoadingKeys) {
     return (
       <div className="flex flex-col gap-4">
         <div className="h-6 w-48 animate-pulse rounded bg-muted" />
@@ -59,8 +81,9 @@ function ApiKeysPage() {
   return (
     <div className="flex flex-col gap-4">
       <ApiKeyList
-        apiKeys={apiKeysQuery.data ?? []}
-        action={<CreateApiKeyForm />}
+        apiKeys={apiKeys}
+        onChanged={() => void loadKeys()}
+        action={<CreateApiKeyForm onCreated={() => void loadKeys()} />}
       />
     </div>
   );

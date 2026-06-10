@@ -6,8 +6,6 @@ import {
 import { APP_LINKS } from "@/lib/app-links";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { api } from "@convex/_generated/api";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 
@@ -31,6 +29,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useTheme } from "@/features/dark-mode/theme-provider";
+import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
 
@@ -54,7 +53,7 @@ export const BookmarkHeader = () => {
   const plan = useUserPlan();
   const isMobile = useMobileMedia();
 
-  const bookmarksInfo = useQuery(convexQuery(api.bookmarks.queries.count, {}));
+  const bookmarkCount = useQuery(api.bookmarks.queries.count, {}) ?? 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -69,7 +68,7 @@ export const BookmarkHeader = () => {
       {!isMobile ? (
         <>
           <Button variant="outline" size="sm">
-            {bookmarksInfo.data ?? 0}/
+            {bookmarkCount}/
             {plan.name === "pro" ? "∞" : (plan.limits.bookmarks ?? 10)}
           </Button>
           {plan.name === "free" && (
@@ -93,7 +92,7 @@ export const BookmarkHeader = () => {
           {isMobile ? (
             <>
               <DropdownMenuLabel>
-                Bookmarks: {bookmarksInfo.data ?? 0}/
+                Bookmarks: {bookmarkCount}/
                 {plan.name === "pro" ? "∞" : (plan.limits.bookmarks ?? 10)}
               </DropdownMenuLabel>
               {plan.name === "free" && (

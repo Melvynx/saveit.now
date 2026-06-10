@@ -1,6 +1,6 @@
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { useAction } from "convex/react";
 
 export type TagCleanupSuggestion = {
   bestTag: string;
@@ -21,11 +21,16 @@ export type TagCleanupResponse = {
 };
 
 export function useTagCleanup() {
-  const runSuggestCleanup = useConvexAction(api.tags.actions.suggestCleanup);
+  const runSuggestCleanup = useAction(api.tags.actions.suggestCleanup);
 
-  return useMutation({
-    mutationFn: (): Promise<TagCleanupResponse> =>
+  const task = useAsyncTask(
+    (): Promise<TagCleanupResponse> =>
       runSuggestCleanup({}) as Promise<TagCleanupResponse>,
-    mutationKey: ["tag-cleanup"],
-  });
+  );
+
+  return {
+    ...task,
+    mutate: task.run,
+    mutateAsync: task.run,
+  };
 }

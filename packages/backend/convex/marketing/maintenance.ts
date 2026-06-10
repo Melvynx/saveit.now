@@ -1,6 +1,9 @@
+"use node";
+
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import crypto from "crypto";
 
 const BATCH_SIZE = 100;
 const MAX_AUTH_FETCH = 500; // betterAuth listUsersForAdmin max
@@ -69,9 +72,18 @@ export const sendBatchEmail = internalAction({
         await Promise.all(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           batch.map(async (user: any) => {
-            const markdownWithUnsubscribe =
-              args.markdown +
-              `\n\n---\n\n[Unsubscribe from marketing emails](${siteUrl}/unsubscribe/${user._id})`;
+            const markdownWithUnsubscribe = (() => {
+              const timestamp = Date.now().toString();
+              const token = crypto
+                .createHmac("sha256", process.env.BETTER_AUTH_SECRET ?? "")
+                .update(`${user._id}:${timestamp}`)
+                .digest("hex");
+              const unsubscribeUrl = `${siteUrl}/unsubscribe/${user._id}?token=${token}&timestamp=${timestamp}`;
+              return (
+                args.markdown +
+                `\n\n---\n\n[Unsubscribe from marketing emails](${unsubscribeUrl})`
+              );
+            })();
 
             try {
               await ctx.runAction(internal.email.actions.sendMarkdownEmail, {

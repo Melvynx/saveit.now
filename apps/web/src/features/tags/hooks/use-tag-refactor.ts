@@ -1,7 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { useMutation } from "convex/react";
 
 export type RefactorInput = {
   refactors: Array<{
@@ -12,29 +12,22 @@ export type RefactorInput = {
 };
 
 export function useTagRefactor() {
-  const queryClient = useQueryClient();
-  const doRefactor = useConvexMutation(api.tags.mutations.refactor);
+  const doRefactor = useMutation(api.tags.mutations.refactor);
 
-  const mutation = useMutation({
-    mutationFn: (input: RefactorInput) =>
-      doRefactor({
-        refactors: input.refactors.map((r) => ({
-          bestTag: r.bestTag,
-          refactorTagIds: r.refactorTagIds as Id<"tags">[],
-          createBestTag: r.createBestTag,
-        })),
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags-infinite"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags"] });
-    },
-  });
+  const task = useAsyncTask((input: RefactorInput) =>
+    doRefactor({
+      refactors: input.refactors.map((r) => ({
+        bestTag: r.bestTag,
+        refactorTagIds: r.refactorTagIds as Id<"tags">[],
+        createBestTag: r.createBestTag,
+      })),
+    }),
+  );
 
   return {
-    refactorTags: mutation.mutateAsync,
-    isRefactoring: mutation.isPending,
-    result: mutation.data,
-    reset: mutation.reset,
+    refactorTags: task.run,
+    isRefactoring: task.isPending,
+    result: task.data,
+    reset: () => {},
   };
 }

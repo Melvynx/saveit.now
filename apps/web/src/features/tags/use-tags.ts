@@ -1,8 +1,8 @@
 "use client";
 
 import { api } from "@convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { useMutation } from "convex/react";
 
 type Tag = {
   id: string;
@@ -17,22 +17,30 @@ export function useTags() {
 }
 
 export const useRefreshTags = () => {
-  const queryClient = useQueryClient();
-  return async () => queryClient.invalidateQueries({ queryKey: ["tags"] });
+  return async () => {};
 };
 
 export function useCreateTagMutation(params: {
   onSuccess?: (tag: Tag) => void;
 }) {
-  const doCreate = useConvexMutation(api.tags.mutations.create);
+  const createTag = useMutation(api.tags.mutations.create);
 
-  return useMutation({
-    mutationFn: async (name: string) => {
-      const tag = await doCreate({ name, type: "USER" });
+  const task = useAsyncTask(
+    async (name: string) => {
+      const tag = await createTag({ name, type: "USER" });
       return { success: true, tag: tag as Tag };
     },
-    onSuccess: (data) => {
-      params.onSuccess?.(data.tag);
+    {
+      onSuccess: (data) => {
+        params.onSuccess?.(data.tag);
+      },
     },
-  });
+  );
+
+  return {
+    ...task,
+    mutate: task.run,
+    mutateAsync: task.run,
+    isPending: task.isPending,
+  };
 }

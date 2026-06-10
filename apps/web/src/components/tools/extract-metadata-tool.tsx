@@ -8,7 +8,7 @@ import {
   generateFilenameFromURL,
 } from "@/lib/tools/tool-utils";
 import { callConvexTool } from "@/lib/tools/convex-tool-client";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -39,17 +39,15 @@ import { extractMetadataResponseSchema } from "@/lib/tools/schemas/extract-metad
 export function ExtractMetadataTool() {
   const [url, setUrl] = useState("");
 
-  const mutation = useMutation({
-    mutationFn: async (urlToFetch: string) => {
-      return callConvexTool("extract-metadata", urlToFetch, extractMetadataResponseSchema);
-    },
-  });
+  const mutation = useAsyncTask(async (urlToFetch: string) =>
+    callConvexTool("extract-metadata", urlToFetch, extractMetadataResponseSchema),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    mutation.mutate(url.trim());
+    void mutation.run(url.trim());
   };
 
   const handleDownloadJSON = () => {

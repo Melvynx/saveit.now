@@ -65,10 +65,10 @@ embedding cost matters, add a tiny `queryEmbeddingCache` table keyed by `(model,
 cron sweep — **optional**, only if Gemini embedding latency is a problem in practice.
 
 ## Wire the frontend
-`use-bookmarks.ts` debounced search branch calls `useQuery(convexAction(api.search.actions.search, {...}))`
-— CORRECTED: `convexAction(ref, args)` already returns full TanStack Query options (queryKey + queryFn +
-staleTime); do NOT nest it inside `{ queryFn: () => convexAction(...) }`. Actions aren't reactive, which is
-fine for search. The no-query branch keeps the reactive `bookmarks.queries.list` pagination from Phase 05.
+`use-bookmarks.ts` debounced search branch calls the Convex action directly with
+`useAction(api.search.actions.search)` or `useConvex().action(...)` and owns its local pagination state.
+Actions are not reactive, which is fine for search. The no-query branch keeps the reactive
+`bookmarks.queries.list` pagination from Phase 05.
 
 ## Acceptance criteria
 - Text search returns semantically relevant results matching today's quality on a sample set.

@@ -263,15 +263,9 @@ importers:
       '@convex-dev/better-auth':
         specifier: ^0.12.2
         version: 0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.10(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.168.25(crossws@0.4.5(srvx@0.11.16))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.3.5(@types/node@20.19.37)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.3)))(pg@8.21.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@1.6.1(@edge-runtime/vm@5.0.0)(@types/node@20.19.37)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.43.1)))(convex@1.40.0(react@19.2.4))(hono@4.12.24)(react@19.2.4)(typescript@5.8.3)
-      '@convex-dev/react-query':
-        specifier: ^0.1.0
-        version: 0.1.0(@tanstack/react-query@5.94.5(react@19.2.4))(convex@1.40.0(react@19.2.4))
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.0(vite@7.3.5(@types/node@20.19.37)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@tanstack/react-query':
-        specifier: ^5.94.5
-        version: 5.94.5(react@19.2.4)
       '@tanstack/react-router':
         specifier: ^1.170.15
         version: 1.170.15(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1630,12 +1624,6 @@ packages:
     peerDependenciesMeta:
       react:
         optional: true
-
-  '@convex-dev/react-query@0.1.0':
-    resolution: {integrity: sha512-ULmBZCtAQDUePdBhUv7hj1Yy4QiCelhi6uEIOtMpjW8db6W9CFKvQwLt9heLngccFyMFfAZdOfSrT+cP4AH0Jw==}
-    peerDependencies:
-      '@tanstack/react-query': ^5.0.0
-      convex: ^1.29.3
 
   '@convex-dev/resend@0.2.4':
     resolution: {integrity: sha512-R009qlbXG+6R0p/WmkTbfHzBo48ocKyfoqRAJ41AQdQDrdW6pPZrVOGgTOTLSIZwmXZp+1BbiNpzjc/+Zh/OVg==}
@@ -4979,14 +4967,6 @@ packages:
   '@tanstack/history@1.162.0':
     resolution: {integrity: sha512-79pf/RkhteYZTRgcR4F9kbk84P2N8rugQJswxfIqovlbRiT3yI7eBE+5QorIrZaOKktsgzRlXh1l/du/xpl4iA==}
     engines: {node: '>=20.19'}
-
-  '@tanstack/query-core@5.94.5':
-    resolution: {integrity: sha512-Vx1JJiBURW/wdNGP45afjrqn0LfxYwL7K/bSrQvNRtyLGF1bxQPgUXCpzscG29e+UeFOh9hz1KOVala0N+bZiA==}
-
-  '@tanstack/react-query@5.94.5':
-    resolution: {integrity: sha512-1wmrxKFkor+q8l+ygdHmv0Sq5g84Q3p4xvuJ7AdSIAhQQ7udOt+ZSZ19g1Jea3mHqtlTslLGJsmC4vHFgP0P3A==}
-    peerDependencies:
-      react: ^18 || ^19
 
   '@tanstack/react-router@1.170.15':
     resolution: {integrity: sha512-GawYz7HEjj8rTUUDoT/SemDEVm63pZUO+2mOcXHY9Jl3EwMS5gFBnPu/2UvcrwRm1jN1k79fokc0d4aFmrLatg==}
@@ -14152,11 +14132,6 @@ snapshots:
     optionalDependencies:
       react: 19.2.4
 
-  '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.94.5(react@19.2.4))(convex@1.40.0(react@19.2.4))':
-    dependencies:
-      '@tanstack/react-query': 5.94.5(react@19.2.4)
-      convex: 1.40.0(react@19.2.4)
-
   '@convex-dev/resend@0.2.4(@react-email/render@1.4.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(convex-helpers@0.1.119(@standard-schema/spec@1.1.0)(convex@1.40.0(react@19.2.4))(hono@4.12.24)(react@19.2.4)(typescript@5.8.3)(zod@4.4.3))(convex@1.40.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@convex-dev/rate-limiter': 0.3.2(convex@1.40.0(react@19.2.4))(react@19.2.4)
@@ -18326,13 +18301,6 @@ snapshots:
       react: 19.0.0
 
   '@tanstack/history@1.162.0': {}
-
-  '@tanstack/query-core@5.94.5': {}
-
-  '@tanstack/react-query@5.94.5(react@19.2.4)':
-    dependencies:
-      '@tanstack/query-core': 5.94.5
-      react: 19.2.4
 
   '@tanstack/react-router@1.170.15(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:

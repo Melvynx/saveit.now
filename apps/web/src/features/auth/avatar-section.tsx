@@ -2,9 +2,8 @@
 
 import { AvatarUploader } from "@/features/auth/avatar-uploader";
 import { useSession } from "@/lib/auth-client";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -13,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { useAction } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,28 +29,30 @@ interface AvatarSectionProps {
 export function AvatarSection({ user }: AvatarSectionProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const session = useSession();
-  const uploadAvatarAction = useConvexAction(api.users.actions.uploadAvatar);
+  const uploadAvatar = useAction(api.users.actions.uploadAvatar);
 
-  const uploadMutation = useMutation({
-    mutationFn: async ({ file }: { file: File }) => {
+  const uploadTask = useAsyncTask(
+    async (file: File) => {
       const fileData = await file.arrayBuffer();
-      return uploadAvatarAction({
+      return uploadAvatar({
         fileData,
         fileName: file.name,
         contentType: file.type,
         fileSize: file.size,
       });
     },
-    onSuccess: () => {
-      toast.success("Avatar updated successfully!");
-      void session.refetch();
-      setSelectedFile(null);
+    {
+      onSuccess: () => {
+        toast.success("Avatar updated successfully!");
+        void session.refetch();
+        setSelectedFile(null);
+      },
+      onError: (error) => {
+        console.error("Upload error:", error);
+        toast.error("Failed to upload avatar. Please try again.");
+      },
     },
-    onError: (error) => {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload avatar. Please try again.");
-    },
-  });
+  );
 
   const hasChanges = selectedFile !== null;
 
@@ -80,15 +82,15 @@ export function AvatarSection({ user }: AvatarSectionProps) {
           </p>
         )}
         <Button
-          onClick={() => selectedFile && uploadMutation.mutate({ file: selectedFile })}
-          disabled={!hasChanges || uploadMutation.isPending}
+          onClick={() => selectedFile && void uploadTask.run(selectedFile)}
+          disabled={!hasChanges || uploadTask.isPending}
           size="sm"
           variant="outline"
         >
-          {uploadMutation.isPending && (
+          {uploadTask.isPending && (
             <Loader2 className="mr-2 size-4 animate-spin" />
           )}
-          {uploadMutation.isPending ? "Uploading..." : "Save avatar"}
+          {uploadTask.isPending ? "Uploading..." : "Save avatar"}
         </Button>
       </CardFooter>
     </Card>

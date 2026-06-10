@@ -1,13 +1,12 @@
 import { api } from "@convex/_generated/api";
-import { useConvexAction } from "@convex-dev/react-query";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useAction } from "convex/react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/billing")({
@@ -15,39 +14,41 @@ export const Route = createFileRoute("/billing")({
 });
 
 function BillingPage() {
-  const createBillingPortal = useConvexAction(
-    api.stripe.actions.createBillingPortal,
-  );
-
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const result = await createBillingPortal({});
-      return result;
-    },
-    onSuccess: (data) => {
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to open billing portal",
-      );
-    },
-  });
+  const createBillingPortal = useAction(api.stripe.actions.createBillingPortal);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
-    mutation.mutate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
 
-  if (mutation.isError) {
+    async function redirectToPortal() {
+      try {
+        const data = await createBillingPortal({});
+        if (cancelled) return;
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setError(err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to open billing portal",
+        );
+      }
+    }
+
+    void redirectToPortal();
+    return () => {
+      cancelled = true;
+    };
+  }, [createBillingPortal]);
+
+  if (error) {
     return (
       <Alert variant="destructive">
         <AlertTitle>Billing portal unavailable</AlertTitle>
         <AlertDescription>
-          {mutation.error instanceof Error
-            ? mutation.error.message
+          {error instanceof Error
+            ? error.message
             : "No billing account found. Please contact support."}
         </AlertDescription>
       </Alert>

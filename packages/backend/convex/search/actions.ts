@@ -99,9 +99,7 @@ async function runVectorSearch(
   // 3. Post-filter by embeddingModel (schema has it as filterField but we
   //    post-filter for safety since we don't know if the index filterField is used
   //    consistently across all documents).
-  const filteredResults = rawResults.filter(
-    (r: any) => r._score !== undefined,
-  );
+  const filteredResults = rawResults.filter((r: any) => r._score !== undefined);
   // We do not filter by embeddingModel here at vector-search level since Convex
   // index filterFields includes "embeddingModel"; we will re-check after loading docs.
 
@@ -139,10 +137,13 @@ async function runVectorSearch(
 
   // 5. Load bookmark docs (with ownership re-check)
   const ids = spreadResults.map((r) => r._id) as any[];
-  const docs: any[] = await ctx.runQuery(internal.search.queries.loadForSearch, {
-    ids,
-    userId,
-  });
+  const docs: any[] = await ctx.runQuery(
+    internal.search.queries.loadForSearch,
+    {
+      ids,
+      userId,
+    },
+  );
 
   // 6. Build a score map
   const scoreMap = new Map<string, number>(
@@ -361,7 +362,8 @@ export const search = authAction({
           userId,
           domain,
           types: types.length > 0 ? (types as any[]) : undefined,
-          specialFilters: specialFilters.length > 0 ? specialFilters : undefined,
+          specialFilters:
+            specialFilters.length > 0 ? specialFilters : undefined,
         },
       );
 
@@ -385,7 +387,8 @@ export const search = authAction({
           userId,
           tags,
           types: types.length > 0 ? (types as any[]) : undefined,
-          specialFilters: specialFilters.length > 0 ? specialFilters : undefined,
+          specialFilters:
+            specialFilters.length > 0 ? specialFilters : undefined,
         },
       );
 
@@ -434,27 +437,28 @@ export const searchForChat = internalAction({
       ),
     ),
     limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
     matchingDistance: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<SearchResponse> => {
     const userId = args.userId;
     const startTime = Date.now();
 
-    // Chat search: limit default 6, max 20; matchingDistance default 0.8
-    const limit = Math.min(20, Math.max(1, args.limit ?? 6));
+    const limit = Math.min(100, Math.max(1, args.limit ?? 6));
     const matchingDistance = args.matchingDistance ?? 0.8;
     const query = args.query ?? "";
     const tags = args.tags ?? [];
     const types = (args.types ?? []) as string[];
     const specialFilters = args.specialFilters ?? [];
+    const cursor = args.cursor;
 
     // -----------------------------------------------------------------------
     // Route 1: no search query → default list
     // -----------------------------------------------------------------------
-    if (!isSearchQuery(query)) {
+    if (!isSearchQuery(query) && tags.length === 0) {
       const paginationOpts = {
         numItems: limit,
-        cursor: null,
+        cursor: cursor ?? null,
       };
 
       const listResult = await ctx.runQuery(
@@ -463,8 +467,7 @@ export const searchForChat = internalAction({
           userId,
           paginationOpts,
           filter:
-            types.length > 0 ||
-            specialFilters.length > 0
+            types.length > 0 || specialFilters.length > 0
               ? buildListFilter(types as any, specialFilters)
               : undefined,
         },
@@ -513,14 +516,15 @@ export const searchForChat = internalAction({
           userId,
           domain,
           types: types.length > 0 ? (types as any[]) : undefined,
-          specialFilters: specialFilters.length > 0 ? specialFilters : undefined,
+          specialFilters:
+            specialFilters.length > 0 ? specialFilters : undefined,
         },
       );
 
-      const paginated = paginateResults(results, undefined, limit);
+      const paginated = paginateResults(results, cursor, limit);
       return {
         bookmarks: paginated.bookmarks,
-        nextCursor: undefined,
+        nextCursor: paginated.nextCursor,
         hasMore: paginated.hasMore,
         fromCache: false,
         queryTime: Date.now() - startTime,
@@ -537,14 +541,15 @@ export const searchForChat = internalAction({
           userId,
           tags,
           types: types.length > 0 ? (types as any[]) : undefined,
-          specialFilters: specialFilters.length > 0 ? specialFilters : undefined,
+          specialFilters:
+            specialFilters.length > 0 ? specialFilters : undefined,
         },
       );
 
-      const paginated = paginateResults(results, undefined, limit);
+      const paginated = paginateResults(results, cursor, limit);
       return {
         bookmarks: paginated.bookmarks,
-        nextCursor: undefined,
+        nextCursor: paginated.nextCursor,
         hasMore: paginated.hasMore,
         fromCache: false,
         queryTime: Date.now() - startTime,
@@ -560,7 +565,7 @@ export const searchForChat = internalAction({
       query,
       matchingDistance,
       limit,
-      undefined, // no cursor for chat
+      cursor,
       tags,
       types,
       specialFilters,
@@ -599,20 +604,11 @@ function buildListFilter(
   // Only set starred / read when the filter is unambiguous.
   // Multiple conflicting special filters would need OR logic not supported
   // here, so we pass the raw specialFilters and let the query handle it.
-  if (
-    specialFilters.length === 1 &&
-    specialFilters.includes("STAR")
-  ) {
+  if (specialFilters.length === 1 && specialFilters.includes("STAR")) {
     filter.starred = true;
-  } else if (
-    specialFilters.length === 1 &&
-    specialFilters.includes("READ")
-  ) {
+  } else if (specialFilters.length === 1 && specialFilters.includes("READ")) {
     filter.read = true;
-  } else if (
-    specialFilters.length === 1 &&
-    specialFilters.includes("UNREAD")
-  ) {
+  } else if (specialFilters.length === 1 && specialFilters.includes("UNREAD")) {
     filter.read = false;
   }
 

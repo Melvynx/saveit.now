@@ -59,6 +59,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user_created", ["userId", "createdAt"])
+    .index("by_user_type_created", ["userId", "type", "createdAt"])
     .index("by_user_status", ["userId", "status"])
     .index("by_user_url", ["userId", "url"])
     .index("by_user_starred", ["userId", "starred"])

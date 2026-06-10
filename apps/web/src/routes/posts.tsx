@@ -1,18 +1,18 @@
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
 import { MaxWidthContainer } from "@/features/page/page";
-import type { Post } from "@/lib/mdx/posts-manager";
+import {
+  getAllPosts,
+  getFeaturedPosts,
+  type Post,
+} from "@/lib/mdx/posts-manager";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 
-const getPostsData = createServerFn({ method: "GET" }).handler(async () => {
-  const { getAllPosts, getFeaturedPosts } = await import(
-    "@/lib/mdx/posts-manager"
-  );
+async function getPostsData() {
   const [allPosts, featuredPosts] = await Promise.all([
     getAllPosts(),
     getFeaturedPosts(),
@@ -23,7 +23,7 @@ const getPostsData = createServerFn({ method: "GET" }).handler(async () => {
     featuredPost: featuredPosts[0] ?? null,
     regularPosts: allPosts.filter((post) => !post.frontmatter.featured),
   };
-});
+}
 
 export const Route = createFileRoute("/posts")({
   loader: () => getPostsData(),

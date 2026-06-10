@@ -2,7 +2,7 @@ import { APP_LINKS } from "@/lib/app-links";
 import { authClient } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { unwrapSafePromise } from "@/lib/promises";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
@@ -33,19 +33,21 @@ export function useHeaderUserMenu() {
   const isImpersonating = session.data?.session.impersonatedBy != null;
   const isAdmin = user?.role === "admin";
 
-  const stopImpersonatingMutation = useMutation({
-    mutationFn: () => unwrapSafePromise(authClient.admin.stopImpersonating()),
-    onSuccess: () => {
-      window.location.reload();
+  const stopImpersonatingTask = useAsyncTask(
+    () => unwrapSafePromise(authClient.admin.stopImpersonating()),
+    {
+      onSuccess: () => {
+        window.location.reload();
+      },
     },
-  });
+  );
 
   return {
     user,
     isAdmin,
     isImpersonating,
-    isStoppingImpersonation: stopImpersonatingMutation.isPending,
-    stopImpersonating: () => stopImpersonatingMutation.mutate(),
+    isStoppingImpersonation: stopImpersonatingTask.isPending,
+    stopImpersonating: () => void stopImpersonatingTask.run(),
   };
 }
 

@@ -53,17 +53,6 @@ import { Route as LandingHeaderRouteImport } from "./routes/landing.header";
 import { Route as DocsSlugRouteImport } from "./routes/docs.$slug";
 import { Route as ChangelogVersionsRouteImport } from "./routes/changelog.versions";
 import { Route as AppAgentsRouteImport } from "./routes/app.agents";
-import { Route as ApiTagsRouteImport } from "./routes/api.tags";
-import { Route as ApiStartRouteImport } from "./routes/api.start";
-import { Route as ApiInngestRouteImport } from "./routes/api.inngest";
-import { Route as ApiImportsRouteImport } from "./routes/api.imports";
-import { Route as ApiHealthRouteImport } from "./routes/api.health";
-import { Route as ApiFakeWorkerRouteImport } from "./routes/api.fake-worker";
-import { Route as ApiExportsRouteImport } from "./routes/api.exports";
-import { Route as ApiChatRouteImport } from "./routes/api.chat";
-import { Route as ApiBugReportRouteImport } from "./routes/api.bug-report";
-import { Route as ApiBookmarksRouteImport } from "./routes/api.bookmarks";
-import { Route as ApiBRouteImport } from "./routes/api.b";
 import { Route as AdminUsersRouteImport } from "./routes/admin.users";
 import { Route as AdminSendEmailRouteImport } from "./routes/admin.send-email";
 import { Route as AdminConversationsRouteImport } from "./routes/admin.conversations";
@@ -71,43 +60,9 @@ import { Route as AccountPublicLinkRouteImport } from "./routes/account.public-l
 import { Route as AccountKeysRouteImport } from "./routes/account.keys";
 import { Route as PBookmarkIdReadRouteImport } from "./routes/p.$bookmarkId.read";
 import { Route as AppBBookmarkIdRouteImport } from "./routes/app.b.$bookmarkId";
-import { Route as ApiWebhooksStripeRouteImport } from "./routes/api.webhooks.stripe";
-import { Route as ApiV1TagsRouteImport } from "./routes/api.v1.tags";
-import { Route as ApiV1BookmarksRouteImport } from "./routes/api.v1.bookmarks";
-import { Route as ApiUnsubscribeUserIdRouteImport } from "./routes/api.unsubscribe.$userId";
-import { Route as ApiToolsYoutubeMetadataRouteImport } from "./routes/api.tools.youtube-metadata";
-import { Route as ApiToolsOgImagesRouteImport } from "./routes/api.tools.og-images";
-import { Route as ApiToolsExtractMetadataRouteImport } from "./routes/api.tools.extract-metadata";
-import { Route as ApiToolsExtractFaviconsRouteImport } from "./routes/api.tools.extract-favicons";
-import { Route as ApiToolsExtractContentRouteImport } from "./routes/api.tools.extract-content";
-import { Route as ApiTagsRefactorRouteImport } from "./routes/api.tags.refactor";
-import { Route as ApiTagsManagementRouteImport } from "./routes/api.tags.management";
-import { Route as ApiTagsCleanupRouteImport } from "./routes/api.tags.cleanup";
-import { Route as ApiTagsBulkDeleteRouteImport } from "./routes/api.tags.bulk-delete";
-import { Route as ApiFakeWorkerYoutubeRouteImport } from "./routes/api.fake-worker.youtube";
-import { Route as ApiFakeWorkerPdfRouteImport } from "./routes/api.fake-worker.pdf";
-import { Route as ApiChatUsageRouteImport } from "./routes/api.chat.usage";
-import { Route as ApiChatConversationsRouteImport } from "./routes/api.chat.conversations";
-import { Route as ApiChangelogDismissRouteImport } from "./routes/api.changelog.dismiss";
-import { Route as ApiChangelogCheckDismissedRouteImport } from "./routes/api.changelog.check-dismissed";
-import { Route as ApiBookmarksInfoRouteImport } from "./routes/api.bookmarks.info";
-import { Route as ApiBookmarksBookmarkIdRouteImport } from "./routes/api.bookmarks.$bookmarkId";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api.auth.$";
-import { Route as ApiAdminSendEmailRouteImport } from "./routes/api.admin.send-email";
 import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users.$userId";
 import { Route as AdminConversationsIdRouteImport } from "./routes/admin.conversations.$id";
-import { Route as ApiV1BookmarksRandomRouteImport } from "./routes/api.v1.bookmarks.random";
-import { Route as ApiV1BookmarksBookmarkIdRouteImport } from "./routes/api.v1.bookmarks.$bookmarkId";
-import { Route as ApiOgBookmarkBookmarkIdRouteImport } from "./routes/api.og.bookmark.$bookmarkId";
-import { Route as ApiChatConversationsIdRouteImport } from "./routes/api.chat.conversations.$id";
-import { Route as ApiBookmarksBookmarkIdUploadScreenshotRouteImport } from "./routes/api.bookmarks.$bookmarkId.upload-screenshot";
-import { Route as ApiBookmarksBookmarkIdTagsRouteImport } from "./routes/api.bookmarks.$bookmarkId.tags";
-import { Route as ApiBookmarksBookmarkIdSubscribeRouteImport } from "./routes/api.bookmarks.$bookmarkId.subscribe";
-import { Route as ApiBookmarksBookmarkIdMetadataRouteImport } from "./routes/api.bookmarks.$bookmarkId.metadata";
-import { Route as ApiV1PublicSlugBookmarksRouteImport } from "./routes/api.v1.public.$slug.bookmarks";
-import { Route as ApiChatConversationsIdLikeRouteImport } from "./routes/api.chat.conversations.$id.like";
-import { Route as ApiChatConversationsIdDislikeRouteImport } from "./routes/api.chat.conversations.$id.dislike";
-import { Route as ApiAdminUsersUserIdCustomLimitsRouteImport } from "./routes/api.admin.users.$userId.custom-limits";
 
 const VerifyRoute = VerifyRouteImport.update({
   id: "/verify",
@@ -329,61 +284,6 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: "/agents",
   getParentRoute: () => AppRoute,
 } as any);
-const ApiTagsRoute = ApiTagsRouteImport.update({
-  id: "/api/tags",
-  path: "/api/tags",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiStartRoute = ApiStartRouteImport.update({
-  id: "/api/start",
-  path: "/api/start",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiInngestRoute = ApiInngestRouteImport.update({
-  id: "/api/inngest",
-  path: "/api/inngest",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiImportsRoute = ApiImportsRouteImport.update({
-  id: "/api/imports",
-  path: "/api/imports",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: "/api/health",
-  path: "/api/health",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiFakeWorkerRoute = ApiFakeWorkerRouteImport.update({
-  id: "/api/fake-worker",
-  path: "/api/fake-worker",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiExportsRoute = ApiExportsRouteImport.update({
-  id: "/api/exports",
-  path: "/api/exports",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: "/api/chat",
-  path: "/api/chat",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiBugReportRoute = ApiBugReportRouteImport.update({
-  id: "/api/bug-report",
-  path: "/api/bug-report",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiBookmarksRoute = ApiBookmarksRouteImport.update({
-  id: "/api/bookmarks",
-  path: "/api/bookmarks",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiBRoute = ApiBRouteImport.update({
-  id: "/api/b",
-  path: "/api/b",
-  getParentRoute: () => rootRouteImport,
-} as any);
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: "/users",
   path: "/users",
@@ -419,120 +319,9 @@ const AppBBookmarkIdRoute = AppBBookmarkIdRouteImport.update({
   path: "/b/$bookmarkId",
   getParentRoute: () => AppRoute,
 } as any);
-const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
-  id: "/api/webhooks/stripe",
-  path: "/api/webhooks/stripe",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiV1TagsRoute = ApiV1TagsRouteImport.update({
-  id: "/api/v1/tags",
-  path: "/api/v1/tags",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiV1BookmarksRoute = ApiV1BookmarksRouteImport.update({
-  id: "/api/v1/bookmarks",
-  path: "/api/v1/bookmarks",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiUnsubscribeUserIdRoute = ApiUnsubscribeUserIdRouteImport.update({
-  id: "/api/unsubscribe/$userId",
-  path: "/api/unsubscribe/$userId",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiToolsYoutubeMetadataRoute = ApiToolsYoutubeMetadataRouteImport.update({
-  id: "/api/tools/youtube-metadata",
-  path: "/api/tools/youtube-metadata",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiToolsOgImagesRoute = ApiToolsOgImagesRouteImport.update({
-  id: "/api/tools/og-images",
-  path: "/api/tools/og-images",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiToolsExtractMetadataRoute = ApiToolsExtractMetadataRouteImport.update({
-  id: "/api/tools/extract-metadata",
-  path: "/api/tools/extract-metadata",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiToolsExtractFaviconsRoute = ApiToolsExtractFaviconsRouteImport.update({
-  id: "/api/tools/extract-favicons",
-  path: "/api/tools/extract-favicons",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiToolsExtractContentRoute = ApiToolsExtractContentRouteImport.update({
-  id: "/api/tools/extract-content",
-  path: "/api/tools/extract-content",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiTagsRefactorRoute = ApiTagsRefactorRouteImport.update({
-  id: "/refactor",
-  path: "/refactor",
-  getParentRoute: () => ApiTagsRoute,
-} as any);
-const ApiTagsManagementRoute = ApiTagsManagementRouteImport.update({
-  id: "/management",
-  path: "/management",
-  getParentRoute: () => ApiTagsRoute,
-} as any);
-const ApiTagsCleanupRoute = ApiTagsCleanupRouteImport.update({
-  id: "/cleanup",
-  path: "/cleanup",
-  getParentRoute: () => ApiTagsRoute,
-} as any);
-const ApiTagsBulkDeleteRoute = ApiTagsBulkDeleteRouteImport.update({
-  id: "/bulk-delete",
-  path: "/bulk-delete",
-  getParentRoute: () => ApiTagsRoute,
-} as any);
-const ApiFakeWorkerYoutubeRoute = ApiFakeWorkerYoutubeRouteImport.update({
-  id: "/youtube",
-  path: "/youtube",
-  getParentRoute: () => ApiFakeWorkerRoute,
-} as any);
-const ApiFakeWorkerPdfRoute = ApiFakeWorkerPdfRouteImport.update({
-  id: "/pdf",
-  path: "/pdf",
-  getParentRoute: () => ApiFakeWorkerRoute,
-} as any);
-const ApiChatUsageRoute = ApiChatUsageRouteImport.update({
-  id: "/usage",
-  path: "/usage",
-  getParentRoute: () => ApiChatRoute,
-} as any);
-const ApiChatConversationsRoute = ApiChatConversationsRouteImport.update({
-  id: "/conversations",
-  path: "/conversations",
-  getParentRoute: () => ApiChatRoute,
-} as any);
-const ApiChangelogDismissRoute = ApiChangelogDismissRouteImport.update({
-  id: "/api/changelog/dismiss",
-  path: "/api/changelog/dismiss",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiChangelogCheckDismissedRoute =
-  ApiChangelogCheckDismissedRouteImport.update({
-    id: "/api/changelog/check-dismissed",
-    path: "/api/changelog/check-dismissed",
-    getParentRoute: () => rootRouteImport,
-  } as any);
-const ApiBookmarksInfoRoute = ApiBookmarksInfoRouteImport.update({
-  id: "/info",
-  path: "/info",
-  getParentRoute: () => ApiBookmarksRoute,
-} as any);
-const ApiBookmarksBookmarkIdRoute = ApiBookmarksBookmarkIdRouteImport.update({
-  id: "/$bookmarkId",
-  path: "/$bookmarkId",
-  getParentRoute: () => ApiBookmarksRoute,
-} as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: "/api/auth/$",
   path: "/api/auth/$",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiAdminSendEmailRoute = ApiAdminSendEmailRouteImport.update({
-  id: "/api/admin/send-email",
-  path: "/api/admin/send-email",
   getParentRoute: () => rootRouteImport,
 } as any);
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
@@ -545,75 +334,6 @@ const AdminConversationsIdRoute = AdminConversationsIdRouteImport.update({
   path: "/$id",
   getParentRoute: () => AdminConversationsRoute,
 } as any);
-const ApiV1BookmarksRandomRoute = ApiV1BookmarksRandomRouteImport.update({
-  id: "/random",
-  path: "/random",
-  getParentRoute: () => ApiV1BookmarksRoute,
-} as any);
-const ApiV1BookmarksBookmarkIdRoute =
-  ApiV1BookmarksBookmarkIdRouteImport.update({
-    id: "/$bookmarkId",
-    path: "/$bookmarkId",
-    getParentRoute: () => ApiV1BookmarksRoute,
-  } as any);
-const ApiOgBookmarkBookmarkIdRoute = ApiOgBookmarkBookmarkIdRouteImport.update({
-  id: "/api/og/bookmark/$bookmarkId",
-  path: "/api/og/bookmark/$bookmarkId",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ApiChatConversationsIdRoute = ApiChatConversationsIdRouteImport.update({
-  id: "/$id",
-  path: "/$id",
-  getParentRoute: () => ApiChatConversationsRoute,
-} as any);
-const ApiBookmarksBookmarkIdUploadScreenshotRoute =
-  ApiBookmarksBookmarkIdUploadScreenshotRouteImport.update({
-    id: "/upload-screenshot",
-    path: "/upload-screenshot",
-    getParentRoute: () => ApiBookmarksBookmarkIdRoute,
-  } as any);
-const ApiBookmarksBookmarkIdTagsRoute =
-  ApiBookmarksBookmarkIdTagsRouteImport.update({
-    id: "/tags",
-    path: "/tags",
-    getParentRoute: () => ApiBookmarksBookmarkIdRoute,
-  } as any);
-const ApiBookmarksBookmarkIdSubscribeRoute =
-  ApiBookmarksBookmarkIdSubscribeRouteImport.update({
-    id: "/subscribe",
-    path: "/subscribe",
-    getParentRoute: () => ApiBookmarksBookmarkIdRoute,
-  } as any);
-const ApiBookmarksBookmarkIdMetadataRoute =
-  ApiBookmarksBookmarkIdMetadataRouteImport.update({
-    id: "/metadata",
-    path: "/metadata",
-    getParentRoute: () => ApiBookmarksBookmarkIdRoute,
-  } as any);
-const ApiV1PublicSlugBookmarksRoute =
-  ApiV1PublicSlugBookmarksRouteImport.update({
-    id: "/api/v1/public/$slug/bookmarks",
-    path: "/api/v1/public/$slug/bookmarks",
-    getParentRoute: () => rootRouteImport,
-  } as any);
-const ApiChatConversationsIdLikeRoute =
-  ApiChatConversationsIdLikeRouteImport.update({
-    id: "/like",
-    path: "/like",
-    getParentRoute: () => ApiChatConversationsIdRoute,
-  } as any);
-const ApiChatConversationsIdDislikeRoute =
-  ApiChatConversationsIdDislikeRouteImport.update({
-    id: "/dislike",
-    path: "/dislike",
-    getParentRoute: () => ApiChatConversationsIdRoute,
-  } as any);
-const ApiAdminUsersUserIdCustomLimitsRoute =
-  ApiAdminUsersUserIdCustomLimitsRouteImport.update({
-    id: "/api/admin/users/$userId/custom-limits",
-    path: "/api/admin/users/$userId/custom-limits",
-    getParentRoute: () => rootRouteImport,
-  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
@@ -649,18 +369,6 @@ export interface FileRoutesByFullPath {
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
-  "/api/b": typeof ApiBRoute;
-  "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
-  "/api/bug-report": typeof ApiBugReportRoute;
-  "/api/chat": typeof ApiChatRouteWithChildren;
-  "/api/exports": typeof ApiExportsRoute;
-  "/api/fake-worker": typeof ApiFakeWorkerRouteWithChildren;
-  "/api/health": typeof ApiHealthRoute;
-  "/api/imports": typeof ApiImportsRoute;
-  "/api/inngest": typeof ApiInngestRoute;
-  "/api/start": typeof ApiStartRoute;
-  "/api/tags": typeof ApiTagsRouteWithChildren;
-  "/api/upgrade": typeof ApiUpgradeRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
@@ -679,49 +387,9 @@ export interface FileRoutesByFullPath {
   "/upgrade/success": typeof UpgradeSuccessRoute;
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
-  "/api/admin/send-email": typeof ApiAdminSendEmailRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
-  "/api/bookmarks/info": typeof ApiBookmarksInfoRoute;
-  "/api/changelog/check-dismissed": typeof ApiChangelogCheckDismissedRoute;
-  "/api/changelog/dismiss": typeof ApiChangelogDismissRoute;
-  "/api/chat/conversations": typeof ApiChatConversationsRouteWithChildren;
-  "/api/chat/usage": typeof ApiChatUsageRoute;
-  "/api/fake-worker/pdf": typeof ApiFakeWorkerPdfRoute;
-  "/api/fake-worker/youtube": typeof ApiFakeWorkerYoutubeRoute;
-  "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
-  "/api/tags/bulk-delete": typeof ApiTagsBulkDeleteRoute;
-  "/api/tags/cleanup": typeof ApiTagsCleanupRoute;
-  "/api/tags/management": typeof ApiTagsManagementRoute;
-  "/api/tags/refactor": typeof ApiTagsRefactorRoute;
-  "/api/tools/extract-content": typeof ApiToolsExtractContentRoute;
-  "/api/tools/extract-favicons": typeof ApiToolsExtractFaviconsRoute;
-  "/api/tools/extract-metadata": typeof ApiToolsExtractMetadataRoute;
-  "/api/tools/og-images": typeof ApiToolsOgImagesRoute;
-  "/api/tools/youtube-metadata": typeof ApiToolsYoutubeMetadataRoute;
-  "/api/unsubscribe/$userId": typeof ApiUnsubscribeUserIdRoute;
-  "/api/user/avatar": typeof ApiUserAvatarRoute;
-  "/api/user/limits": typeof ApiUserLimitsRoute;
-  "/api/user/profile": typeof ApiUserProfileRoute;
-  "/api/user/public-link": typeof ApiUserPublicLinkRoute;
-  "/api/v1/bookmarks": typeof ApiV1BookmarksRouteWithChildren;
-  "/api/v1/tags": typeof ApiV1TagsRoute;
-  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
-  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
-  "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
-  "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
-  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
-  "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
-  "/api/chat/conversations/$id": typeof ApiChatConversationsIdRouteWithChildren;
-  "/api/og/bookmark/$bookmarkId": typeof ApiOgBookmarkBookmarkIdRoute;
-  "/api/v1/bookmarks/$bookmarkId": typeof ApiV1BookmarksBookmarkIdRoute;
-  "/api/v1/bookmarks/random": typeof ApiV1BookmarksRandomRoute;
-  "/api/admin/users/$userId/custom-limits": typeof ApiAdminUsersUserIdCustomLimitsRoute;
-  "/api/chat/conversations/$id/dislike": typeof ApiChatConversationsIdDislikeRoute;
-  "/api/chat/conversations/$id/like": typeof ApiChatConversationsIdLikeRoute;
-  "/api/v1/public/$slug/bookmarks": typeof ApiV1PublicSlugBookmarksRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
@@ -757,18 +425,6 @@ export interface FileRoutesByTo {
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
-  "/api/b": typeof ApiBRoute;
-  "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
-  "/api/bug-report": typeof ApiBugReportRoute;
-  "/api/chat": typeof ApiChatRouteWithChildren;
-  "/api/exports": typeof ApiExportsRoute;
-  "/api/fake-worker": typeof ApiFakeWorkerRouteWithChildren;
-  "/api/health": typeof ApiHealthRoute;
-  "/api/imports": typeof ApiImportsRoute;
-  "/api/inngest": typeof ApiInngestRoute;
-  "/api/start": typeof ApiStartRoute;
-  "/api/tags": typeof ApiTagsRouteWithChildren;
-  "/api/upgrade": typeof ApiUpgradeRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
@@ -787,49 +443,9 @@ export interface FileRoutesByTo {
   "/upgrade/success": typeof UpgradeSuccessRoute;
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
-  "/api/admin/send-email": typeof ApiAdminSendEmailRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
-  "/api/bookmarks/info": typeof ApiBookmarksInfoRoute;
-  "/api/changelog/check-dismissed": typeof ApiChangelogCheckDismissedRoute;
-  "/api/changelog/dismiss": typeof ApiChangelogDismissRoute;
-  "/api/chat/conversations": typeof ApiChatConversationsRouteWithChildren;
-  "/api/chat/usage": typeof ApiChatUsageRoute;
-  "/api/fake-worker/pdf": typeof ApiFakeWorkerPdfRoute;
-  "/api/fake-worker/youtube": typeof ApiFakeWorkerYoutubeRoute;
-  "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
-  "/api/tags/bulk-delete": typeof ApiTagsBulkDeleteRoute;
-  "/api/tags/cleanup": typeof ApiTagsCleanupRoute;
-  "/api/tags/management": typeof ApiTagsManagementRoute;
-  "/api/tags/refactor": typeof ApiTagsRefactorRoute;
-  "/api/tools/extract-content": typeof ApiToolsExtractContentRoute;
-  "/api/tools/extract-favicons": typeof ApiToolsExtractFaviconsRoute;
-  "/api/tools/extract-metadata": typeof ApiToolsExtractMetadataRoute;
-  "/api/tools/og-images": typeof ApiToolsOgImagesRoute;
-  "/api/tools/youtube-metadata": typeof ApiToolsYoutubeMetadataRoute;
-  "/api/unsubscribe/$userId": typeof ApiUnsubscribeUserIdRoute;
-  "/api/user/avatar": typeof ApiUserAvatarRoute;
-  "/api/user/limits": typeof ApiUserLimitsRoute;
-  "/api/user/profile": typeof ApiUserProfileRoute;
-  "/api/user/public-link": typeof ApiUserPublicLinkRoute;
-  "/api/v1/bookmarks": typeof ApiV1BookmarksRouteWithChildren;
-  "/api/v1/tags": typeof ApiV1TagsRoute;
-  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
-  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
-  "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
-  "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
-  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
-  "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
-  "/api/chat/conversations/$id": typeof ApiChatConversationsIdRouteWithChildren;
-  "/api/og/bookmark/$bookmarkId": typeof ApiOgBookmarkBookmarkIdRoute;
-  "/api/v1/bookmarks/$bookmarkId": typeof ApiV1BookmarksBookmarkIdRoute;
-  "/api/v1/bookmarks/random": typeof ApiV1BookmarksRandomRoute;
-  "/api/admin/users/$userId/custom-limits": typeof ApiAdminUsersUserIdCustomLimitsRoute;
-  "/api/chat/conversations/$id/dislike": typeof ApiChatConversationsIdDislikeRoute;
-  "/api/chat/conversations/$id/like": typeof ApiChatConversationsIdLikeRoute;
-  "/api/v1/public/$slug/bookmarks": typeof ApiV1PublicSlugBookmarksRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -866,18 +482,6 @@ export interface FileRoutesById {
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
   "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
-  "/api/b": typeof ApiBRoute;
-  "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
-  "/api/bug-report": typeof ApiBugReportRoute;
-  "/api/chat": typeof ApiChatRouteWithChildren;
-  "/api/exports": typeof ApiExportsRoute;
-  "/api/fake-worker": typeof ApiFakeWorkerRouteWithChildren;
-  "/api/health": typeof ApiHealthRoute;
-  "/api/imports": typeof ApiImportsRoute;
-  "/api/inngest": typeof ApiInngestRoute;
-  "/api/start": typeof ApiStartRoute;
-  "/api/tags": typeof ApiTagsRouteWithChildren;
-  "/api/upgrade": typeof ApiUpgradeRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
@@ -896,49 +500,9 @@ export interface FileRoutesById {
   "/upgrade/success": typeof UpgradeSuccessRoute;
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
-  "/api/admin/send-email": typeof ApiAdminSendEmailRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
-  "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
-  "/api/bookmarks/info": typeof ApiBookmarksInfoRoute;
-  "/api/changelog/check-dismissed": typeof ApiChangelogCheckDismissedRoute;
-  "/api/changelog/dismiss": typeof ApiChangelogDismissRoute;
-  "/api/chat/conversations": typeof ApiChatConversationsRouteWithChildren;
-  "/api/chat/usage": typeof ApiChatUsageRoute;
-  "/api/fake-worker/pdf": typeof ApiFakeWorkerPdfRoute;
-  "/api/fake-worker/youtube": typeof ApiFakeWorkerYoutubeRoute;
-  "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
-  "/api/tags/bulk-delete": typeof ApiTagsBulkDeleteRoute;
-  "/api/tags/cleanup": typeof ApiTagsCleanupRoute;
-  "/api/tags/management": typeof ApiTagsManagementRoute;
-  "/api/tags/refactor": typeof ApiTagsRefactorRoute;
-  "/api/tools/extract-content": typeof ApiToolsExtractContentRoute;
-  "/api/tools/extract-favicons": typeof ApiToolsExtractFaviconsRoute;
-  "/api/tools/extract-metadata": typeof ApiToolsExtractMetadataRoute;
-  "/api/tools/og-images": typeof ApiToolsOgImagesRoute;
-  "/api/tools/youtube-metadata": typeof ApiToolsYoutubeMetadataRoute;
-  "/api/unsubscribe/$userId": typeof ApiUnsubscribeUserIdRoute;
-  "/api/user/avatar": typeof ApiUserAvatarRoute;
-  "/api/user/limits": typeof ApiUserLimitsRoute;
-  "/api/user/profile": typeof ApiUserProfileRoute;
-  "/api/user/public-link": typeof ApiUserPublicLinkRoute;
-  "/api/v1/bookmarks": typeof ApiV1BookmarksRouteWithChildren;
-  "/api/v1/tags": typeof ApiV1TagsRoute;
-  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
-  "/api/account/keys/$keyId": typeof ApiAccountKeysKeyIdRoute;
-  "/api/bookmarks/$bookmarkId/metadata": typeof ApiBookmarksBookmarkIdMetadataRoute;
-  "/api/bookmarks/$bookmarkId/subscribe": typeof ApiBookmarksBookmarkIdSubscribeRoute;
-  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
-  "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
-  "/api/chat/conversations/$id": typeof ApiChatConversationsIdRouteWithChildren;
-  "/api/og/bookmark/$bookmarkId": typeof ApiOgBookmarkBookmarkIdRoute;
-  "/api/v1/bookmarks/$bookmarkId": typeof ApiV1BookmarksBookmarkIdRoute;
-  "/api/v1/bookmarks/random": typeof ApiV1BookmarksRandomRoute;
-  "/api/admin/users/$userId/custom-limits": typeof ApiAdminUsersUserIdCustomLimitsRoute;
-  "/api/chat/conversations/$id/dislike": typeof ApiChatConversationsIdDislikeRoute;
-  "/api/chat/conversations/$id/like": typeof ApiChatConversationsIdLikeRoute;
-  "/api/v1/public/$slug/bookmarks": typeof ApiV1PublicSlugBookmarksRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -976,18 +540,6 @@ export interface FileRouteTypes {
     | "/admin/conversations"
     | "/admin/send-email"
     | "/admin/users"
-    | "/api/b"
-    | "/api/bookmarks"
-    | "/api/bug-report"
-    | "/api/chat"
-    | "/api/exports"
-    | "/api/fake-worker"
-    | "/api/health"
-    | "/api/imports"
-    | "/api/inngest"
-    | "/api/start"
-    | "/api/tags"
-    | "/api/upgrade"
     | "/app/agents"
     | "/changelog/versions"
     | "/docs/$slug"
@@ -1006,49 +558,9 @@ export interface FileRouteTypes {
     | "/upgrade/success"
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
-    | "/api/admin/send-email"
     | "/api/auth/$"
-    | "/api/bookmarks/$bookmarkId"
-    | "/api/bookmarks/info"
-    | "/api/changelog/check-dismissed"
-    | "/api/changelog/dismiss"
-    | "/api/chat/conversations"
-    | "/api/chat/usage"
-    | "/api/fake-worker/pdf"
-    | "/api/fake-worker/youtube"
-    | "/api/mobile/checkout"
-    | "/api/tags/bulk-delete"
-    | "/api/tags/cleanup"
-    | "/api/tags/management"
-    | "/api/tags/refactor"
-    | "/api/tools/extract-content"
-    | "/api/tools/extract-favicons"
-    | "/api/tools/extract-metadata"
-    | "/api/tools/og-images"
-    | "/api/tools/youtube-metadata"
-    | "/api/unsubscribe/$userId"
-    | "/api/user/avatar"
-    | "/api/user/limits"
-    | "/api/user/profile"
-    | "/api/user/public-link"
-    | "/api/v1/bookmarks"
-    | "/api/v1/tags"
-    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
-    | "/p/$bookmarkId/read"
-    | "/api/account/keys/$keyId"
-    | "/api/bookmarks/$bookmarkId/metadata"
-    | "/api/bookmarks/$bookmarkId/subscribe"
-    | "/api/bookmarks/$bookmarkId/tags"
-    | "/api/bookmarks/$bookmarkId/upload-screenshot"
-    | "/api/chat/conversations/$id"
-    | "/api/og/bookmark/$bookmarkId"
-    | "/api/v1/bookmarks/$bookmarkId"
-    | "/api/v1/bookmarks/random"
-    | "/api/admin/users/$userId/custom-limits"
-    | "/api/chat/conversations/$id/dislike"
-    | "/api/chat/conversations/$id/like"
-    | "/api/v1/public/$slug/bookmarks";
+    | "/p/$bookmarkId/read";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -1084,18 +596,6 @@ export interface FileRouteTypes {
     | "/admin/conversations"
     | "/admin/send-email"
     | "/admin/users"
-    | "/api/b"
-    | "/api/bookmarks"
-    | "/api/bug-report"
-    | "/api/chat"
-    | "/api/exports"
-    | "/api/fake-worker"
-    | "/api/health"
-    | "/api/imports"
-    | "/api/inngest"
-    | "/api/start"
-    | "/api/tags"
-    | "/api/upgrade"
     | "/app/agents"
     | "/changelog/versions"
     | "/docs/$slug"
@@ -1114,49 +614,9 @@ export interface FileRouteTypes {
     | "/upgrade/success"
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
-    | "/api/admin/send-email"
     | "/api/auth/$"
-    | "/api/bookmarks/$bookmarkId"
-    | "/api/bookmarks/info"
-    | "/api/changelog/check-dismissed"
-    | "/api/changelog/dismiss"
-    | "/api/chat/conversations"
-    | "/api/chat/usage"
-    | "/api/fake-worker/pdf"
-    | "/api/fake-worker/youtube"
-    | "/api/mobile/checkout"
-    | "/api/tags/bulk-delete"
-    | "/api/tags/cleanup"
-    | "/api/tags/management"
-    | "/api/tags/refactor"
-    | "/api/tools/extract-content"
-    | "/api/tools/extract-favicons"
-    | "/api/tools/extract-metadata"
-    | "/api/tools/og-images"
-    | "/api/tools/youtube-metadata"
-    | "/api/unsubscribe/$userId"
-    | "/api/user/avatar"
-    | "/api/user/limits"
-    | "/api/user/profile"
-    | "/api/user/public-link"
-    | "/api/v1/bookmarks"
-    | "/api/v1/tags"
-    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
-    | "/p/$bookmarkId/read"
-    | "/api/account/keys/$keyId"
-    | "/api/bookmarks/$bookmarkId/metadata"
-    | "/api/bookmarks/$bookmarkId/subscribe"
-    | "/api/bookmarks/$bookmarkId/tags"
-    | "/api/bookmarks/$bookmarkId/upload-screenshot"
-    | "/api/chat/conversations/$id"
-    | "/api/og/bookmark/$bookmarkId"
-    | "/api/v1/bookmarks/$bookmarkId"
-    | "/api/v1/bookmarks/random"
-    | "/api/admin/users/$userId/custom-limits"
-    | "/api/chat/conversations/$id/dislike"
-    | "/api/chat/conversations/$id/like"
-    | "/api/v1/public/$slug/bookmarks";
+    | "/p/$bookmarkId/read";
   id:
     | "__root__"
     | "/"
@@ -1192,18 +652,6 @@ export interface FileRouteTypes {
     | "/admin/conversations"
     | "/admin/send-email"
     | "/admin/users"
-    | "/api/b"
-    | "/api/bookmarks"
-    | "/api/bug-report"
-    | "/api/chat"
-    | "/api/exports"
-    | "/api/fake-worker"
-    | "/api/health"
-    | "/api/imports"
-    | "/api/inngest"
-    | "/api/start"
-    | "/api/tags"
-    | "/api/upgrade"
     | "/app/agents"
     | "/changelog/versions"
     | "/docs/$slug"
@@ -1222,49 +670,9 @@ export interface FileRouteTypes {
     | "/upgrade/success"
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
-    | "/api/admin/send-email"
     | "/api/auth/$"
-    | "/api/bookmarks/$bookmarkId"
-    | "/api/bookmarks/info"
-    | "/api/changelog/check-dismissed"
-    | "/api/changelog/dismiss"
-    | "/api/chat/conversations"
-    | "/api/chat/usage"
-    | "/api/fake-worker/pdf"
-    | "/api/fake-worker/youtube"
-    | "/api/mobile/checkout"
-    | "/api/tags/bulk-delete"
-    | "/api/tags/cleanup"
-    | "/api/tags/management"
-    | "/api/tags/refactor"
-    | "/api/tools/extract-content"
-    | "/api/tools/extract-favicons"
-    | "/api/tools/extract-metadata"
-    | "/api/tools/og-images"
-    | "/api/tools/youtube-metadata"
-    | "/api/unsubscribe/$userId"
-    | "/api/user/avatar"
-    | "/api/user/limits"
-    | "/api/user/profile"
-    | "/api/user/public-link"
-    | "/api/v1/bookmarks"
-    | "/api/v1/tags"
-    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
-    | "/p/$bookmarkId/read"
-    | "/api/account/keys/$keyId"
-    | "/api/bookmarks/$bookmarkId/metadata"
-    | "/api/bookmarks/$bookmarkId/subscribe"
-    | "/api/bookmarks/$bookmarkId/tags"
-    | "/api/bookmarks/$bookmarkId/upload-screenshot"
-    | "/api/chat/conversations/$id"
-    | "/api/og/bookmark/$bookmarkId"
-    | "/api/v1/bookmarks/$bookmarkId"
-    | "/api/v1/bookmarks/random"
-    | "/api/admin/users/$userId/custom-limits"
-    | "/api/chat/conversations/$id/dislike"
-    | "/api/chat/conversations/$id/like"
-    | "/api/v1/public/$slug/bookmarks";
+    | "/p/$bookmarkId/read";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -1296,38 +704,12 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRouteWithChildren;
   VariationsRoute: typeof VariationsRoute;
   VerifyRoute: typeof VerifyRoute;
-  ApiBRoute: typeof ApiBRoute;
-  ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren;
-  ApiBugReportRoute: typeof ApiBugReportRoute;
-  ApiChatRoute: typeof ApiChatRouteWithChildren;
-  ApiExportsRoute: typeof ApiExportsRoute;
-  ApiFakeWorkerRoute: typeof ApiFakeWorkerRouteWithChildren;
-  ApiHealthRoute: typeof ApiHealthRoute;
-  ApiImportsRoute: typeof ApiImportsRoute;
-  ApiInngestRoute: typeof ApiInngestRoute;
-  ApiStartRoute: typeof ApiStartRoute;
-  ApiTagsRoute: typeof ApiTagsRouteWithChildren;
   LandingHeaderRoute: typeof LandingHeaderRoute;
   LandingHeader2Route: typeof LandingHeader2Route;
   PBookmarkIdRoute: typeof PBookmarkIdRouteWithChildren;
   USlugRoute: typeof USlugRoute;
   UnsubscribeUserIdRoute: typeof UnsubscribeUserIdRoute;
-  ApiAdminSendEmailRoute: typeof ApiAdminSendEmailRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
-  ApiChangelogCheckDismissedRoute: typeof ApiChangelogCheckDismissedRoute;
-  ApiChangelogDismissRoute: typeof ApiChangelogDismissRoute;
-  ApiToolsExtractContentRoute: typeof ApiToolsExtractContentRoute;
-  ApiToolsExtractFaviconsRoute: typeof ApiToolsExtractFaviconsRoute;
-  ApiToolsExtractMetadataRoute: typeof ApiToolsExtractMetadataRoute;
-  ApiToolsOgImagesRoute: typeof ApiToolsOgImagesRoute;
-  ApiToolsYoutubeMetadataRoute: typeof ApiToolsYoutubeMetadataRoute;
-  ApiUnsubscribeUserIdRoute: typeof ApiUnsubscribeUserIdRoute;
-  ApiV1BookmarksRoute: typeof ApiV1BookmarksRouteWithChildren;
-  ApiV1TagsRoute: typeof ApiV1TagsRoute;
-  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute;
-  ApiOgBookmarkBookmarkIdRoute: typeof ApiOgBookmarkBookmarkIdRoute;
-  ApiAdminUsersUserIdCustomLimitsRoute: typeof ApiAdminUsersUserIdCustomLimitsRoute;
-  ApiV1PublicSlugBookmarksRoute: typeof ApiV1PublicSlugBookmarksRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -1640,90 +1022,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppAgentsRouteImport;
       parentRoute: typeof AppRoute;
     };
-    "/api/upgrade": {
-      id: "/api/upgrade";
-      path: "/api/upgrade";
-      fullPath: "/api/upgrade";
-      preLoaderRoute: typeof ApiUpgradeRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tags": {
-      id: "/api/tags";
-      path: "/api/tags";
-      fullPath: "/api/tags";
-      preLoaderRoute: typeof ApiTagsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/start": {
-      id: "/api/start";
-      path: "/api/start";
-      fullPath: "/api/start";
-      preLoaderRoute: typeof ApiStartRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/inngest": {
-      id: "/api/inngest";
-      path: "/api/inngest";
-      fullPath: "/api/inngest";
-      preLoaderRoute: typeof ApiInngestRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/imports": {
-      id: "/api/imports";
-      path: "/api/imports";
-      fullPath: "/api/imports";
-      preLoaderRoute: typeof ApiImportsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/health": {
-      id: "/api/health";
-      path: "/api/health";
-      fullPath: "/api/health";
-      preLoaderRoute: typeof ApiHealthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/fake-worker": {
-      id: "/api/fake-worker";
-      path: "/api/fake-worker";
-      fullPath: "/api/fake-worker";
-      preLoaderRoute: typeof ApiFakeWorkerRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/exports": {
-      id: "/api/exports";
-      path: "/api/exports";
-      fullPath: "/api/exports";
-      preLoaderRoute: typeof ApiExportsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/chat": {
-      id: "/api/chat";
-      path: "/api/chat";
-      fullPath: "/api/chat";
-      preLoaderRoute: typeof ApiChatRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/bug-report": {
-      id: "/api/bug-report";
-      path: "/api/bug-report";
-      fullPath: "/api/bug-report";
-      preLoaderRoute: typeof ApiBugReportRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/bookmarks": {
-      id: "/api/bookmarks";
-      path: "/api/bookmarks";
-      fullPath: "/api/bookmarks";
-      preLoaderRoute: typeof ApiBookmarksRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/b": {
-      id: "/api/b";
-      path: "/api/b";
-      fullPath: "/api/b";
-      preLoaderRoute: typeof ApiBRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
     "/admin/users": {
       id: "/admin/users";
       path: "/users";
@@ -1773,200 +1071,11 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppBBookmarkIdRouteImport;
       parentRoute: typeof AppRoute;
     };
-    "/api/webhooks/stripe": {
-      id: "/api/webhooks/stripe";
-      path: "/api/webhooks/stripe";
-      fullPath: "/api/webhooks/stripe";
-      preLoaderRoute: typeof ApiWebhooksStripeRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/v1/tags": {
-      id: "/api/v1/tags";
-      path: "/api/v1/tags";
-      fullPath: "/api/v1/tags";
-      preLoaderRoute: typeof ApiV1TagsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/v1/bookmarks": {
-      id: "/api/v1/bookmarks";
-      path: "/api/v1/bookmarks";
-      fullPath: "/api/v1/bookmarks";
-      preLoaderRoute: typeof ApiV1BookmarksRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/user/public-link": {
-      id: "/api/user/public-link";
-      path: "/api/user/public-link";
-      fullPath: "/api/user/public-link";
-      preLoaderRoute: typeof ApiUserPublicLinkRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/user/profile": {
-      id: "/api/user/profile";
-      path: "/api/user/profile";
-      fullPath: "/api/user/profile";
-      preLoaderRoute: typeof ApiUserProfileRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/user/limits": {
-      id: "/api/user/limits";
-      path: "/api/user/limits";
-      fullPath: "/api/user/limits";
-      preLoaderRoute: typeof ApiUserLimitsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/user/avatar": {
-      id: "/api/user/avatar";
-      path: "/api/user/avatar";
-      fullPath: "/api/user/avatar";
-      preLoaderRoute: typeof ApiUserAvatarRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/unsubscribe/$userId": {
-      id: "/api/unsubscribe/$userId";
-      path: "/api/unsubscribe/$userId";
-      fullPath: "/api/unsubscribe/$userId";
-      preLoaderRoute: typeof ApiUnsubscribeUserIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tools/youtube-metadata": {
-      id: "/api/tools/youtube-metadata";
-      path: "/api/tools/youtube-metadata";
-      fullPath: "/api/tools/youtube-metadata";
-      preLoaderRoute: typeof ApiToolsYoutubeMetadataRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tools/og-images": {
-      id: "/api/tools/og-images";
-      path: "/api/tools/og-images";
-      fullPath: "/api/tools/og-images";
-      preLoaderRoute: typeof ApiToolsOgImagesRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tools/extract-metadata": {
-      id: "/api/tools/extract-metadata";
-      path: "/api/tools/extract-metadata";
-      fullPath: "/api/tools/extract-metadata";
-      preLoaderRoute: typeof ApiToolsExtractMetadataRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tools/extract-favicons": {
-      id: "/api/tools/extract-favicons";
-      path: "/api/tools/extract-favicons";
-      fullPath: "/api/tools/extract-favicons";
-      preLoaderRoute: typeof ApiToolsExtractFaviconsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tools/extract-content": {
-      id: "/api/tools/extract-content";
-      path: "/api/tools/extract-content";
-      fullPath: "/api/tools/extract-content";
-      preLoaderRoute: typeof ApiToolsExtractContentRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/tags/refactor": {
-      id: "/api/tags/refactor";
-      path: "/refactor";
-      fullPath: "/api/tags/refactor";
-      preLoaderRoute: typeof ApiTagsRefactorRouteImport;
-      parentRoute: typeof ApiTagsRoute;
-    };
-    "/api/tags/management": {
-      id: "/api/tags/management";
-      path: "/management";
-      fullPath: "/api/tags/management";
-      preLoaderRoute: typeof ApiTagsManagementRouteImport;
-      parentRoute: typeof ApiTagsRoute;
-    };
-    "/api/tags/cleanup": {
-      id: "/api/tags/cleanup";
-      path: "/cleanup";
-      fullPath: "/api/tags/cleanup";
-      preLoaderRoute: typeof ApiTagsCleanupRouteImport;
-      parentRoute: typeof ApiTagsRoute;
-    };
-    "/api/tags/bulk-delete": {
-      id: "/api/tags/bulk-delete";
-      path: "/bulk-delete";
-      fullPath: "/api/tags/bulk-delete";
-      preLoaderRoute: typeof ApiTagsBulkDeleteRouteImport;
-      parentRoute: typeof ApiTagsRoute;
-    };
-    "/api/mobile/checkout": {
-      id: "/api/mobile/checkout";
-      path: "/api/mobile/checkout";
-      fullPath: "/api/mobile/checkout";
-      preLoaderRoute: typeof ApiMobileCheckoutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/fake-worker/youtube": {
-      id: "/api/fake-worker/youtube";
-      path: "/youtube";
-      fullPath: "/api/fake-worker/youtube";
-      preLoaderRoute: typeof ApiFakeWorkerYoutubeRouteImport;
-      parentRoute: typeof ApiFakeWorkerRoute;
-    };
-    "/api/fake-worker/pdf": {
-      id: "/api/fake-worker/pdf";
-      path: "/pdf";
-      fullPath: "/api/fake-worker/pdf";
-      preLoaderRoute: typeof ApiFakeWorkerPdfRouteImport;
-      parentRoute: typeof ApiFakeWorkerRoute;
-    };
-    "/api/chat/usage": {
-      id: "/api/chat/usage";
-      path: "/usage";
-      fullPath: "/api/chat/usage";
-      preLoaderRoute: typeof ApiChatUsageRouteImport;
-      parentRoute: typeof ApiChatRoute;
-    };
-    "/api/chat/conversations": {
-      id: "/api/chat/conversations";
-      path: "/conversations";
-      fullPath: "/api/chat/conversations";
-      preLoaderRoute: typeof ApiChatConversationsRouteImport;
-      parentRoute: typeof ApiChatRoute;
-    };
-    "/api/changelog/dismiss": {
-      id: "/api/changelog/dismiss";
-      path: "/api/changelog/dismiss";
-      fullPath: "/api/changelog/dismiss";
-      preLoaderRoute: typeof ApiChangelogDismissRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/changelog/check-dismissed": {
-      id: "/api/changelog/check-dismissed";
-      path: "/api/changelog/check-dismissed";
-      fullPath: "/api/changelog/check-dismissed";
-      preLoaderRoute: typeof ApiChangelogCheckDismissedRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/bookmarks/info": {
-      id: "/api/bookmarks/info";
-      path: "/info";
-      fullPath: "/api/bookmarks/info";
-      preLoaderRoute: typeof ApiBookmarksInfoRouteImport;
-      parentRoute: typeof ApiBookmarksRoute;
-    };
-    "/api/bookmarks/$bookmarkId": {
-      id: "/api/bookmarks/$bookmarkId";
-      path: "/$bookmarkId";
-      fullPath: "/api/bookmarks/$bookmarkId";
-      preLoaderRoute: typeof ApiBookmarksBookmarkIdRouteImport;
-      parentRoute: typeof ApiBookmarksRoute;
-    };
     "/api/auth/$": {
       id: "/api/auth/$";
       path: "/api/auth/$";
       fullPath: "/api/auth/$";
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/admin/send-email": {
-      id: "/api/admin/send-email";
-      path: "/api/admin/send-email";
-      fullPath: "/api/admin/send-email";
-      preLoaderRoute: typeof ApiAdminSendEmailRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/admin/users/$userId": {
@@ -1982,97 +1091,6 @@ declare module "@tanstack/react-router" {
       fullPath: "/admin/conversations/$id";
       preLoaderRoute: typeof AdminConversationsIdRouteImport;
       parentRoute: typeof AdminConversationsRoute;
-    };
-    "/api/v1/bookmarks/random": {
-      id: "/api/v1/bookmarks/random";
-      path: "/random";
-      fullPath: "/api/v1/bookmarks/random";
-      preLoaderRoute: typeof ApiV1BookmarksRandomRouteImport;
-      parentRoute: typeof ApiV1BookmarksRoute;
-    };
-    "/api/v1/bookmarks/$bookmarkId": {
-      id: "/api/v1/bookmarks/$bookmarkId";
-      path: "/$bookmarkId";
-      fullPath: "/api/v1/bookmarks/$bookmarkId";
-      preLoaderRoute: typeof ApiV1BookmarksBookmarkIdRouteImport;
-      parentRoute: typeof ApiV1BookmarksRoute;
-    };
-    "/api/og/bookmark/$bookmarkId": {
-      id: "/api/og/bookmark/$bookmarkId";
-      path: "/api/og/bookmark/$bookmarkId";
-      fullPath: "/api/og/bookmark/$bookmarkId";
-      preLoaderRoute: typeof ApiOgBookmarkBookmarkIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/chat/conversations/$id": {
-      id: "/api/chat/conversations/$id";
-      path: "/$id";
-      fullPath: "/api/chat/conversations/$id";
-      preLoaderRoute: typeof ApiChatConversationsIdRouteImport;
-      parentRoute: typeof ApiChatConversationsRoute;
-    };
-    "/api/bookmarks/$bookmarkId/upload-screenshot": {
-      id: "/api/bookmarks/$bookmarkId/upload-screenshot";
-      path: "/upload-screenshot";
-      fullPath: "/api/bookmarks/$bookmarkId/upload-screenshot";
-      preLoaderRoute: typeof ApiBookmarksBookmarkIdUploadScreenshotRouteImport;
-      parentRoute: typeof ApiBookmarksBookmarkIdRoute;
-    };
-    "/api/bookmarks/$bookmarkId/tags": {
-      id: "/api/bookmarks/$bookmarkId/tags";
-      path: "/tags";
-      fullPath: "/api/bookmarks/$bookmarkId/tags";
-      preLoaderRoute: typeof ApiBookmarksBookmarkIdTagsRouteImport;
-      parentRoute: typeof ApiBookmarksBookmarkIdRoute;
-    };
-    "/api/bookmarks/$bookmarkId/subscribe": {
-      id: "/api/bookmarks/$bookmarkId/subscribe";
-      path: "/subscribe";
-      fullPath: "/api/bookmarks/$bookmarkId/subscribe";
-      preLoaderRoute: typeof ApiBookmarksBookmarkIdSubscribeRouteImport;
-      parentRoute: typeof ApiBookmarksBookmarkIdRoute;
-    };
-    "/api/bookmarks/$bookmarkId/metadata": {
-      id: "/api/bookmarks/$bookmarkId/metadata";
-      path: "/metadata";
-      fullPath: "/api/bookmarks/$bookmarkId/metadata";
-      preLoaderRoute: typeof ApiBookmarksBookmarkIdMetadataRouteImport;
-      parentRoute: typeof ApiBookmarksBookmarkIdRoute;
-    };
-    "/api/account/keys/$keyId": {
-      id: "/api/account/keys/$keyId";
-      path: "/api/account/keys/$keyId";
-      fullPath: "/api/account/keys/$keyId";
-      preLoaderRoute: typeof ApiAccountKeysKeyIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/v1/public/$slug/bookmarks": {
-      id: "/api/v1/public/$slug/bookmarks";
-      path: "/api/v1/public/$slug/bookmarks";
-      fullPath: "/api/v1/public/$slug/bookmarks";
-      preLoaderRoute: typeof ApiV1PublicSlugBookmarksRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/api/chat/conversations/$id/like": {
-      id: "/api/chat/conversations/$id/like";
-      path: "/like";
-      fullPath: "/api/chat/conversations/$id/like";
-      preLoaderRoute: typeof ApiChatConversationsIdLikeRouteImport;
-      parentRoute: typeof ApiChatConversationsIdRoute;
-    };
-    "/api/chat/conversations/$id/dislike": {
-      id: "/api/chat/conversations/$id/dislike";
-      path: "/dislike";
-      fullPath: "/api/chat/conversations/$id/dislike";
-      preLoaderRoute: typeof ApiChatConversationsIdDislikeRouteImport;
-      parentRoute: typeof ApiChatConversationsIdRoute;
-    };
-    "/api/admin/users/$userId/custom-limits": {
-      id: "/api/admin/users/$userId/custom-limits";
-      path: "/api/admin/users/$userId/custom-limits";
-      fullPath: "/api/admin/users/$userId/custom-limits";
-      preLoaderRoute: typeof ApiAdminUsersUserIdCustomLimitsRouteImport;
-      parentRoute: typeof rootRouteImport;
     };
   }
 }
@@ -2202,112 +1220,6 @@ const UpgradeRouteChildren: UpgradeRouteChildren = {
 const UpgradeRouteWithChildren =
   UpgradeRoute._addFileChildren(UpgradeRouteChildren);
 
-interface ApiBookmarksBookmarkIdRouteChildren {
-  ApiBookmarksBookmarkIdMetadataRoute: typeof ApiBookmarksBookmarkIdMetadataRoute;
-  ApiBookmarksBookmarkIdSubscribeRoute: typeof ApiBookmarksBookmarkIdSubscribeRoute;
-  ApiBookmarksBookmarkIdTagsRoute: typeof ApiBookmarksBookmarkIdTagsRoute;
-  ApiBookmarksBookmarkIdUploadScreenshotRoute: typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
-}
-
-const ApiBookmarksBookmarkIdRouteChildren: ApiBookmarksBookmarkIdRouteChildren =
-  {
-    ApiBookmarksBookmarkIdMetadataRoute: ApiBookmarksBookmarkIdMetadataRoute,
-    ApiBookmarksBookmarkIdSubscribeRoute: ApiBookmarksBookmarkIdSubscribeRoute,
-    ApiBookmarksBookmarkIdTagsRoute: ApiBookmarksBookmarkIdTagsRoute,
-    ApiBookmarksBookmarkIdUploadScreenshotRoute:
-      ApiBookmarksBookmarkIdUploadScreenshotRoute,
-  };
-
-const ApiBookmarksBookmarkIdRouteWithChildren =
-  ApiBookmarksBookmarkIdRoute._addFileChildren(
-    ApiBookmarksBookmarkIdRouteChildren,
-  );
-
-interface ApiBookmarksRouteChildren {
-  ApiBookmarksBookmarkIdRoute: typeof ApiBookmarksBookmarkIdRouteWithChildren;
-  ApiBookmarksInfoRoute: typeof ApiBookmarksInfoRoute;
-}
-
-const ApiBookmarksRouteChildren: ApiBookmarksRouteChildren = {
-  ApiBookmarksBookmarkIdRoute: ApiBookmarksBookmarkIdRouteWithChildren,
-  ApiBookmarksInfoRoute: ApiBookmarksInfoRoute,
-};
-
-const ApiBookmarksRouteWithChildren = ApiBookmarksRoute._addFileChildren(
-  ApiBookmarksRouteChildren,
-);
-
-interface ApiChatConversationsIdRouteChildren {
-  ApiChatConversationsIdDislikeRoute: typeof ApiChatConversationsIdDislikeRoute;
-  ApiChatConversationsIdLikeRoute: typeof ApiChatConversationsIdLikeRoute;
-}
-
-const ApiChatConversationsIdRouteChildren: ApiChatConversationsIdRouteChildren =
-  {
-    ApiChatConversationsIdDislikeRoute: ApiChatConversationsIdDislikeRoute,
-    ApiChatConversationsIdLikeRoute: ApiChatConversationsIdLikeRoute,
-  };
-
-const ApiChatConversationsIdRouteWithChildren =
-  ApiChatConversationsIdRoute._addFileChildren(
-    ApiChatConversationsIdRouteChildren,
-  );
-
-interface ApiChatConversationsRouteChildren {
-  ApiChatConversationsIdRoute: typeof ApiChatConversationsIdRouteWithChildren;
-}
-
-const ApiChatConversationsRouteChildren: ApiChatConversationsRouteChildren = {
-  ApiChatConversationsIdRoute: ApiChatConversationsIdRouteWithChildren,
-};
-
-const ApiChatConversationsRouteWithChildren =
-  ApiChatConversationsRoute._addFileChildren(ApiChatConversationsRouteChildren);
-
-interface ApiChatRouteChildren {
-  ApiChatConversationsRoute: typeof ApiChatConversationsRouteWithChildren;
-  ApiChatUsageRoute: typeof ApiChatUsageRoute;
-}
-
-const ApiChatRouteChildren: ApiChatRouteChildren = {
-  ApiChatConversationsRoute: ApiChatConversationsRouteWithChildren,
-  ApiChatUsageRoute: ApiChatUsageRoute,
-};
-
-const ApiChatRouteWithChildren =
-  ApiChatRoute._addFileChildren(ApiChatRouteChildren);
-
-interface ApiFakeWorkerRouteChildren {
-  ApiFakeWorkerPdfRoute: typeof ApiFakeWorkerPdfRoute;
-  ApiFakeWorkerYoutubeRoute: typeof ApiFakeWorkerYoutubeRoute;
-}
-
-const ApiFakeWorkerRouteChildren: ApiFakeWorkerRouteChildren = {
-  ApiFakeWorkerPdfRoute: ApiFakeWorkerPdfRoute,
-  ApiFakeWorkerYoutubeRoute: ApiFakeWorkerYoutubeRoute,
-};
-
-const ApiFakeWorkerRouteWithChildren = ApiFakeWorkerRoute._addFileChildren(
-  ApiFakeWorkerRouteChildren,
-);
-
-interface ApiTagsRouteChildren {
-  ApiTagsBulkDeleteRoute: typeof ApiTagsBulkDeleteRoute;
-  ApiTagsCleanupRoute: typeof ApiTagsCleanupRoute;
-  ApiTagsManagementRoute: typeof ApiTagsManagementRoute;
-  ApiTagsRefactorRoute: typeof ApiTagsRefactorRoute;
-}
-
-const ApiTagsRouteChildren: ApiTagsRouteChildren = {
-  ApiTagsBulkDeleteRoute: ApiTagsBulkDeleteRoute,
-  ApiTagsCleanupRoute: ApiTagsCleanupRoute,
-  ApiTagsManagementRoute: ApiTagsManagementRoute,
-  ApiTagsRefactorRoute: ApiTagsRefactorRoute,
-};
-
-const ApiTagsRouteWithChildren =
-  ApiTagsRoute._addFileChildren(ApiTagsRouteChildren);
-
 interface PBookmarkIdRouteChildren {
   PBookmarkIdReadRoute: typeof PBookmarkIdReadRoute;
 }
@@ -2318,20 +1230,6 @@ const PBookmarkIdRouteChildren: PBookmarkIdRouteChildren = {
 
 const PBookmarkIdRouteWithChildren = PBookmarkIdRoute._addFileChildren(
   PBookmarkIdRouteChildren,
-);
-
-interface ApiV1BookmarksRouteChildren {
-  ApiV1BookmarksBookmarkIdRoute: typeof ApiV1BookmarksBookmarkIdRoute;
-  ApiV1BookmarksRandomRoute: typeof ApiV1BookmarksRandomRoute;
-}
-
-const ApiV1BookmarksRouteChildren: ApiV1BookmarksRouteChildren = {
-  ApiV1BookmarksBookmarkIdRoute: ApiV1BookmarksBookmarkIdRoute,
-  ApiV1BookmarksRandomRoute: ApiV1BookmarksRandomRoute,
-};
-
-const ApiV1BookmarksRouteWithChildren = ApiV1BookmarksRoute._addFileChildren(
-  ApiV1BookmarksRouteChildren,
 );
 
 const rootRouteChildren: RootRouteChildren = {
@@ -2363,38 +1261,12 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRouteWithChildren,
   VariationsRoute: VariationsRoute,
   VerifyRoute: VerifyRoute,
-  ApiBRoute: ApiBRoute,
-  ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
-  ApiBugReportRoute: ApiBugReportRoute,
-  ApiChatRoute: ApiChatRouteWithChildren,
-  ApiExportsRoute: ApiExportsRoute,
-  ApiFakeWorkerRoute: ApiFakeWorkerRouteWithChildren,
-  ApiHealthRoute: ApiHealthRoute,
-  ApiImportsRoute: ApiImportsRoute,
-  ApiInngestRoute: ApiInngestRoute,
-  ApiStartRoute: ApiStartRoute,
-  ApiTagsRoute: ApiTagsRouteWithChildren,
   LandingHeaderRoute: LandingHeaderRoute,
   LandingHeader2Route: LandingHeader2Route,
   PBookmarkIdRoute: PBookmarkIdRouteWithChildren,
   USlugRoute: USlugRoute,
   UnsubscribeUserIdRoute: UnsubscribeUserIdRoute,
-  ApiAdminSendEmailRoute: ApiAdminSendEmailRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiChangelogCheckDismissedRoute: ApiChangelogCheckDismissedRoute,
-  ApiChangelogDismissRoute: ApiChangelogDismissRoute,
-  ApiToolsExtractContentRoute: ApiToolsExtractContentRoute,
-  ApiToolsExtractFaviconsRoute: ApiToolsExtractFaviconsRoute,
-  ApiToolsExtractMetadataRoute: ApiToolsExtractMetadataRoute,
-  ApiToolsOgImagesRoute: ApiToolsOgImagesRoute,
-  ApiToolsYoutubeMetadataRoute: ApiToolsYoutubeMetadataRoute,
-  ApiUnsubscribeUserIdRoute: ApiUnsubscribeUserIdRoute,
-  ApiV1BookmarksRoute: ApiV1BookmarksRouteWithChildren,
-  ApiV1TagsRoute: ApiV1TagsRoute,
-  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
-  ApiOgBookmarkBookmarkIdRoute: ApiOgBookmarkBookmarkIdRoute,
-  ApiAdminUsersUserIdCustomLimitsRoute: ApiAdminUsersUserIdCustomLimitsRoute,
-  ApiV1PublicSlugBookmarksRoute: ApiV1PublicSlugBookmarksRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

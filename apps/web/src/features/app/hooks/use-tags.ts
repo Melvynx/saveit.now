@@ -1,8 +1,6 @@
 import { api } from "@convex/_generated/api";
-import { convexQuery } from "@convex-dev/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useQuery } from "@tanstack/react-query";
-import { usePaginatedQuery } from "convex/react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 
@@ -25,12 +23,13 @@ export const useTags = (query?: string) => {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    ...convexQuery(api.tags.queries.list, {
+  const data = useQuery(
+    api.tags.queries.list,
+    {
       paginationOpts: { numItems: 50, cursor: null },
       query: debouncedQuery || undefined,
-    }),
-  });
+    },
+  );
 
   const userTags: Tag[] = useMemo(
     () => (data?.page as Tag[] | undefined) ?? [],
@@ -74,9 +73,7 @@ export const useTags = (query?: string) => {
     setSelectedTags([]);
   }, [setSelectedTags]);
 
-  const retryFetch = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  const retryFetch = useCallback(() => {}, []);
 
   return {
     selectedTags,
@@ -88,8 +85,8 @@ export const useTags = (query?: string) => {
     addTag,
     removeTag,
     clearTags,
-    isLoading: isLoading || isRefetching,
-    error: error as Error | null,
+    isLoading: data === undefined,
+    error: null,
     retryFetch,
   };
 };

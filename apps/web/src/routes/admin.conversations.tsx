@@ -1,8 +1,7 @@
 import { AdminPageHeader } from "@/features/admin/admin-shared";
-import { fetchAuthQuery } from "@/lib/auth-server";
+import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
   CardContent,
@@ -20,42 +19,25 @@ import {
 } from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
 import { MessageSquareIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-
-const getAdminConversationsData = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { getUser } = await import("@/lib/auth-session");
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    const conversations = await fetchAuthQuery(
-      api.admin.queries.listConversations,
-      {},
-    );
-
-    return {
-      access: "granted" as const,
-      conversations,
-    };
-  },
-);
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/admin/conversations")({
-  loader: () => getAdminConversationsData(),
   component: AdminConversationsPage,
 });
 
 function AdminConversationsPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
+  const session = useSession();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const conversations = useQuery(
+    api.admin.queries.listConversations,
+    isAdmin ? {} : "skip",
+  );
 
-  const { conversations } = data;
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (!conversations) return null;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">

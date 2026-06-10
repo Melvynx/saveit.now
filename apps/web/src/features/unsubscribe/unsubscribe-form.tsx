@@ -1,10 +1,10 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
-import { useMutation } from "@tanstack/react-query";
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
 
@@ -13,14 +13,14 @@ const convexSiteUrl = import.meta.env?.VITE_CONVEX_SITE_URL ?? "";
 export function UnsubscribeForm({ userId }: { userId: string }) {
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
 
-  const unsubscribeMutation = useMutation({
-    mutationFn: async () => {
+  const unsubscribeTask = useAsyncTask(
+    async () => {
       // Token + timestamp supplied via URL search params from the email link.
       const params = new URLSearchParams(
         typeof window !== "undefined" ? window.location.search : "",
       );
       const token = params.get("token");
-      const timestamp = params.get("timestamp");
+      const timestamp = params.get("timestamp") ?? params.get("ts");
 
       const qs = new URLSearchParams({ userId });
       if (token) qs.set("token", token);
@@ -36,10 +36,12 @@ export function UnsubscribeForm({ userId }: { userId: string }) {
       }
       return res.json() as Promise<{ success: boolean; message: string }>;
     },
-    onSuccess: () => {
-      setIsUnsubscribed(true);
+    {
+      onSuccess: () => {
+        setIsUnsubscribed(true);
+      },
     },
-  });
+  );
 
   if (isUnsubscribed) {
     return (
@@ -62,18 +64,16 @@ export function UnsubscribeForm({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       <LoadingButton
-        loading={unsubscribeMutation.isPending}
-        onClick={() => unsubscribeMutation.mutate()}
+        loading={unsubscribeTask.isPending}
+        onClick={() => void unsubscribeTask.run()}
         className="w-full bg-red-600 hover:bg-red-700 text-white"
       >
         Yes, Unsubscribe Me
       </LoadingButton>
 
-      {unsubscribeMutation.error && (
+      {unsubscribeTask.error instanceof Error && (
         <Alert variant="destructive">
-          <AlertDescription>
-            {unsubscribeMutation.error.message}
-          </AlertDescription>
+          <AlertDescription>{unsubscribeTask.error.message}</AlertDescription>
         </Alert>
       )}
 
@@ -85,4 +85,3 @@ export function UnsubscribeForm({ userId }: { userId: string }) {
     </div>
   );
 }
-

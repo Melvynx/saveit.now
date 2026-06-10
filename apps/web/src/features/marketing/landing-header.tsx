@@ -3,8 +3,8 @@ import { LandingAppButton } from "./landing-app-button";
 
 export const LandingHeader = () => {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-[#141414]/80 backdrop-blur-md">
-      <div className="mx-auto flex h-12 max-w-5xl items-center justify-between border-b border-white/[0.08] px-6">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.08] bg-[#141414]/80 backdrop-blur-md">
+      <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-6">
         <a
           href="/"
           className="font-elegant text-lg tracking-tight text-[#fafafa]"

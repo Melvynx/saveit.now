@@ -55,17 +55,15 @@ export const { handler, getToken, fetchAuthQuery, fetchAuthMutation, fetchAuthAc
 ## 4. Convex client in router context + provider
 
 - `apps/web/src/router.tsx`: create `new ConvexReactClient(import.meta.env.VITE_CONVEX_URL)` and pass
-  as router `context.convexClient` (model: nowstack-saas `router.tsx`). Integrate with TanStack Query
-  via `@convex-dev/react-query` (`ConvexQueryClient`) — SaveIt's `providers.tsx` already builds the
-  `ConvexQueryClient`; move its creation into the router context so SSR + client share one instance.
+  as router `context.convexClient` (model: nowstack-saas `router.tsx`) when route context needs the
+  client. Do not introduce `ConvexQueryClient` or TanStack Query; client components should use
+  `convex/react` directly.
 - `apps/web/src/routes/__root.tsx`: wrap the tree in
   `<ConvexBetterAuthProvider client={convexClient} authClient={authClient}>` (from
-  `@convex-dev/better-auth/react`), **outside** `QueryClientProvider`. Replace the plain
-  `ConvexProvider` currently in `providers.tsx`.
+  `@convex-dev/better-auth/react`). Replace the plain `ConvexProvider` currently in `providers.tsx`.
 
-> Net change to `providers.tsx`: keep the `ConvexQueryClient` + `QueryClient` wiring, but drop the raw
-> `<ConvexProvider>` (the better-auth provider supplies the Convex client). Source the client from
-> router context instead of a module-level `new ConvexReactClient`.
+> Net change to `providers.tsx`: the better-auth provider supplies the Convex client. Keep a single
+> `ConvexReactClient`; do not wrap the app in a TanStack `QueryClientProvider`.
 
 ## 5. SSR auth helpers + guards
 

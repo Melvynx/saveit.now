@@ -6,7 +6,7 @@
 //   POST /api/bookmarks/:id/upload-screenshot  — upload screenshot (Chrome only)
 //
 // Auth: Better Auth session cookie (credentials: "include") via authComponent.getAuth.
-// CORS: explicit, including chrome-extension://* and moz-extension://*.
+// CORS: explicit app origins plus configured extension origins.
 
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
@@ -16,40 +16,42 @@ import { authComponent, createAuth } from "../auth/config";
 // CORS helpers — extension origins included
 // ---------------------------------------------------------------------------
 
-const EXTENSION_ALLOWED_ORIGINS = [
-  "https://saveit.now",
-  "https://saveit.now/*",
-  "https://*.saveit.now",
-  "http://localhost:3000",
-  "http://localhost:3000/*",
-  "http://localhost:3001",
-  "http://localhost:3001/*",
-  "http://localhost:3002",
-  "http://localhost:3002/*",
-  "http://localhost:3003",
-  "http://localhost:3003/*",
-  "http://localhost:*",
-  "http://127.0.0.1:*",
-  "https://saveit-now-web-codelynx.vercel.app",
-  "https://saveit-now-web-git-main-codelynx.vercel.app",
-  "https://saveit-now-*",
-  "chrome-extension://",
-  "moz-extension://",
-];
+const CONFIGURED_EXTENSION_ORIGINS = (
+  process.env.EXTENSION_ALLOWED_ORIGINS ?? ""
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 function isAllowedExtensionOrigin(origin: string): boolean {
-  // Chrome/Firefox extension origins
-  if (origin.startsWith("chrome-extension://")) return true;
-  if (origin.startsWith("moz-extension://")) return true;
+  if (CONFIGURED_EXTENSION_ORIGINS.includes(origin)) return true;
 
-  for (const pattern of EXTENSION_ALLOWED_ORIGINS) {
-    if (pattern.endsWith("*")) {
-      if (origin.startsWith(pattern.slice(0, -1))) return true;
-    } else if (origin === pattern) {
-      return true;
-    }
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    return false;
   }
-  return false;
+
+  if (
+    parsed.protocol === "http:" &&
+    ["localhost", "127.0.0.1"].includes(parsed.hostname)
+  ) {
+    return true;
+  }
+
+  if (parsed.protocol !== "https:") return false;
+
+  if (
+    parsed.hostname === "saveit.now" ||
+    parsed.hostname.endsWith(".saveit.now")
+  ) {
+    return true;
+  }
+
+  return /^saveit-now(?:-[a-z0-9-]+)?-codelynx\.vercel\.app$/.test(
+    parsed.hostname,
+  );
 }
 
 function corsHeaders(origin?: string | null): Record<string, string> {
@@ -154,7 +156,8 @@ export const extensionCreateBookmark = httpAction(async (ctx, request) => {
     const parsed = body as Record<string, unknown>;
     bookmarkUrl = (parsed.url as string | undefined) ?? undefined;
     transcript = (parsed.transcript as string | undefined) ?? undefined;
-    metadata = (parsed.metadata as Record<string, unknown> | undefined) ?? undefined;
+    metadata =
+      (parsed.metadata as Record<string, unknown> | undefined) ?? undefined;
   }
 
   if (!bookmarkUrl) {
@@ -207,11 +210,7 @@ export const extensionCreateBookmark = httpAction(async (ctx, request) => {
     const msg = err instanceof Error ? err.message : String(err);
     // Preserve error substrings the extension detects:
     if (msg.includes("already exists")) {
-      return errResponse(
-        "Bookmark already exists for this URL",
-        400,
-        origin,
-      );
+      return errResponse("Bookmark already exists for this URL", 400, origin);
     }
     if (msg.includes("maximum number of bookmarks")) {
       return errResponse(msg, 400, origin);
@@ -291,7 +290,18 @@ export const extensionUploadScreenshot = httpAction(async (ctx, request) => {
     );
   }
 
-  const key = `users/${user.id}/bookmarks/${bookmarkId}/${Date.now()}-${fileName}`;
+  const bookmark = await ctx
+    .runQuery(internal.bookmarks.queries.getById, {
+      id: bookmarkId as never,
+      userId: user.id,
+    })
+    .catch(() => null);
+  if (!bookmark) {
+    return errResponse("Bookmark not found", 404, origin);
+  }
+
+  const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120);
+  const key = `users/${user.id}/bookmarks/${bookmarkId}/${Date.now()}-${safeFileName}`;
 
   let previewUrl: string;
   try {
@@ -305,7 +315,6 @@ export const extensionUploadScreenshot = httpAction(async (ctx, request) => {
     return errResponse("Failed to upload screenshot", 500, origin);
   }
 
-  // Patch preview on the bookmark — best-effort, do not fail the response
   try {
     await ctx.runMutation(internal.bookmarks.mutations.updatePreview, {
       id: bookmarkId as never,
@@ -313,7 +322,8 @@ export const extensionUploadScreenshot = httpAction(async (ctx, request) => {
       preview: previewUrl,
     });
   } catch (err) {
-    console.warn("[ext upload-screenshot] updatePreview failed (non-fatal)", err);
+    console.warn("[ext upload-screenshot] updatePreview failed", err);
+    return errResponse("Failed to attach screenshot", 500, origin);
   }
 
   return new Response(

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { isActiveSubscriptionStatus } from "../billing/plans";
 
 /**
  * getActiveSubscriptionForUser — internalQuery
@@ -15,7 +16,7 @@ export const getActiveSubscriptionForUser = internalQuery({
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
-    if (!sub) return null;
+    if (!sub || !isActiveSubscriptionStatus(sub.status)) return null;
     return { plan: sub.plan as "free" | "pro", status: sub.status ?? null };
   },
 });

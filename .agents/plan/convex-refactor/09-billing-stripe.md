@@ -55,8 +55,8 @@ Point the Stripe dashboard webhook at `https://<deployment>.convex.site/stripe/w
 `user.metadata.customLimits`. `subscription.status in ["active","trialing"]` ⇒ `pro`.
 
 ## Frontend
-- Re-add the upgrade / pricing / billing pages (deleted in the migration) calling
-  `useConvexMutation(api.stripe.actions.createCheckout / createBillingPortal)`.
+- Re-add the upgrade / pricing / billing pages (deleted in the migration) calling native
+  `useAction(api.stripe.actions.createCheckout / createBillingPortal)`.
 - `VITE_STRIPE_PUBLISHABLE_KEY` stays client-side (Checkout redirect, no Elements needed).
 
 ## Acceptance criteria
