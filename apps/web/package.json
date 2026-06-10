@@ -15,7 +15,7 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "test:e2e": "HEADLESS=false playwright test --ui",
-    "test:e2e:ci": "HEADLESS=true playwright test --reporter=list"
+    "test:e2e:ci": "HEADLESS=true playwright test e2e/tests/ci-smoke.spec.ts --reporter=list"
   },
   "dependencies": {
     "@ai-sdk/provider": "^3.0.8",

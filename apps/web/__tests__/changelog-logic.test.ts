@@ -1,65 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { markChangelogAsDismissed, isChangelogDismissed } from "@/lib/changelog/changelog-redis";
-
-// Mock Redis
-vi.mock("@/lib/changelog/changelog-redis", () => ({
-  markChangelogAsDismissed: vi.fn(),
-  isChangelogDismissed: vi.fn(),
-}));
-
-const mockMarkChangelogAsDismissed = vi.mocked(markChangelogAsDismissed);
-const mockIsChangelogDismissed = vi.mocked(isChangelogDismissed);
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 describe("Changelog Logic", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  const root = resolve(__dirname, "..");
+
+  function readProjectFile(relativePath: string) {
+    return readFileSync(resolve(root, relativePath), "utf8");
+  }
+
+  it("stores dismissed changelog versions in Convex", () => {
+    const mutations = readProjectFile("../../packages/backend/convex/changelog/mutations.ts");
+    const queries = readProjectFile("../../packages/backend/convex/changelog/queries.ts");
+    const schema = readProjectFile("../../packages/backend/convex/schema.ts");
+
+    expect(schema).toContain("changelogDismissals");
+    expect(schema).toContain('index("by_user_version"');
+    expect(mutations).toContain('query("changelogDismissals")');
+    expect(mutations).toContain('insert("changelogDismissals"');
+    expect(queries).toContain('query("changelogDismissals")');
   });
 
-  describe("markChangelogAsDismissed", () => {
-    it("should mark changelog as dismissed for a user", async () => {
-      const userId = "user123";
-      const version = "1.2.0";
+  it("keeps dismiss and check handlers authenticated", () => {
+    const mutations = readProjectFile("../../packages/backend/convex/changelog/mutations.ts");
+    const queries = readProjectFile("../../packages/backend/convex/changelog/queries.ts");
 
-      await markChangelogAsDismissed(userId, version);
-
-      expect(mockMarkChangelogAsDismissed).toHaveBeenCalledWith(userId, version);
-      expect(mockMarkChangelogAsDismissed).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("isChangelogDismissed", () => {
-    it("should return true when changelog is dismissed", async () => {
-      const userId = "user123";
-      const version = "1.2.0";
-      mockIsChangelogDismissed.mockResolvedValue(true);
-
-      const result = await isChangelogDismissed(userId, version);
-
-      expect(result).toBe(true);
-      expect(mockIsChangelogDismissed).toHaveBeenCalledWith(userId, version);
-    });
-
-    it("should return false when changelog is not dismissed", async () => {
-      const userId = "user123";
-      const version = "1.2.0";
-      mockIsChangelogDismissed.mockResolvedValue(false);
-
-      const result = await isChangelogDismissed(userId, version);
-
-      expect(result).toBe(false);
-      expect(mockIsChangelogDismissed).toHaveBeenCalledWith(userId, version);
-    });
-  });
-
-  describe("Redis key format", () => {
-    it("should use correct key format for user dismissals", () => {
-      const userId = "user123";
-      const version = "1.2.0";
-      const expectedKey = `user:${userId}:dismissed_changelog:${version}`;
-
-      // This test ensures the key format is consistent
-      // The actual Redis calls would use this format
-      expect(`user:${userId}:dismissed_changelog:${version}`).toBe(expectedKey);
-    });
+    expect(mutations).toContain("authMutation");
+    expect(queries).toContain("authQuery");
+    expect(mutations).toContain("ctx.user.id");
+    expect(queries).toContain("ctx.user.id");
   });
 });
