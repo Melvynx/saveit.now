@@ -2,20 +2,31 @@ import { spawnSync } from "node:child_process";
 
 // Vercel build entrypoint (called from apps/web/vercel.json → `pnpm vercel-build`).
 //
-// With a Convex deploy key present (set CONVEX_DEPLOY_KEY in Vercel env), this
-// runs `convex deploy` which:
-//   1. deploys the Convex functions to the target deployment (prod or preview),
-//   2. injects that deployment's URL into VITE_CONVEX_URL for the build command,
-// then builds the web app (build-web.mjs derives VITE_CONVEX_SITE_URL from it).
-// No manual VITE_CONVEX_URL env var is needed — the deploy key creates it.
+// Three modes, in priority order:
 //
-// Without a deploy key (e.g. local), it just builds against the configured env.
+// 1. VITE_CONVEX_URL is already set in the environment → MANUAL OVERRIDE.
+//    Skip `convex deploy` entirely and build against that URL. Used for the
+//    branch preview so it can point at an existing deployment (e.g. the dev
+//    deployment that already holds migrated data) without deploying functions
+//    to a fresh, empty preview deployment.
+//
+// 2. A Convex deploy key is present (CONVEX_DEPLOY_KEY in Vercel env) → DEPLOY.
+//    Run `convex deploy`, which deploys the functions to the target deployment
+//    (prod) and injects that deployment's URL into VITE_CONVEX_URL for the
+//    build. No manual VITE_CONVEX_URL needed — the deploy key creates it.
+//    build-web.mjs derives VITE_CONVEX_SITE_URL (.site) from it.
+//
+// 3. Neither → build against whatever env is configured (local fallback).
 
-const hasConvexDeployCredentials = Boolean(
-  process.env.CONVEX_DEPLOY_KEY ||
-    (process.env.CONVEX_SELF_HOSTED_URL &&
-      process.env.CONVEX_SELF_HOSTED_ADMIN_KEY),
-);
+const hasManualConvexUrl = Boolean(process.env.VITE_CONVEX_URL);
+
+const hasConvexDeployCredentials =
+  !hasManualConvexUrl &&
+  Boolean(
+    process.env.CONVEX_DEPLOY_KEY ||
+      (process.env.CONVEX_SELF_HOSTED_URL &&
+        process.env.CONVEX_SELF_HOSTED_ADMIN_KEY),
+  );
 
 const command = hasConvexDeployCredentials
   ? [
@@ -34,13 +45,17 @@ const command = hasConvexDeployCredentials
     ]
   : ["node", "scripts/build-web.mjs"];
 
-if (!hasConvexDeployCredentials) {
+if (hasManualConvexUrl) {
   console.log(
-    "[vercel-build] No Convex deploy credentials found; building web against the configured VITE_CONVEX_URL.",
+    `[vercel-build] VITE_CONVEX_URL already set (${process.env.VITE_CONVEX_URL}); skipping convex deploy and building against it.`,
+  );
+} else if (hasConvexDeployCredentials) {
+  console.log(
+    "[vercel-build] Deploying Convex + building web (VITE_CONVEX_URL auto-injected).",
   );
 } else {
   console.log(
-    "[vercel-build] Deploying Convex + building web (VITE_CONVEX_URL auto-injected).",
+    "[vercel-build] No Convex deploy credentials found; building web against the configured VITE_CONVEX_URL.",
   );
 }
 
