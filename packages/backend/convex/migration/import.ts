@@ -438,12 +438,27 @@ export const importConversations = mutation({
     let count = 0;
 
     for (const row of rows) {
+      const userId = String(row.userId);
+      const updatedAt = toMs(row.updatedAt);
+      const title = row.title ?? undefined;
+      // Idempotent: skip if a conversation with the same (userId, updatedAt, title)
+      // already exists, so a re-run after a partial failure doesn't duplicate.
+      const existing = await ctx.db
+        .query("chatConversations")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_user_updated", (q: any) =>
+          q.eq("userId", userId).eq("updatedAt", updatedAt),
+        )
+        .collect();
+      if (existing.some((c) => (c.title ?? undefined) === title)) {
+        continue;
+      }
       const convexConversationId = await ctx.db.insert("chatConversations", {
-        userId: String(row.userId),
-        title: row.title ?? undefined,
+        userId,
+        title,
         likes: Number(row.likes ?? 0),
         createdAt: toMs(row.createdAt),
-        updatedAt: toMs(row.updatedAt),
+        updatedAt,
       });
       count++;
 
@@ -459,11 +474,22 @@ export const importConversations = mutation({
         const role = (m.role as string) ?? "user";
         const validRole =
           role === "assistant" || role === "system" ? role : "user";
+        const content = m.content ?? m;
+        // Convex documents are capped at 1 MiB. A few legacy messages embed huge
+        // tool results / pasted blobs that exceed that on their own — skip them
+        // rather than aborting the whole conversation import.
+        const approxSize = JSON.stringify(content)?.length ?? 0;
+        if (approxSize > 1_000_000) {
+          console.warn(
+            `[migrate] skipping oversized chat message (${approxSize} bytes) in conversation ${convexConversationId}`,
+          );
+          continue;
+        }
         await ctx.db.insert("chatMessages", {
           conversationId: convexConversationId,
           userId: String(row.userId),
           role: validRole as "user" | "assistant" | "system",
-          content: m.content ?? m,
+          content,
           createdAt:
             m.createdAt != null
               ? toMs(m.createdAt as any)
@@ -481,41 +507,31 @@ export const importConversations = mutation({
 // ---------------------------------------------------------------------------
 
 /**
- * rebuildUserCounters — recomputes the denormalized bookmarkCount for each userId
- * and upserts a userCounters row. Monthly counters are reset to 0 (the migration
- * is a fresh start for the new deployment).
- *
- * Called once at the end of the import with all convex userIds.
+ * rebuildUserCounters — upserts a userCounters row with a precomputed
+ * bookmarkCount per userId. The count is computed client-side in the import
+ * script from the exported bookmarks (counting inside a mutation would require
+ * reading every bookmark doc, which blows Convex's per-query read limits for
+ * power users). Monthly counters are reset to 0 (the migration is a fresh
+ * start for the new deployment). Idempotent — safe to re-run.
  */
 export const rebuildUserCounters = mutation({
-  args: { userIds: v.array(v.string()), migrationSecret: v.string() },
+  args: {
+    counters: v.array(
+      v.object({ userId: v.string(), bookmarkCount: v.number() }),
+    ),
+    migrationSecret: v.string(),
+  },
   returns: v.number(),
-  handler: async (ctx, { userIds, migrationSecret }) => {
+  handler: async (ctx, { counters, migrationSecret }) => {
     assertMigrationAllowed(migrationSecret);
 
     const now = new Date();
     const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 
-    for (const userId of userIds) {
-      // Count bookmarks via bounded index read.
-      // We read in chunks of 1000 to stay within Convex read limits.
-      let bookmarkCount = 0;
-      let cursor: string | null = null;
-
-      while (true) {
-        const page = await ctx.db
-          .query("bookmarks")
-          .withIndex("by_user_created", (q: any) => q.eq("userId", userId))
-          .paginate({ cursor, numItems: 1000 });
-
-        bookmarkCount += page.page.length;
-
-        if (page.isDone) break;
-        cursor = page.continueCursor;
-      }
-
+    for (const { userId, bookmarkCount } of counters) {
       const existing = await ctx.db
         .query("userCounters")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .withIndex("by_user", (q: any) => q.eq("userId", userId))
         .first();
 
@@ -537,7 +553,7 @@ export const rebuildUserCounters = mutation({
       }
     }
 
-    return userIds.length;
+    return counters.length;
   },
 });
 

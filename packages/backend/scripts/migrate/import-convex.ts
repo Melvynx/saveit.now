@@ -26,6 +26,20 @@ import { api } from "../../convex/_generated/api";
 
 const EXPORT_DIR = path.resolve(process.cwd(), "migration-export");
 const CHUNK_SIZE = 100; // rows per mutation call (safe for Convex write limits)
+// Conversations embed their full message JSON, so 100/batch can exceed the
+// Convex HTTP request-body limit. Send them one at a time.
+const CONVERSATION_CHUNK_SIZE = Number(
+  process.env.CONVERSATION_CHUNK_SIZE ?? "1",
+);
+// Optional: run only specific stages (comma-separated), e.g.
+// ONLY_STAGES=conversations,counters. The `users` stage always runs because
+// every later stage needs the legacyId→convexId user map it builds.
+const ONLY_STAGES = (process.env.ONLY_STAGES ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const shouldRun = (stage: string) =>
+  ONLY_STAGES.length === 0 || ONLY_STAGES.includes(stage);
 const migrationSecret = process.env.MIGRATION_SECRET;
 
 if (!migrationSecret) {
@@ -82,7 +96,9 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 5): Promise<T> {
         );
       if (!transient || i === attempts - 1) throw err;
       const delay = 1000 * 2 ** i;
-      console.warn(`\n  [retry ${i + 1}/${attempts}] ${msg} — waiting ${delay}ms`);
+      console.warn(
+        `\n  [retry ${i + 1}/${attempts}] ${msg} — waiting ${delay}ms`,
+      );
       await new Promise((r) => setTimeout(r, delay));
     }
   }
@@ -93,8 +109,9 @@ async function runChunked<T>(
   label: string,
   rows: T[],
   fn: (batch: T[]) => Promise<unknown>,
+  chunkSize: number = CHUNK_SIZE,
 ): Promise<void> {
-  const batches = chunk(rows, CHUNK_SIZE);
+  const batches = chunk(rows, chunkSize);
   let processed = 0;
   for (const batch of batches) {
     await withRetry(() => fn(batch));
@@ -178,6 +195,14 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   // 3. Import users — build legacyId → convexId map
   // -------------------------------------------------------------------------
+  // Summary counters — set by each stage that runs (stages can be skipped via
+  // ONLY_STAGES, so these stay 0 for skipped stages).
+  let bookmarkTagsCount = 0;
+  let bookmarkOpensCount = 0;
+  let subscriptionsCount = 0;
+  let conversationsCount = 0;
+  let countersCount = 0;
+
   console.log("Importing users...");
   const userMap = new Map<string, string>(); // legacyId → convexId
   const userBatches = chunk(usersWithAccounts, CHUNK_SIZE);
@@ -202,171 +227,206 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   // 4. Import tags — build legacyId → convexId map
   // -------------------------------------------------------------------------
-  console.log("\nImporting tags...");
   const tagMap = new Map<string, string>(); // legacyId → convexId
-  const tagsRewritten = (rawTags as Record<string, unknown>[]).map((t) => ({
-    ...t,
-    userId: userMap.get(String(t.userId)) ?? t.userId,
-  }));
-  const tagBatches = chunk(tagsRewritten, CHUNK_SIZE);
-  let tagsProcessed = 0;
-  for (const batch of tagBatches) {
-    const result = await withRetry(() =>
-      client.mutation(api.migration.import.importTags, {
-        tags: batch,
-        migrationSecret,
-      }),
-    );
-    for (const { legacyId, convexId } of result) {
-      tagMap.set(legacyId, convexId);
+  if (shouldRun("tags")) {
+    console.log("\nImporting tags...");
+    const tagsRewritten = (rawTags as Record<string, unknown>[]).map((t) => ({
+      ...t,
+      userId: userMap.get(String(t.userId)) ?? t.userId,
+    }));
+    const tagBatches = chunk(tagsRewritten, CHUNK_SIZE);
+    let tagsProcessed = 0;
+    for (const batch of tagBatches) {
+      const result = await withRetry(() =>
+        client.mutation(api.migration.import.importTags, {
+          tags: batch,
+          migrationSecret,
+        }),
+      );
+      for (const { legacyId, convexId } of result) {
+        tagMap.set(legacyId, convexId);
+      }
+      tagsProcessed += batch.length;
+      process.stdout.write(
+        `\r  tags: ${tagsProcessed}/${rawTags.length} imported`,
+      );
     }
-    tagsProcessed += batch.length;
-    process.stdout.write(
-      `\r  tags: ${tagsProcessed}/${rawTags.length} imported`,
-    );
+    console.log(`\n  Built tag map: ${tagMap.size} entries.`);
   }
-  console.log(`\n  Built tag map: ${tagMap.size} entries.`);
 
   // -------------------------------------------------------------------------
   // 5. Import bookmarks — build legacyId → convexId map
   // -------------------------------------------------------------------------
-  console.log("\nImporting bookmarks...");
   const bookmarkMap = new Map<string, string>(); // legacyId → convexId
-  const bookmarksRewritten = (rawBookmarks as Record<string, unknown>[]).map(
-    (b) => ({
-      ...b,
-      userId: userMap.get(String(b.userId)) ?? b.userId,
-    }),
-  );
-  const bookmarkBatches = chunk(bookmarksRewritten, CHUNK_SIZE);
-  let bookmarksProcessed = 0;
-  for (const batch of bookmarkBatches) {
-    const result = await withRetry(() =>
-      client.mutation(api.migration.import.importBookmarks, {
-        bookmarks: batch,
-        migrationSecret,
+  if (shouldRun("bookmarks")) {
+    console.log("\nImporting bookmarks...");
+    const bookmarksRewritten = (rawBookmarks as Record<string, unknown>[]).map(
+      (b) => ({
+        ...b,
+        userId: userMap.get(String(b.userId)) ?? b.userId,
       }),
     );
-    for (const { legacyId, convexId } of result) {
-      bookmarkMap.set(legacyId, convexId);
+    const bookmarkBatches = chunk(bookmarksRewritten, CHUNK_SIZE);
+    let bookmarksProcessed = 0;
+    for (const batch of bookmarkBatches) {
+      const result = await withRetry(() =>
+        client.mutation(api.migration.import.importBookmarks, {
+          bookmarks: batch,
+          migrationSecret,
+        }),
+      );
+      for (const { legacyId, convexId } of result) {
+        bookmarkMap.set(legacyId, convexId);
+      }
+      bookmarksProcessed += batch.length;
+      process.stdout.write(
+        `\r  bookmarks: ${bookmarksProcessed}/${rawBookmarks.length} imported`,
+      );
     }
-    bookmarksProcessed += batch.length;
-    process.stdout.write(
-      `\r  bookmarks: ${bookmarksProcessed}/${rawBookmarks.length} imported`,
-    );
+    console.log(`\n  Built bookmark map: ${bookmarkMap.size} entries.`);
   }
-  console.log(`\n  Built bookmark map: ${bookmarkMap.size} entries.`);
 
   // -------------------------------------------------------------------------
   // 6. Import bookmarkTags
   // -------------------------------------------------------------------------
-  console.log("\nImporting bookmarkTags...");
-  // Prisma BookmarkTag has NO userId column — derive it from the bookmark's owner.
-  const bookmarkLegacyUser = new Map<string, string>(); // legacy bookmarkId → legacy userId
-  for (const b of rawBookmarks as Record<string, unknown>[]) {
-    bookmarkLegacyUser.set(String(b.id), String(b.userId));
-  }
-  const bookmarkTagsRewritten = (rawBookmarkTags as Record<string, unknown>[])
-    .map((row) => {
-      const bookmarkId = bookmarkMap.get(String(row.bookmarkId));
-      const tagId = tagMap.get(String(row.tagId));
-      const legacyUserId = bookmarkLegacyUser.get(String(row.bookmarkId));
-      const userId = legacyUserId ? userMap.get(legacyUserId) : undefined;
-      if (!bookmarkId || !tagId || !userId) return null; // dangling FK — skip
-      return { bookmarkId, tagId, userId };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-  console.log(
-    `  bookmarkTags resolved: ${bookmarkTagsRewritten.length}/${rawBookmarkTags.length}`,
-  );
+  if (shouldRun("bookmarkTags")) {
+    console.log("\nImporting bookmarkTags...");
+    // Prisma BookmarkTag has NO userId column — derive it from the bookmark's owner.
+    const bookmarkLegacyUser = new Map<string, string>(); // legacy bookmarkId → legacy userId
+    for (const b of rawBookmarks as Record<string, unknown>[]) {
+      bookmarkLegacyUser.set(String(b.id), String(b.userId));
+    }
+    const bookmarkTagsRewritten = (rawBookmarkTags as Record<string, unknown>[])
+      .map((row) => {
+        const bookmarkId = bookmarkMap.get(String(row.bookmarkId));
+        const tagId = tagMap.get(String(row.tagId));
+        const legacyUserId = bookmarkLegacyUser.get(String(row.bookmarkId));
+        const userId = legacyUserId ? userMap.get(legacyUserId) : undefined;
+        if (!bookmarkId || !tagId || !userId) return null; // dangling FK — skip
+        return { bookmarkId, tagId, userId };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    console.log(
+      `  bookmarkTags resolved: ${bookmarkTagsRewritten.length}/${rawBookmarkTags.length}`,
+    );
 
-  await runChunked("bookmarkTags", bookmarkTagsRewritten, (batch) =>
-    client.mutation(api.migration.import.importBookmarkTags, {
-      rows: batch,
-      migrationSecret,
-    }),
-  );
+    bookmarkTagsCount = bookmarkTagsRewritten.length;
+    await runChunked("bookmarkTags", bookmarkTagsRewritten, (batch) =>
+      client.mutation(api.migration.import.importBookmarkTags, {
+        rows: batch,
+        migrationSecret,
+      }),
+    );
+  }
 
   // -------------------------------------------------------------------------
   // 7. Import bookmarkOpens
   // -------------------------------------------------------------------------
-  console.log("Importing bookmarkOpens...");
-  const bookmarkOpensRewritten = (rawBookmarkOpens as Record<string, unknown>[])
-    .map((row) => {
-      const bookmarkId = bookmarkMap.get(String(row.bookmarkId));
-      const userId = userMap.get(String(row.userId)) ?? row.userId;
-      if (!bookmarkId) return null;
-      return { ...row, bookmarkId, userId };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
+  if (shouldRun("bookmarkOpens")) {
+    console.log("Importing bookmarkOpens...");
+    const bookmarkOpensRewritten = (
+      rawBookmarkOpens as Record<string, unknown>[]
+    )
+      .map((row) => {
+        const bookmarkId = bookmarkMap.get(String(row.bookmarkId));
+        const userId = userMap.get(String(row.userId)) ?? row.userId;
+        if (!bookmarkId) return null;
+        return { ...row, bookmarkId, userId };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
 
-  await runChunked("bookmarkOpens", bookmarkOpensRewritten, (batch) =>
-    client.mutation(api.migration.import.importBookmarkOpens, {
-      rows: batch,
-      migrationSecret,
-    }),
-  );
+    bookmarkOpensCount = bookmarkOpensRewritten.length;
+    await runChunked("bookmarkOpens", bookmarkOpensRewritten, (batch) =>
+      client.mutation(api.migration.import.importBookmarkOpens, {
+        rows: batch,
+        migrationSecret,
+      }),
+    );
+  }
 
   // -------------------------------------------------------------------------
   // 8. Import subscriptions
   // -------------------------------------------------------------------------
-  console.log("Importing subscriptions...");
-  const subscriptionsRewritten = (
-    rawSubscriptions as Record<string, unknown>[]
-  ).map((row) => ({
-    ...row,
-    userId:
-      userMap.get(String(row.userId ?? row.referenceId)) ??
-      row.userId ??
-      row.referenceId,
-  }));
+  if (shouldRun("subscriptions")) {
+    console.log("Importing subscriptions...");
+    const subscriptionsRewritten = (
+      rawSubscriptions as Record<string, unknown>[]
+    ).map((row) => ({
+      ...row,
+      userId:
+        userMap.get(String(row.userId ?? row.referenceId)) ??
+        row.userId ??
+        row.referenceId,
+    }));
 
-  await runChunked("subscriptions", subscriptionsRewritten, (batch) =>
-    client.mutation(api.migration.import.importSubscriptions, {
-      rows: batch,
-      migrationSecret,
-    }),
-  );
+    subscriptionsCount = subscriptionsRewritten.length;
+    await runChunked("subscriptions", subscriptionsRewritten, (batch) =>
+      client.mutation(api.migration.import.importSubscriptions, {
+        rows: batch,
+        migrationSecret,
+      }),
+    );
+  }
 
   // -------------------------------------------------------------------------
   // 9. Import chatConversations (+ embedded messages)
   // -------------------------------------------------------------------------
-  console.log("Importing chatConversations...");
-  const conversationsRewritten = (
-    rawConversations as Record<string, unknown>[]
-  ).map((row) => ({
-    ...row,
-    userId: userMap.get(String(row.userId)) ?? row.userId,
-    // Postgres stores messages as a JSON column (`messages`). Re-key to `_messages`
-    // so the import mutation finds it consistently regardless of schema variants.
-    _messages: row.messages ?? row._messages ?? [],
-  }));
+  if (shouldRun("conversations")) {
+    console.log("Importing chatConversations...");
+    const conversationsRewritten = (
+      rawConversations as Record<string, unknown>[]
+    ).map((row) => ({
+      ...row,
+      userId: userMap.get(String(row.userId)) ?? row.userId,
+      // Postgres stores messages as a JSON column (`messages`). Re-key to `_messages`
+      // so the import mutation finds it consistently regardless of schema variants.
+      _messages: row.messages ?? row._messages ?? [],
+    }));
 
-  await runChunked("conversations", conversationsRewritten, (batch) =>
-    client.mutation(api.migration.import.importConversations, {
-      rows: batch,
-      migrationSecret,
-    }),
-  );
+    conversationsCount = conversationsRewritten.length;
+    // Conversations embed their full message JSON, so a single one can be large.
+    // Send them in small batches to stay under the Convex request-body limit.
+    await runChunked(
+      "conversations",
+      conversationsRewritten,
+      (batch) =>
+        client.mutation(api.migration.import.importConversations, {
+          rows: batch,
+          migrationSecret,
+        }),
+      CONVERSATION_CHUNK_SIZE,
+    );
+  }
 
   // -------------------------------------------------------------------------
   // 10. Rebuild userCounters
   // -------------------------------------------------------------------------
-  console.log("\nRebuilding userCounters...");
-  const allConvexUserIds = Array.from(userMap.values());
-  const userIdBatches = chunk(allConvexUserIds, CHUNK_SIZE);
-  let countersProcessed = 0;
-  for (const batch of userIdBatches) {
-    await client.mutation(api.migration.import.rebuildUserCounters, {
-      userIds: batch,
-      migrationSecret,
-    });
-    countersProcessed += batch.length;
-    process.stdout.write(
-      `\r  userCounters: ${countersProcessed}/${allConvexUserIds.length} users`,
+  if (shouldRun("counters")) {
+    console.log("\nRebuilding userCounters...");
+    // Count bookmarks per user from the export data (avoids reading every
+    // bookmark doc inside a mutation, which blows Convex read limits).
+    const countByConvexUser = new Map<string, number>();
+    for (const b of rawBookmarks as Record<string, unknown>[]) {
+      const convexUserId = userMap.get(String(b.userId));
+      if (!convexUserId) continue;
+      countByConvexUser.set(
+        convexUserId,
+        (countByConvexUser.get(convexUserId) ?? 0) + 1,
+      );
+    }
+    // Every imported user gets a counter row, even with 0 bookmarks.
+    const counterEntries = Array.from(userMap.values()).map((userId) => ({
+      userId,
+      bookmarkCount: countByConvexUser.get(userId) ?? 0,
+    }));
+    countersCount = counterEntries.length;
+    await runChunked("userCounters", counterEntries, (batch) =>
+      client.mutation(api.migration.import.rebuildUserCounters, {
+        counters: batch,
+        migrationSecret,
+      }),
     );
   }
-  console.log();
 
   // -------------------------------------------------------------------------
   // Summary
@@ -375,11 +435,11 @@ async function main(): Promise<void> {
   console.log(`  Users imported:         ${userMap.size}`);
   console.log(`  Tags imported:          ${tagMap.size}`);
   console.log(`  Bookmarks imported:     ${bookmarkMap.size}`);
-  console.log(`  BookmarkTags imported:  ${bookmarkTagsRewritten.length}`);
-  console.log(`  BookmarkOpens imported: ${bookmarkOpensRewritten.length}`);
-  console.log(`  Subscriptions imported: ${subscriptionsRewritten.length}`);
-  console.log(`  Conversations imported: ${conversationsRewritten.length}`);
-  console.log(`  UserCounters rebuilt:   ${allConvexUserIds.length}`);
+  console.log(`  BookmarkTags imported:  ${bookmarkTagsCount}`);
+  console.log(`  BookmarkOpens imported: ${bookmarkOpensCount}`);
+  console.log(`  Subscriptions imported: ${subscriptionsCount}`);
+  console.log(`  Conversations imported: ${conversationsCount}`);
+  console.log(`  UserCounters rebuilt:   ${countersCount}`);
 
   console.log(`
 Next step: trigger re-embedding by running:
