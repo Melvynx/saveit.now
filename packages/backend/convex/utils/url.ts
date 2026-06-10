@@ -93,18 +93,42 @@ const TRACKING_PARAMS = [
 ] as const;
 
 /**
+ * Strips punctuation users drag along when pasting URLs from prose
+ * (e.g. "https://example.com/page:" or "…/page)."). Closing brackets are
+ * only stripped when unbalanced, so Wikipedia-style "…_(theory)" URLs
+ * stay intact.
+ */
+const TRAILING_PUNCTUATION = /[.,:;!?'"<>]+$/;
+
+export function stripTrailingPunctuation(url: string): string {
+  let result = url.trim().replace(TRAILING_PUNCTUATION, "");
+
+  while (/[)\]}]$/.test(result)) {
+    const close = result[result.length - 1]!;
+    const open = close === ")" ? "(" : close === "]" ? "[" : "{";
+    const openCount = result.split(open).length - 1;
+    const closeCount = result.split(close).length - 1;
+    if (closeCount <= openCount) break;
+    result = result.slice(0, -1).replace(TRAILING_PUNCTUATION, "");
+  }
+
+  return result;
+}
+
+/**
  * Strips known tracking query parameters from a URL.
  * Falls back to the original URL string if parsing fails.
  */
 export function cleanUrl(url: string): string {
+  const stripped = stripTrailingPunctuation(url);
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(stripped);
     for (const param of TRACKING_PARAMS) {
       parsed.searchParams.delete(param);
     }
     return parsed.toString();
   } catch {
-    return url;
+    return stripped;
   }
 }
 
