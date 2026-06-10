@@ -1,14 +1,17 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
+import { BOOKMARK_STEPS } from "@/lib/bookmark-steps";
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { Loader } from "@workspace/ui/components/loader";
 import { Text } from "@workspace/ui/components/text";
+import { motion } from "motion/react";
 import { toast } from "sonner";
 import {
+  useBookmark,
   useBookmarkMetadata,
 } from "../bookmark-page/use-bookmark";
 import {
@@ -59,25 +62,50 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
 };
 
 /**
- * Shows a processing indicator using Convex reactive bookmark data.
+ * Shows a step-by-step processing indicator driven by the reactive
+ * `processingStep` field the Convex pipeline patches as it runs.
  * Replaces the old Inngest realtime token-based progress UI.
  */
 function ProcessingIndicator({ bookmarkId }: { bookmarkId: string }) {
-  void bookmarkId;
+  const bookmark = useBookmark(bookmarkId);
+  const currentStepIdx = bookmark.data?.bookmark.processingStep ?? 0;
+  const currentStep =
+    BOOKMARK_STEPS.find((step) => step.order === currentStepIdx) ??
+    BOOKMARK_STEPS[0];
+
   return (
     <div className="flex flex-col items-start w-fit mx-auto justify-center gap-2">
       <div className="flex w-full items-center justify-center gap-2">
-        {Array.from({ length: 9 }).map((_, idx) => (
-          <div
-            key={idx}
-            className="rounded-full bg-accent"
-            style={{ height: 3, width: 10, borderRadius: 2, opacity: 0.4 }}
-          />
-        ))}
+        {Array.from({ length: 9 }).map((_, idx) => {
+          const isActive = idx === currentStepIdx;
+          const isCompleted = idx < currentStepIdx;
+          return (
+            <motion.div
+              key={idx}
+              layout
+              initial={{ scale: 0.8, opacity: 0.5 }}
+              animate={{
+                scale: isActive ? 1.2 : 1,
+                opacity: isActive ? 1 : isCompleted ? 0.8 : 0.4,
+                backgroundColor:
+                  isActive || isCompleted ? "var(--primary)" : "var(--accent)",
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="h-1 rounded-full"
+              style={{
+                height: 3,
+                width: 10,
+                borderRadius: 2,
+              }}
+            />
+          );
+        })}
       </div>
       <div className="flex items-center gap-2 relative -left-0.5">
         <Loader className="text-muted-foreground size-4" />
-        <Text variant="shine">Processing...</Text>
+        <Text variant="shine" key={currentStep.name}>
+          {currentStep.name}
+        </Text>
       </div>
     </div>
   );

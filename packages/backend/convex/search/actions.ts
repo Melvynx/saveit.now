@@ -246,9 +246,10 @@ export const search = authAction({
     const cursor = args.cursor;
 
     // -----------------------------------------------------------------------
-    // Route 1: no search query → default list (reactive browsing)
+    // Route 1: no search query, no tags → default list
+    // (tags-only requests must fall through to Route 4 / searchByTags)
     // -----------------------------------------------------------------------
-    if (!isSearchQuery(query)) {
+    if (!isSearchQuery(query) && tags.length === 0) {
       const paginationOpts = {
         numItems: limit,
         cursor: cursor ?? null,
@@ -302,57 +303,7 @@ export const search = authAction({
     }
 
     // -----------------------------------------------------------------------
-    // Route 2: types-only (no query text, no tags) → listByType
-    // -----------------------------------------------------------------------
-    if (types.length > 0 && !isSearchQuery(query) && tags.length === 0) {
-      const paginationOpts = {
-        numItems: limit,
-        cursor: cursor ?? null,
-      };
-
-      const listResult = await ctx.runQuery(
-        internal.bookmarks.queries.listByType,
-        {
-          userId,
-          types: types as any[],
-          paginationOpts,
-        },
-      );
-
-      const bookmarks: SearchResultDTO[] = listResult.page.map((bm: any) => ({
-        _id: bm._id,
-        id: bm._id,
-        url: bm.url,
-        title: bm.title ?? null,
-        summary: bm.summary ?? null,
-        preview: bm.preview ?? null,
-        type: bm.type ?? null,
-        status: bm.status,
-        ogImageUrl: bm.ogImageUrl ?? null,
-        ogDescription: bm.ogDescription ?? null,
-        faviconUrl: bm.faviconUrl ?? null,
-        score: 0,
-        matchType: "default" as const,
-        matchedTags: [],
-        tags: bm.tags ?? [],
-        createdAt: bm.createdAt,
-        metadata: bm.metadata ?? null,
-        openCount: 0,
-        starred: bm.starred,
-        read: bm.read,
-      }));
-
-      return {
-        bookmarks,
-        nextCursor: listResult.continueCursor ?? undefined,
-        hasMore: listResult.isDone === false,
-        fromCache: false,
-        queryTime: Date.now() - startTime,
-      };
-    }
-
-    // -----------------------------------------------------------------------
-    // Route 3: domain query
+    // Route 2: domain query
     // -----------------------------------------------------------------------
     if (isSearchQuery(query) && isDomainQuery(query)) {
       const domain = extractDomain(query);
@@ -378,7 +329,7 @@ export const search = authAction({
     }
 
     // -----------------------------------------------------------------------
-    // Route 4: tags-only (query is blank but we have tags)
+    // Route 3: tags-only (query is blank but we have tags)
     // -----------------------------------------------------------------------
     if (!isSearchQuery(query) && tags.length > 0) {
       const results: SearchResultDTO[] = await ctx.runQuery(
@@ -403,7 +354,7 @@ export const search = authAction({
     }
 
     // -----------------------------------------------------------------------
-    // Route 5: vector search (default for any real text query)
+    // Route 4: vector search (default for any real text query)
     // -----------------------------------------------------------------------
     return runVectorSearch(
       ctx,

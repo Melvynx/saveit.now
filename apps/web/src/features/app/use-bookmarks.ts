@@ -2,12 +2,13 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@convex/_generated/api";
 import type { SearchResultDTO } from "@convex/search/helpers";
 import { useSearch } from "@tanstack/react-router";
-import { useAction, useQuery } from "convex/react";
+import {
+  useAction,
+  useConvexAuth,
+  usePaginatedQuery,
+  useQuery,
+} from "convex/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-export const useRefreshBookmarks = () => {
-  return () => {};
-};
 
 const URL_SCHEMA_REGEX = /^https?:\/\/.+/;
 
@@ -15,7 +16,51 @@ function isUrl(str: string): boolean {
   return URL_SCHEMA_REGEX.test(str);
 }
 
-export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => {
+const PAGE_SIZE = 20;
+
+type BookmarkTypeFilter =
+  | "TWEET"
+  | "YOUTUBE"
+  | "ARTICLE"
+  | "PAGE"
+  | "IMAGE"
+  | "PDF"
+  | "PRODUCT";
+
+/**
+ * Maps URL filter params to the `bookmarks.queries.list` filter shape.
+ * Mirrors `buildListFilter` in convex/search/actions.ts.
+ */
+function buildListFilter(types: string[], special: string[]) {
+  const filter: {
+    types?: BookmarkTypeFilter[];
+    starred?: boolean;
+    read?: boolean;
+  } = {};
+
+  if (types.length > 0) {
+    filter.types = types as BookmarkTypeFilter[];
+  }
+
+  if (special.length === 1 && special.includes("STAR")) {
+    filter.starred = true;
+  } else if (special.length === 1 && special.includes("READ")) {
+    filter.read = true;
+  } else if (special.length === 1 && special.includes("UNREAD")) {
+    filter.read = false;
+  }
+
+  return Object.keys(filter).length > 0 ? filter : undefined;
+}
+
+export const useBookmarks = ({
+  enabled: enabledProp = true,
+}: { enabled?: boolean } = {}) => {
+  // Don't fire authQueries until the Convex client holds an auth token —
+  // the Better Auth session resolves before the JWT exchange completes,
+  // and an early call throws UNAUTHORIZED into the error boundary.
+  const { isAuthenticated } = useConvexAuth();
+  const enabled = enabledProp && isAuthenticated;
   const searchParams = useSearch({ strict: false }) as {
     query?: string;
     types?: string;
@@ -47,19 +92,25 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     api.bookmarks.queries.count,
     enabled ? {} : "skip",
   );
-  const hasActiveFilters =
-    searchQuery !== "" ||
-    types.length > 0 ||
-    tags.length > 0 ||
-    special.length > 0;
-  const hasKnownEmptyLibrary = bookmarkCount === 0 && !hasActiveFilters;
+
+  // Browse mode (no text query, no tag search) is served by a reactive
+  // paginated query so new PENDING bookmarks and processing-status changes
+  // stream in live. Text/tag searches need the (non-reactive) search action.
+  const isBrowsing = searchQuery.trim() === "" && tags.length === 0;
+
+  const browse = usePaginatedQuery(
+    api.bookmarks.queries.list,
+    enabled && isBrowsing ? { filter: buildListFilter(types, special) } : "skip",
+    { initialNumItems: PAGE_SIZE },
+  );
 
   const search = useAction(api.search.actions.search);
   const [pages, setPages] = useState<
     Array<{ bookmarks: SearchResultDTO[]; hasMore: boolean; nextCursor?: string }>
   >([]);
-  const [isPending, setIsPending] = useState(false);
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const [isSearchPending, setIsSearchPending] = useState(false);
+  const [isFetchingNextSearchPage, setIsFetchingNextSearchPage] =
+    useState(false);
   const [error, setError] = useState<unknown>(null);
   const requestKey = useMemo(
     () =>
@@ -70,17 +121,8 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         special,
         matchingDistance,
         query: Boolean(query),
-        hasKnownEmptyLibrary,
       }),
-    [
-      hasKnownEmptyLibrary,
-      matchingDistance,
-      query,
-      searchQuery,
-      special,
-      tags,
-      types,
-    ],
+    [matchingDistance, query, searchQuery, special, tags, types],
   );
   const latestRequestRef = useRef(requestKey);
 
@@ -88,9 +130,9 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     async (cursor?: string, append = false) => {
       if (!enabled) return;
       if (append) {
-        setIsFetchingNextPage(true);
+        setIsFetchingNextSearchPage(true);
       } else {
-        setIsPending(true);
+        setIsSearchPending(true);
       }
       setError(null);
 
@@ -111,23 +153,13 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         const result = await search({
           query: searchQuery || undefined,
           types:
-            types.length > 0
-              ? (types as (
-                  | "TWEET"
-                  | "YOUTUBE"
-                  | "ARTICLE"
-                  | "PAGE"
-                  | "IMAGE"
-                  | "PDF"
-                  | "PRODUCT"
-                )[])
-              : undefined,
+            types.length > 0 ? (types as BookmarkTypeFilter[]) : undefined,
           tags: tags.length > 0 ? tags : undefined,
           specialFilters:
             special.length > 0
               ? (special as ("READ" | "UNREAD" | "STAR")[])
               : undefined,
-          limit: 20,
+          limit: PAGE_SIZE,
           cursor,
           matchingDistance,
         });
@@ -145,8 +177,8 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         }
       } finally {
         if (latestRequestRef.current === activeRequest) {
-          setIsPending(false);
-          setIsFetchingNextPage(false);
+          setIsSearchPending(false);
+          setIsFetchingNextSearchPage(false);
         }
       }
     },
@@ -164,22 +196,30 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
 
   useEffect(() => {
     setPages([]);
-    if (!enabled) return;
-    if (hasKnownEmptyLibrary) {
-      latestRequestRef.current = requestKey;
-      setPages([{ bookmarks: [], hasMore: false, nextCursor: undefined }]);
-      setIsPending(false);
-      setIsFetchingNextPage(false);
-      setError(null);
+    if (!enabled || isBrowsing) return;
+    void fetchPage();
+  }, [enabled, fetchPage, isBrowsing, requestKey]);
+
+  const searchBookmarks = pages.flatMap((page) => page.bookmarks);
+  const lastPage = pages[pages.length - 1];
+
+  const bookmarks = isBrowsing
+    ? (browse.results as SearchResultDTO[])
+    : searchBookmarks;
+  const isPending = isBrowsing
+    ? browse.status === "LoadingFirstPage"
+    : isSearchPending;
+  const hasNextPage = isBrowsing
+    ? browse.status === "CanLoadMore"
+    : Boolean(lastPage?.hasMore);
+  const isFetchingNextPage = isBrowsing
+    ? browse.status === "LoadingMore"
+    : isFetchingNextSearchPage;
+  const fetchNextPage = () => {
+    if (isBrowsing) {
+      if (browse.status === "CanLoadMore") browse.loadMore(PAGE_SIZE);
       return;
     }
-    void fetchPage();
-  }, [enabled, fetchPage, hasKnownEmptyLibrary, requestKey]);
-
-  const bookmarks = pages.flatMap((page) => page.bookmarks);
-  const lastPage = pages[pages.length - 1];
-  const hasNextPage = Boolean(lastPage?.hasMore);
-  const fetchNextPage = () => {
     if (!hasNextPage || isFetchingNextPage) return;
     void fetchPage(lastPage?.nextCursor, true);
   };
