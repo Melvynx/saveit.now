@@ -55,6 +55,8 @@ export default defineSchema({
     // processing progress (drives reactive UI; replaces Inngest realtime)
     processingStep: v.optional(v.number()),
     processingError: v.optional(v.string()),
+    // @convex-dev/workflow run id — lets deletion cancel an in-flight run
+    workflowId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

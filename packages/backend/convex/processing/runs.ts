@@ -1,8 +1,27 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 // Embedding model key constant (duplicated here to avoid importing from "use node" module)
 const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
+
+/**
+ * getForProcessing — minimal lookup for the workflow's get-bookmark step.
+ * Returns only what routing needs so the workflow journal stays small.
+ */
+export const getForProcessing = internalQuery({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+    userId: v.string(),
+  },
+  returns: v.union(v.object({ url: v.string() }), v.null()),
+  handler: async (ctx, { bookmarkId, userId }) => {
+    const bookmark = await ctx.db.get(bookmarkId);
+    if (!bookmark || bookmark.userId !== userId) return null;
+    return { url: bookmark.url };
+  },
+});
 
 /**
  * start — set bookmark status=PROCESSING, insert bookmarkProcessingRun (STARTED).
@@ -82,7 +101,41 @@ export const finish = internalMutation({
 });
 
 /**
- * fail — set bookmark status=ERROR, mark processingRun FAILED.
+ * failProcessing — set bookmark status=ERROR, mark processingRun FAILED.
+ * Tolerates a deleted bookmark (the workflow onComplete callback can fire
+ * after the user removed it).
+ */
+export async function failProcessing(
+  ctx: MutationCtx,
+  bookmarkId: Id<"bookmarks">,
+  error: string,
+): Promise<void> {
+  const bookmark = await ctx.db.get(bookmarkId);
+  if (bookmark) {
+    await ctx.db.patch(bookmarkId, {
+      status: "ERROR",
+      processingError: error,
+    });
+  }
+
+  // Mark the most recent processing run as FAILED
+  const run = await ctx.db
+    .query("bookmarkProcessingRuns")
+    .withIndex("by_bookmark", (q) => q.eq("bookmarkId", bookmarkId))
+    .order("desc")
+    .first();
+
+  if (run && run.status === "STARTED") {
+    await ctx.db.patch(run._id, {
+      status: "FAILED",
+      failureReason: error,
+      completedAt: Date.now(),
+    });
+  }
+}
+
+/**
+ * fail — internalMutation wrapper around failProcessing.
  */
 export const fail = internalMutation({
   args: {
@@ -91,25 +144,34 @@ export const fail = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, { bookmarkId, error }) => {
+    await failProcessing(ctx, bookmarkId, error);
+    return null;
+  },
+});
+
+/**
+ * markFetchFailed — minimal READY bookmark when the URL can't be fetched
+ * (same behavior as the legacy Inngest job: fallback title, no preview).
+ */
+export const markFetchFailed = internalMutation({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, { bookmarkId }) => {
+    const bookmark = await ctx.db.get(bookmarkId);
+    if (!bookmark) return null;
+
+    const urlObj = new URL(bookmark.url);
     await ctx.db.patch(bookmarkId, {
-      status: "ERROR",
-      processingError: error,
+      status: "READY",
+      type: "PAGE",
+      title: urlObj.hostname + urlObj.pathname,
+      metadata: {
+        fetchFailed: true,
+        fetchError: "Could not retrieve content from URL",
+      },
     });
-
-    // Mark the most recent processing run as FAILED
-    const run = await ctx.db
-      .query("bookmarkProcessingRuns")
-      .withIndex("by_bookmark", (q) => q.eq("bookmarkId", bookmarkId))
-      .order("desc")
-      .first();
-
-    if (run && run.status === "STARTED") {
-      await ctx.db.patch(run._id, {
-        status: "FAILED",
-        failureReason: error,
-        completedAt: Date.now(),
-      });
-    }
     return null;
   },
 });
@@ -132,6 +194,8 @@ export const patchStep = internalMutation({
 /**
  * applyResult — patch bookmark with type-handler result fields.
  * Does NOT set status to READY — finish() handles that.
+ * Handlers return `null` for absent values (e.g. no favicon found); the
+ * schema uses v.optional(...), so nulls map to undefined (field removed).
  */
 export const applyResult = internalMutation({
   args: {
@@ -140,7 +204,17 @@ export const applyResult = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, { bookmarkId, fields }) => {
-    await ctx.db.patch(bookmarkId, fields);
+    const existing = await ctx.db.get(bookmarkId);
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(
+      fields as Record<string, unknown>,
+    )) {
+      if (key === "preview" && (value === null || value === undefined)) {
+        if (existing?.preview) continue;
+      }
+      patch[key] = value === null ? undefined : value;
+    }
+    await ctx.db.patch(bookmarkId, patch);
     return null;
   },
 });

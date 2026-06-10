@@ -4,8 +4,9 @@
  * Contract §A bookmarks/mutations.ts + §B canonical refs.
  */
 
+import { cancel, type WorkflowId } from "@convex-dev/workflow";
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import { authMutation, internalMutation } from "../functions";
 import {
   throwLimitReached,
@@ -174,7 +175,7 @@ async function createBookmarkCore(
   }
 
   // 8. Schedule pipeline processing.
-  await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+  await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
     bookmarkId,
     userId,
   });
@@ -279,7 +280,7 @@ export const update = authMutation({
     await ctx.db.patch(args.id, patchData);
 
     if (args.patch.status === "PENDING") {
-      await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+      await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
         bookmarkId: args.id,
         userId,
       });
@@ -299,6 +300,16 @@ export const remove = authMutation({
 
     if (!doc || doc.userId !== userId) {
       throwNotFound("Bookmark not found");
+    }
+
+    // Cancel an in-flight processing workflow so it stops writing to a
+    // bookmark that no longer exists.
+    if (doc.workflowId) {
+      try {
+        await cancel(ctx, components.workflow, doc.workflowId as WorkflowId);
+      } catch {
+        // workflow already finished or was cleaned up
+      }
     }
 
     // Delete bookmarkTags join rows.
@@ -430,7 +441,7 @@ export const reprocess = authMutation({
       updatedAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+    await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
       bookmarkId: args.id,
       userId,
     });
@@ -573,7 +584,7 @@ export const insertWelcomeBookmark = internalMutation({
     await bumpBookmarkCount(ctx, args.userId, 1);
 
     // Schedule pipeline.
-    await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+    await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
       bookmarkId,
       userId: args.userId,
     });

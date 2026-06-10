@@ -18,6 +18,8 @@
     "@better-auth/expo": "1.6.10",
     "@convex-dev/better-auth": "^0.12.2",
     "@convex-dev/resend": "^0.2.3",
+    "@convex-dev/workflow": "^0.4.4",
+    "@convex-dev/workpool": "^0.4.7",
     "@danielxceron/youtube-transcript": "^1.2.6",
     "@react-email/components": "^0.1.1",
     "@react-email/render": "^1.4.0",

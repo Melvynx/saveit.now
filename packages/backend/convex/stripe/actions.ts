@@ -372,7 +372,7 @@ export const createPromotionCode = internalAction({
 //
 // Cross-module deps (Contract §B):
 //   - internal.bookmarks.mutations.updateProcessing  ({ id, patch }) — Phase 02
-//   - internal.processing.pipeline.run              ({ bookmarkId, userId }) — Phase 03
+//   - internal.processing.workflow.kickoff              ({ bookmarkId, userId }) — Phase 03
 // ---------------------------------------------------------------------------
 
 export const retryLimitExceededBookmarks = internalAction({
@@ -416,7 +416,7 @@ export const retryLimitExceededBookmarks = internalAction({
           },
         );
         // Schedule reprocessing via the pipeline.
-        await ctx.scheduler.runAfter(0, internal.processing.pipeline.run, {
+        await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
           bookmarkId: bookmark._id as never,
           userId,
         });
