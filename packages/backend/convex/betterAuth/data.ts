@@ -206,7 +206,8 @@ export const insertAccount = mutationGeneric({
     // Idempotent: return existing account _id if (accountId, providerId) already present.
     const existing = await ctx.db
       .query("account")
-      .withIndex("accountId_providerId", (q) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .withIndex("accountId_providerId", (q: any) =>
         q.eq("accountId", args.accountId).eq("providerId", args.providerId),
       )
       .first();
