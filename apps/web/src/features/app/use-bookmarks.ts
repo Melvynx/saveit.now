@@ -2,7 +2,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@convex/_generated/api";
 import type { SearchResultDTO } from "@convex/search/helpers";
 import { useSearch } from "@tanstack/react-router";
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const useRefreshBookmarks = () => {
@@ -24,9 +24,18 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     matchingDistance?: string | number;
   };
   const query = searchParams.query ?? "";
-  const types = searchParams.types?.split(",").filter(Boolean) ?? [];
-  const tags = searchParams.tags?.split(",").filter(Boolean) ?? [];
-  const special = searchParams.special?.split(",").filter(Boolean) ?? [];
+  const types = useMemo(
+    () => searchParams.types?.split(",").filter(Boolean) ?? [],
+    [searchParams.types],
+  );
+  const tags = useMemo(
+    () => searchParams.tags?.split(",").filter(Boolean) ?? [],
+    [searchParams.tags],
+  );
+  const special = useMemo(
+    () => searchParams.special?.split(",").filter(Boolean) ?? [],
+    [searchParams.special],
+  );
   const matchingDistance = parseFloat(
     String(searchParams.matchingDistance ?? "0.1"),
   );
@@ -34,6 +43,16 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
 
   // Use debouncedQuery for the actual search, fallback to query if not provided
   const searchQuery = debouncedQuery !== undefined ? debouncedQuery : query;
+  const bookmarkCount = useQuery(
+    api.bookmarks.queries.count,
+    enabled ? {} : "skip",
+  );
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    types.length > 0 ||
+    tags.length > 0 ||
+    special.length > 0;
+  const hasKnownEmptyLibrary = bookmarkCount === 0 && !hasActiveFilters;
 
   const search = useAction(api.search.actions.search);
   const [pages, setPages] = useState<
@@ -51,8 +70,17 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         special,
         matchingDistance,
         query: Boolean(query),
+        hasKnownEmptyLibrary,
       }),
-    [matchingDistance, query, searchQuery, special, tags, types],
+    [
+      hasKnownEmptyLibrary,
+      matchingDistance,
+      query,
+      searchQuery,
+      special,
+      tags,
+      types,
+    ],
   );
   const latestRequestRef = useRef(requestKey);
 
@@ -70,25 +98,39 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
       latestRequestRef.current = activeRequest;
 
       try {
-      if (isUrl(searchQuery)) {
+        if (isUrl(searchQuery)) {
           const empty = {
-          bookmarks: [] as SearchResultDTO[],
-          hasMore: false,
-          nextCursor: undefined as string | undefined,
-        };
+            bookmarks: [] as SearchResultDTO[],
+            hasMore: false,
+            nextCursor: undefined as string | undefined,
+          };
           setPages([empty]);
           return;
-      }
+        }
 
-      const result = await search({
-        query: searchQuery || undefined,
-        types: types.length > 0 ? (types as ("TWEET" | "YOUTUBE" | "ARTICLE" | "PAGE" | "IMAGE" | "PDF" | "PRODUCT")[]) : undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        specialFilters: special.length > 0 ? (special as ("READ" | "UNREAD" | "STAR")[]) : undefined,
-        limit: 20,
+        const result = await search({
+          query: searchQuery || undefined,
+          types:
+            types.length > 0
+              ? (types as (
+                  | "TWEET"
+                  | "YOUTUBE"
+                  | "ARTICLE"
+                  | "PAGE"
+                  | "IMAGE"
+                  | "PDF"
+                  | "PRODUCT"
+                )[])
+              : undefined,
+          tags: tags.length > 0 ? tags : undefined,
+          specialFilters:
+            special.length > 0
+              ? (special as ("READ" | "UNREAD" | "STAR")[])
+              : undefined,
+          limit: 20,
           cursor,
-        matchingDistance,
-      });
+          matchingDistance,
+        });
 
         if (latestRequestRef.current !== activeRequest) return;
         const page = result as {
@@ -108,14 +150,31 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
         }
       }
     },
-    [enabled, matchingDistance, requestKey, search, searchQuery, special, tags, types],
+    [
+      enabled,
+      matchingDistance,
+      requestKey,
+      search,
+      searchQuery,
+      special,
+      tags,
+      types,
+    ],
   );
 
   useEffect(() => {
     setPages([]);
     if (!enabled) return;
+    if (hasKnownEmptyLibrary) {
+      latestRequestRef.current = requestKey;
+      setPages([{ bookmarks: [], hasMore: false, nextCursor: undefined }]);
+      setIsPending(false);
+      setIsFetchingNextPage(false);
+      setError(null);
+      return;
+    }
     void fetchPage();
-  }, [enabled, fetchPage, requestKey]);
+  }, [enabled, fetchPage, hasKnownEmptyLibrary, requestKey]);
 
   const bookmarks = pages.flatMap((page) => page.bookmarks);
   const lastPage = pages[pages.length - 1];
@@ -143,5 +202,6 @@ export const useBookmarks = ({ enabled = true }: { enabled?: boolean } = {}) => 
     special,
     matchingDistance,
     isTyping,
+    bookmarkCount,
   };
 };

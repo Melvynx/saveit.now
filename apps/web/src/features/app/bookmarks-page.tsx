@@ -10,13 +10,12 @@ import {
 } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { Sparkles } from "lucide-react";
+import { BookmarkX, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import {
   BookmarkCard,
-  BookmarkCardAgenticSearch,
   BookmarkCardInput,
   BookmarkCardLoadMore,
   BookmarkCardPricing,
@@ -44,8 +43,13 @@ export function BookmarksPage() {
     isFetchingNextPage,
     fetchNextPage,
     query,
+    types,
+    tags,
+    special,
   } = useBookmarks({ enabled: Boolean(session.data?.user) });
   const searchInputRef = useRef<SearchInputRef>(null);
+  const hasActiveFilters =
+    query !== "" || types.length > 0 || tags.length > 0 || special.length > 0;
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -114,24 +118,30 @@ export function BookmarksPage() {
           <>
             {!query && <BookmarkCardInput />}
 
-            {(bookmarks as unknown as BookmarkCardData[]).map((bookmark, i) => {
-              if (query && i === 0) {
-                return (
-                  <div className="relative" key={bookmark.id}>
-                    <Badge
-                      variant="outline"
-                      className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
-                    >
-                      <Sparkles className="size-4 text-primary" />
-                      Best match
-                    </Badge>
-                    <BookmarkCard bookmark={bookmark} key={bookmark.id} />
-                  </div>
-                );
-              }
+            {bookmarks.length === 0 ? (
+              <BookmarksEmptyState hasActiveFilters={hasActiveFilters} />
+            ) : (
+              (bookmarks as unknown as BookmarkCardData[]).map(
+                (bookmark, i) => {
+                  if (query && i === 0) {
+                    return (
+                      <div className="relative" key={bookmark.id}>
+                        <Badge
+                          variant="outline"
+                          className="absolute -top-2 -left-2 z-50 rounded-lg bg-card"
+                        >
+                          <Sparkles className="size-4 text-primary" />
+                          Best match
+                        </Badge>
+                        <BookmarkCard bookmark={bookmark} key={bookmark.id} />
+                      </div>
+                    );
+                  }
 
-              return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
-            })}
+                  return <BookmarkCard bookmark={bookmark} key={bookmark.id} />;
+                },
+              )
+            )}
             {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
             {query && <MoreResultsButton />}
             {bookmarks.length > 10 && (
@@ -151,6 +161,28 @@ export function BookmarksPage() {
           onClose={closeBookmarkDialog}
         />
       ) : null}
+    </div>
+  );
+}
+
+function BookmarksEmptyState({
+  hasActiveFilters,
+}: {
+  hasActiveFilters: boolean;
+}) {
+  return (
+    <div className="col-span-full flex min-h-72 w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border/80 bg-card/30 px-6 text-center">
+      <BookmarkX className="size-8 text-muted-foreground" aria-hidden="true" />
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-foreground">
+          {hasActiveFilters ? "No matching bookmarks" : "No bookmarks yet"}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {hasActiveFilters
+            ? "Try another search, tag, or type filter."
+            : "Add your first link to start building your library."}
+        </p>
+      </div>
     </div>
   );
 }
