@@ -167,6 +167,18 @@ export const importTags = mutation({
 
     for (const tag of tags) {
       const legacyId = String(tag.id);
+      // Idempotent: reuse existing tag for (userId, name) so re-runs don't duplicate.
+      const existing = await ctx.db
+        .query("tags")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_user_name", (q: any) =>
+          q.eq("userId", String(tag.userId)).eq("name", String(tag.name)),
+        )
+        .first();
+      if (existing) {
+        result.push({ legacyId, convexId: existing._id as string });
+        continue;
+      }
       const convexId = await ctx.db.insert("tags", {
         userId: String(tag.userId),
         name: String(tag.name),
@@ -220,6 +232,18 @@ export const importBookmarks = mutation({
 
     for (const bm of bookmarks) {
       const legacyId = String(bm.id);
+      // Idempotent: reuse existing bookmark for (userId, url) so re-runs resume safely.
+      const existing = await ctx.db
+        .query("bookmarks")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_user_url", (q: any) =>
+          q.eq("userId", String(bm.userId)).eq("url", String(bm.url)),
+        )
+        .first();
+      if (existing) {
+        result.push({ legacyId, convexId: existing._id as string });
+        continue;
+      }
       const convexId = await ctx.db.insert("bookmarks", {
         userId: String(bm.userId),
         url: String(bm.url),
@@ -272,6 +296,17 @@ export const importBookmarkTags = mutation({
     assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
+      // Idempotent: skip if this (bookmarkId, tagId) join already exists.
+      const existingJoins = await ctx.db
+        .query("bookmarkTags")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_bookmark", (q: any) =>
+          q.eq("bookmarkId", row.bookmarkId),
+        )
+        .take(500);
+      if (existingJoins.some((j) => String(j.tagId) === String(row.tagId))) {
+        continue;
+      }
       await ctx.db.insert("bookmarkTags", {
         bookmarkId: row.bookmarkId as any,
         tagId: row.tagId as any,

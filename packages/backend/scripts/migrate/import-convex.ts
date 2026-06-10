@@ -67,6 +67,28 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
+/** Retry a Convex call on transient network errors (EPIPE / fetch failed / ECONNRESET). */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 5): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const msg = String((err as Error)?.message ?? err);
+      const transient =
+        /EPIPE|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|network/i.test(
+          msg,
+        );
+      if (!transient || i === attempts - 1) throw err;
+      const delay = 1000 * 2 ** i;
+      console.warn(`\n  [retry ${i + 1}/${attempts}] ${msg} — waiting ${delay}ms`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
 async function runChunked<T>(
   label: string,
   rows: T[],
@@ -75,7 +97,7 @@ async function runChunked<T>(
   const batches = chunk(rows, CHUNK_SIZE);
   let processed = 0;
   for (const batch of batches) {
-    await fn(batch);
+    await withRetry(() => fn(batch));
     processed += batch.length;
     process.stdout.write(
       `\r  ${label}: ${processed}/${rows.length} rows imported`,
@@ -161,10 +183,12 @@ async function main(): Promise<void> {
   const userBatches = chunk(usersWithAccounts, CHUNK_SIZE);
   let usersProcessed = 0;
   for (const batch of userBatches) {
-    const result = await client.mutation(api.migration.import.importUsers, {
-      users: batch,
-      migrationSecret,
-    });
+    const result = await withRetry(() =>
+      client.mutation(api.migration.import.importUsers, {
+        users: batch,
+        migrationSecret,
+      }),
+    );
     for (const { legacyId, convexId } of result) {
       userMap.set(legacyId, convexId);
     }
@@ -187,10 +211,12 @@ async function main(): Promise<void> {
   const tagBatches = chunk(tagsRewritten, CHUNK_SIZE);
   let tagsProcessed = 0;
   for (const batch of tagBatches) {
-    const result = await client.mutation(api.migration.import.importTags, {
-      tags: batch,
-      migrationSecret,
-    });
+    const result = await withRetry(() =>
+      client.mutation(api.migration.import.importTags, {
+        tags: batch,
+        migrationSecret,
+      }),
+    );
     for (const { legacyId, convexId } of result) {
       tagMap.set(legacyId, convexId);
     }
@@ -215,10 +241,12 @@ async function main(): Promise<void> {
   const bookmarkBatches = chunk(bookmarksRewritten, CHUNK_SIZE);
   let bookmarksProcessed = 0;
   for (const batch of bookmarkBatches) {
-    const result = await client.mutation(api.migration.import.importBookmarks, {
-      bookmarks: batch,
-      migrationSecret,
-    });
+    const result = await withRetry(() =>
+      client.mutation(api.migration.import.importBookmarks, {
+        bookmarks: batch,
+        migrationSecret,
+      }),
+    );
     for (const { legacyId, convexId } of result) {
       bookmarkMap.set(legacyId, convexId);
     }

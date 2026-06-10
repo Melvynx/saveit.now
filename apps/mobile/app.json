@@ -2,7 +2,7 @@
   "expo": {
     "name": "SaveIt",
     "slug": "saveit-mobile",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "saveit",
@@ -64,7 +64,9 @@
     },
     "env": {
       "production": {
-        "EXPO_PUBLIC_API_URL": "https://saveit.now"
+        "EXPO_PUBLIC_API_URL": "https://saveit.now",
+        "EXPO_PUBLIC_CONVEX_URL": "https://tough-chameleon-916.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://tough-chameleon-916.convex.site"
       }
     }
   }
