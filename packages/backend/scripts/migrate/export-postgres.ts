@@ -51,8 +51,9 @@ const TABLES: TableExport[] = [
   },
   {
     file: "tag",
-    // Quoted because the Prisma model is Tag → table "Tag"
-    query: `SELECT * FROM "Tag" ORDER BY "createdAt"`,
+    // Quoted because the Prisma model is Tag → table "Tag".
+    // Tag has no createdAt column — order by id.
+    query: `SELECT * FROM "Tag" ORDER BY id`,
   },
   {
     file: "bookmark",
@@ -77,7 +78,8 @@ const TABLES: TableExport[] = [
   },
   {
     file: "subscription",
-    query: `SELECT * FROM "subscription" ORDER BY "createdAt"`,
+    // Prisma Subscription has no createdAt column — order by id.
+    query: `SELECT * FROM "subscription" ORDER BY id`,
   },
   {
     file: "chatConversation",

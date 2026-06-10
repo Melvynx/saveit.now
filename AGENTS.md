@@ -71,6 +71,7 @@ The application requires extensive environment variables (35+ variables) for var
 ## Deployment and Logs
 
 - To get the latest deployment logs, use `flyctl logs` command for the specific app
+- For Convex preview/prod env debugging, load `CONVEX_DEPLOY_KEY` from the ignored root `.env`; never echo the key, paste it into docs, or commit it.
 - Vercel CLI deployment commands:
   - `vercel` - Deploy the current project
   - `vercel --prod` - Deploy to production

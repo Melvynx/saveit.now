@@ -233,15 +233,24 @@ async function main(): Promise<void> {
   // 6. Import bookmarkTags
   // -------------------------------------------------------------------------
   console.log("\nImporting bookmarkTags...");
+  // Prisma BookmarkTag has NO userId column — derive it from the bookmark's owner.
+  const bookmarkLegacyUser = new Map<string, string>(); // legacy bookmarkId → legacy userId
+  for (const b of rawBookmarks as Record<string, unknown>[]) {
+    bookmarkLegacyUser.set(String(b.id), String(b.userId));
+  }
   const bookmarkTagsRewritten = (rawBookmarkTags as Record<string, unknown>[])
     .map((row) => {
       const bookmarkId = bookmarkMap.get(String(row.bookmarkId));
       const tagId = tagMap.get(String(row.tagId));
-      const userId = userMap.get(String(row.userId)) ?? row.userId;
-      if (!bookmarkId || !tagId) return null; // dangling FK — skip
+      const legacyUserId = bookmarkLegacyUser.get(String(row.bookmarkId));
+      const userId = legacyUserId ? userMap.get(legacyUserId) : undefined;
+      if (!bookmarkId || !tagId || !userId) return null; // dangling FK — skip
       return { bookmarkId, tagId, userId };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
+  console.log(
+    `  bookmarkTags resolved: ${bookmarkTagsRewritten.length}/${rawBookmarkTags.length}`,
+  );
 
   await runChunked("bookmarkTags", bookmarkTagsRewritten, (batch) =>
     client.mutation(api.migration.import.importBookmarkTags, {
