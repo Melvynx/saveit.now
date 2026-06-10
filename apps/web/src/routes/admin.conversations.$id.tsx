@@ -11,9 +11,9 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { cn } from "@workspace/ui/lib/utils";
-import { useQuery } from "convex/react";
 import { ArrowLeftIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/conversations/$id")({
   component: AdminConversationDetailPage,
@@ -24,7 +24,7 @@ function AdminConversationDetailPage() {
   const { id } = Route.useParams();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
-  const conversation = useQuery(
+  const conversation = useAuthedQuery(
     api.admin.queries.getConversation,
     isAdmin ? { conversationId: id } : "skip",
   );

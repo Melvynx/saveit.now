@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VariationsClient } from "@/features/variations/variations-client";
 import { api } from "@convex/_generated/api";
-import { useQuery } from "convex/react";
 import type { VariationBookmark } from "@/features/variations/types";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/variations")({
   component: VariationsPage,
 });
 
 function VariationsPage() {
-  const bookmarksData = useQuery(
+  const bookmarksData = useAuthedQuery(
     api.bookmarks.queries.list,
     {
       paginationOpts: { numItems: 50, cursor: null },

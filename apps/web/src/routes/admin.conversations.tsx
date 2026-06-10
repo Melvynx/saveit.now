@@ -19,7 +19,7 @@ import {
 } from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
 import { MessageSquareIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/conversations")({
   component: AdminConversationsPage,
@@ -29,7 +29,7 @@ function AdminConversationsPage() {
   const session = useSession();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
-  const conversations = useQuery(
+  const conversations = useAuthedQuery(
     api.admin.queries.listConversations,
     isAdmin ? {} : "skip",
   );

@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { useQuery } from "convex/react";
 import { Mail } from "lucide-react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/send-email")({
   component: SendEmailPage,
@@ -21,7 +21,7 @@ function SendEmailPage() {
   const session = useSession();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
-  const stats = useQuery(
+  const stats = useAuthedQuery(
     api.admin.queries.getMarketingStats,
     isAdmin ? {} : "skip",
   );

@@ -5,7 +5,8 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useChat } from "@ai-sdk/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useAction, useConvex, useMutation, useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
+import { useAction, useConvex, useMutation } from "convex/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ArrowDownIcon,
@@ -183,7 +184,7 @@ export function ChatPage() {
   }, [conversationId, setSearchParams]);
 
   // Convex reactive query for chat usage
-  const usage = useQuery(api.chat.queries.getChatUsage, {});
+  const usage = useAuthedQuery(api.chat.queries.getChatUsage, {});
 
   // Convex action for creating a conversation with AI-generated title
   const createConversation = useAction(

@@ -1,8 +1,9 @@
 import { api } from "@convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { toast } from "sonner";
 import type { Id } from "@convex/_generated/dataModel";
 import { useState } from "react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export interface Tag {
   id: string;
@@ -16,7 +17,7 @@ export const useBookmarkTags = (bookmarkId?: string | null) => {
     api.tags.mutations.setBookmarkTagsByName,
   );
 
-  const data = useQuery(
+  const data = useAuthedQuery(
     api.tags.queries.getByBookmark,
     bookmarkId ? { bookmarkId: bookmarkId as Id<"bookmarks"> } : "skip",
   );

@@ -20,6 +20,7 @@ export type BookmarkCardData = {
   read: boolean;
   status: BookmarkStatus;
   faviconUrl: string | null;
+  processingError?: string | null;
   userId?: string;
   imageDescription?: string | null;
   inngestRunId?: string | null;

@@ -16,7 +16,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Bookmark, MousePointerClick, UserCog, Users } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/users/$userId")({
   component: AdminUserPage,
@@ -27,7 +27,7 @@ function AdminUserPage() {
   const { userId } = Route.useParams();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
-  const userDetail = useQuery(
+  const userDetail = useAuthedQuery(
     api.admin.queries.getUserDetail,
     isAdmin ? { userId } : "skip",
   );

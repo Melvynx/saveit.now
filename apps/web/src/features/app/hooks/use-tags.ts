@@ -1,8 +1,9 @@
 import { api } from "@convex/_generated/api";
 import { useDebounce } from "@/hooks/use-debounce";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export type Tag = {
   _id: string;
@@ -23,7 +24,7 @@ export const useTags = (query?: string) => {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const data = useQuery(
+  const data = useAuthedQuery(
     api.tags.queries.list,
     {
       paginationOpts: { numItems: 50, cursor: null },

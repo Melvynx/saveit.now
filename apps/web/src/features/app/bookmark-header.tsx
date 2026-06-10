@@ -29,7 +29,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useTheme } from "@/features/dark-mode/theme-provider";
-import { useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { useEffect, useState } from "react";
 
 
@@ -53,7 +53,7 @@ export const BookmarkHeader = () => {
   const plan = useUserPlan();
   const isMobile = useMobileMedia();
 
-  const bookmarkCount = useQuery(api.bookmarks.queries.count, {}) ?? 0;
+  const bookmarkCount = useAuthedQuery(api.bookmarks.queries.count, {}) ?? 0;
 
   return (
     <div className="flex items-center gap-2">

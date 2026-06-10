@@ -17,7 +17,7 @@ import {
 import { Users } from "lucide-react";
 import { Suspense } from "react";
 import { UserTable } from "@/features/admin/user-table";
-import { useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/users")({
   validateSearch: parseAdminSearchParams,
@@ -30,7 +30,7 @@ function AdminUsersPage() {
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
   const pageSize = 10;
-  const usersData = useQuery(
+  const usersData = useAuthedQuery(
     api.admin.queries.listUsers,
     isAdmin
       ? {

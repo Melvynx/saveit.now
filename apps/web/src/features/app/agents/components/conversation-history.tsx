@@ -10,12 +10,13 @@ import {
 } from "@workspace/ui/components/popover";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { HistoryIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 dayjs.extend(relativeTime);
 
@@ -40,7 +41,7 @@ export function ConversationHistory({
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Convex reactive query — only active when the popover is open
-  const data = useQuery(
+  const data = useAuthedQuery(
     api.chat.queries.listConversations,
     open ? {} : "skip",
   );

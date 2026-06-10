@@ -56,7 +56,9 @@ const ReBookmarkButton = ({
 };
 
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
-  const metadata = bookmark.metadata as { error: string };
+  const metadata = bookmark.metadata as { error?: string } | null | undefined;
+  const errorMessage =
+    bookmark.processingError ?? metadata?.error ?? "Processing failed";
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>
@@ -87,7 +89,7 @@ export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
 
       <BookmarkCardContent bookmark={bookmark} href={null}>
         <BookmarkCardTitle>Error Details</BookmarkCardTitle>
-        <BookmarkCardDescription>{metadata.error}</BookmarkCardDescription>
+        <BookmarkCardDescription>{errorMessage}</BookmarkCardDescription>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );

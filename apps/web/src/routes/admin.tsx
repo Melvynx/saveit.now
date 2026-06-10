@@ -10,6 +10,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 import {
   Card,
   CardContent,
@@ -27,7 +28,6 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/admin")({
   validateSearch: parseAdminSearchParams,
@@ -39,7 +39,7 @@ function AdminPage() {
   const session = useSession();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
   const isAdmin = role === "admin";
-  const overview = useQuery(
+  const overview = useAuthedQuery(
     api.admin.queries.getOverview,
     isAdmin && pathname === "/admin" ? {} : "skip",
   );

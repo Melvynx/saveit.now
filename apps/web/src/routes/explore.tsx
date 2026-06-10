@@ -9,7 +9,6 @@ import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,6 +20,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import type { ElementType } from "react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 const BOOKMARKS_PER_PAGE = 48;
 
@@ -100,7 +100,7 @@ function ExplorePage() {
   const { type, tag, page: pageParam } = Route.useSearch();
   const currentPage = Math.max(1, Number(pageParam) || 1);
 
-  const bookmarksData = useQuery(
+  const bookmarksData = useAuthedQuery(
     api.bookmarks.queries.list,
     {
       paginationOpts: { numItems: BOOKMARKS_PER_PAGE, cursor: null },

@@ -6,7 +6,8 @@ import { useUserPlan } from "@/lib/auth/user-plan";
 import { api } from "@convex/_generated/api";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ClientOnly } from "@tanstack/react-router";
-import { ConvexReactClient, useQuery } from "convex/react";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
+import { ConvexReactClient } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { TchaoProvider } from "tchao/react";
 import { useEffect } from "react";
@@ -47,7 +48,10 @@ const UserPlanSync = () => {
   const session = useSession();
   const userId = session.data?.user?.id;
 
-  const plan = useQuery(api.users.queries.getLimits, userId ? {} : "skip");
+  const plan = useAuthedQuery(
+    api.users.queries.getLimits,
+    userId ? {} : "skip",
+  );
 
   useEffect(() => {
     if (!session.isPending && !userId) {

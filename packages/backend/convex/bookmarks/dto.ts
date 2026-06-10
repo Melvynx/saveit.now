@@ -61,6 +61,7 @@ export type BookmarkDTO = {
   openCount: number;
   starred: boolean;
   read: boolean;
+  processingError: string | null;
 };
 
 export type BookmarkDetailDTO = BookmarkDTO & {
@@ -69,7 +70,6 @@ export type BookmarkDetailDTO = BookmarkDTO & {
   vectorSummary: string | null;
   updatedAt: number;
   processingStep: number | null;
-  processingError: string | null;
 };
 
 export type PublicBookmarkDTO = {
@@ -163,6 +163,7 @@ export function buildBookmarkDTO(
     openCount,
     starred: bookmark.starred,
     read: bookmark.read,
+    processingError: bookmark.processingError ?? null,
   };
 }
 
@@ -181,7 +182,6 @@ export function buildBookmarkDetailDTO(
     vectorSummary: bookmark.vectorSummary ?? null,
     updatedAt: bookmark.updatedAt,
     processingStep: bookmark.processingStep ?? null,
-    processingError: bookmark.processingError ?? null,
   };
 }
 
