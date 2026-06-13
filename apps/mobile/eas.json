@@ -21,6 +21,7 @@
       }
     },
     "production": {
+      "pnpm": "10.4.1",
       "ios": {
         "resourceClass": "m-medium"
       },
