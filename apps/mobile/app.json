@@ -16,7 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "buildNumber": "2026061301"
     },
     "android": {
       "adaptiveIcon": {
