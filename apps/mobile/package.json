@@ -64,6 +64,9 @@
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.2"
   },
+  "optionalDependencies": {
+    "lightningcss-darwin-arm64": "1.32.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@react-native-community/cli": "latest",
