@@ -2,6 +2,7 @@
   "name": "@saveit/mobile",
   "main": "expo-router/entry",
   "version": "3.0.0",
+  "packageManager": "pnpm@10.4.1",
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
