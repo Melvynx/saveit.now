@@ -23,6 +23,7 @@
     "production": {
       "pnpm": "10.4.1",
       "ios": {
+        "image": "latest",
         "resourceClass": "m-medium"
       },
       "env": {
