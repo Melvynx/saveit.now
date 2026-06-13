@@ -485,7 +485,7 @@
 					"$(inherited)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "/Users/melvynx/Developer/saas/saveit.now-mono/apps/mobile/ios/ShareExtension/ShareExtension-Info.plist";
+				INFOPLIST_FILE = ShareExtension/ShareExtension-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -512,7 +512,7 @@
 				CURRENT_PROJECT_VERSION = 2026061301;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "/Users/melvynx/Developer/saas/saveit.now-mono/apps/mobile/ios/ShareExtension/ShareExtension-Info.plist";
+				INFOPLIST_FILE = ShareExtension/ShareExtension-Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
