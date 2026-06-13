@@ -1,6 +1,7 @@
-import { ScrollView } from "react-native";
-import { XStack, Text, Button } from "tamagui";
-import { BookmarkType, BOOKMARK_TYPES } from "../lib/api-client";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { hapticSelection } from "../lib/haptics";
+import { cn } from "../lib/utils";
+import { BOOKMARK_TYPES, BookmarkType } from "../lib/api-client";
 
 const TYPE_LABELS: Record<BookmarkType, string> = {
   PAGE: "Pages",
@@ -11,17 +12,6 @@ const TYPE_LABELS: Record<BookmarkType, string> = {
   IMAGE: "Images",
   PDF: "PDFs",
   PRODUCT: "Products",
-};
-
-const TYPE_COLORS: Record<BookmarkType, string> = {
-  PAGE: "$blue10",
-  ARTICLE: "$green10",
-  YOUTUBE: "$red10",
-  TWEET: "$blue10",
-  VIDEO: "$purple10",
-  IMAGE: "$orange10",
-  PDF: "$red10",
-  PRODUCT: "$yellow10",
 };
 
 interface TypeFilterBadgesProps {
@@ -37,36 +27,35 @@ export function TypeFilterBadges({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+      contentContainerStyle={{ paddingHorizontal: 16 }}
     >
-      <XStack gap="$2">
+      <View className="flex-row gap-2">
         {BOOKMARK_TYPES.map((type) => {
           const isSelected = selectedTypes.includes(type);
           return (
-            <Button
+            <Pressable
               key={type}
-              size="$2"
-              paddingHorizontal="$3"
-              backgroundColor={isSelected ? TYPE_COLORS[type] : "$gray4"}
-              borderRadius="$10"
-              pressStyle={{ scale: 0.97 }}
-              hoverStyle={{
-                backgroundColor: isSelected ? TYPE_COLORS[type] : "$gray5",
+              onPress={() => {
+                hapticSelection();
+                onToggleType(type);
               }}
-              focusStyle={{ outlineWidth: 0 }}
-              onPress={() => onToggleType(type)}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 active:opacity-80",
+                isSelected ? "bg-primary" : "bg-secondary",
+              )}
             >
               <Text
-                fontSize="$2"
-                fontWeight="500"
-                color={isSelected ? "white" : "$gray11"}
+                className={cn(
+                  "font-sans-semibold text-[13px]",
+                  isSelected ? "text-primary-foreground" : "text-muted-foreground",
+                )}
               >
                 {TYPE_LABELS[type]}
               </Text>
-            </Button>
+            </Pressable>
           );
         })}
-      </XStack>
+      </View>
     </ScrollView>
   );
 }

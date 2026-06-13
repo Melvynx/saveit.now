@@ -1,12 +1,12 @@
-import { Star } from "@tamagui/lucide-icons";
-import { Button, Card, Image, Text, XStack, YStack } from "tamagui";
+import { Image, Pressable, Text, View } from "react-native";
+
 import { type Bookmark } from "../lib/api-client";
+import { CardActionButton } from "./bookmark-item";
 
 interface BookmarkItemTweetProps {
   bookmark: Bookmark;
   onPress: () => void;
   onToggleStar: () => void;
-  onToggleRead?: () => void;
 }
 
 export function BookmarkItemTweet({
@@ -20,37 +20,20 @@ export function BookmarkItemTweet({
   const media = metadata?.mediaDetails?.[0];
 
   return (
-    <Card
-      elevate
-      size="$4"
-      bordered
-      marginBottom="$3"
-      pressStyle={{ scale: 0.98 }}
+    <Pressable
       onPress={onPress}
-      overflow="hidden"
-      padding="$4"
+      className="overflow-hidden rounded-2xl border border-border bg-card p-4 active:opacity-90"
     >
-      <XStack position="absolute" top="$2" right="$2" zIndex={10}>
-        <Button
-          size="$2"
-          circular
-          backgroundColor="$background"
-          borderColor="$borderColor"
-          onPress={(e) => {
-            e.stopPropagation();
-            onToggleStar();
-          }}
-        >
-          <Star
-            size={14}
-            color={bookmark.starred ? "$yellow10" : "$gray10"}
-            fill={bookmark.starred ? "$yellow10" : "transparent"}
-          />
-        </Button>
-      </XStack>
+      <View className="absolute right-2 top-2 z-10">
+        <CardActionButton
+          icon={bookmark.starred ? "star" : "star-outline"}
+          color={bookmark.starred ? "#F59E0B" : undefined}
+          onPress={onToggleStar}
+        />
+      </View>
 
-      <YStack gap="$3">
-        <XStack gap="$3" alignItems="center">
+      <View className="gap-3">
+        <View className="flex-row items-center gap-3 pr-10">
           <Image
             source={{
               uri:
@@ -58,63 +41,53 @@ export function BookmarkItemTweet({
                 bookmark.faviconUrl ||
                 "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
             }}
-            width={48}
-            height={48}
-            borderRadius={24}
+            style={{ width: 44, height: 44, borderRadius: 22 }}
           />
-          <YStack flex={1}>
-            <Text fontWeight="700" fontSize="$4" numberOfLines={1}>
+          <View className="flex-1">
+            <Text
+              numberOfLines={1}
+              className="font-sans-bold text-[15px] text-foreground"
+            >
               {user?.name || bookmark.title || "Twitter User"}
             </Text>
-            <Text color="$gray10" fontSize="$3">
+            <Text className="font-sans text-[13px] text-muted-foreground">
               @{user?.screen_name || "user"}
             </Text>
-          </YStack>
-          <XLogo />
-        </XStack>
+          </View>
+          <Text className="text-[17px] font-sans-bold text-foreground">𝕏</Text>
+        </View>
 
-        {tweetText && (
-          <Text fontSize="$4" lineHeight="$5" numberOfLines={6}>
+        {tweetText ? (
+          <Text
+            numberOfLines={6}
+            className="font-sans text-[15px] leading-[22px] text-foreground"
+          >
             {tweetText}
           </Text>
-        )}
+        ) : null}
 
-        {media && (
+        {media ? (
           <Image
             source={{ uri: media.media_url_https }}
-            width="100%"
-            height={200}
-            borderRadius="$3"
+            style={{ width: "100%", height: 200, borderRadius: 12 }}
             resizeMode="cover"
           />
-        )}
+        ) : null}
 
-        <XStack alignItems="center" gap="$2">
-          <Text color="$gray9" fontSize="$2">
+        <View className="flex-row items-center gap-2">
+          <Text className="font-sans text-[12px] text-muted-foreground">
             {new Date(bookmark.createdAt).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
               year: "numeric",
             })}
           </Text>
-          <Text color="$gray9" fontSize="$2">
-            •
-          </Text>
-          <Text color="$blue10" fontSize="$2">
+          <Text className="font-sans text-[12px] text-muted-foreground">•</Text>
+          <Text className="font-sans-semibold text-[12px] text-foreground">
             View on X
           </Text>
-        </XStack>
-      </YStack>
-    </Card>
-  );
-}
-
-function XLogo() {
-  return (
-    <YStack width={24} height={24} alignItems="center" justifyContent="center">
-      <Text fontSize="$5" fontWeight="900">
-        𝕏
-      </Text>
-    </YStack>
+        </View>
+      </View>
+    </Pressable>
   );
 }

@@ -51,7 +51,7 @@ const TABLES: TableExport[] = [
   },
   {
     file: "tag",
-    // Quoted because the Prisma model is Tag → table "Tag".
+    // Quoted because the legacy relational table is named "Tag".
     // Tag has no createdAt column — order by id.
     query: `SELECT * FROM "Tag" ORDER BY id`,
   },
@@ -78,7 +78,7 @@ const TABLES: TableExport[] = [
   },
   {
     file: "subscription",
-    // Prisma Subscription has no createdAt column — order by id.
+    // Legacy subscription rows have no createdAt column - order by id.
     query: `SELECT * FROM "subscription" ORDER BY id`,
   },
   {

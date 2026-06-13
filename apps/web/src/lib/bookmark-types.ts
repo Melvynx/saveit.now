@@ -1,6 +1,5 @@
 /**
- * Client-safe bookmark/tag enums — replaces the Prisma-generated enums from
- * `@workspace/database`. Mirrors the Convex schema unions. Usable as both a
+ * Client-safe bookmark/tag enums. Mirrors the Convex schema unions. Usable as both a
  * value (e.g. `BookmarkType.YOUTUBE`) and a type (`BookmarkType`).
  */
 export const BookmarkType = {

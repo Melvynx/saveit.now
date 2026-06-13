@@ -1,6 +1,6 @@
 # SaveIt.now
 
-A modern bookmark management SaaS application built with TypeScript, TanStack Start, and Prisma.
+A modern bookmark management SaaS application built with TypeScript, TanStack Start, and Convex.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 ### Shared Packages
 
-- **packages/database** - Prisma database client and types
+- **packages/backend** - Convex backend functions, schema, and auth
 - **packages/ui** - Shared UI components using shadcn/ui
 - **packages/eslint-config** - Shared ESLint configuration
 - **packages/typescript-config** - Shared TypeScript configuration
@@ -24,9 +24,8 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 - **Frontend**: TanStack Start, TypeScript, shadcn/ui
 - **Authentication**: Better Auth with GitHub/Google OAuth, magic links, email OTP
-- **Database**: PostgreSQL with Prisma ORM
+- **Backend**: Convex for data, auth integration, and background work
 - **Payments**: Stripe integration for subscriptions
-- **Background Jobs**: Inngest for bookmark processing and emails
 - **File Storage**: AWS S3 for screenshots and media
 - **Email**: Resend for transactional emails
 - **Analytics**: PostHog
@@ -38,7 +37,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 - Node.js 18+
 - pnpm
-- PostgreSQL database
+- Convex deployment
 
 ### Setup
 
@@ -48,9 +47,9 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
    pnpm install
    ```
 3. Set up environment variables (see CLAUDE.md for full list)
-4. Run database migrations:
+4. Start the Convex backend:
    ```bash
-   pnpm db:generate && pnpm db:migrate
+   pnpm convex:dev
    ```
 
 ### Development Commands
@@ -78,21 +77,8 @@ pnpm dev
 # Run TypeScript checks
 pnpm ts
 
-# Generate Better Auth schema
-pnpm better-auth:generate
-```
-
-### Database
-
-```bash
-# Generate Prisma client
-pnpm db:generate
-
-# Run migrations (development)
-pnpm db:migrate
-
-# Deploy migrations (production)
-pnpm db:deploy
+# Start Convex backend
+pnpm convex:dev
 ```
 
 ## Using UI Components

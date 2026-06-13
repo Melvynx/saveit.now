@@ -1,29 +1,79 @@
-import {
-  Book,
-  Bug,
-  Check,
-  Crown,
-  HelpCircle,
-  LogOut,
-  Moon,
-  Sun,
-  Trash2,
-  User,
-} from "@tamagui/lucide-icons";
-import * as WebBrowser from "expo-web-browser";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert, ScrollView } from "react-native";
-import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
+import { Alert, Pressable, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { UpgradeButton } from "../../src/components/upgrade-button";
+import { Text } from "../../src/components/ui/text";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { authClient } from "../../src/lib/auth-client";
-import { useAppTheme } from "../_layout";
+import { hapticSelection, hapticWarning } from "../../src/lib/haptics";
+import { useAppTheme, useThemeColors } from "../../src/lib/theme";
+
+function SettingsRow({
+  icon,
+  title,
+  description,
+  trailing,
+  showChevron = false,
+  isFirst = false,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description?: string;
+  trailing?: React.ReactNode;
+  showChevron?: boolean;
+  isFirst?: boolean;
+  onPress?: () => void;
+}) {
+  const colors = useThemeColors();
+  const row = (
+    <View
+      className={
+        isFirst
+          ? "flex-row items-center gap-3 px-4 py-3.5"
+          : "flex-row items-center gap-3 border-t border-border px-4 py-3.5"
+      }
+    >
+      <View className="h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-background">
+        <Ionicons name={icon} size={16} color={colors.foreground} />
+      </View>
+      <View className="flex-1">
+        <Text className="font-sans-medium text-[16px] text-foreground">{title}</Text>
+        {description ? (
+          <Text className="font-sans text-[13px] text-muted-foreground">
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+      {showChevron ? (
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={colors.mutedForeground}
+          style={{ opacity: 0.6 }}
+        />
+      ) : null}
+    </View>
+  );
+
+  if (!onPress) return row;
+  return (
+    <Pressable onPress={onPress} className="active:opacity-70">
+      {row}
+    </Pressable>
+  );
+}
 
 export default function TabTwoScreen() {
   const { user, plan, signOutWithNavigation } = useAuth();
   const { currentTheme, toggleTheme } = useAppTheme();
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const handleDeleteAccount = async () => {
@@ -62,6 +112,7 @@ export default function TabTwoScreen() {
   };
 
   const handleSignOut = () => {
+    hapticWarning();
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -83,180 +134,141 @@ export default function TabTwoScreen() {
 
   if (!user) {
     return (
-      <YStack
-        flex={1}
-        alignItems="center"
-        justifyContent="center"
-        padding="$4"
-        gap="$4"
+      <View
+        className="flex-1 items-center justify-center gap-2 bg-background px-4"
+        style={{ paddingTop: insets.top + 8 }}
       >
-        <Text fontSize="$8" fontWeight="bold" color="$color">
-          Settings
-        </Text>
-        <Text fontSize="$4" textAlign="center" color="$gray10">
+        <Text variant="title">Settings</Text>
+        <Text variant="subtitle" className="text-center">
           Please sign in to access settings.
         </Text>
-      </YStack>
+      </View>
     );
   }
 
-  return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-      <YStack gap="$4">
-        <YStack alignItems="center" gap="$4" marginTop="$8">
-          <Text fontSize="$8" fontWeight="bold" color="$color">
-            Settings
-          </Text>
-          <Separator width="80%" />
-        </YStack>
+  const isPro = plan.name === "pro";
 
-        <Card
-          padding="$4"
-          gap="$3"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$borderColor"
-        >
-          <XStack alignItems="center" gap="$3">
-            <User size={24} color="$gray10" />
-            <YStack flex={1} gap="$1">
-              <Text fontSize="$3" color="$gray10">
-                Signed in as:
+  return (
+    <View
+      className="flex-1 bg-background"
+      style={{ paddingTop: insets.top + 8 }}
+    >
+      <View className="mb-6 px-4 pt-2">
+        <Text variant="title">Settings</Text>
+      </View>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
+      >
+        <View className="mb-8 px-4">
+          <Text variant="section-label" className="mb-3">
+            Account
+          </Text>
+          <View className="rounded-2xl bg-secondary">
+            <View className="px-5 py-4">
+              <Text className="font-sans text-[13px] text-muted-foreground">
+                Email
               </Text>
-              <Text fontSize="$5" fontWeight="500" color="$color">
+              <Text className="font-sans-medium text-[17px] text-foreground">
                 {user.email}
               </Text>
-            </YStack>
-          </XStack>
-        </Card>
-
-        <Card
-          padding="$4"
-          gap="$3"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor={plan.name === "pro" ? "$green8" : "$borderColor"}
-        >
-          <XStack alignItems="center" gap="$3">
-            <Crown
-              size={24}
-              color={plan.name === "pro" ? "$green10" : "$gray10"}
-            />
-            <YStack flex={1} gap="$1">
-              <Text fontSize="$3" color="$gray10">
-                Current Plan
+            </View>
+            <View className="border-t border-border px-5 py-4">
+              <Text className="font-sans text-[13px] text-muted-foreground">
+                Plan
               </Text>
-              <XStack alignItems="center" gap="$2">
-                <Text fontSize="$5" fontWeight="500" color="$color">
-                  {plan.name === "pro" ? "SaveIt.pro" : "Free"}
+              <View className="flex-row items-center gap-2">
+                <Text className="font-sans-medium text-[17px] text-foreground">
+                  {isPro ? "SaveIt Pro" : "Free"}
                 </Text>
-                {plan.name === "pro" && <Check size={16} color="$green10" />}
-              </XStack>
-            </YStack>
-          </XStack>
-          {plan.name === "free" && (
-            <YStack gap="$2" marginTop="$2">
-              <Text fontSize="$2" color="$gray10">
-                {plan.limits.bookmarks} bookmarks limit
+                {isPro ? (
+                  <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                ) : null}
+              </View>
+              <Text className="mt-0.5 font-sans text-[13px] text-muted-foreground">
+                {isPro
+                  ? "Unlimited bookmarks"
+                  : `${plan.limits.bookmarks} bookmarks limit`}
               </Text>
+            </View>
+          </View>
+          {!isPro ? (
+            <View className="mt-3">
               <UpgradeButton />
-            </YStack>
-          )}
-          {plan.name === "pro" && (
-            <Text fontSize="$2" color="$green10" marginTop="$2">
-              Unlimited bookmarks
+            </View>
+          ) : null}
+        </View>
+
+        <View className="mb-8 px-4">
+          <Text variant="section-label" className="mb-3">
+            Appearance
+          </Text>
+          <View className="overflow-hidden rounded-2xl bg-secondary">
+            <SettingsRow
+              isFirst
+              icon={currentTheme === "dark" ? "moon-outline" : "sunny-outline"}
+              title="Theme"
+              description={currentTheme === "dark" ? "Dark mode" : "Light mode"}
+              trailing={
+                <Pressable
+                  onPress={() => {
+                    hapticSelection();
+                    toggleTheme();
+                  }}
+                  className="h-9 w-9 items-center justify-center rounded-full bg-background active:opacity-70"
+                >
+                  <Ionicons
+                    name={currentTheme === "dark" ? "sunny-outline" : "moon-outline"}
+                    size={16}
+                    color={colors.foreground}
+                  />
+                </Pressable>
+              }
+            />
+          </View>
+        </View>
+
+        <View className="mb-8 px-4">
+          <Text variant="section-label" className="mb-3">
+            App
+          </Text>
+          <View className="overflow-hidden rounded-2xl bg-secondary">
+            <SettingsRow
+              isFirst
+              icon="book-outline"
+              title="Documentation"
+              description="Learn how to use SaveIt"
+              showChevron
+              onPress={openDocumentation}
+            />
+            <SettingsRow
+              icon="help-circle-outline"
+              title="Help"
+              description="Get support"
+              showChevron
+              onPress={openHelp}
+            />
+            <SettingsRow
+              icon="bug-outline"
+              title="Report Bug"
+              description="Tell us what went wrong"
+              showChevron
+              onPress={openBugReport}
+            />
+          </View>
+        </View>
+
+        <View className="gap-2.5 px-4">
+          <Pressable
+            onPress={handleSignOut}
+            className="items-center rounded-2xl bg-secondary py-4 active:opacity-70"
+          >
+            <Text className="font-sans-semibold text-[17px] text-destructive">
+              Log Out
             </Text>
-          )}
-        </Card>
-
-        <Card
-          padding="$4"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$borderColor"
-        >
-          <XStack alignItems="center" justifyContent="space-between">
-            <XStack alignItems="center" gap="$3">
-              {currentTheme === "dark" ? (
-                <Moon size={24} color="$gray10" />
-              ) : (
-                <Sun size={24} color="$gray10" />
-              )}
-              <YStack gap="$1">
-                <Text fontSize="$4" fontWeight="500" color="$color">
-                  Theme
-                </Text>
-                <Text fontSize="$3" color="$gray10">
-                  {currentTheme === "dark" ? "Dark mode" : "Light mode"}
-                </Text>
-              </YStack>
-            </XStack>
-            <Button
-              onPress={toggleTheme}
-              size="$3"
-              variant="outlined"
-              backgroundColor="transparent"
-            >
-              {currentTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
-          </XStack>
-        </Card>
-
-        <YStack gap="$3">
-          <Button
-            onPress={openDocumentation}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <Book size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Documentation
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
-            onPress={openHelp}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <HelpCircle size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Help
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
-            onPress={openBugReport}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <Bug size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Report Bug
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$red8"
-            justifyContent="flex-start"
+          </Pressable>
+          <Pressable
             onPress={() => {
               Alert.alert(
                 "Delete Account",
@@ -271,34 +283,15 @@ export default function TabTwoScreen() {
                 ],
               );
             }}
-            opacity={isDeletingAccount ? 0.5 : 1}
             disabled={isDeletingAccount}
+            className="items-center rounded-2xl border border-border py-4 active:opacity-70 disabled:opacity-50"
           >
-            <XStack alignItems="center" gap="$3">
-              <Trash2 size={20} color="$red10" />
-              <Text fontSize="$4" color="$red10">
-                {isDeletingAccount ? "Deleting..." : "Delete Account"}
-              </Text>
-            </XStack>
-          </Button>
-        </YStack>
-
-        <Button
-          onPress={handleSignOut}
-          size="$4"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$red8"
-          justifyContent="flex-start"
-        >
-          <XStack alignItems="center" gap="$3">
-            <LogOut size={20} color="$red10" />
-            <Text fontSize="$4" color="$red10">
-              Sign Out
+            <Text className="font-sans-medium text-[15px] text-muted-foreground">
+              {isDeletingAccount ? "Sending email..." : "Delete account"}
             </Text>
-          </XStack>
-        </Button>
-      </YStack>
-    </ScrollView>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
   );
 }

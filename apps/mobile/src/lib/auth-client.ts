@@ -10,6 +10,7 @@ export const authClient = createAuthClient({
     expoClient({
       scheme: "saveit",
       storagePrefix: "saveit",
+      cookiePrefix: "save-it",
       storage: SecureStore,
     }),
     emailOTPClient(),

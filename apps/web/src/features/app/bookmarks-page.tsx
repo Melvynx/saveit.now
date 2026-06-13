@@ -20,9 +20,11 @@ import {
   BookmarkCardLoadMore,
   BookmarkCardPricing,
 } from "./bookmark-card";
+import { AddBookmarkCard } from "./add-bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
 import { ChatBar } from "./components/chat-bar";
 import { MoreResultsButton } from "./more-results-button";
+import { URL_SCHEMA } from "./schema";
 import { BookmarkDialog } from "./bookmark-page/bookmark-page";
 import { SearchInput, type SearchInputRef } from "./search-input";
 import { useBookmarks } from "./use-bookmarks";
@@ -50,6 +52,9 @@ export function BookmarksPage() {
   const searchInputRef = useRef<SearchInputRef>(null);
   const hasActiveFilters =
     query !== "" || types.length > 0 || tags.length > 0 || special.length > 0;
+  const urlQuery = URL_SCHEMA.safeParse(query.trim()).success
+    ? query.trim()
+    : null;
 
   useHotkeys("mod+k", (event) => {
     event.preventDefault();
@@ -104,7 +109,9 @@ export function BookmarksPage() {
           }
         }
       >
-        {isPending ? (
+        {urlQuery ? (
+          <AddBookmarkCard url={urlQuery} />
+        ) : isPending ? (
           <>
             {Array.from({ length: query ? 2 : 12 }).map((_, i) => (
               <Skeleton

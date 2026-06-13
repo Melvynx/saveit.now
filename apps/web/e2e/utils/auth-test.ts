@@ -1,9 +1,5 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import {
-  getOTPCodeFromDatabase,
-  setUserOnboardingTrue,
-} from "./database-loader.mjs";
 import { TEST_EMAIL, TEST_PASSWORD, generateTestUserData } from "./test-data";
 
 export interface AuthTestUserData {
@@ -207,10 +203,10 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
   const otpInputs = page.locator("input[inputmode='numeric']");
   await expect(otpInputs.first()).toBeVisible();
 
-  const otpCode = await getOTPCodeFromDatabase(`sign-in-otp-${testEmail}`);
+  const otpCode = process.env.PLAYWRIGHT_TEST_OTP_CODE;
 
   if (!otpCode) {
-    throw new Error("OTP code not found");
+    throw new Error("PLAYWRIGHT_TEST_OTP_CODE must be set for OTP E2E sign-in");
   }
 
   await page.locator('input[inputmode="numeric"]').first().fill(otpCode);
@@ -218,14 +214,13 @@ export async function signInWithEmail(params: { email: string; page: Page }) {
   await page.waitForTimeout(1000);
   try {
     await page.waitForLoadState("networkidle", { timeout: 5000 });
-  } catch (error) {
+  } catch {
     // If networkidle times out, just continue - page might be loaded enough
     console.log("Network idle timeout - continuing anyway");
   }
 
   const currentUrl = page.url();
   if (currentUrl.includes("/start")) {
-    await setUserOnboardingTrue(testEmail);
     await page.goto("/app");
   } else if (!currentUrl.includes("/app")) {
     // If not on /app, navigate there

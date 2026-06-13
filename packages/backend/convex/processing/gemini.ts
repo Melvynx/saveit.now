@@ -203,7 +203,7 @@ export const IMAGE_ANALYSIS_PROMPT = `Analyze this screenshot and provide a deta
 - Any notable features or interactive elements
 - Overall design and user interface elements
 
-If the image appears to be completely black, blank, shows only an error page, captcha, Cloudflare protection, or seems to be an invalid screenshot, use the invalid-image tool instead.`;
+If the image appears to be completely black, blank, shows only a browser error page (e.g. "This page couldn't load", "This site can't be reached", a connection error with a Reload button), a captcha, Cloudflare/bot protection, or seems to be an invalid screenshot, set isInvalid to true with a short invalidReason instead of describing it.`;
 
 export const IMAGE_SUMMARY_PROMPT = `<context>
 Create a summary of the purpose of the image. This summary will be show in a "bookmarked" image. The user just save this image, and we will create the best short, straight summary for this image.

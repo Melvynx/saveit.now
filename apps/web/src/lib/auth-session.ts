@@ -3,8 +3,8 @@ import { api } from "@convex/_generated/api";
 import { redirect } from "@tanstack/react-router";
 
 /**
- * SSR auth helpers — sourced entirely from Convex (Better Auth on Convex).
- * No Prisma, no local server auth. Function names are kept stable so every
+ * SSR auth helpers sourced entirely from Convex (Better Auth on Convex).
+ * Function names are kept stable so every
  * route loader / beforeLoad guard keeps working after the data-layer swap.
  */
 

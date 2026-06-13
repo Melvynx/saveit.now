@@ -4,8 +4,8 @@ import { v } from "convex/values";
 /**
  * Local Better Auth component schema (user-centric, NO organizations).
  *
- * The `user` table is extended with SaveIt's custom fields (ported from the
- * Prisma `User` model) so that `userId === betterAuth user id` everywhere.
+ * The `user` table is extended with SaveIt's custom fields so that
+ * `userId === betterAuth user id` everywhere.
  * Custom fields MUST be optional so Better Auth's internal writes never fail
  * validation. Fields that should appear (typed) on `auth.api.getSession().user`
  * must ALSO be declared in `user.additionalFields` in `auth/config.ts`.

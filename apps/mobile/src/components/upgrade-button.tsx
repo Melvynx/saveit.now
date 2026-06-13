@@ -1,10 +1,12 @@
-import { Crown } from "@tamagui/lucide-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { api } from "@convex/_generated/api";
 import { useAction } from "convex/react";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert } from "react-native";
-import { Button, Spinner, Text, XStack } from "tamagui";
-import { api } from "@convex/_generated/api";
+import { Alert, Text } from "react-native";
+
+import { Button } from "./ui/button";
+import { useThemeColors } from "../lib/theme";
 
 interface UpgradeButtonProps {
   annual?: boolean;
@@ -13,6 +15,7 @@ interface UpgradeButtonProps {
 export function UpgradeButton({ annual = false }: UpgradeButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const createCheckout = useAction(api.stripe.actions.createCheckout);
+  const colors = useThemeColors();
 
   const handleUpgrade = async () => {
     setIsLoading(true);
@@ -39,23 +42,15 @@ export function UpgradeButton({ annual = false }: UpgradeButtonProps) {
   };
 
   return (
-    <Button
-      onPress={handleUpgrade}
-      disabled={isLoading}
-      backgroundColor="$blue10"
-      color="white"
-      size="$4"
-    >
-      {isLoading ? (
-        <Spinner color="white" size="small" />
-      ) : (
-        <XStack alignItems="center" gap="$2">
-          <Crown size={18} color="white" />
-          <Text color="white" fontWeight="bold">
-            Upgrade to Pro {annual ? "(Yearly)" : ""}
+    <Button onPress={handleUpgrade} loading={isLoading}>
+      {!isLoading ? (
+        <>
+          <Ionicons name="sparkles" size={17} color={colors.primaryForeground} />
+          <Text className="font-sans-bold text-[17px] text-primary-foreground">
+            Upgrade to Pro{annual ? " (Yearly)" : ""}
           </Text>
-        </XStack>
-      )}
+        </>
+      ) : null}
     </Button>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import { buttonVariants } from "@workspace/ui/components/button";
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import {
   Command,
@@ -20,7 +20,7 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { ChevronDown, Hash, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useTags, type Tag } from "../hooks/use-tags";
+import { useTags } from "../hooks/use-tags";
 
 function TagBadge({
   tag,
@@ -86,12 +86,13 @@ export function TagMultiSelect({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+      <PopoverTrigger asChild nativeButton={false}>
+        <div
           role="combobox"
           aria-expanded={open}
+          tabIndex={0}
           className={cn(
+            buttonVariants({ variant: "outline" }),
             "h-10 min-w-[120px] justify-between gap-1 px-3",
             className,
           )}
@@ -114,7 +115,7 @@ export function TagMultiSelect({
             </span>
           )}
           <ChevronDown className="size-4 shrink-0 opacity-50" />
-        </Button>
+        </div>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0" align="start">
         <Command>

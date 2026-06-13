@@ -10,7 +10,7 @@ const fallbackConvexSiteUrl = convexUrl.replace(
   ".convex.cloud",
   ".convex.site",
 );
-const convexSiteUrl =
+export const convexSiteUrl =
   import.meta.env.VITE_CONVEX_SITE_URL ??
   process.env.VITE_CONVEX_SITE_URL ??
   process.env.CONVEX_SITE_URL ??

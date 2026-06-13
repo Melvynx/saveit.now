@@ -1,15 +1,12 @@
 import { createAuthClient } from "better-auth/client";
 import { config } from "./config";
 
-// BASE_URL: app origin (https://saveit.now) — used for navigation (sign-in page)
+// BASE_URL: app origin (https://saveit.now). The session cookie lives on this
+// origin; /api/auth/* and /api/bookmarks* are proxied server-side to Convex.
 const BASE_URL = config.BASE_URL;
-// CONVEX_SITE_URL: Convex .site domain — serves /api/auth/* and /api/bookmarks
-const CONVEX_SITE_URL = config.CONVEX_SITE_URL;
 
-// Auth client: baseURL points at the Convex site URL where Better Auth routes are registered
-// (authComponent.registerRoutes mounts /api/auth/* on the .convex.site domain).
 export const authClient = createAuthClient({
-  baseURL: CONVEX_SITE_URL,
+  baseURL: BASE_URL,
   fetchOptions: {
     credentials: "include", // Send session cookies cross-origin
     mode: "cors",
@@ -30,12 +27,7 @@ export interface Session {
 
 export async function getSession(): Promise<Session | null> {
   try {
-    console.log("Fetching session from", CONVEX_SITE_URL);
-    console.log("Auth client config:", {
-      baseURL: CONVEX_SITE_URL,
-      mode: "cors",
-      credentials: "include"
-    });
+    console.log("Fetching session from", BASE_URL);
     const { data, error } = await authClient.getSession();
 
     if (error) {
@@ -83,8 +75,8 @@ export async function saveBookmark(
 
     console.log("Saving bookmark with data:", requestBody);
 
-    // POST to the Convex site URL — the Prisma/Next endpoint is removed.
-    const response = await fetch(`${CONVEX_SITE_URL}/api/bookmarks`, {
+    // POST to the app origin; proxied server-side to the Convex handler.
+    const response = await fetch(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -157,8 +149,8 @@ export async function uploadScreenshot(
     const formData = new FormData();
     formData.append("file", screenshotBlob, "screenshot.png");
 
-    // Upload to the Convex site URL — the Prisma/Next endpoint is removed.
-    const uploadUrl = `${CONVEX_SITE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`;
+    // Upload to the app origin; proxied server-side to the Convex handler.
+    const uploadUrl = `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`;
 
     const response = await fetch(uploadUrl, {
       method: "POST",

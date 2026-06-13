@@ -102,16 +102,11 @@ export function TagSelector({
   );
 
   const handleTagSelect = (tagName: string) => {
-    console.log("handleTagSelect called with:", tagName);
-    console.log("Current selectedTags:", selectedTags);
-
     const isSelected = selectedTags.some((selectedTag) =>
       typeof selectedTag === "string"
         ? selectedTag === tagName
         : selectedTag.name === tagName,
     );
-
-    console.log("isSelected:", isSelected);
 
     const newTagNames = isSelected
       ? selectedTags
@@ -124,7 +119,6 @@ export function TagSelector({
           tagName,
         ];
 
-    console.log("newTagNames:", newTagNames);
     onTagsChange(newTagNames);
   };
 
@@ -236,7 +230,7 @@ export function TagSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild nativeButton={false}>
         <div
           className={cn(
             "border-input focus-within:ring-ring shadow-xs flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-within:ring-1",

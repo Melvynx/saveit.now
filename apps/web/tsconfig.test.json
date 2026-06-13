@@ -10,7 +10,6 @@
       "@/features/*": ["./src/features/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@test/*": ["./test/*"],
-      "@workspace/database": ["../../packages/database/src"],
       "@workspace/ui": ["../../packages/ui/src"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom", "node"]

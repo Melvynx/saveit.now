@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -31,4 +32,4 @@ config.resolver.unstable_enableSymlinks = true;
 // Enable package exports for Better Auth
 config.resolver.unstable_enablePackageExports = true;
 
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' });

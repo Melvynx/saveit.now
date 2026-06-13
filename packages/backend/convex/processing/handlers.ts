@@ -583,11 +583,11 @@ ${screenshotAnalysis.description}
     );
   }
 
+  // screenshotUrl is only set when the capture was analyzed as valid; if it
+  // is missing or flagged invalid, fall back to the uploaded OG image.
   const finalPreview = screenshotAnalysis.isInvalid
     ? uploadedOgImageUrl
-    : screenshotAnalysis.description
-      ? screenshotUrl
-      : uploadedOgImageUrl;
+    : (screenshotUrl ?? uploadedOgImageUrl);
 
   // Embed
   let searchEmbedding: number[] | undefined;
@@ -1408,11 +1408,11 @@ ${screenshotAnalysis.description}
     );
   }
 
+  // screenshotUrl is only set when the capture was analyzed as valid; if it
+  // is missing or flagged invalid, fall back to the uploaded OG image.
   const finalPreview = screenshotAnalysis.isInvalid
     ? uploadedOgImageUrl
-    : screenshotAnalysis.description
-      ? screenshotUrl
-      : uploadedOgImageUrl;
+    : (screenshotUrl ?? uploadedOgImageUrl);
 
   let searchEmbedding: number[] | undefined;
   if (pageMetadata.title || vectorSummary) {

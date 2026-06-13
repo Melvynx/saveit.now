@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SaveIt.now",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Organize nothing. Find everything.",
   "author": "@melvynxdev",
   "homepage_url": "https://saveit.now",
@@ -25,10 +25,7 @@
     "contextMenus",
     "tabs"
   ],
-  "host_permissions": [
-    "https://saveit.now/*",
-    "https://*.convex.site/*"
-  ],
+  "host_permissions": ["https://saveit.now/*"],
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",

@@ -1,5 +1,4 @@
 import { HeaderUser } from "../page/header-user";
-import { LandingAppButton } from "./landing-app-button";
 
 export const LandingHeader = () => {
   return (
@@ -26,10 +25,6 @@ export const LandingHeader = () => {
 
         <div className="flex items-center gap-3">
           <HeaderUser />
-          <LandingAppButton
-            className="hidden rounded-full px-4 text-xs sm:inline-flex"
-            variant="default"
-          />
         </div>
       </div>
     </header>

@@ -1,25 +1,33 @@
-import {
-  Check,
-  Circle,
-  Copy,
-  ExternalLink,
-  Star,
-  Tag,
-  Trash2,
-  X,
-} from "@tamagui/lucide-icons";
-import { useQuery, useMutation } from "convex/react";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, Linking, ScrollView } from "react-native";
-import YoutubePlayer from "react-native-youtube-iframe";
-import { Button, Card, H3, H4, Image, Text, XStack, YStack } from "tamagui";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  Linking,
+  ScrollView,
+  Text as RNText,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import YoutubePlayer from "react-native-youtube-iframe";
+
+import { Button } from "../../src/components/ui/button";
+import { IconButton } from "../../src/components/ui/icon-button";
+import { LoadingScreen } from "../../src/components/ui/loading";
+import { StatusScreen } from "../../src/components/ui/status-screen";
+import { Text } from "../../src/components/ui/text";
+import { hapticWarning } from "../../src/lib/haptics";
+import { useThemeColors } from "../../src/lib/theme";
+import { getDomainName } from "../../src/lib/utils";
 
 export default function BookmarkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [copying, setCopying] = useState(false);
 
   // Reactive query — updates automatically during processing.
@@ -90,6 +98,7 @@ export default function BookmarkDetailScreen() {
   const handleDeleteBookmark = () => {
     if (!bookmark) return;
 
+    hapticWarning();
     Alert.alert(
       "Delete Bookmark",
       "Are you sure you want to delete this bookmark? This action cannot be undone.",
@@ -113,21 +122,21 @@ export default function BookmarkDetailScreen() {
   };
 
   if (isLoading) {
-    return (
-      <YStack flex={1} justifyContent="center" alignItems="center">
-        <Text>Loading...</Text>
-      </YStack>
-    );
+    return <LoadingScreen />;
   }
 
   if (!bookmark) {
     return (
-      <YStack flex={1} justifyContent="center" alignItems="center" gap="$4">
-        <Text color="$red10">Failed to load bookmark</Text>
-        <Button onPress={() => router.back()} theme="blue">
-          Go Back
-        </Button>
-      </YStack>
+      <StatusScreen
+        icon="alert-circle-outline"
+        title="Something went wrong"
+        message="Failed to load bookmark"
+        footer={
+          <Button onPress={() => router.back()} className="self-stretch">
+            Go Back
+          </Button>
+        }
+      />
     );
   }
 
@@ -141,43 +150,32 @@ export default function BookmarkDetailScreen() {
         : bookmark.createdAt,
   };
 
-  const domainName = (() => {
-    try {
-      return new URL(bookmarkView.url).hostname;
-    } catch {
-      return bookmarkView.url;
-    }
-  })();
+  const domainName = getDomainName(bookmarkView.url);
 
   return (
-    <YStack flex={1}>
+    <View className="flex-1 bg-background">
       {/* Header */}
-      <XStack
-        justifyContent="space-between"
-        alignItems="center"
-        padding="$4"
-        borderBottomWidth={1}
-        borderBottomColor="$borderColor"
-        backgroundColor="$background"
-      >
-        <H3 flex={1} numberOfLines={1} fontSize="$5">
-          {bookmarkView.title || domainName}
-        </H3>
-        <Button
-          size="$3"
-          circular
-          variant="outlined"
-          onPress={() => router.back()}
-        >
-          <X size={20} />
-        </Button>
-      </XStack>
+      <View className="flex-row items-center gap-3 px-4 pb-3 pt-4">
+        <View className="flex-1">
+          <Text
+            numberOfLines={1}
+            className="font-sans-semibold text-[17px] text-foreground"
+          >
+            {bookmarkView.title || domainName}
+          </Text>
+          <Text className="font-sans text-[12px] text-muted-foreground">
+            {domainName}
+          </Text>
+        </View>
+        <IconButton icon="close" onPress={() => router.back()} />
+      </View>
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
-        <YStack padding="$4" gap="$4">
+        <View className="gap-4 px-4 pt-2">
           <BookmarkDetailContent
             bookmark={bookmarkView as any}
             preview={preview}
@@ -186,120 +184,82 @@ export default function BookmarkDetailScreen() {
 
           {/* Summary */}
           {bookmarkView.summary && (
-            <Card padding="$4" gap="$3">
-              <H4>Summary</H4>
-              <Text color="$gray11" lineHeight="$1">
-                {bookmarkView.summary}
-              </Text>
-            </Card>
+            <View className="gap-2">
+              <Text variant="section-label">Summary</Text>
+              <View className="rounded-2xl bg-secondary px-5 py-4">
+                <Text className="font-sans text-[14px] leading-[21px] text-foreground">
+                  {bookmarkView.summary}
+                </Text>
+              </View>
+            </View>
           )}
 
           {/* Tags */}
           {bookmarkView.tags && bookmarkView.tags.length > 0 && (
-            <Card padding="$4" gap="$3">
-              <H4>Tags</H4>
-              <XStack flexWrap="wrap" gap="$2">
+            <View className="gap-2">
+              <Text variant="section-label">Tags</Text>
+              <View className="flex-row flex-wrap gap-2">
                 {bookmarkView.tags.map((tagWrapper: any) => (
-                  <Button
+                  <View
                     key={tagWrapper.tag.id}
-                    size="$2"
-                    icon={<Tag size={14} />}
-                    backgroundColor="$blue4"
-                    color="$blue12"
-                    fontSize="$2"
-                    borderRadius="$3"
-                    paddingHorizontal="$3"
-                    paddingVertical="$2"
+                    className="rounded-full border border-border bg-card px-3.5 py-1.5"
                   >
-                    {tagWrapper.tag.name}
-                  </Button>
+                    <RNText className="font-sans-semibold text-[13px] text-foreground">
+                      #{tagWrapper.tag.name}
+                    </RNText>
+                  </View>
                 ))}
-              </XStack>
-            </Card>
+              </View>
+            </View>
           )}
-        </YStack>
+        </View>
       </ScrollView>
 
       {/* Floating Action Toolbar */}
-      <XStack
-        position="absolute"
-        bottom="$4"
-        alignSelf="center"
-        backgroundColor="$background"
-        borderRadius="$8"
-        padding="$3"
-        gap="$3"
-        justifyContent="center"
-        alignItems="center"
-        borderWidth={1}
-        borderColor="$borderColor"
-        shadowColor="$shadowColor"
-        shadowOffset={{ width: 0, height: 4 }}
-        shadowOpacity={0.1}
-        shadowRadius={8}
-        elevation={8}
+      <View
+        className="absolute self-center rounded-full bg-card"
+        style={{
+          bottom: insets.bottom + 16,
+          flexDirection: "row",
+          gap: 12,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          shadowColor: "#000000",
+          shadowOpacity: colors.isDark ? 0.5 : 0.1,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 10,
+        }}
       >
-        <Button
-          circular
-          size="$3"
-          backgroundColor="transparent"
+        <IconButton
+          size="xl"
+          icon={bookmarkView.starred ? "star" : "star-outline"}
+          color={bookmarkView.starred ? "#F59E0B" : undefined}
           onPress={handleToggleStar}
-          theme={bookmarkView.starred ? "yellow" : undefined}
-        >
-          <Star
-            size={20}
-            color={bookmarkView.starred ? "$yellow10" : "$gray10"}
-            fill={bookmarkView.starred ? "$yellow10" : "transparent"}
-          />
-        </Button>
-
+        />
         {(bookmarkView.type === "ARTICLE" || bookmarkView.type === "YOUTUBE") && (
-          <Button
-            circular
-            size="$3"
-            backgroundColor="transparent"
+          <IconButton
+            size="xl"
+            icon={bookmarkView.read ? "checkmark-circle" : "ellipse-outline"}
+            color={bookmarkView.read ? "#10B981" : undefined}
             onPress={handleToggleRead}
-            theme={bookmarkView.read ? "green" : undefined}
-          >
-            {bookmarkView.read ? (
-              <Check size={20} color="$green10" />
-            ) : (
-              <Circle size={20} color="$gray10" />
-            )}
-          </Button>
+          />
         )}
-
-        <Button
-          circular
-          size="$3"
-          backgroundColor="transparent"
+        <IconButton
+          size="xl"
+          icon="copy-outline"
           onPress={handleCopyLink}
           disabled={copying}
-        >
-          <Copy size={20} color="$gray10" />
-        </Button>
-
-        <Button
-          circular
-          size="$3"
-          backgroundColor="transparent"
-          onPress={handleOpenLink}
-          theme="blue"
-        >
-          <ExternalLink size={20} />
-        </Button>
-
-        <Button
-          circular
-          size="$3"
-          backgroundColor="transparent"
+        />
+        <IconButton size="xl" icon="open-outline" onPress={handleOpenLink} />
+        <IconButton
+          size="xl"
+          icon="trash-outline"
+          color={colors.destructive}
           onPress={handleDeleteBookmark}
-          theme="red"
-        >
-          <Trash2 size={20} color="$red10" />
-        </Button>
-      </XStack>
-    </YStack>
+        />
+      </View>
+    </View>
   );
 }
 
@@ -342,90 +302,50 @@ function TweetDetailContent({
   const media = metadata?.mediaDetails?.[0];
 
   return (
-    <>
-      <Card padding="$4" gap="$4">
-        <XStack gap="$3" alignItems="center">
-          <Image
-            source={{
-              uri:
-                user?.profile_image_url_https ||
-                faviconUrl ||
-                "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
-            }}
-            width={56}
-            height={56}
-            borderRadius={28}
-          />
-          <YStack flex={1}>
-            <Text fontWeight="700" fontSize="$5">
-              {user?.name || bookmark.title || "Twitter User"}
-            </Text>
-            <Text color="$gray10" fontSize="$4">
-              @{user?.screen_name || "user"}
-            </Text>
-          </YStack>
-          <YStack
-            width={28}
-            height={28}
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Text fontSize="$6" fontWeight="900">
-              𝕏
-            </Text>
-          </YStack>
-        </XStack>
+    <View className="gap-4 rounded-2xl border border-border bg-card p-5">
+      <View className="flex-row items-center gap-3">
+        <Image
+          source={{
+            uri:
+              user?.profile_image_url_https ||
+              faviconUrl ||
+              "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+          }}
+          style={{ width: 52, height: 52, borderRadius: 26 }}
+        />
+        <View className="flex-1">
+          <RNText className="font-sans-bold text-[16px] text-foreground">
+            {user?.name || bookmark.title || "Twitter User"}
+          </RNText>
+          <RNText className="font-sans text-[13px] text-muted-foreground">
+            @{user?.screen_name || "user"}
+          </RNText>
+        </View>
+        <RNText className="font-sans-bold text-[20px] text-foreground">𝕏</RNText>
+      </View>
 
-        {tweetText && (
-          <Text
-            fontSize="$3"
-            lineHeight="$4"
-            color="$gray11"
-            numberOfLines={8}
-            letterSpacing={-0.2}
-          >
-            {tweetText}
-          </Text>
-        )}
+      {tweetText ? (
+        <RNText className="font-sans text-[15px] leading-[22px] text-foreground">
+          {tweetText}
+        </RNText>
+      ) : null}
 
-        {media && (
-          <Image
-            source={{ uri: media.media_url_https }}
-            width="100%"
-            height={250}
-            borderRadius="$4"
-            resizeMode="cover"
-          />
-        )}
+      {media ? (
+        <Image
+          source={{ uri: media.media_url_https }}
+          style={{ width: "100%", height: 250, borderRadius: 16 }}
+          resizeMode="cover"
+        />
+      ) : null}
 
-        <Text color="$gray9" fontSize="$3">
-          {new Date(bookmark.createdAt).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </Text>
-      </Card>
-
-      <Card padding="$4" gap="$3">
-        <XStack alignItems="center" gap="$2">
-          <Image
-            source={{ uri: faviconUrl }}
-            width={24}
-            height={24}
-            borderRadius="$3"
-          />
-          <YStack flex={1}>
-            <Text fontSize="$4" fontWeight="600">
-              {user?.name || bookmark.title}
-            </Text>
-            <Text color="$gray10" fontSize="$3" numberOfLines={1}>
-              {bookmark.url}
-            </Text>
-          </YStack>
-        </XStack>
-      </Card>
-    </>
+      <RNText className="font-sans text-[13px] text-muted-foreground">
+        {new Date(bookmark.createdAt).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </RNText>
+    </View>
   );
 }
 
@@ -435,8 +355,8 @@ function YoutubeDetailContent({ bookmark }: { bookmark: any }) {
   if (!youtubeId) return null;
 
   return (
-    <>
-      <Card padding="$0" overflow="hidden" borderRadius="$4">
+    <View className="gap-4">
+      <View className="overflow-hidden rounded-2xl border border-border bg-card">
         <YoutubePlayer
           height={220}
           videoId={youtubeId}
@@ -446,27 +366,26 @@ function YoutubeDetailContent({ bookmark }: { bookmark: any }) {
             showsHorizontalScrollIndicator: false,
           }}
         />
-      </Card>
+      </View>
 
-      <Card padding="$4" gap="$3">
-        <XStack alignItems="center" gap="$2">
-          <Image
-            source={{ uri: "https://www.youtube.com/favicon.ico" }}
-            width={24}
-            height={24}
-            borderRadius="$3"
-          />
-          <YStack flex={1}>
-            <Text fontSize="$4" fontWeight="600" numberOfLines={2}>
-              {bookmark.title || "YouTube Video"}
-            </Text>
-            <Text color="$gray10" fontSize="$3">
-              youtube.com
-            </Text>
-          </YStack>
-        </XStack>
-      </Card>
-    </>
+      <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+        <Image
+          source={{ uri: "https://www.youtube.com/favicon.ico" }}
+          style={{ width: 24, height: 24, borderRadius: 6 }}
+        />
+        <View className="flex-1">
+          <RNText
+            numberOfLines={2}
+            className="font-sans-semibold text-[15px] text-foreground"
+          >
+            {bookmark.title || "YouTube Video"}
+          </RNText>
+          <RNText className="font-sans text-[13px] text-muted-foreground">
+            youtube.com
+          </RNText>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -479,40 +398,35 @@ function DefaultDetailContent({
   preview: string;
   faviconUrl: string;
 }) {
-  const domainName = (() => {
-    try {
-      return new URL(bookmark.url).hostname;
-    } catch {
-      return bookmark.url;
-    }
-  })();
+  const domainName = getDomainName(bookmark.url);
 
   return (
-    <>
-      {preview && (
-        <Card padding="$0" overflow="hidden">
-          <Image source={{ uri: preview }} height={200} width="100%" />
-        </Card>
-      )}
-
-      <Card padding="$4" gap="$3">
-        <XStack alignItems="flex-start" gap="$2">
-          <Image
-            source={{ uri: faviconUrl }}
-            width={24}
-            height={24}
-            borderRadius="$3"
-          />
-          <YStack flex={1}>
-            <Text fontSize="$5" fontWeight="600" numberOfLines={2}>
-              {bookmark.title || "Untitled"}
-            </Text>
-            <Text color="$gray10" fontSize="$3" numberOfLines={1}>
-              {domainName}
-            </Text>
-          </YStack>
-        </XStack>
-      </Card>
-    </>
+    <View className="overflow-hidden rounded-2xl border border-border bg-card">
+      <Image
+        source={{ uri: preview }}
+        style={{ height: 200, width: "100%" }}
+        resizeMode="cover"
+      />
+      <View className="flex-row items-start gap-3 px-4 py-3.5">
+        <Image
+          source={{ uri: faviconUrl }}
+          style={{ width: 24, height: 24, borderRadius: 6, marginTop: 2 }}
+        />
+        <View className="flex-1">
+          <RNText
+            numberOfLines={2}
+            className="font-sans-semibold text-[15px] text-foreground"
+          >
+            {bookmark.title || "Untitled"}
+          </RNText>
+          <RNText
+            numberOfLines={1}
+            className="font-sans text-[13px] text-muted-foreground"
+          >
+            {domainName}
+          </RNText>
+        </View>
+      </View>
+    </View>
   );
 }

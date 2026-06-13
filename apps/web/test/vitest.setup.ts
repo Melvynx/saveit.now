@@ -1,5 +1,3 @@
-import "@testing-library/jest-dom/vitest";
-
 import { cleanup } from "@testing-library/react";
 import { fetch } from "cross-fetch";
 import { beforeEach, vi } from "vitest";
@@ -45,7 +43,7 @@ vi.mock("react-hotkeys-hook", () => ({
   useHotkeys: vi.fn(),
 }));
 
-// (Prisma/up-fetch mocks removed — the backend now lives in Convex.)
+// Old REST data mocks were removed; the backend now lives in Convex.
 
 // Set global fetch
 global.fetch = fetch;

@@ -8,8 +8,9 @@ const GEMINI_PROCESSING_FILES = [
   "../../packages/backend/convex/processing/gemini.ts",
   "../../packages/backend/convex/processing/embeddings.ts",
   "../../packages/backend/convex/processing/handlers.ts",
-  "../../packages/backend/convex/processing/pipeline.ts",
   "../../packages/backend/convex/processing/runs.ts",
+  "../../packages/backend/convex/processing/steps.ts",
+  "../../packages/backend/convex/processing/workflow.ts",
   "../../packages/backend/convex/search/actions.ts",
   "../../packages/backend/convex/search/queries.ts",
 ];

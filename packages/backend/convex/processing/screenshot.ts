@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { generateText, tool } from "ai";
+import { generateObject } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import { IMAGE_ANALYSIS_PROMPT } from "./gemini";
@@ -16,12 +16,22 @@ export interface ScreenshotAnalysisResult {
   invalidReason: string | null;
 }
 
-const INVALID_IMAGE_TOOL = tool({
-  description:
-    "The image is black, invalid, you see nothing on it. Or it's just a captcha, Cloudflare protection, or invalid website image.",
-  inputSchema: z.object({
-    reason: z.string(),
-  }),
+const SCREENSHOT_ANALYSIS_SCHEMA = z.object({
+  isInvalid: z
+    .boolean()
+    .describe(
+      "true if the image is black/blank, a browser error page (e.g. \"This page couldn't load\"), a captcha, a Cloudflare/bot protection page, or otherwise not a real screenshot of the website content.",
+    ),
+  invalidReason: z
+    .string()
+    .nullable()
+    .describe("If isInvalid is true, a short reason. Otherwise null."),
+  description: z
+    .string()
+    .nullable()
+    .describe(
+      "If isInvalid is false, the detailed description of the screenshot. Otherwise null.",
+    ),
 });
 
 async function callCloudflareScreenshot(url: string): Promise<Buffer> {
@@ -49,7 +59,11 @@ async function callCloudflareScreenshot(url: string): Promise<Buffer> {
       body: JSON.stringify({
         url,
         gotoOptions: {
-          waitUntil: "networkidle0",
+          // "networkidle0" breaks on sites that keep connections open
+          // (e.g. anthropic.com): the navigation never settles and the API
+          // returns a screenshot of Chromium's "This page couldn't load"
+          // error page with HTTP 200.
+          waitUntil: "load",
           timeout: 30000,
         },
         viewport: { width: 1920, height: 1080 },
@@ -76,7 +90,8 @@ async function callCloudflareScreenshot(url: string): Promise<Buffer> {
 }
 
 /**
- * analyzeScreenshot — analyze an image URL via Gemini vision + invalid-image tool.
+ * analyzeScreenshot — analyze an image URL via Gemini vision with structured
+ * output (description + isInvalid flag).
  */
 export async function analyzeScreenshot(
   url: string | null,
@@ -140,7 +155,7 @@ async function analyzeImageBase64(
   base64: string,
   prompt: string,
 ): Promise<ScreenshotAnalysisResult> {
-  const result = await generateText({
+  const result = await generateObject({
     model: google(
       process.env.GEMINI_CHEAP_MODEL ?? "gemini-3.1-flash-lite",
     ),
@@ -153,18 +168,23 @@ async function analyzeImageBase64(
         ],
       },
     ],
-    tools: { "invalid-image": INVALID_IMAGE_TOOL },
-    toolChoice: "auto",
+    schema: SCREENSHOT_ANALYSIS_SCHEMA,
   });
 
-  if (result.toolCalls?.[0]?.toolName === "invalid-image") {
-    const invalidReason = (
-      result.toolCalls[0] as { input: { reason: string } }
-    ).input.reason;
-    return { description: null, isInvalid: true, invalidReason };
+  const analysis = result.object;
+  if (analysis.isInvalid) {
+    return {
+      description: null,
+      isInvalid: true,
+      invalidReason: analysis.invalidReason ?? "Invalid screenshot",
+    };
   }
 
-  return { description: result.text, isInvalid: false, invalidReason: null };
+  return {
+    description: analysis.description,
+    isInvalid: false,
+    invalidReason: null,
+  };
 }
 
 /**
@@ -207,7 +227,9 @@ export const captureAndUploadScreenshot = internalAction({
   handler: async (ctx, { url, userId, bookmarkId }): Promise<string | null> => {
     try {
       const buffer = await callCloudflareScreenshot(url);
-      const key = `users/${userId}/bookmarks/${bookmarkId}/screenshot.png`;
+      // Timestamped key: re-captures must not reuse the previous key, the
+      // CDN keeps serving the stale cached image for the old URL.
+      const key = `users/${userId}/bookmarks/${bookmarkId}/screenshot-${Date.now()}.png`;
       const cdnUrl: string = await ctx.runAction(
         internal.files.actions.uploadBuffer,
         {
@@ -238,7 +260,7 @@ export const captureAndUploadPDFScreenshot = internalAction({
     try {
       const pdfUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
       const buffer = await callCloudflareScreenshot(pdfUrl);
-      const key = `users/${userId}/bookmarks/${bookmarkId}/pdf-screenshot.png`;
+      const key = `users/${userId}/bookmarks/${bookmarkId}/pdf-screenshot-${Date.now()}.png`;
       const cdnUrl: string = await ctx.runAction(
         internal.files.actions.uploadBuffer,
         {

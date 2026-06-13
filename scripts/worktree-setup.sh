@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Per-worktree environment setup for SaveIt (Conductor / Codex / Cursor).
-# Convex-based — NO Prisma/Postgres. Creates/selects an isolated Convex dev
+# Convex-based. Creates/selects an isolated Convex dev
 # deployment, clones env + data from the source `dev` deployment, sets a
 # per-worktree Better Auth cookie prefix, pushes schema + codegen.
 set -euo pipefail

@@ -28,7 +28,6 @@
     "cookies",
     "webRequest",
     "https://saveit.now/*",
-    "https://*.convex.site/*",
     "https://www.youtube.com/*"
   ],
 

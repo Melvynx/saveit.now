@@ -1,40 +1,35 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import "react-native-reanimated";
+
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+  useFonts,
+} from "@expo-google-fonts/dm-sans";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { TamaguiProvider, Theme } from "@tamagui/core";
-import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexReactClient } from "convex/react";
 import { ShareIntentProvider } from "expo-share-intent";
-import { useFonts } from "expo-font";
-import { Stack, useGlobalSearchParams, usePathname, useSegments } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState, createContext, useContext } from "react";
-import "react-native-reanimated";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 
-import { useColorScheme } from "../components/useColorScheme";
+import "../global.css";
+import { themeColors, useAppTheme } from "../src/lib/theme";
 import { AuthProvider } from "../src/contexts/AuthContext";
 import { authClient } from "../src/lib/auth-client";
-import config from "../tamagui.config";
 
 // Convex client — singleton outside component to avoid re-creation on re-renders.
 const convex = new ConvexReactClient(
   process.env.EXPO_PUBLIC_CONVEX_URL as string,
   { unsavedChangesWarning: false },
 );
-
-// Theme context for managing theme state across the app
-const AppThemeContext = createContext<{
-  currentTheme: "light" | "dark";
-  toggleTheme: () => void;
-}>({
-  currentTheme: "light",
-  toggleTheme: () => {},
-});
-
-export const useAppTheme = () => useContext(AppThemeContext);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -50,19 +45,12 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const systemColorScheme = useColorScheme();
-  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(
-    systemColorScheme === "dark" ? "dark" : "light",
-  );
-
   const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...FontAwesome.font,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
   });
-
-  const toggleTheme = () => {
-    setCurrentTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -82,15 +70,9 @@ export default function RootLayout() {
   return (
     <ConvexBetterAuthProvider client={convex} authClient={authClient}>
       <ShareIntentProvider>
-        <TamaguiProvider config={config}>
-          <AppThemeContext.Provider value={{ currentTheme, toggleTheme }}>
-            <Theme name={currentTheme}>
-              <AuthProvider>
-                <RootLayoutNav />
-              </AuthProvider>
-            </Theme>
-          </AppThemeContext.Provider>
-        </TamaguiProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
       </ShareIntentProvider>
     </ConvexBetterAuthProvider>
   );
@@ -98,22 +80,31 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const { currentTheme } = useAppTheme();
-  const segments = useSegments();
-  const pathname = usePathname();
-  const globalParams = useGlobalSearchParams();
+  const isDark = currentTheme === "dark";
+  const colors = isDark ? themeColors.dark : themeColors.light;
 
-  useEffect(() => {
-    console.log("Navigation - Current pathname:", pathname);
-    console.log("Navigation - Current segments:", segments);
-    console.log("Navigation - Global params:", globalParams);
-  }, [pathname, segments, globalParams]);
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: colors.background,
+      card: colors.card,
+      text: colors.foreground,
+      border: colors.border,
+      primary: colors.primary,
+    },
+  };
 
   return (
-    <ThemeProvider value={currentTheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="modal"
+          options={{ presentation: "modal", headerShown: false }}
+        />
         <Stack.Screen
           name="bookmark/[id]"
           options={{

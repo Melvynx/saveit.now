@@ -1,20 +1,12 @@
-import { AlertTriangle, Bookmark, Check, X } from "@tamagui/lucide-icons";
+import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useShareIntentContext } from "expo-share-intent";
 import React, { useEffect, useState } from "react";
-import {
-  Button,
-  Circle,
-  H2,
-  Paragraph,
-  Spinner,
-  Text,
-  View,
-  XStack,
-  YStack,
-} from "tamagui";
-import { api } from "@convex/_generated/api";
+
+import { Button } from "../src/components/ui/button";
+import { StatusScreen } from "../src/components/ui/status-screen";
+import { hapticSuccess } from "../src/lib/haptics";
 
 type MutationStatus = "idle" | "pending" | "success" | "error";
 
@@ -35,11 +27,7 @@ export default function ShareHandler() {
       return;
     }
 
-    if (
-      hasShareIntent &&
-      shareIntent &&
-      status === "idle"
-    ) {
+    if (hasShareIntent && shareIntent && status === "idle") {
       handleSharedContent();
     }
   }, [hasShareIntent, shareIntent]);
@@ -104,6 +92,7 @@ export default function ShareHandler() {
 
     try {
       await createBookmark({ url, metadata });
+      hapticSuccess();
       setStatus("success");
       // Show success for 2 seconds, then close
       setTimeout(() => {
@@ -128,195 +117,56 @@ export default function ShareHandler() {
   // Share-intent error state
   if (error) {
     return (
-      <View flex={1} backgroundColor="$background">
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          padding="$4"
-          gap="$4"
-        >
-          <Circle
-            size={80}
-            backgroundColor="$destructive"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <AlertTriangle size={40} color="$destructiveForeground" />
-          </Circle>
-
-          <YStack gap="$2" alignItems="center">
-            <H2 color="$destructive" textAlign="center">
-              Share Error
-            </H2>
-            <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
-              {typeof error === "string"
-                ? error
-                : (error as any)?.message || "Unable to process shared content"}
-            </Paragraph>
-          </YStack>
-
-          <Button
-            size="$4"
-            onPress={handleCancel}
-            backgroundColor="$destructive"
-            borderRadius="$4"
-            fontWeight="600"
-          >
-            <X size={20} color="$destructiveForeground" />
-            <Text color="$destructiveForeground" fontWeight="600">
-              Close
-            </Text>
+      <StatusScreen
+        icon="alert-circle-outline"
+        title="Share Error"
+        message={
+          typeof error === "string"
+            ? error
+            : (error as any)?.message || "Unable to process shared content"
+        }
+        footer={
+          <Button onPress={handleCancel} className="self-stretch">
+            Close
           </Button>
-        </YStack>
-      </View>
+        }
+      />
     );
   }
 
   // Error state from Convex mutation (e.g. already exists)
   if (status === "error") {
     return (
-      <View flex={1} backgroundColor="$background">
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          padding="$4"
-          gap="$4"
-        >
-          <Circle
-            size={80}
-            backgroundColor="$primary"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <AlertTriangle size={40} color="$primaryForeground" />
-          </Circle>
-
-          <YStack gap="$2" alignItems="center">
-            <H2 color="$primary" textAlign="center">
-              Already Saved
-            </H2>
-            <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
-              This bookmark already exists in your SaveIt collection
-            </Paragraph>
-          </YStack>
-
-          <Button
-            size="$4"
-            onPress={handleCancel}
-            backgroundColor="$primary"
-            borderRadius="$4"
-            fontWeight="600"
-          >
-            <X size={20} color="$primaryForeground" />
-            <Text color="$primaryForeground" fontWeight="600">
-              Close
-            </Text>
+      <StatusScreen
+        icon="bookmark"
+        title="Already Saved"
+        message="This bookmark already exists in your SaveIt collection"
+        footer={
+          <Button onPress={handleCancel} className="self-stretch">
+            Close
           </Button>
-        </YStack>
-      </View>
+        }
+      />
     );
   }
 
   // Success state
   if (status === "success") {
     return (
-      <View flex={1} backgroundColor="$background">
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          padding="$4"
-          gap="$4"
-        >
-          <Circle
-            size={80}
-            backgroundColor="$primary"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Check size={40} color="$primaryForeground" />
-          </Circle>
-
-          <YStack gap="$2" alignItems="center">
-            <H2 color="$primary" textAlign="center">
-              Saved Successfully!
-            </H2>
-            <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
-              Your bookmark has been added to SaveIt
-            </Paragraph>
-          </YStack>
-
-          <XStack alignItems="center" gap="$2" opacity={0.6}>
-            <Bookmark size={16} color="$foreground" />
-            <Text fontSize="$3" color="$foreground">
-              Added to your collection
-            </Text>
-          </XStack>
-        </YStack>
-      </View>
+      <StatusScreen
+        icon="checkmark"
+        title="Saved Successfully!"
+        message="Your bookmark has been added to SaveIt"
+      />
     );
   }
 
   // Loading / pending state
   return (
-    <View flex={1} backgroundColor="$background">
-      <YStack
-        flex={1}
-        justifyContent="center"
-        alignItems="center"
-        padding="$4"
-        gap="$4"
-      >
-        <Circle
-          size={80}
-          backgroundColor="$primary"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Spinner size="large" color="$primaryForeground" />
-        </Circle>
-
-        <YStack gap="$2" alignItems="center">
-          <H2 color="$foreground" textAlign="center">
-            Saving Bookmark
-          </H2>
-          <Paragraph color="$foreground" textAlign="center" opacity={0.8}>
-            Adding to your SaveIt collection...
-          </Paragraph>
-        </YStack>
-
-        <XStack alignItems="center" gap="$2" opacity={0.6}>
-          <View
-            width={4}
-            height={4}
-            borderRadius="$10"
-            backgroundColor="$primary"
-            animation="bouncy"
-            animateOnly={["scale"]}
-            scale={1.2}
-          />
-          <View
-            width={4}
-            height={4}
-            borderRadius="$10"
-            backgroundColor="$primary"
-            animation="bouncy"
-            animateOnly={["scale"]}
-            scale={1.2}
-          />
-          <View
-            width={4}
-            height={4}
-            borderRadius="$10"
-            backgroundColor="$primary"
-            animation="bouncy"
-            animateOnly={["scale"]}
-            scale={1.2}
-          />
-        </XStack>
-      </YStack>
-    </View>
+    <StatusScreen
+      spinner
+      title="Saving Bookmark"
+      message="Adding to your SaveIt collection..."
+    />
   );
 }

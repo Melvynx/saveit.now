@@ -1,8 +1,9 @@
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useShareIntent } from "expo-share-intent";
-import { View, ActivityIndicator, Modal, useColorScheme } from "react-native";
-import { Text, YStack } from "tamagui";
+import { useCallback, useState } from "react";
+import { Modal, View } from "react-native";
+
+import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
 import OnboardingScreen from "../src/screens/OnboardingScreen";
 import SignInScreen from "../src/screens/SignInScreen";
@@ -14,8 +15,6 @@ export default function IndexPage() {
   const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
 
   useFocusEffect(
     useCallback(() => {
@@ -55,21 +54,8 @@ export default function IndexPage() {
           transparent
           onRequestClose={() => setShowSignIn(false)}
         >
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "flex-end",
-              backgroundColor: "rgba(0,0,0,0.5)",
-            }}
-          >
-            <View
-              style={{
-                height: "70%",
-                backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-              }}
-            >
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="h-[70%] overflow-hidden rounded-t-[28px] bg-background">
               <SignInScreen onClose={() => setShowSignIn(false)} />
             </View>
           </View>
@@ -78,21 +64,5 @@ export default function IndexPage() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
-        <ActivityIndicator size="large" />
-        <Text fontSize="$6" marginTop="$4">
-          Loading...
-        </Text>
-      </YStack>
-    );
-  }
-
-  // Authenticated user navigating to tabs - show spinner
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <ActivityIndicator size="large" />
-    </View>
-  );
+  return <LoadingScreen />;
 }

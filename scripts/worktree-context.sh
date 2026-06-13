@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared helpers for SaveIt worktree environment management (Conductor / Codex /
-# Cursor). Convex-based — no Prisma/Postgres. Mirrors the nowstack-saas pattern.
+# Cursor). Convex-based. Mirrors the nowstack-saas pattern.
 
 resolve_worktree_path() {
   local script_dir="$1"

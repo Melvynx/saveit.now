@@ -291,7 +291,7 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   if (shouldRun("bookmarkTags")) {
     console.log("\nImporting bookmarkTags...");
-    // Prisma BookmarkTag has NO userId column — derive it from the bookmark's owner.
+    // Legacy BookmarkTag rows have no userId column - derive it from the bookmark's owner.
     const bookmarkLegacyUser = new Map<string, string>(); // legacy bookmarkId → legacy userId
     for (const b of rawBookmarks as Record<string, unknown>[]) {
       bookmarkLegacyUser.set(String(b.id), String(b.userId));

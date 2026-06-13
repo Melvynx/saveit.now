@@ -270,11 +270,15 @@ PODS:
     - Yoga
   - ExpoAsset (11.1.7):
     - ExpoModulesCore
+  - ExpoBlur (14.1.5):
+    - ExpoModulesCore
   - ExpoCrypto (14.1.5):
     - ExpoModulesCore
   - ExpoFileSystem (18.1.11):
     - ExpoModulesCore
   - ExpoFont (13.3.2):
+    - ExpoModulesCore
+  - ExpoHaptics (14.1.4):
     - ExpoModulesCore
   - ExpoHead (5.1.4):
     - ExpoModulesCore
@@ -2338,9 +2342,11 @@ DEPENDENCIES:
   - "expo-dev-menu (from `../../../node_modules/.pnpm/expo-dev-menu@6.1.14_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-na_8ae2ac311c94f9486343821437031fd2/node_modules/expo-dev-menu`)"
   - "expo-dev-menu-interface (from `../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._2544dc85eb4760f6e0f8055652cef997/node_modules/expo-dev-menu-interface/ios`)"
   - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_57698a8d7c87a18ce87c053dd5b18c47/node_modules/expo-asset/ios`)"
+  - "ExpoBlur (from `../../../node_modules/.pnpm/expo-blur@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_269affbdec06c763783376ae3d7177ec/node_modules/expo-blur/ios`)"
   - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_8a11dfbe4729002da01d6ad7773be705/node_modules/expo-crypto/ios`)"
   - "ExpoFileSystem (from `../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_c2507699f6427dcd631e88f849f0d607/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_fc828eefb0a502bda1e198ded6189316/node_modules/expo-font/ios`)"
+  - "ExpoHaptics (from `../../../node_modules/.pnpm/expo-haptics@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nat_2806b5894aa3ed72c930952eb15328a8/node_modules/expo-haptics/ios`)"
   - "ExpoHead (from `../../../node_modules/.pnpm/expo-router@5.1.4_069f4c458ed1a380d1487a39818ba083/node_modules/expo-router/ios`)"
   - "ExpoKeepAwake (from `../../../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-_0f87a6c4dea031f992f8e059c82a79ad/node_modules/expo-keep-awake/ios`)"
   - "ExpoLinearGradient (from `../../../node_modules/.pnpm/expo-linear-gradient@15.0.8_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_r_db6dd3e0b1dba335f97bd6408a69cbb7/node_modules/expo-linear-gradient/ios`)"
@@ -2457,12 +2463,16 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/expo-dev-menu-interface@1.10.0_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0._2544dc85eb4760f6e0f8055652cef997/node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
     :path: "../../../node_modules/.pnpm/expo-asset@11.1.7_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nativ_57698a8d7c87a18ce87c053dd5b18c47/node_modules/expo-asset/ios"
+  ExpoBlur:
+    :path: "../../../node_modules/.pnpm/expo-blur@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_269affbdec06c763783376ae3d7177ec/node_modules/expo-blur/ios"
   ExpoCrypto:
     :path: "../../../node_modules/.pnpm/expo-crypto@14.1.5_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nati_8a11dfbe4729002da01d6ad7773be705/node_modules/expo-crypto/ios"
   ExpoFileSystem:
     :path: "../../../node_modules/.pnpm/expo-file-system@18.1.11_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_reac_c2507699f6427dcd631e88f849f0d607/node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../../../node_modules/.pnpm/expo-font@13.3.2_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-native_fc828eefb0a502bda1e198ded6189316/node_modules/expo-font/ios"
+  ExpoHaptics:
+    :path: "../../../node_modules/.pnpm/expo-haptics@14.1.4_expo@53.0.22_@babel+core@7.28.0_@expo+metro-runtime@5.0.4_react-nat_2806b5894aa3ed72c930952eb15328a8/node_modules/expo-haptics/ios"
   ExpoHead:
     :path: "../../../node_modules/.pnpm/expo-router@5.1.4_069f4c458ed1a380d1487a39818ba083/node_modules/expo-router/ios"
   ExpoKeepAwake:
@@ -2649,9 +2659,11 @@ SPEC CHECKSUMS:
   expo-dev-menu: 0771fa9c5c405e07aa15e55a699b8a4a984ea77a
   expo-dev-menu-interface: 609c35ae8b97479cdd4c9e23c8cf6adc44beea0e
   ExpoAsset: ef06e880126c375f580d4923fdd1cdf4ee6ee7d6
+  ExpoBlur: 3c8885b9bf9eef4309041ec87adec48b5f1986a9
   ExpoCrypto: a9f1d75baeea6ef8b03c1660621585196c382e85
   ExpoFileSystem: 7f92f7be2f5c5ed40a7c9efc8fa30821181d9d63
   ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
+  ExpoHaptics: 0ff6e0d83cd891178a306e548da1450249d54500
   ExpoHead: a7b66cbaeeb51f4a85338d335a0f5467e29a2c90
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58

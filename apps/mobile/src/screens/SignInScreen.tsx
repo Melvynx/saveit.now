@@ -1,13 +1,18 @@
-import { X } from "@tamagui/lucide-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  useColorScheme,
+  View,
 } from "react-native";
-import { Button, H3, Input, Text, XStack, YStack } from "tamagui";
+import Animated, { FadeInDown } from "react-native-reanimated";
+
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Text } from "../components/ui/text";
+import { useThemeColors } from "../lib/theme";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SignInScreenProps {
@@ -20,8 +25,7 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [isLoading, setIsLoading] = useState(false);
   const { sendOTP, verifyOTP } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const colors = useThemeColors();
 
   const handleSendOTP = async () => {
     if (!email.trim()) {
@@ -73,148 +77,99 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <YStack
-        flex={1}
-        backgroundColor={isDark ? "#1a1a1a" : "#ffffff"}
-        borderTopLeftRadius={24}
-        borderTopRightRadius={24}
-        padding="$5"
-        paddingTop="$3"
-      >
-        <XStack
-          justifyContent="space-between"
-          alignItems="center"
-          marginBottom="$4"
-        >
-          <YStack width={40} />
-          <YStack
-            width={40}
-            height={5}
-            backgroundColor={isDark ? "#444" : "#ddd"}
-            borderRadius={3}
-          />
+      <View className="flex-1 bg-background px-6 pt-3">
+        <View className="mb-5 flex-row items-center justify-between">
+          <View className="w-10" />
+          <View className="h-[5px] w-10 rounded-full bg-border" />
           {onClose ? (
             <Pressable onPress={onClose} hitSlop={20}>
-              <YStack
-                width={40}
-                height={40}
-                alignItems="center"
-                justifyContent="center"
-                borderRadius={20}
-                backgroundColor={isDark ? "#333" : "#f0f0f0"}
-              >
-                <X size={20} color={isDark ? "#fff" : "#333"} />
-              </YStack>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                <Ionicons name="close" size={20} color={colors.foreground} />
+              </View>
             </Pressable>
           ) : (
-            <YStack width={40} />
+            <View className="w-10" />
           )}
-        </XStack>
+        </View>
 
-        <YStack flex={1} justifyContent="flex-start" gap="$5" paddingTop="$2">
-          {step === "otp" ? (
-            <>
-              <YStack gap="$2">
-                <H3 color={isDark ? "#ffffff" : "#1a1a1a"}>Check your email</H3>
-                <Text color={isDark ? "#a0a0a0" : "#666666"}>
-                  {"We sent a 6-digit code to "}
-                  <Text fontWeight="600" color={isDark ? "#ffffff" : "#1a1a1a"}>
-                    {email}
-                  </Text>
+        {step === "otp" ? (
+          <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
+            <View className="gap-2">
+              <Text variant="title" className="text-[26px] leading-[32px]">
+                Check your email
+              </Text>
+              <Text variant="subtitle">
+                {"We sent a 6-digit code to "}
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  {email}
                 </Text>
-              </YStack>
+              </Text>
+            </View>
 
-              <YStack gap="$4">
-                <Input
-                  placeholder="000000"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                  textAlign="center"
-                  fontSize="$8"
-                  letterSpacing={12}
-                  size="$6"
-                  autoFocus
-                  backgroundColor={isDark ? "#2a2a2a" : "#f5f5f5"}
-                  borderColor={isDark ? "#444" : "#e0e0e0"}
-                  color={isDark ? "#ffffff" : "#1a1a1a"}
-                />
+            <View className="gap-3">
+              <Input
+                placeholder="000000"
+                value={otp}
+                onChangeText={setOtp}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoComplete="one-time-code"
+                autoFocus
+                variant="filled"
+                className="h-[56px] rounded-full text-center font-sans-bold text-[24px] tracking-[8px]"
+              />
 
-                <Button
-                  size="$5"
-                  backgroundColor="#f49f1e"
-                  pressStyle={{ backgroundColor: "#e08f15", scale: 0.98 }}
-                  animation="quick"
-                  onPress={handleVerifyOTP}
-                  disabled={isLoading || otp.length < 6}
-                  opacity={isLoading || otp.length < 6 ? 0.6 : 1}
-                >
-                  <Text color="#000000" fontWeight="700" fontSize="$5">
-                    {isLoading ? "Verifying..." : "Verify Code"}
-                  </Text>
-                </Button>
+              <Button
+                onPress={handleVerifyOTP}
+                disabled={otp.length < 6}
+                loading={isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify Code"}
+              </Button>
 
-                <Button
-                  size="$4"
-                  backgroundColor="transparent"
-                  borderWidth={1}
-                  borderColor={isDark ? "#444" : "#ddd"}
-                  pressStyle={{ backgroundColor: isDark ? "#333" : "#f5f5f5" }}
-                  onPress={handleBackToEmail}
-                >
-                  <Text color={isDark ? "#ffffff" : "#333"} fontWeight="600">
-                    Use different email
-                  </Text>
-                </Button>
-              </YStack>
-            </>
-          ) : (
-            <>
-              <YStack gap="$2">
-                <H3 color={isDark ? "#ffffff" : "#1a1a1a"}>
-                  Sign in to SaveIt
-                </H3>
-                <Text color={isDark ? "#a0a0a0" : "#666666"}>
-                  {"Enter your email and we'll send you a verification code"}
+              <Button variant="ghost" onPress={handleBackToEmail}>
+                <Text className="font-sans-semibold text-[15px] text-muted-foreground">
+                  Use different email
                 </Text>
-              </YStack>
+              </Button>
+            </View>
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
+            <View className="gap-2">
+              <Text variant="title" className="text-[26px] leading-[32px]">
+                Sign in to SaveIt
+              </Text>
+              <Text variant="subtitle">
+                {"Enter your email and we'll send you a verification code"}
+              </Text>
+            </View>
 
-              <YStack gap="$4">
-                <Input
-                  placeholder="you@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  size="$5"
-                  autoFocus
-                  backgroundColor={isDark ? "#2a2a2a" : "#f5f5f5"}
-                  borderColor={isDark ? "#444" : "#e0e0e0"}
-                  color={isDark ? "#ffffff" : "#1a1a1a"}
-                />
+            <View className="gap-3">
+              <Input
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                autoFocus
+                variant="filled"
+                inputSize="pill"
+              />
 
-                <Button
-                  size="$5"
-                  backgroundColor="#f49f1e"
-                  pressStyle={{ backgroundColor: "#e08f15", scale: 0.98 }}
-                  animation="quick"
-                  onPress={handleSendOTP}
-                  disabled={isLoading || !email.trim()}
-                  opacity={isLoading || !email.trim() ? 0.6 : 1}
-                >
-                  <Text color="#000000" fontWeight="700" fontSize="$5">
-                    {isLoading ? "Sending..." : "Continue"}
-                  </Text>
-                </Button>
-              </YStack>
-            </>
-          )}
-        </YStack>
-      </YStack>
+              <Button
+                onPress={handleSendOTP}
+                disabled={!email.trim()}
+                loading={isLoading}
+              >
+                {isLoading ? "Sending..." : "Continue"}
+              </Button>
+            </View>
+          </Animated.View>
+        )}
+      </View>
     </KeyboardAvoidingView>
   );
 }
