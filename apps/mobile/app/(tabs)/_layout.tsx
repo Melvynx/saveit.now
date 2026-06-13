@@ -1,47 +1,73 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
+import { StyleSheet } from "react-native";
 
-import { useClientOnlyValue } from "../../components/useClientOnlyValue";
-import { useColorScheme } from "../../components/useColorScheme";
-import Colors from "../../constants/Colors";
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { useThemeColors } from "../../src/lib/theme";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const headerShown = useClientOnlyValue(false, true);
+  const colors = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown,
+        headerShown: false,
+        tabBarStyle: {
+          position: "absolute",
+          backgroundColor: "transparent",
+          borderTopColor: colors.border,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 85,
+          paddingTop: 8,
+          elevation: 0,
+        },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={50}
+            tint={colors.isDark ? "dark" : "light"}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: colors.isDark
+                  ? "rgba(10, 10, 10, 0.55)"
+                  : "rgba(255, 255, 255, 0.55)",
+              },
+            ]}
+          />
+        ),
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabInactive,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily: "DMSans_600SemiBold",
+          marginTop: 2,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Bookmarks",
-          tabBarIcon: ({ color }: { color: string }) => (
-            <TabBarIcon name="bookmark" color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "bookmark" : "bookmark-outline"}
+              size={size}
+              color={color}
+            />
           ),
-          headerSearchBarOptions: {
-            placeholder: "Search bookmarks...",
-          },
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color }: { color: string }) => (
-            <TabBarIcon name="gear" color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "settings" : "settings-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

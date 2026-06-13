@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FFFDF8"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FFFDF8"
       },
       "edgeToEdgeEnabled": true,
       "package": "now.saveit.saveitapp"
@@ -43,11 +43,7 @@
             "NSExtensionActivationSupportsMovieWithMaxCount": 1,
             "NSExtensionActivationSupportsText": true
           },
-          "androidIntentFilters": [
-            "text/*",
-            "image/*",
-            "video/*"
-          ]
+          "androidIntentFilters": ["text/*", "image/*", "video/*"]
         }
       ]
     ],

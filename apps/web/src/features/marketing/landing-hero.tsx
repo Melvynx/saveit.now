@@ -94,7 +94,7 @@ export const LandingHero = () => {
 
   return (
     <section className="px-6 pt-20 sm:pt-24">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-[#1e3a5f]/30 border-b-transparent bg-gradient-to-b from-[#0f2035] via-[#132a42] to-[#141414]">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-[#4a2a12]/40 border-b-transparent bg-gradient-to-b from-[#2b1708] via-[#3a1f0c] to-[#141414]">
         <div
           className="pointer-events-none absolute inset-0 z-[1] opacity-[0.07]"
           style={{
@@ -107,7 +107,7 @@ export const LandingHero = () => {
 
         <div className="relative z-[2] px-6 pb-16 pt-20 sm:px-12 sm:pb-20 sm:pt-28 lg:px-16 lg:pb-24 lg:pt-32">
           <div className="flex flex-col items-center text-center">
-            <span className="text-[13px] tracking-wide text-[#8eafc8]">
+            <span className="text-[13px] tracking-wide text-[#d6a176]">
               Agentic Bookmarks
             </span>
 
@@ -117,7 +117,7 @@ export const LandingHero = () => {
               <em>just ask.</em>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-[#8eafc8]">
+            <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-[#d6a176]">
               Your bookmarks watch, learn, and find. The first bookmark manager
               that actually works for you - autonomously.
             </p>
@@ -126,13 +126,13 @@ export const LandingHero = () => {
               <LandingAppButton className="h-10 rounded-full border border-white/10 bg-white/10 px-6 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20" />
               <a
                 href="#demo"
-                className="inline-flex h-10 items-center rounded-full border border-white/10 bg-transparent px-6 text-sm font-medium text-[#8eafc8] transition-colors hover:bg-white/5 hover:text-white"
+                className="inline-flex h-10 items-center rounded-full border border-white/10 bg-transparent px-6 text-sm font-medium text-[#d6a176] transition-colors hover:bg-white/5 hover:text-white"
               >
                 See it work
               </a>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[13px] text-[#5a7d99]">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[13px] text-[#8a6240]">
               <span>No credit card required</span>
               <span className="hidden sm:inline">-</span>
               <span className="hidden sm:inline">
@@ -142,7 +142,7 @@ export const LandingHero = () => {
           </div>
 
           {/* Agent Chat Demo */}
-          <div className="mx-auto mt-14 max-w-3xl overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0d1117] shadow-2xl shadow-black/40">
+          <div className="mx-auto mt-14 max-w-3xl overflow-hidden rounded-2xl border border-white/[0.08] bg-[#17100b] shadow-2xl shadow-black/40">
             {/* Window bar */}
             <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3">
               <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export const LandingHero = () => {
                   <div className="size-3 rounded-full bg-[#28c840]" />
                 </div>
                 <div className="ml-3 flex items-center gap-1.5">
-                  <SparklesIcon className="size-3.5 text-[#93c5fd]" />
+                  <SparklesIcon className="size-3.5 text-[#fed7aa]" />
                   <span className="text-[13px] font-medium text-[#c9d1d9]">
                     SaveIt Agent
                   </span>
@@ -171,7 +171,7 @@ export const LandingHero = () => {
               {/* User message */}
               {showUser && (
                 <div className="flex justify-end">
-                  <div className="max-w-[75%] rounded-2xl rounded-br-md bg-[#1f6feb] px-4 py-2.5">
+                  <div className="max-w-[75%] rounded-2xl rounded-br-md bg-[#ea6a12] px-4 py-2.5">
                     <p className="text-[14px] text-white">
                       {typed}
                       {step === "typing" && (
@@ -191,13 +191,13 @@ export const LandingHero = () => {
                       {s1Done ? (
                         <CheckIcon className="size-3 text-[#28c840]" />
                       ) : (
-                        <SearchIcon className="size-3 animate-pulse text-[#93c5fd]" />
+                        <SearchIcon className="size-3 animate-pulse text-[#fed7aa]" />
                       )}
-                      <span className="text-[12px] text-[#8b949e]">
+                      <span className="text-[12px] text-[#a98a70]">
                         database tutorials
                       </span>
                       {s1Done && (
-                        <span className="text-[11px] text-[#484f58]">
+                        <span className="text-[11px] text-[#7a6b5a]">
                           3 found
                         </span>
                       )}
@@ -207,13 +207,13 @@ export const LandingHero = () => {
                         {s2Done ? (
                           <CheckIcon className="size-3 text-[#28c840]" />
                         ) : (
-                          <SearchIcon className="size-3 animate-pulse text-[#93c5fd]" />
+                          <SearchIcon className="size-3 animate-pulse text-[#fed7aa]" />
                         )}
-                        <span className="text-[12px] text-[#8b949e]">
+                        <span className="text-[12px] text-[#a98a70]">
                           SQL tools
                         </span>
                         {s2Done && (
-                          <span className="text-[11px] text-[#484f58]">
+                          <span className="text-[11px] text-[#7a6b5a]">
                             2 found
                           </span>
                         )}
@@ -224,8 +224,8 @@ export const LandingHero = () => {
                   {/* Loading or results */}
                   {!showResults && (
                     <div className="flex items-center gap-2 py-2">
-                      <Loader2Icon className="size-3.5 animate-spin text-[#8b949e]" />
-                      <span className="text-[13px] text-[#8b949e]">
+                      <Loader2Icon className="size-3.5 animate-spin text-[#a98a70]" />
+                      <span className="text-[13px] text-[#a98a70]">
                         Searching your bookmarks...
                       </span>
                     </div>
@@ -240,7 +240,7 @@ export const LandingHero = () => {
                             key={b.title}
                             className="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                           >
-                            <div className="aspect-[16/10] w-full overflow-hidden bg-[#161b22]">
+                            <div className="aspect-[16/10] w-full overflow-hidden bg-[#25180f]">
                               <img
                                 src={b.preview}
                                 alt={b.title}
@@ -256,7 +256,7 @@ export const LandingHero = () => {
                                   className="size-3.5 rounded-sm"
                                   loading="lazy"
                                 />
-                                <span className="truncate text-[11px] text-[#484f58]">
+                                <span className="truncate text-[11px] text-[#7a6b5a]">
                                   {b.domain}
                                 </span>
                               </div>
@@ -271,8 +271,8 @@ export const LandingHero = () => {
                       {/* Agent response */}
                       {showResponse && (
                         <div className="flex gap-2.5">
-                          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#1f6feb]/20">
-                            <SparklesIcon className="size-3 text-[#93c5fd]" />
+                          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#ea6a12]/20">
+                            <SparklesIcon className="size-3 text-[#fed7aa]" />
                           </div>
                           <p className="pt-0.5 text-[14px] leading-relaxed text-[#c9d1d9]">
                             I found 3 database resources in your bookmarks. Want
@@ -289,7 +289,7 @@ export const LandingHero = () => {
             {/* Input bar */}
             <div className="border-t border-white/[0.06] px-5 py-3">
               <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5">
-                <span className="text-[14px] text-[#484f58]">
+                <span className="text-[14px] text-[#7a6b5a]">
                   Ask about your bookmarks...
                 </span>
               </div>

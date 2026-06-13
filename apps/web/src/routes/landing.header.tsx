@@ -58,7 +58,7 @@ function HeroStyle1() {
       <div className="relative max-w-5xl mx-auto text-center">
         <h1 className="text-6xl md:text-8xl font-black tracking-tight">
           The First{" "}
-          <span className="bg-gradient-to-r from-primary via-purple-500 to-orange-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary via-amber-500 to-orange-500 bg-clip-text text-transparent">
             Agentic
           </span>
           <br />
@@ -148,14 +148,14 @@ function HeroStyle3() {
           </div>
         </div>
         <div className="relative">
-          <div className="aspect-square rounded-3xl bg-gradient-to-br from-primary/20 via-purple-500/20 to-orange-500/20 p-8 flex items-center justify-center">
+          <div className="aspect-square rounded-3xl bg-gradient-to-br from-primary/20 via-amber-500/20 to-orange-500/20 p-8 flex items-center justify-center">
             <div className="grid grid-cols-3 gap-4">
               <div className="size-20 rounded-2xl bg-primary/30 animate-pulse" />
-              <div className="size-20 rounded-2xl bg-purple-500/30 animate-pulse delay-100" />
+              <div className="size-20 rounded-2xl bg-amber-500/30 animate-pulse delay-100" />
               <div className="size-20 rounded-2xl bg-orange-500/30 animate-pulse delay-200" />
               <div className="size-20 rounded-2xl bg-orange-500/30 animate-pulse delay-300" />
               <div className="size-20 rounded-2xl bg-primary/30 animate-pulse delay-400" />
-              <div className="size-20 rounded-2xl bg-purple-500/30 animate-pulse delay-500" />
+              <div className="size-20 rounded-2xl bg-amber-500/30 animate-pulse delay-500" />
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ function HeroStyle5() {
       <StyleLabel number={5} name="Playful Icons" />
       <div className="absolute inset-0 overflow-hidden">
         <Brain className="absolute top-20 left-[10%] size-12 text-primary/20 animate-bounce" />
-        <Eye className="absolute top-40 right-[15%] size-10 text-purple-500/20 animate-bounce delay-100" />
+        <Eye className="absolute top-40 right-[15%] size-10 text-amber-500/20 animate-bounce delay-100" />
         <Zap className="absolute bottom-32 left-[20%] size-14 text-orange-500/20 animate-bounce delay-200" />
         <Bot className="absolute bottom-20 right-[10%] size-16 text-primary/20 animate-bounce delay-300" />
       </div>
@@ -329,7 +329,7 @@ function HeroStyle8() {
               <p className="text-4xl font-bold">0s</p>
               <p className="text-muted-foreground">Organization time</p>
             </div>
-            <div className="border-l-2 border-purple-500 pl-6">
+            <div className="border-l-2 border-amber-500 pl-6">
               <p className="text-4xl font-bold">&lt;1s</p>
               <p className="text-muted-foreground">Search & retrieval</p>
             </div>
@@ -347,7 +347,7 @@ function HeroStyle8() {
 // Style 9: Glassmorphism Card
 function HeroStyle9() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6 py-24 bg-gradient-to-br from-primary/10 via-background to-purple-500/10">
+    <section className="relative min-h-screen flex items-center justify-center px-6 py-24 bg-gradient-to-br from-primary/10 via-background to-amber-500/10">
       <StyleLabel number={9} name="Glassmorphism" />
       <div className="max-w-3xl mx-auto">
         <div className="backdrop-blur-xl bg-background/60 border rounded-3xl p-12 shadow-2xl">
@@ -359,7 +359,7 @@ function HeroStyle9() {
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">
               The First Agentic
               <br />
-              <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
                 Bookmark Manager
               </span>
             </h1>
