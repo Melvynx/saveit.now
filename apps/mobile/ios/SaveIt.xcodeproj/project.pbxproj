@@ -507,7 +507,8 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2026061301;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -521,6 +522,8 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
 				PRODUCT_NAME = ShareExtension;
+				PROVISIONING_PROFILE = "3fff36d8-dd67-434f-9957-2aa249c4aea9";
+				PROVISIONING_PROFILE_SPECIFIER = "*[expo] now.saveit.saveitapp.share-extension AppStore 2026-06-13";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
