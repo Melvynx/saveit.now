@@ -56,9 +56,10 @@ export const getUserBookmarksByIds = async (
 };
 
 export const getPublicBookmark = async (bookmarkId: string) => {
-  return await prisma.bookmark.findUnique({
+  return await prisma.bookmark.findFirst({
     where: {
       id: bookmarkId,
+      user: { is: { publicLinkEnabled: true } },
     },
     select: SELECT_QUERY,
   });
