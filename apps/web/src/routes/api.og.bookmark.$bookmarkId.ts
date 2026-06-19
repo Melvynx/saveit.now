@@ -11,9 +11,17 @@ const escapeXml = (value: string) =>
 const truncate = (value: string, length: number) =>
   value.length > length ? `${value.slice(0, length - 3)}...` : value;
 
-const GET = async ({ params }: { request: Request; params: { bookmarkId: string } }) => {
-  const bookmark = await prisma.bookmark.findUnique({
-    where: { id: params.bookmarkId },
+const GET = async ({
+  params,
+}: {
+  request: Request;
+  params: { bookmarkId: string };
+}) => {
+  const bookmark = await prisma.bookmark.findFirst({
+    where: {
+      id: params.bookmarkId,
+      user: { is: { publicLinkEnabled: true } },
+    },
     select: {
       title: true,
       url: true,

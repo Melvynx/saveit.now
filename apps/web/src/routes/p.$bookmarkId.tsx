@@ -30,6 +30,7 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
     const { prisma } = await import("@workspace/database/client");
     const where = {
       id: { not: data.bookmarkId },
+      user: { is: { publicLinkEnabled: true } },
       status: "READY" as const,
       title: { not: null },
       ...(tagIds.length > 0 && {
