@@ -2,6 +2,9 @@ import { ANALYTICS } from "@/lib/analytics";
 import { getPostHogClient } from "@/lib/posthog";
 import { getPosthogId } from "@/lib/posthog-id";
 import { z } from "zod";
+import { readResponseTextWithLimit, safeToolFetch } from "./safe-fetch";
+
+export { safeToolFetch, validatePublicToolUrl } from "./safe-fetch";
 
 export const TOOL_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
@@ -19,9 +22,10 @@ export function resolveUrl(baseUrl: URL, value: string | undefined) {
 }
 
 export async function fetchHtml(url: string) {
-  const response = await fetch(url, {
+  const response = await safeToolFetch(url, {
     headers: {
       "User-Agent": TOOL_USER_AGENT,
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
   });
 
@@ -29,7 +33,7 @@ export async function fetchHtml(url: string) {
     throw new Error("Failed to fetch the webpage");
   }
 
-  return response.text();
+  return readResponseTextWithLimit(response);
 }
 
 export async function captureToolUsage(request: Request, toolName: string) {

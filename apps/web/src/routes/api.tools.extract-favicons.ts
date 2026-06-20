@@ -2,6 +2,7 @@ import {
   captureToolUsage,
   fetchHtml,
   resolveUrl,
+  safeToolFetch,
   TOOL_USER_AGENT,
   toolErrorResponse,
 } from "@/lib/tools/tool-route-utils";
@@ -27,7 +28,7 @@ const STANDARD_FAVICON_PATHS = [
 
 async function validateImageUrl(url: string) {
   try {
-    const response = await fetch(url, {
+    const response = await safeToolFetch(url, {
       method: "HEAD",
       headers: { "User-Agent": TOOL_USER_AGENT },
     });
