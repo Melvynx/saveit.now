@@ -16,8 +16,6 @@ type SubscriptionDTO = {
   id: string;
   userId: string;
   plan: "free" | "pro";
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
   status: string | null;
   periodStart: number | null;
   periodEnd: number | null;
@@ -73,8 +71,6 @@ export const getMine = authQuery({
       id: sub._id,
       userId: sub.userId,
       plan: (sub.plan === "pro" ? "pro" : "free") as "free" | "pro",
-      stripeCustomerId: sub.stripeCustomerId ?? null,
-      stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
       status: sub.status ?? null,
       periodStart: sub.periodStart ?? null,
       periodEnd: sub.periodEnd ?? null,

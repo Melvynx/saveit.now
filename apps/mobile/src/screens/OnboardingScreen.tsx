@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { View } from "react-native";
+import { Image, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "../components/ui/button";
 import { Text } from "../components/ui/text";
 import { useThemeColors } from "../lib/theme";
+import onboardingLogo from "../../assets/images/splash-icon.png";
 
 interface OnboardingScreenProps {
   onSignIn: () => void;
@@ -52,14 +53,15 @@ export default function OnboardingScreen({ onSignIn }: OnboardingScreenProps) {
           entering={FadeInDown.duration(400).delay(100)}
           className="mb-10 items-center"
         >
-          <View className="mb-5 h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <Ionicons
-              name="bookmark"
-              size={30}
-              color={colors.primaryForeground}
-            />
-          </View>
-          <Text variant="title" className="mb-2 text-center text-[32px] leading-[38px]">
+          <Image
+            source={onboardingLogo}
+            className="mb-5 h-16 w-16 rounded-2xl"
+            resizeMode="contain"
+          />
+          <Text
+            variant="title"
+            className="mb-2 text-center text-[32px] leading-[38px]"
+          >
             SaveIt.now
           </Text>
           <Text variant="subtitle" className="max-w-[280px] text-center">
@@ -75,7 +77,11 @@ export default function OnboardingScreen({ onSignIn }: OnboardingScreenProps) {
               className="flex-row items-center gap-4 rounded-2xl bg-secondary px-5 py-3.5"
             >
               <View className="h-12 w-12 items-center justify-center rounded-2xl bg-background">
-                <Ionicons name={feature.icon} size={22} color={colors.foreground} />
+                <Ionicons
+                  name={feature.icon}
+                  size={22}
+                  color={colors.foreground}
+                />
               </View>
               <View className="flex-1">
                 <Text className="font-sans-bold text-[15px] text-foreground">
@@ -90,7 +96,10 @@ export default function OnboardingScreen({ onSignIn }: OnboardingScreenProps) {
         </View>
       </View>
 
-      <Animated.View entering={FadeInDown.duration(400).delay(650)} className="gap-3">
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(650)}
+        className="gap-3"
+      >
         <Button onPress={onSignIn}>Sign In with Email</Button>
         <Text className="text-center font-sans text-[12px] text-muted-foreground">
           {"No password needed - we'll send you a code"}

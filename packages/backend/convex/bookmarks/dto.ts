@@ -4,6 +4,9 @@
  */
 
 import type { Id } from "../_generated/dataModel";
+import { cleanMetadata, cleanPublicMetadata } from "../utils/metadata";
+
+export { cleanMetadata, cleanPublicMetadata };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,6 +46,7 @@ export type TagManagementDTO = TagDTO & {
 export type BookmarkDTO = {
   _id: Id<"bookmarks">;
   id: string;
+  legacyId?: string | null;
   url: string;
   title: string | null;
   summary: string | null;
@@ -74,6 +78,7 @@ export type BookmarkDetailDTO = BookmarkDTO & {
 
 export type PublicBookmarkDTO = {
   id: string;
+  legacyId?: string | null;
   url: string;
   title: string | null;
   type: BookmarkType | null;
@@ -94,24 +99,13 @@ export type PublicBookmarkDTO = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Strips `transcript` from metadata before sending to clients.
- * Spec 02 §9.2, Contract §E.11.
- */
-export function cleanMetadata(metadata: unknown): Record<string, unknown> | null {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return metadata as Record<string, unknown> | null;
-  }
-  const { transcript: _, ...cleaned } = metadata as Record<string, unknown>;
-  return cleaned as Record<string, unknown>;
-}
-
 // ---------------------------------------------------------------------------
 // Internal raw doc shapes (subset — callers supply these from DB reads)
 // ---------------------------------------------------------------------------
 
 type RawBookmark = {
   _id: Id<"bookmarks">;
+  legacyId?: string | null;
   userId: string;
   url: string;
   type?: BookmarkType;
@@ -145,6 +139,7 @@ export function buildBookmarkDTO(
   return {
     _id: bookmark._id,
     id: bookmark._id,
+    ...(bookmark.legacyId ? { legacyId: bookmark.legacyId } : {}),
     url: bookmark.url,
     title: bookmark.title ?? null,
     summary: bookmark.summary ?? null,
@@ -159,7 +154,7 @@ export function buildBookmarkDTO(
     matchedTags: [],
     tags,
     createdAt: bookmark.createdAt,
-    metadata: cleanMetadata(bookmark.metadata),
+    metadata: cleanMetadata(bookmark.metadata) ?? null,
     openCount,
     starred: bookmark.starred,
     read: bookmark.read,
@@ -193,6 +188,7 @@ export function buildBookmarkDetailDTO(
 export function buildPublicBookmarkDTO(bookmark: RawBookmark): PublicBookmarkDTO {
   return {
     id: bookmark._id,
+    ...(bookmark.legacyId ? { legacyId: bookmark.legacyId } : {}),
     url: bookmark.url,
     title: bookmark.title ?? null,
     type: bookmark.type ?? null,
@@ -206,6 +202,6 @@ export function buildPublicBookmarkDTO(bookmark: RawBookmark): PublicBookmarkDTO
     starred: false,
     read: false,
     matchedTags: [],
-    metadata: cleanMetadata(bookmark.metadata),
+    metadata: cleanPublicMetadata(bookmark.metadata) ?? null,
   };
 }

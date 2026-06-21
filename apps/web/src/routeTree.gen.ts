@@ -61,6 +61,8 @@ import { Route as AccountPublicLinkRouteImport } from "./routes/account.public-l
 import { Route as AccountKeysRouteImport } from "./routes/account.keys";
 import { Route as PBookmarkIdReadRouteImport } from "./routes/p.$bookmarkId.read";
 import { Route as AppBBookmarkIdRouteImport } from "./routes/app.b.$bookmarkId";
+import { Route as ApiWebhooksStripeRouteImport } from "./routes/api.webhooks.stripe";
+import { Route as ApiV1SplatRouteImport } from "./routes/api.v1.$";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api.auth.$";
 import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users.$userId";
 import { Route as AdminConversationsIdRouteImport } from "./routes/admin.conversations.$id";
@@ -326,6 +328,16 @@ const AppBBookmarkIdRoute = AppBBookmarkIdRouteImport.update({
   path: "/b/$bookmarkId",
   getParentRoute: () => AppRoute,
 } as any);
+const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
+  id: "/api/webhooks/stripe",
+  path: "/api/webhooks/stripe",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
+  id: "/api/v1/$",
+  path: "/api/v1/$",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: "/api/auth/$",
   path: "/api/auth/$",
@@ -402,6 +414,8 @@ export interface FileRoutesByFullPath {
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/v1/$": typeof ApiV1SplatRoute;
+  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
@@ -460,6 +474,8 @@ export interface FileRoutesByTo {
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/v1/$": typeof ApiV1SplatRoute;
+  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
@@ -519,6 +535,8 @@ export interface FileRoutesById {
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/api/v1/$": typeof ApiV1SplatRoute;
+  "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
@@ -579,6 +597,8 @@ export interface FileRouteTypes {
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
     | "/api/auth/$"
+    | "/api/v1/$"
+    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
@@ -637,6 +657,8 @@ export interface FileRouteTypes {
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
     | "/api/auth/$"
+    | "/api/v1/$"
+    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
@@ -695,6 +717,8 @@ export interface FileRouteTypes {
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
     | "/api/auth/$"
+    | "/api/v1/$"
+    | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
@@ -736,6 +760,8 @@ export interface RootRouteChildren {
   USlugRoute: typeof USlugRoute;
   UnsubscribeUserIdRoute: typeof UnsubscribeUserIdRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiV1SplatRoute: typeof ApiV1SplatRoute;
+  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -1104,6 +1130,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppBBookmarkIdRouteImport;
       parentRoute: typeof AppRoute;
     };
+    "/api/webhooks/stripe": {
+      id: "/api/webhooks/stripe";
+      path: "/api/webhooks/stripe";
+      fullPath: "/api/webhooks/stripe";
+      preLoaderRoute: typeof ApiWebhooksStripeRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/v1/$": {
+      id: "/api/v1/$";
+      path: "/api/v1/$";
+      fullPath: "/api/v1/$";
+      preLoaderRoute: typeof ApiV1SplatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/api/auth/$": {
       id: "/api/auth/$";
       path: "/api/auth/$";
@@ -1321,6 +1361,8 @@ const rootRouteChildren: RootRouteChildren = {
   USlugRoute: USlugRoute,
   UnsubscribeUserIdRoute: UnsubscribeUserIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiV1SplatRoute: ApiV1SplatRoute,
+  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -15,6 +15,8 @@ import {
 } from "../_generated/server";
 import { internal, components } from "../_generated/api";
 import { throwNotFound } from "../utils/errors";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 
 type BookmarkTypeLiteral =
   | "VIDEO"
@@ -149,6 +151,32 @@ export const createBookmarkForUser = internalAction({
 // bookmark delete (for API key callers)
 // ---------------------------------------------------------------------------
 
+async function resolveBookmarkIdForUser(
+  ctx: {
+    db: MutationCtx["db"];
+  },
+  bookmarkId: string,
+  userId: string,
+): Promise<Id<"bookmarks"> | null> {
+  const normalizedId = ctx.db.normalizeId("bookmarks", bookmarkId);
+  if (normalizedId) {
+    const bookmark = await ctx.db.get(normalizedId);
+    if (bookmark?.userId === userId) {
+      return normalizedId;
+    }
+  }
+
+  const legacyBookmark = await ctx.db
+    .query("bookmarks")
+    .withIndex("by_legacy_id", (q) => q.eq("legacyId", bookmarkId))
+    .first();
+  if (legacyBookmark?.userId === userId) {
+    return legacyBookmark._id;
+  }
+
+  return null;
+}
+
 export const deleteBookmarkForUser = internalAction({
   args: {
     userId: v.string(),
@@ -166,8 +194,11 @@ export const deleteBookmarkMutation = internalMutation({
     bookmarkId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Try to normalize the ID
-    const id = ctx.db.normalizeId("bookmarks", args.bookmarkId);
+    const id = await resolveBookmarkIdForUser(
+      ctx,
+      args.bookmarkId,
+      args.userId,
+    );
     if (!id) throwNotFound("Bookmark not found");
 
     const bookmark = await ctx.db.get(id!);
@@ -231,7 +262,11 @@ export const recordOpenMutation = internalMutation({
     bookmarkId: v.string(),
   },
   handler: async (ctx, args) => {
-    const id = ctx.db.normalizeId("bookmarks", args.bookmarkId);
+    const id = await resolveBookmarkIdForUser(
+      ctx,
+      args.bookmarkId,
+      args.userId,
+    );
     if (!id) return null;
 
     await ctx.db.insert("bookmarkOpens", {

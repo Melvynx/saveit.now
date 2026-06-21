@@ -8,16 +8,11 @@
     "scheme": "saveit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFDF8"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026061303"
+      "buildNumber": "2026062101"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,6 +30,20 @@
     "plugins": [
       "expo-router",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFDF8",
+          "ios": {
+            "imageWidth": 184
+          },
+          "android": {
+            "imageWidth": 246
+          }
+        }
+      ],
+      [
         "expo-share-intent",
         {
           "iosActivationRules": {
@@ -46,7 +55,10 @@
           },
           "androidIntentFilters": ["text/*", "image/*", "video/*"]
         }
-      ]
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -57,13 +69,6 @@
       },
       "eas": {
         "projectId": "d09eb4d5-85f0-4a4a-9b9e-5ca5cc19d4fa"
-      }
-    },
-    "env": {
-      "production": {
-        "EXPO_PUBLIC_API_URL": "https://saveit.now",
-        "EXPO_PUBLIC_CONVEX_URL": "https://tough-chameleon-916.convex.cloud",
-        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://tough-chameleon-916.convex.site"
       }
     }
   }

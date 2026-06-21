@@ -230,6 +230,97 @@ export const insertAccount = mutationGeneric({
   },
 });
 
+/**
+ * insertApiKey — idempotent migration helper for legacy Better Auth API keys.
+ *
+ * The old Prisma schema stored the owner in `userId`; the current api-key
+ * plugin schema stores it in `referenceId` and requires `configId`.
+ */
+export const insertApiKey = mutationGeneric({
+  args: {
+    configId: v.optional(v.string()),
+    name: v.optional(v.union(v.null(), v.string())),
+    start: v.optional(v.union(v.null(), v.string())),
+    referenceId: v.string(),
+    prefix: v.optional(v.union(v.null(), v.string())),
+    key: v.string(),
+    refillInterval: v.optional(v.union(v.null(), v.number())),
+    refillAmount: v.optional(v.union(v.null(), v.number())),
+    lastRefillAt: v.optional(v.union(v.null(), v.number())),
+    enabled: v.optional(v.union(v.null(), v.boolean())),
+    rateLimitEnabled: v.optional(v.union(v.null(), v.boolean())),
+    rateLimitTimeWindow: v.optional(v.union(v.null(), v.number())),
+    rateLimitMax: v.optional(v.union(v.null(), v.number())),
+    requestCount: v.optional(v.union(v.null(), v.number())),
+    remaining: v.optional(v.union(v.null(), v.number())),
+    lastRequest: v.optional(v.union(v.null(), v.number())),
+    expiresAt: v.optional(v.union(v.null(), v.number())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    permissions: v.optional(v.union(v.null(), v.string())),
+    metadata: v.optional(v.union(v.null(), v.string())),
+  },
+  handler: async (ctx, args) => {
+    const configId = args.configId ?? "default";
+    const prefix = args.prefix ?? "saveit_";
+    const matchingKeys = await ctx.db
+      .query("apikey")
+      .withIndex("key", (q) => q.eq("key", args.key))
+      .take(10);
+    const existing = matchingKeys.find((row) => row.configId === configId);
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        configId,
+        name: args.name ?? null,
+        start: args.start ?? null,
+        referenceId: args.referenceId,
+        prefix,
+        refillInterval: args.refillInterval ?? null,
+        refillAmount: args.refillAmount ?? null,
+        lastRefillAt: args.lastRefillAt ?? null,
+        enabled: args.enabled ?? true,
+        rateLimitEnabled: args.rateLimitEnabled ?? false,
+        rateLimitTimeWindow: args.rateLimitTimeWindow ?? null,
+        rateLimitMax: args.rateLimitMax ?? null,
+        requestCount: args.requestCount ?? 0,
+        remaining: args.remaining ?? null,
+        lastRequest: args.lastRequest ?? null,
+        expiresAt: args.expiresAt ?? null,
+        updatedAt: args.updatedAt,
+        permissions: args.permissions ?? null,
+        metadata: args.metadata ?? null,
+      });
+      return existing._id as string;
+    }
+
+    const id = await ctx.db.insert("apikey", {
+      configId,
+      name: args.name ?? null,
+      start: args.start ?? null,
+      referenceId: args.referenceId,
+      prefix,
+      key: args.key,
+      refillInterval: args.refillInterval ?? null,
+      refillAmount: args.refillAmount ?? null,
+      lastRefillAt: args.lastRefillAt ?? null,
+      enabled: args.enabled ?? true,
+      rateLimitEnabled: args.rateLimitEnabled ?? false,
+      rateLimitTimeWindow: args.rateLimitTimeWindow ?? null,
+      rateLimitMax: args.rateLimitMax ?? null,
+      requestCount: args.requestCount ?? 0,
+      remaining: args.remaining ?? null,
+      lastRequest: args.lastRequest ?? null,
+      expiresAt: args.expiresAt ?? null,
+      createdAt: args.createdAt,
+      updatedAt: args.updatedAt,
+      permissions: args.permissions ?? null,
+      metadata: args.metadata ?? null,
+    });
+    return id as string;
+  },
+});
+
 export const getSessionById = queryGeneric({
   args: { sessionId: v.string() },
   handler: async (ctx, args) => {

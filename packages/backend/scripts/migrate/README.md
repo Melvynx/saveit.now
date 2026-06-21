@@ -35,8 +35,8 @@ DATABASE_URL="postgres://user:pass@host:5432/dbname" \
 
 Output: `./migration-export/*.jsonl` (one JSON object per line per table).
 
-Tables exported: `user`, `account`, `tag`, `bookmark` (no embeddings), `bookmarkTag`,
-`bookmarkOpen`, `subscription`, `chatConversation`.
+Tables exported: `user`, `account`, `apiKey`, `tag`, `bookmark` (no embeddings),
+`bookmarkTag`, `bookmarkOpen`, `subscription`, `chatConversation`.
 
 ---
 
@@ -53,9 +53,16 @@ MIGRATION_SECRET="same-value-as-convex-env" \
 The script:
 
 1. Reads all JSONL files.
-2. Imports in dependency order, threading `legacyId → convexId` maps.
-3. Rewrites all foreign-key references (userId, bookmarkId, tagId).
-4. Rebuilds `userCounters` for each user.
+2. Imports in dependency order: users → API keys → tags → bookmarks → bookmarkTags → bookmarkOpens → subscriptions → conversations → counters.
+3. Threads `legacyId → convexId` maps where needed.
+4. Rewrites all foreign-key references (userId/referenceId, bookmarkId, tagId).
+5. Preserves `Bookmark.legacyId` on the Convex document and reruns by that id.
+6. Rebuilds `userCounters` for each user.
+
+The migration is rerun-safe for users, API keys, subscriptions, conversations,
+and bookmarks: users dedupe by email, API keys by `configId + key`,
+subscriptions by Stripe subscription or user, conversations by
+`userId + updatedAt + title`, and bookmarks by legacy bookmark id.
 
 ---
 
@@ -64,6 +71,11 @@ The script:
 After the import completes, kick off the background re-embed pass:
 
 ```bash
+# Preferred admin wrapper with a dry-run first:
+cd packages/backend
+pnpm exec tsx scripts/admin/reembed-search.ts --limit 100
+pnpm exec tsx scripts/admin/reembed-search.ts --start --batch-size 20
+
 # Via the Convex CLI:
 npx convex run migration/reembed_helpers:startReembed '{"migrationSecret":"same-value-as-convex-env"}'
 
@@ -78,9 +90,10 @@ client.mutation(api.migration.reembed_helpers.startReembed, {
 "
 ```
 
-The `reembedBatch` action pages through bookmarks with a missing/stale
-`embeddingModel`, embeds each with Gemini, and self-schedules the next batch
-(throttled to 2 s between batches).
+The `reembedBatch` action pages through bookmarks with a missing
+`searchEmbedding`, invalid vector dimensions, or a stale `embeddingModel`,
+embeds each with Gemini, and self-schedules the next batch (throttled to 2 s
+between batches).
 
 ---
 
@@ -91,6 +104,8 @@ The `reembedBatch` action pages through bookmarks with a missing/stale
 - Run a search query and confirm results are returned.
 - Confirm `userCounters.bookmarkCount` matches actual counts for a few users.
 - Confirm a `pro` user has an active subscription with correct `plan`.
+- Confirm migrated API keys appear on `/account/keys` and authenticate against `/api/v1/*`.
+- Confirm old `/p/:legacyBookmarkId` and `/app/b/:legacyBookmarkId` links resolve.
 
 ---
 
@@ -125,10 +140,16 @@ npx convex env remove MIGRATION_SECRET
 | account                       | accountId                                                          | betterAuth/account | accountId                         |
 | account                       | providerId                                                         | betterAuth/account | providerId                        |
 | account                       | accessToken/refreshToken/idToken/scope                             | betterAuth/account | same                              |
+| apikey                        | id                                                                 | betterAuth/apikey  | \_id (new)                        |
+| apikey                        | configId                                                           | betterAuth/apikey  | configId (defaults to "default")  |
+| apikey                        | userId/referenceId                                                 | betterAuth/apikey  | referenceId (rewritten)           |
+| apikey                        | key/name/start/prefix                                              | betterAuth/apikey  | same; hashed key is not rehashed  |
+| apikey                        | permissions/metadata                                               | betterAuth/apikey  | normalized text                   |
+| apikey                        | refill/rateLimit/request/expires fields                            | betterAuth/apikey  | same, dates as ms                 |
 | "Tag"                         | id                                                                 | tags               | \_id (new)                        |
 | "Tag"                         | userId                                                             | tags               | userId (rewritten)                |
 | "Tag"                         | name/type                                                          | tags               | name/type                         |
-| "Bookmark"                    | id                                                                 | bookmarks          | \_id (new)                        |
+| "Bookmark"                    | id                                                                 | bookmarks          | legacyId                          |
 | "Bookmark"                    | userId                                                             | bookmarks          | userId (rewritten)                |
 | "Bookmark"                    | url/type/title/summary/note/preview                                | bookmarks          | same                              |
 | "Bookmark"                    | vectorSummary/faviconUrl/ogImageUrl/ogDescription/imageDescription | bookmarks          | same                              |

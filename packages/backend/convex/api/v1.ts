@@ -2,6 +2,7 @@
 // R2 uploads are delegated to the node action internal.files.actions.uploadBuffer.
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { cleanMetadata, cleanPublicMetadata } from "../utils/metadata";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -152,7 +153,7 @@ function bookmarkToApiShape(b: Record<string, unknown>) {
       typeof b.createdAt === "number"
         ? new Date(b.createdAt).toISOString()
         : (b.createdAt as string),
-    metadata: (b.metadata as Record<string, unknown> | null) ?? null,
+    metadata: cleanMetadata(b.metadata) ?? null,
     matchedTags: (b.matchedTags as string[]) ?? [],
     score: (b.score as number) ?? 0,
     matchType: (b.matchType as string) ?? "default",
@@ -636,7 +637,7 @@ export const publicSlugBookmarks = httpAction(async (ctx, request) => {
           starred: false as const,
           read: false as const,
           matchedTags: (b.matchedTags as string[]) ?? [],
-          metadata: b.metadata ?? null,
+          metadata: cleanPublicMetadata(b.metadata) ?? null,
         })),
         hasMore: (result as { hasMore: boolean }).hasMore ?? false,
         nextCursor: (result as { nextCursor?: string }).nextCursor ?? null,

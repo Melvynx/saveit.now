@@ -30,15 +30,15 @@ export const Route = createFileRoute("/p/$bookmarkId")({
 function PublicBookmarkPage() {
   const { bookmarkId } = Route.useParams();
   const session = useSession();
-  const bookmark = useQuery(api.bookmarks.queries.getPublic, {
-    id: bookmarkId as Id<"bookmarks">,
+  const bookmark = useQuery(api.bookmarks.queries.getPublicByIdOrLegacyId, {
+    id: bookmarkId,
   });
   const tagIds =
     bookmark?.tags?.map((t: { tag: { id: string } }) => t.tag.id) ?? [];
   const relatedBookmarks = useQuery(
     api.bookmarks.queries.getRelated,
     bookmark
-      ? { id: bookmarkId as Id<"bookmarks">, tagIds, take: 6 }
+      ? { id: bookmark.id as Id<"bookmarks">, tagIds, take: 6 }
       : "skip",
   );
 
@@ -58,7 +58,7 @@ function PublicBookmarkPage() {
       "@type": "WebPage",
       name: title,
       description: description.slice(0, 200),
-      url: `${baseUrl}/p/${bookmarkId}`,
+      url: `${baseUrl}/p/${bookmark.id}`,
       isPartOf: {
         "@type": "WebSite",
         name: "SaveIt.now",
@@ -84,12 +84,12 @@ function PublicBookmarkPage() {
             "@type": "ListItem",
             position: 3,
             name: title,
-            item: `${baseUrl}/p/${bookmarkId}`,
+            item: `${baseUrl}/p/${bookmark.id}`,
           },
         ],
       },
     };
-  }, [bookmark, bookmarkId]);
+  }, [bookmark]);
 
   if (bookmark === undefined) return null;
   if (!bookmark) {

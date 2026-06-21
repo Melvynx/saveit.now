@@ -84,6 +84,7 @@ import type * as users_actions from "../users/actions.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 import type * as utils_errors from "../utils/errors.js";
+import type * as utils_metadata from "../utils/metadata.js";
 import type * as utils_url from "../utils/url.js";
 
 import type {
@@ -169,6 +170,7 @@ declare const fullApi: ApiFromModules<{
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
   "utils/errors": typeof utils_errors;
+  "utils/metadata": typeof utils_metadata;
   "utils/url": typeof utils_url;
 }>;
 

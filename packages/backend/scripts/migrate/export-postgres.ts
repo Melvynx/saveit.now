@@ -9,6 +9,7 @@
  * Tables exported:
  *   user             → user.jsonl
  *   account          → account.jsonl
+ *   apikey           → apiKey.jsonl
  *   "Tag"            → tag.jsonl
  *   "Bookmark"       → bookmark.jsonl  (titleEmbedding + vectorSummaryEmbedding EXCLUDED)
  *   "BookmarkTag"    → bookmarkTag.jsonl
@@ -48,6 +49,10 @@ const TABLES: TableExport[] = [
   {
     file: "account",
     query: `SELECT * FROM "account" ORDER BY "createdAt"`,
+  },
+  {
+    file: "apiKey",
+    query: `SELECT * FROM "apikey" ORDER BY id`,
   },
   {
     file: "tag",

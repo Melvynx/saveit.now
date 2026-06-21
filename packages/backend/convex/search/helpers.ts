@@ -3,6 +3,10 @@
  * No Convex function registrations. No runtime-specific imports.
  */
 
+import { cleanMetadata, cleanPublicMetadata } from "../utils/metadata";
+
+export { cleanMetadata, cleanPublicMetadata };
+
 // ---------------------------------------------------------------------------
 // Types (mirrored from Contract §C — SearchResultDTO = BookmarkDTO with score)
 // ---------------------------------------------------------------------------
@@ -154,23 +158,6 @@ export function paginateResults(
       : undefined;
 
   return { bookmarks, nextCursor, hasMore };
-}
-
-// ---------------------------------------------------------------------------
-// Metadata cleaning (Contract §C, E.11)
-// ---------------------------------------------------------------------------
-
-/**
- * Strips the `transcript` field from metadata before sending to clients.
- * YouTube transcripts can be very large.
- */
-export function cleanMetadata(metadata: any): any {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return metadata;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { transcript: _, ...cleaned } = metadata as Record<string, unknown>;
-  return cleaned;
 }
 
 // ---------------------------------------------------------------------------

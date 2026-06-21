@@ -37,6 +37,7 @@
   "pnpm": {
     "overrides": {
       "@opentelemetry/instrumentation": "0.213.0",
+      "@saveit/mobile>@types/react": "19.1.17",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3"
     }

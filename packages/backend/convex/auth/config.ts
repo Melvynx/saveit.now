@@ -7,11 +7,7 @@ import { betterAuth } from "better-auth";
 import { admin, emailOTP, magicLink } from "better-auth/plugins";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
-import type {
-  ActionCtx,
-  MutationCtx,
-  QueryCtx,
-} from "../_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import authConfig from "../auth.config";
 import betterAuthSchema from "../betterAuth/schema";
 import { throwForbidden, throwUnauthorized } from "../utils/errors";
@@ -20,7 +16,12 @@ const APP_NAME = "SaveIt";
 export const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 export const authCookiePrefix =
   process.env.BETTER_AUTH_COOKIE_PREFIX?.trim() || "save-it";
-const appStoreTestEmail = process.env.APPSTORE_TEST_EMAIL;
+const appStoreTestEmail = "help@saveit.now";
+const appStoreTestOtp = "123456";
+
+const isAppStoreTestLogin = (email: string) => {
+  return email.trim().toLowerCase() === appStoreTestEmail;
+};
 
 // --- Origin / host helpers (Phase 17 B9: accept preview deploys) ---
 
@@ -213,6 +214,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
         description: `Welcome to ${APP_NAME}. Use the secure link below to verify your email address.`,
         actionLabel: "Verify email",
         actionUrl: url,
+        preview: `Verify your ${APP_NAME} email address.`,
       });
     },
   },
@@ -239,8 +241,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
       otpLength: 6,
       expiresIn: 300,
       generateOTP: ({ email }: { email: string }) => {
-        if (appStoreTestEmail && email === appStoreTestEmail) {
-          return "123456";
+        if (isAppStoreTestLogin(email)) {
+          return appStoreTestOtp;
         }
         return undefined as unknown as string;
       },
@@ -252,24 +254,19 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
         otp: string;
       }) => {
         // Phase 17 B10: store-review test account skips the email.
-        if (appStoreTestEmail && email === appStoreTestEmail) return;
+        if (isAppStoreTestLogin(email)) return;
         await scheduleEmail(ctx, {
           to: email,
           subject: `Your ${APP_NAME} sign-in code`,
           title: "Your sign-in code",
           description: `Use this one-time code to sign in to ${APP_NAME}.`,
+          preview: `Your ${APP_NAME} sign-in code is ${otp}.`,
           otp,
         });
       },
     }),
     magicLink({
-      sendMagicLink: async ({
-        email,
-        url,
-      }: {
-        email: string;
-        url: string;
-      }) => {
+      sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
         await scheduleEmail(ctx, {
           to: email,
           subject: `Sign in to ${APP_NAME}`,
@@ -277,6 +274,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
           description: "Use the secure link below to sign in.",
           actionLabel: "Sign in",
           actionUrl: url,
+          preview: `Open this secure link to sign in to ${APP_NAME}.`,
         });
       },
     }),

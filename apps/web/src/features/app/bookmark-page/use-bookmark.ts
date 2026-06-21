@@ -1,11 +1,10 @@
 import { api } from "@convex/_generated/api";
-import type { Id } from "@convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const useBookmark = (bookmarkId?: string | null) => {
   const bookmark = useAuthedQuery(
-    api.bookmarks.queries.get,
-    bookmarkId ? { id: bookmarkId as Id<"bookmarks"> } : "skip",
+    api.bookmarks.queries.getByIdOrLegacyId,
+    bookmarkId ? { id: bookmarkId } : "skip",
   );
 
   return {

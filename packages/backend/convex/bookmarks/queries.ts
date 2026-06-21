@@ -7,7 +7,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, query, authQuery } from "../functions";
 import { bookmarkType } from "../schema";
 import { throwNotFound } from "../utils/errors";
@@ -47,6 +47,40 @@ async function resolveTagsForBookmark(
     }
   }
   return tags;
+}
+
+async function resolveBookmarkByIdOrLegacyId(
+  ctx: { db: { get: Function; normalizeId: Function; query: Function } },
+  idOrLegacyId: string,
+): Promise<Doc<"bookmarks"> | null> {
+  const normalizedId = ctx.db.normalizeId(
+    "bookmarks",
+    idOrLegacyId,
+  ) as Id<"bookmarks"> | null;
+  if (normalizedId) {
+    const doc = (await ctx.db.get(normalizedId)) as Doc<"bookmarks"> | null;
+    if (doc) return doc;
+  }
+
+  return (await (ctx.db as any)
+    .query("bookmarks")
+    .withIndex("by_legacy_id", (q: any) =>
+      q.eq("legacyId", idOrLegacyId),
+    )
+    .first()) as Doc<"bookmarks"> | null;
+}
+
+async function buildBookmarkDetailForDoc(
+  ctx: { db: { query: Function } },
+  doc: Doc<"bookmarks">,
+): Promise<BookmarkDetailDTO> {
+  const tags = await resolveTagsForBookmark(ctx, doc._id);
+  const opens = await (ctx.db as any)
+    .query("bookmarkOpens")
+    .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
+    .take(10000);
+
+  return buildBookmarkDetailDTO(doc as any, tags, opens.length);
 }
 
 // ---------------------------------------------------------------------------
@@ -166,13 +200,27 @@ export const get = authQuery({
       throwNotFound("Bookmark not found");
     }
 
-    const tags = await resolveTagsForBookmark(ctx, doc._id);
-    const opens = await ctx.db
-      .query("bookmarkOpens")
-      .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
-      .take(10000);
+    return buildBookmarkDetailForDoc(ctx, doc);
+  },
+});
 
-    return buildBookmarkDetailDTO(doc as any, tags, opens.length);
+/**
+ * getByIdOrLegacyId — compatibility read for imported bookmarks whose public
+ * or private URLs still contain the old Postgres bookmark id.
+ */
+export const getByIdOrLegacyId = authQuery({
+  args: {
+    id: v.string(),
+  },
+  handler: async (ctx, args): Promise<BookmarkDetailDTO> => {
+    const userId = ctx.user.id;
+    const doc = await resolveBookmarkByIdOrLegacyId(ctx, args.id);
+
+    if (!doc || doc.userId !== userId) {
+      throwNotFound("Bookmark not found");
+    }
+
+    return buildBookmarkDetailForDoc(ctx, doc);
   },
 });
 
@@ -255,6 +303,31 @@ export const getPublic = query({
   },
   handler: async (ctx, args): Promise<any> => {
     const doc = await ctx.db.get(args.id);
+    if (!doc) {
+      return null;
+    }
+    const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId: doc.userId as string,
+    });
+    if (!user || !(user as any).publicLinkEnabled) {
+      return null;
+    }
+    const tags = await resolveTagsForBookmark(ctx, doc._id);
+    const bookmark = buildPublicBookmarkDTO(doc as any);
+    return { ...bookmark, tags };
+  },
+});
+
+/**
+ * getPublicByIdOrLegacyId — public compatibility lookup for old `/p/:id`
+ * links created before the Convex migration.
+ */
+export const getPublicByIdOrLegacyId = query({
+  args: {
+    id: v.string(),
+  },
+  handler: async (ctx, args): Promise<any> => {
+    const doc = await resolveBookmarkByIdOrLegacyId(ctx, args.id);
     if (!doc) {
       return null;
     }

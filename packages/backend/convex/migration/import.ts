@@ -8,13 +8,14 @@
  *
  * Import order (maintained by the import-convex.ts script):
  *   1. importUsers       — betterAuth user + account rows
- *   2. importTags        — tags (userId already rewritten)
- *   3. importBookmarks   — bookmarks (userId rewritten, embeddings omitted)
- *   4. importBookmarkTags
- *   5. importBookmarkOpens
- *   6. importSubscriptions
- *   7. importConversations  (conversations + messages)
- *   8. rebuildUserCounters
+ *   2. importApiKeys     — betterAuth api-key rows
+ *   3. importTags        — tags (userId already rewritten)
+ *   4. importBookmarks   — bookmarks (userId rewritten, embeddings omitted)
+ *   5. importBookmarkTags
+ *   6. importBookmarkOpens
+ *   7. importSubscriptions
+ *   8. importConversations  (conversations + messages)
+ *   9. rebuildUserCounters
  */
 
 import { v } from "convex/values";
@@ -41,6 +42,52 @@ function assertMigrationAllowed(migrationSecret: string): void {
 // ---------------------------------------------------------------------------
 
 const idMapEntry = v.object({ legacyId: v.string(), convexId: v.string() });
+
+function normalizeText(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "bigint") return Number(value);
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+  if (value == null) return fallback;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const lowered = value.trim().toLowerCase();
+    if (lowered === "true" || lowered === "1") return true;
+    if (lowered === "false" || lowered === "0") return false;
+  }
+  return Boolean(value);
+}
+
+function stableJson(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? "";
+  } catch {
+    return String(value);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // 1. importUsers
@@ -145,7 +192,68 @@ export const importUsers = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 2. importTags
+// 2. importApiKeys
+// ---------------------------------------------------------------------------
+
+/**
+ * importApiKeys — inserts legacy Better Auth API key rows into the current
+ * betterAuth component schema. userId/referenceId is already rewritten, the
+ * legacy hashed key is preserved as-is, and reruns match by (configId, key).
+ */
+export const importApiKeys = mutation({
+  args: { rows: v.array(v.any()), migrationSecret: v.string() },
+  returns: v.number(),
+  handler: async (ctx, { rows, migrationSecret }) => {
+    assertMigrationAllowed(migrationSecret);
+
+    let upsertedCount = 0;
+
+    for (const row of rows) {
+      const configId = normalizeText(row.configId)?.trim() || "default";
+      const prefix = normalizeText(row.prefix)?.trim() || "saveit_";
+      const referenceId = normalizeText(row.referenceId ?? row.userId)?.trim();
+      const key = normalizeText(row.key)?.trim();
+      if (!referenceId || !key) continue;
+
+      const data = {
+        configId,
+        name: normalizeText(row.name),
+        start: normalizeText(row.start),
+        referenceId,
+        prefix,
+        key,
+        refillInterval: normalizeNumber(row.refillInterval),
+        refillAmount: normalizeNumber(row.refillAmount),
+        lastRefillAt:
+          row.lastRefillAt != null ? toMs(row.lastRefillAt as any) : null,
+        enabled: normalizeBoolean(row.enabled, true),
+        rateLimitEnabled: normalizeBoolean(row.rateLimitEnabled, false),
+        rateLimitTimeWindow: normalizeNumber(row.rateLimitTimeWindow),
+        rateLimitMax: normalizeNumber(row.rateLimitMax),
+        requestCount: normalizeNumber(row.requestCount) ?? 0,
+        remaining: normalizeNumber(row.remaining),
+        lastRequest:
+          row.lastRequest != null ? toMs(row.lastRequest as any) : null,
+        expiresAt: row.expiresAt != null ? toMs(row.expiresAt as any) : null,
+        createdAt: toMs(row.createdAt as any),
+        updatedAt: toMs(row.updatedAt as any),
+        permissions: normalizeText(row.permissions),
+        metadata: normalizeText(row.metadata),
+      };
+
+      await ctx.runMutation(
+        (components.betterAuth.data as any).insertApiKey,
+        data,
+      );
+      upsertedCount += 1;
+    }
+
+    return upsertedCount;
+  },
+});
+
+// ---------------------------------------------------------------------------
+// 3. importTags
 // ---------------------------------------------------------------------------
 
 /**
@@ -192,7 +300,7 @@ export const importTags = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 3. importBookmarks
+// 4. importBookmarks
 // ---------------------------------------------------------------------------
 
 /**
@@ -201,7 +309,7 @@ export const importTags = mutation({
  * userId is already rewritten by the script.
  *
  * Field mapping (Postgres "Bookmark" → Convex bookmarks):
- *   id                → (auto-generated)
+ *   id                → legacyId (stable legacy identity for reruns)
  *   userId            → userId (rewritten to convex id)
  *   url               → url
  *   type              → type
@@ -231,22 +339,15 @@ export const importBookmarks = mutation({
     const result: { legacyId: string; convexId: string }[] = [];
 
     for (const bm of bookmarks) {
-      const legacyId = String(bm.id);
-      // Idempotent: reuse existing bookmark for (userId, url) so re-runs resume safely.
-      const existing = await ctx.db
-        .query("bookmarks")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .withIndex("by_user_url", (q: any) =>
-          q.eq("userId", String(bm.userId)).eq("url", String(bm.url)),
-        )
-        .first();
-      if (existing) {
-        result.push({ legacyId, convexId: existing._id as string });
-        continue;
-      }
-      const convexId = await ctx.db.insert("bookmarks", {
-        userId: String(bm.userId),
-        url: String(bm.url),
+      const legacyId = normalizeText(bm.id)?.trim();
+      const userId = normalizeText(bm.userId)?.trim();
+      const url = normalizeText(bm.url)?.trim();
+      if (!legacyId || !userId || !url) continue;
+
+      const bookmarkFields = {
+        userId,
+        legacyId,
+        url,
         type: bm.type ?? undefined,
         title: bm.title ?? undefined,
         summary: bm.summary ?? undefined,
@@ -268,7 +369,34 @@ export const importBookmarks = mutation({
         // searchEmbedding and embeddingModel intentionally omitted — re-embed pass
         createdAt: toMs(bm.createdAt),
         updatedAt: toMs(bm.updatedAt),
-      });
+      } as const;
+
+      const existingByLegacyId = await (ctx.db.query("bookmarks") as any)
+        .withIndex("by_legacy_id", (q: any) => q.eq("legacyId", legacyId))
+        .first();
+      if (existingByLegacyId) {
+        await ctx.db.patch(existingByLegacyId._id, bookmarkFields as any);
+        result.push({ legacyId, convexId: existingByLegacyId._id as string });
+        continue;
+      }
+      const existingByUserUrl = await (ctx.db.query("bookmarks") as any)
+        .withIndex("by_user_url", (q: any) =>
+          q.eq("userId", userId).eq("url", url),
+        )
+        .take(10);
+      const existingWithoutLegacyId = existingByUserUrl.find(
+        (row: { legacyId?: string | null }) => row.legacyId == null,
+      );
+      if (existingWithoutLegacyId) {
+        await ctx.db.patch(existingWithoutLegacyId._id, bookmarkFields as any);
+        result.push({
+          legacyId,
+          convexId: existingWithoutLegacyId._id as string,
+        });
+        continue;
+      }
+
+      const convexId = await ctx.db.insert("bookmarks", bookmarkFields as any);
       result.push({ legacyId, convexId: convexId as string });
     }
 
@@ -277,7 +405,7 @@ export const importBookmarks = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 4. importBookmarkTags
+// 5. importBookmarkTags
 // ---------------------------------------------------------------------------
 
 /**
@@ -319,7 +447,7 @@ export const importBookmarkTags = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 5. importBookmarkOpens
+// 6. importBookmarkOpens
 // ---------------------------------------------------------------------------
 
 /**
@@ -338,10 +466,23 @@ export const importBookmarkOpens = mutation({
     assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
+      const bookmarkId = row.bookmarkId;
+      const userId = String(row.userId);
+      const openedAt = toMs(row.openedAt ?? row.createdAt);
+      const existingOpens = await ctx.db
+        .query("bookmarkOpens")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_bookmark_user", (q: any) =>
+          q.eq("bookmarkId", bookmarkId).eq("userId", userId),
+        )
+        .take(500);
+      if (existingOpens.some((open) => open.openedAt === openedAt)) {
+        continue;
+      }
       await ctx.db.insert("bookmarkOpens", {
-        bookmarkId: row.bookmarkId as any,
-        userId: String(row.userId),
-        openedAt: toMs(row.openedAt ?? row.createdAt),
+        bookmarkId: bookmarkId as any,
+        userId,
+        openedAt,
       });
     }
 
@@ -350,7 +491,7 @@ export const importBookmarkOpens = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 6. importSubscriptions
+// 7. importSubscriptions
 // ---------------------------------------------------------------------------
 
 /**
@@ -378,29 +519,86 @@ export const importSubscriptions = mutation({
     assertMigrationAllowed(migrationSecret);
 
     for (const row of rows) {
-      await ctx.db.insert("subscriptions", {
-        userId: String(row.userId ?? row.referenceId),
+      const userId = String(row.userId ?? row.referenceId);
+      const stripeCustomerId =
+        row.stripeCustomerId != null ? String(row.stripeCustomerId) : null;
+      const stripeSubscriptionId =
+        row.stripeSubscriptionId != null
+          ? String(row.stripeSubscriptionId)
+          : null;
+      const subscription: {
+        userId: string;
+        plan: string;
+        stripeCustomerId?: string;
+        stripeSubscriptionId?: string;
+        status?: string;
+        periodStart?: number;
+        periodEnd?: number;
+        cancelAtPeriodEnd?: boolean;
+        seats?: number;
+        createdAt: number;
+        updatedAt: number;
+      } = {
+        userId,
         plan: String(row.plan ?? "free"),
-        stripeCustomerId: row.stripeCustomerId ?? undefined,
-        stripeSubscriptionId: row.stripeSubscriptionId ?? undefined,
-        status: row.status ?? undefined,
-        periodStart:
-          row.currentPeriodStart != null
-            ? toMs(row.currentPeriodStart)
-            : row.periodStart != null
-              ? toMs(row.periodStart)
-              : undefined,
-        periodEnd:
-          row.currentPeriodEnd != null
-            ? toMs(row.currentPeriodEnd)
-            : row.periodEnd != null
-              ? toMs(row.periodEnd)
-              : undefined,
-        cancelAtPeriodEnd: row.cancelAtPeriodEnd ?? undefined,
-        seats: row.seats ?? undefined,
         createdAt: toMs(row.createdAt),
         updatedAt: toMs(row.updatedAt),
-      });
+      };
+      if (stripeCustomerId) {
+        subscription.stripeCustomerId = stripeCustomerId;
+      }
+      if (stripeSubscriptionId) {
+        subscription.stripeSubscriptionId = stripeSubscriptionId;
+      }
+      if (row.status != null) {
+        subscription.status = String(row.status);
+      }
+      if (row.currentPeriodStart != null || row.periodStart != null) {
+        subscription.periodStart =
+          row.currentPeriodStart != null
+            ? toMs(row.currentPeriodStart)
+            : toMs(row.periodStart);
+      }
+      if (row.currentPeriodEnd != null || row.periodEnd != null) {
+        subscription.periodEnd =
+          row.currentPeriodEnd != null
+            ? toMs(row.currentPeriodEnd)
+            : toMs(row.periodEnd);
+      }
+      if (row.cancelAtPeriodEnd != null) {
+        subscription.cancelAtPeriodEnd = normalizeBoolean(
+          row.cancelAtPeriodEnd,
+          false,
+        );
+      }
+      if (row.seats != null) {
+        subscription.seats = normalizeNumber(row.seats) ?? undefined;
+      }
+
+      const existingByStripeId = stripeSubscriptionId
+        ? await ctx.db
+            .query("subscriptions")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .withIndex("by_stripe_subscription", (q: any) =>
+              q.eq("stripeSubscriptionId", stripeSubscriptionId),
+            )
+            .first()
+        : null;
+      const existingByUser =
+        existingByStripeId ??
+        (await ctx.db
+          .query("subscriptions")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .withIndex("by_user", (q: any) => q.eq("userId", userId))
+          .first());
+
+      if (existingByUser) {
+        await ctx.db.patch(existingByUser._id, {
+          ...(subscription as any),
+        });
+      } else {
+        await ctx.db.insert("subscriptions", subscription as any);
+      }
     }
 
     return rows.length;
@@ -408,7 +606,7 @@ export const importSubscriptions = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 7. importConversations
+// 8. importConversations
 // ---------------------------------------------------------------------------
 
 /**
@@ -441,26 +639,42 @@ export const importConversations = mutation({
       const userId = String(row.userId);
       const updatedAt = toMs(row.updatedAt);
       const title = row.title ?? undefined;
-      // Idempotent: skip if a conversation with the same (userId, updatedAt, title)
-      // already exists, so a re-run after a partial failure doesn't duplicate.
+      // Idempotent: reuse a conversation with the same (userId, updatedAt, title)
+      // so a re-run after a partial failure can still fill missing messages.
       const existing = await ctx.db
         .query("chatConversations")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .withIndex("by_user_updated", (q: any) =>
           q.eq("userId", userId).eq("updatedAt", updatedAt),
         )
-        .collect();
-      if (existing.some((c) => (c.title ?? undefined) === title)) {
-        continue;
-      }
-      const convexConversationId = await ctx.db.insert("chatConversations", {
-        userId,
-        title,
-        likes: Number(row.likes ?? 0),
-        createdAt: toMs(row.createdAt),
-        updatedAt,
-      });
-      count++;
+        .take(25);
+      const existingConversation = existing.find(
+        (c) => (c.title ?? undefined) === title,
+      );
+      const convexConversationId =
+        existingConversation?._id ??
+        (await ctx.db.insert("chatConversations", {
+          userId,
+          title,
+          likes: Number(row.likes ?? 0),
+          createdAt: toMs(row.createdAt),
+          updatedAt,
+        }));
+      if (!existingConversation) count++;
+
+      const existingMessages = await ctx.db
+        .query("chatMessages")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex("by_conversation", (q: any) =>
+          q.eq("conversationId", convexConversationId),
+        )
+        .take(500);
+      const existingMessageKeys = new Set(
+        existingMessages.map(
+          (msg) =>
+            `${msg.role}:${msg.createdAt}:${stableJson(msg.content).slice(0, 500)}`,
+        ),
+      );
 
       // messages can be stored as JSON array on the Postgres row (old schema).
       const messages: unknown[] = Array.isArray(row._messages)
@@ -475,10 +689,20 @@ export const importConversations = mutation({
         const validRole =
           role === "assistant" || role === "system" ? role : "user";
         const content = m.content ?? m;
+        const createdAt =
+          m.createdAt != null
+            ? toMs(m.createdAt as any)
+            : toMs(row.createdAt);
+        const messageKey = `${validRole}:${createdAt}:${stableJson(
+          content,
+        ).slice(0, 500)}`;
+        if (existingMessageKeys.has(messageKey)) {
+          continue;
+        }
         // Convex documents are capped at 1 MiB. A few legacy messages embed huge
         // tool results / pasted blobs that exceed that on their own — skip them
         // rather than aborting the whole conversation import.
-        const approxSize = JSON.stringify(content)?.length ?? 0;
+        const approxSize = stableJson(content).length;
         if (approxSize > 1_000_000) {
           console.warn(
             `[migrate] skipping oversized chat message (${approxSize} bytes) in conversation ${convexConversationId}`,
@@ -490,11 +714,9 @@ export const importConversations = mutation({
           userId: String(row.userId),
           role: validRole as "user" | "assistant" | "system",
           content,
-          createdAt:
-            m.createdAt != null
-              ? toMs(m.createdAt as any)
-              : toMs(row.createdAt),
+          createdAt,
         });
+        existingMessageKeys.add(messageKey);
       }
     }
 
@@ -503,7 +725,7 @@ export const importConversations = mutation({
 });
 
 // ---------------------------------------------------------------------------
-// 8. rebuildUserCounters
+// 9. rebuildUserCounters
 // ---------------------------------------------------------------------------
 
 /**

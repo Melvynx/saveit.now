@@ -2,7 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { type ComponentType, useState } from "react";
 import {
   Alert,
   Image,
@@ -12,7 +12,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import YoutubePlayer from "react-native-youtube-iframe";
 
 import { Button } from "../../src/components/ui/button";
 import { IconButton } from "../../src/components/ui/icon-button";
@@ -22,6 +21,35 @@ import { Text } from "../../src/components/ui/text";
 import { hapticWarning } from "../../src/lib/haptics";
 import { useThemeColors } from "../../src/lib/theme";
 import { getDomainName } from "../../src/lib/utils";
+
+type YoutubePlayerProps = {
+  height: number;
+  videoId: string;
+  webViewProps?: Record<string, unknown>;
+};
+
+let resolvedYoutubePlayer:
+  | ComponentType<YoutubePlayerProps>
+  | null
+  | undefined;
+
+function getYoutubePlayer() {
+  if (resolvedYoutubePlayer !== undefined) {
+    return resolvedYoutubePlayer;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const youtubeIframe = require("react-native-youtube-iframe") as {
+      default?: ComponentType<YoutubePlayerProps>;
+    };
+    resolvedYoutubePlayer = youtubeIframe.default ?? null;
+  } catch {
+    resolvedYoutubePlayer = null;
+  }
+
+  return resolvedYoutubePlayer;
+}
 
 export default function BookmarkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -351,8 +379,45 @@ function TweetDetailContent({
 
 function YoutubeDetailContent({ bookmark }: { bookmark: any }) {
   const youtubeId = bookmark.metadata?.youtubeId;
+  const YoutubePlayer = getYoutubePlayer();
 
   if (!youtubeId) return null;
+
+  if (!YoutubePlayer) {
+    return (
+      <View className="gap-4">
+        <View className="overflow-hidden rounded-2xl border border-border bg-card">
+          <Image
+            source={{
+              uri:
+                bookmark.preview ||
+                `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
+            }}
+            style={{ height: 220, width: "100%" }}
+            resizeMode="cover"
+          />
+        </View>
+
+        <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+          <Image
+            source={{ uri: "https://www.youtube.com/favicon.ico" }}
+            style={{ width: 24, height: 24, borderRadius: 6 }}
+          />
+          <View className="flex-1">
+            <RNText
+              numberOfLines={2}
+              className="font-sans-semibold text-[15px] text-foreground"
+            >
+              {bookmark.title || "YouTube Video"}
+            </RNText>
+            <RNText className="font-sans text-[13px] text-muted-foreground">
+              youtube.com
+            </RNText>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="gap-4">

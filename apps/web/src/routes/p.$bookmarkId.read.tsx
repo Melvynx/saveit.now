@@ -1,7 +1,12 @@
 import { ArticleReader } from "@/features/public-bookmarks/article-reader";
 import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
-import type { Id } from "@convex/_generated/dataModel";
+import { Button } from "@workspace/ui/components/button";
+import { Card } from "@workspace/ui/components/card";
+import { Typography } from "@workspace/ui/components/typography";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
 
 /** Extract article markdown from a bookmark's metadata (client-safe). */
 function getMarkdownContent(metadata: unknown): string | null {
@@ -10,12 +15,6 @@ function getMarkdownContent(metadata: unknown): string | null {
   const content = m.articleContent ?? m.markdown ?? m.content;
   return typeof content === "string" && content.trim() ? content : null;
 }
-import { Button } from "@workspace/ui/components/button";
-import { Card } from "@workspace/ui/components/card";
-import { Typography } from "@workspace/ui/components/typography";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/p/$bookmarkId/read")({
   component: ReadArticlePage,
@@ -24,8 +23,8 @@ export const Route = createFileRoute("/p/$bookmarkId/read")({
 function ReadArticlePage() {
   const { bookmarkId } = Route.useParams();
   const session = useSession();
-  const bookmark = useQuery(api.bookmarks.queries.getPublic, {
-    id: bookmarkId as Id<"bookmarks">,
+  const bookmark = useQuery(api.bookmarks.queries.getPublicByIdOrLegacyId, {
+    id: bookmarkId,
   });
 
   if (bookmark === undefined) return null;
@@ -46,7 +45,7 @@ function ReadArticlePage() {
       <div className="container mx-auto max-w-4xl p-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" size="sm" asChild>
-            <a href={`/p/${bookmarkId}`}>
+            <a href={`/p/${bookmark.id}`}>
               <ArrowLeft className="size-4 mr-2" />
               Back to Bookmark
             </a>
@@ -76,7 +75,7 @@ function ReadArticlePage() {
     <div className="container mx-auto max-w-4xl p-6">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" size="sm" asChild>
-          <a href={`/p/${bookmarkId}`}>
+          <a href={`/p/${bookmark.id}`}>
             <ArrowLeft className="size-4 mr-2" />
             Back to Bookmark
           </a>

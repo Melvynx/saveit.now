@@ -47,11 +47,14 @@ export const sendAuthEmail = internalAction({
       process.env.NODE_ENV === "development"
         ? `[DEV] ${args.subject}`
         : args.subject;
+    const preview =
+      args.preview?.trim() ||
+      (args.otp ? `Your sign-in code is ${args.otp}.` : args.description);
 
     const html = await render(
       React.createElement(MarkdownEmail, {
         markdown,
-        preview: args.preview,
+        preview,
         disabledSignature: false,
       }),
     );

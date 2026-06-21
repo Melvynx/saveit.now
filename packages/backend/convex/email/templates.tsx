@@ -68,13 +68,25 @@ export function EmailLayout({ children, disableTailwind }: EmailLayoutProps) {
                 </tr>
               </tbody>
             </table>
-            <Hr style={{ marginTop: "12px", marginBottom: "24px", borderColor: "#d1d5db" }} />
+            <Hr
+              style={{
+                marginTop: "12px",
+                marginBottom: "24px",
+                borderColor: "#d1d5db",
+              }}
+            />
           </Tailwind>
 
           {disableTailwind ? children : <Tailwind>{children}</Tailwind>}
 
           <Tailwind>
-            <Hr style={{ marginTop: "48px", marginBottom: "24px", borderColor: "#d1d5db" }} />
+            <Hr
+              style={{
+                marginTop: "48px",
+                marginBottom: "24px",
+                borderColor: "#d1d5db",
+              }}
+            />
             <table cellPadding={0} cellSpacing={0}>
               <tbody>
                 <tr>
@@ -119,6 +131,7 @@ export function MarkdownEmail({
   disabledSignature = false,
 }: MarkdownEmailProps) {
   let content = markdown;
+  const previewText = preview?.trim();
 
   if (!disabledSignature) {
     content += `\n\nBest,\n\nMelvyn from SaveIt.now`;
@@ -132,7 +145,7 @@ export function MarkdownEmail({
 
   return (
     <EmailLayout disableTailwind>
-      <Preview>{preview ?? "You receive a markdown email."}</Preview>
+      {previewText ? <Preview>{previewText}</Preview> : null}
       <Markdown
         markdownCustomStyles={{
           p: { fontSize: "1.125rem", lineHeight: "1.5rem" },

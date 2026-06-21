@@ -1556,6 +1556,35 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      insertApiKey: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          configId?: string;
+          createdAt: number;
+          enabled?: null | boolean;
+          expiresAt?: null | number;
+          key: string;
+          lastRefillAt?: null | number;
+          lastRequest?: null | number;
+          metadata?: null | string;
+          name?: null | string;
+          permissions?: null | string;
+          prefix?: null | string;
+          rateLimitEnabled?: null | boolean;
+          rateLimitMax?: null | number;
+          rateLimitTimeWindow?: null | number;
+          referenceId: string;
+          refillAmount?: null | number;
+          refillInterval?: null | number;
+          remaining?: null | number;
+          requestCount?: null | number;
+          start?: null | string;
+          updatedAt: number;
+        },
+        any,
+        Name
+      >;
       insertUser: FunctionReference<
         "mutation",
         "internal",

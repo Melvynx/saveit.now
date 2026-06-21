@@ -6,7 +6,7 @@ import { Modal, View } from "react-native";
 import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
 import OnboardingScreen from "../src/screens/OnboardingScreen";
-import SignInScreen from "../src/screens/SignInScreen";
+import SignInScreen, { type SignInStep } from "../src/screens/SignInScreen";
 
 export default function IndexPage() {
   const router = useRouter();
@@ -15,6 +15,16 @@ export default function IndexPage() {
   const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInOtp, setSignInOtp] = useState("");
+  const [signInStep, setSignInStep] = useState<SignInStep>("email");
+
+  const closeSignIn = useCallback(() => {
+    setShowSignIn(false);
+    setSignInEmail("");
+    setSignInOtp("");
+    setSignInStep("email");
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -33,14 +43,7 @@ export default function IndexPage() {
 
       const timer = setTimeout(handleNavigation, 100);
       return () => clearTimeout(timer);
-    }, [
-      hasShareIntent,
-      params.dataUrl,
-      isNavigating,
-      isLoading,
-      user,
-      router,
-    ]),
+    }, [hasShareIntent, params.dataUrl, isNavigating, isLoading, user, router]),
   );
 
   // Show onboarding/sign-in when user is not authenticated
@@ -52,11 +55,19 @@ export default function IndexPage() {
           visible={showSignIn}
           animationType="slide"
           transparent
-          onRequestClose={() => setShowSignIn(false)}
+          onRequestClose={closeSignIn}
         >
           <View className="flex-1 justify-end bg-black/50">
             <View className="h-[70%] overflow-hidden rounded-t-[28px] bg-background">
-              <SignInScreen onClose={() => setShowSignIn(false)} />
+              <SignInScreen
+                onClose={closeSignIn}
+                email={signInEmail}
+                onEmailChange={setSignInEmail}
+                otp={signInOtp}
+                onOtpChange={setSignInOtp}
+                step={signInStep}
+                onStepChange={setSignInStep}
+              />
             </View>
           </View>
         </Modal>

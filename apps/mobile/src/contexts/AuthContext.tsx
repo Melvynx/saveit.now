@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
 import { authClient } from "../lib/auth-client";
 
@@ -49,8 +49,39 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isConvexTokenReady, setIsConvexTokenReady] = useState(false);
   const session = authClient.useSession();
+  const sessionId = session.data?.session?.id ?? null;
   const baUser = session.data?.user ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsConvexTokenReady(false);
+
+    if (!sessionId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void authClient.convex
+      .token({ fetchOptions: { throw: false } })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setIsConvexTokenReady(Boolean(data?.token));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsConvexTokenReady(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
 
   // Build a User shape compatible with the existing consumers.
   const user: User | null = baUser
@@ -62,8 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     : null;
 
-  const isAuthenticated = !!user;
-  const isLoading = session.isPending;
+  const hasBetterAuthSession = !!user;
+  const isAuthenticated = hasBetterAuthSession && isConvexTokenReady;
+  const isLoading =
+    session.isPending || (hasBetterAuthSession && !isConvexTokenReady);
 
   // Reactive plan query — automatically updated when Stripe webhook lands.
   const userLimits = useQuery(
@@ -105,16 +138,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const result = await authClient.signOut();
-    if (result?.error) {
-      throw new Error(result.error.message || "Sign out failed");
+    setIsSigningOut(true);
+    try {
+      const result = await authClient.signOut();
+      if (result?.error) {
+        throw new Error(result.error.message || "Sign out failed");
+      }
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
   const signOutWithNavigation = async (navigate: () => void) => {
-    navigate();
-    await new Promise((resolve) => setTimeout(resolve, 100));
     await signOut();
+    navigate();
   };
 
   // Convex queries are reactive — no manual refresh needed. Keep API surface
@@ -139,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         plan,
         isLoading,
         isPlanLoading,
-        isSigningOut: false,
+        isSigningOut,
         isAuthenticated,
         sendOTP,
         verifyOTP,

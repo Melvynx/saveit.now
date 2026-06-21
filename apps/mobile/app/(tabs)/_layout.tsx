@@ -1,76 +1,71 @@
-import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
-import { Tabs } from "expo-router";
-import React from "react";
-import { StyleSheet } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import {
+  Icon,
+  Label,
+  NativeTabs,
+  VectorIcon,
+  type VectorIconProps,
+} from "expo-router/unstable-native-tabs";
+import { useEffect } from "react";
 
+import { LoadingScreen } from "../../src/components/ui/loading";
+import { useAuth } from "../../src/contexts/AuthContext";
 import { useThemeColors } from "../../src/lib/theme";
 
+type IoniconName = keyof typeof Ionicons.glyphMap;
+const nativeTabIonicons: VectorIconProps<IoniconName>["family"] = Ionicons;
+
 export default function TabLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
   const colors = useThemeColors();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "transparent",
-          borderTopColor: colors.border,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: 85,
-          paddingTop: 8,
-          elevation: 0,
-        },
-        tabBarBackground: () => (
-          <BlurView
-            intensity={50}
-            tint={colors.isDark ? "dark" : "light"}
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor: colors.isDark
-                  ? "rgba(10, 10, 10, 0.55)"
-                  : "rgba(255, 255, 255, 0.55)",
-              },
-            ]}
-          />
-        ),
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.tabInactive,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontFamily: "DMSans_600SemiBold",
-          marginTop: 2,
-        },
+    <NativeTabs
+      tintColor={colors.foreground}
+      labelStyle={{
+        fontSize: 11,
+        fontFamily: "DMSans_600SemiBold",
+        fontWeight: "600",
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Bookmarks",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "bookmark" : "bookmark-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "settings" : "settings-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="index">
+        <Label>Bookmarks</Label>
+        <Icon
+          src={{
+            default: (
+              <VectorIcon family={nativeTabIonicons} name="bookmark-outline" />
+            ),
+            selected: <VectorIcon family={nativeTabIonicons} name="bookmark" />,
+          }}
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        <Icon
+          src={{
+            default: (
+              <VectorIcon family={nativeTabIonicons} name="settings-outline" />
+            ),
+            selected: <VectorIcon family={nativeTabIonicons} name="settings" />,
+          }}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

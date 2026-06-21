@@ -151,6 +151,7 @@ async function main(): Promise<void> {
   const [
     rawUsers,
     rawAccounts,
+    rawApiKeys,
     rawTags,
     rawBookmarks,
     rawBookmarkTags,
@@ -160,6 +161,7 @@ async function main(): Promise<void> {
   ] = await Promise.all([
     readJsonl("user.jsonl"),
     readJsonl("account.jsonl"),
+    readJsonl("apiKey.jsonl"),
     readJsonl("tag.jsonl"),
     readJsonl("bookmark.jsonl"),
     readJsonl("bookmarkTag.jsonl"),
@@ -169,6 +171,7 @@ async function main(): Promise<void> {
   ]);
   console.log(`  users: ${rawUsers.length}`);
   console.log(`  accounts: ${rawAccounts.length}`);
+  console.log(`  apiKeys: ${rawApiKeys.length}`);
   console.log(`  tags: ${rawTags.length}`);
   console.log(`  bookmarks: ${rawBookmarks.length}`);
   console.log(`  bookmarkTags: ${rawBookmarkTags.length}`);
@@ -199,6 +202,7 @@ async function main(): Promise<void> {
   // ONLY_STAGES, so these stay 0 for skipped stages).
   let bookmarkTagsCount = 0;
   let bookmarkOpensCount = 0;
+  let apiKeysCount = 0;
   let subscriptionsCount = 0;
   let conversationsCount = 0;
   let countersCount = 0;
@@ -225,7 +229,37 @@ async function main(): Promise<void> {
   console.log(`\n  Built user map: ${userMap.size} entries.`);
 
   // -------------------------------------------------------------------------
-  // 4. Import tags — build legacyId → convexId map
+  // 4. Import API keys
+  // -------------------------------------------------------------------------
+  if (shouldRun("apiKeys")) {
+    console.log("\nImporting apiKeys...");
+    const apiKeysRewritten = (rawApiKeys as Record<string, unknown>[])
+      .map((row) => {
+        const legacyUserId = String(row.userId ?? row.referenceId ?? "");
+        const referenceId = userMap.get(legacyUserId);
+        if (!referenceId) return null;
+        return {
+          ...row,
+          referenceId,
+          userId: referenceId,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    console.log(
+      `  apiKeys resolved: ${apiKeysRewritten.length}/${rawApiKeys.length}`,
+    );
+    apiKeysCount = apiKeysRewritten.length;
+    await runChunked("apiKeys", apiKeysRewritten, (batch) =>
+      client.mutation(api.migration.import.importApiKeys, {
+        rows: batch,
+        migrationSecret,
+      }),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // 5. Import tags — build legacyId → convexId map
   // -------------------------------------------------------------------------
   const tagMap = new Map<string, string>(); // legacyId → convexId
   if (shouldRun("tags")) {
@@ -255,7 +289,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 5. Import bookmarks — build legacyId → convexId map
+  // 6. Import bookmarks — build legacyId → convexId map
   // -------------------------------------------------------------------------
   const bookmarkMap = new Map<string, string>(); // legacyId → convexId
   if (shouldRun("bookmarks")) {
@@ -287,7 +321,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 6. Import bookmarkTags
+  // 7. Import bookmarkTags
   // -------------------------------------------------------------------------
   if (shouldRun("bookmarkTags")) {
     console.log("\nImporting bookmarkTags...");
@@ -320,7 +354,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 7. Import bookmarkOpens
+  // 8. Import bookmarkOpens
   // -------------------------------------------------------------------------
   if (shouldRun("bookmarkOpens")) {
     console.log("Importing bookmarkOpens...");
@@ -345,7 +379,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 8. Import subscriptions
+  // 9. Import subscriptions
   // -------------------------------------------------------------------------
   if (shouldRun("subscriptions")) {
     console.log("Importing subscriptions...");
@@ -369,7 +403,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 9. Import chatConversations (+ embedded messages)
+  // 10. Import chatConversations (+ embedded messages)
   // -------------------------------------------------------------------------
   if (shouldRun("conversations")) {
     console.log("Importing chatConversations...");
@@ -399,7 +433,7 @@ async function main(): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // 10. Rebuild userCounters
+  // 11. Rebuild userCounters
   // -------------------------------------------------------------------------
   if (shouldRun("counters")) {
     console.log("\nRebuilding userCounters...");
@@ -433,6 +467,7 @@ async function main(): Promise<void> {
   // -------------------------------------------------------------------------
   console.log("\n--- Import summary ---");
   console.log(`  Users imported:         ${userMap.size}`);
+  console.log(`  API keys imported:      ${apiKeysCount}`);
   console.log(`  Tags imported:          ${tagMap.size}`);
   console.log(`  Bookmarks imported:     ${bookmarkMap.size}`);
   console.log(`  BookmarkTags imported:  ${bookmarkTagsCount}`);

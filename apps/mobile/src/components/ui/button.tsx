@@ -71,6 +71,8 @@ export function Button({
   disabled,
   children,
   onPress,
+  accessibilityLabel,
+  accessibilityRole,
   ...props
 }: ButtonProps) {
   const colors = useThemeColors();
@@ -78,11 +80,15 @@ export function Button({
     variant === "default" || variant == null
       ? colors.primaryForeground
       : colors.foreground;
+  const resolvedAccessibilityLabel =
+    accessibilityLabel ?? (typeof children === "string" ? children : undefined);
 
   return (
     <Pressable
       className={cn(buttonVariants({ variant, size }), className)}
       disabled={disabled || loading}
+      accessibilityLabel={resolvedAccessibilityLabel}
+      accessibilityRole={accessibilityRole ?? "button"}
       onPress={(e) => {
         hapticLight();
         onPress?.(e);
@@ -91,7 +97,9 @@ export function Button({
     >
       {loading ? <ActivityIndicator size="small" color={spinnerColor} /> : null}
       {typeof children === "string" ? (
-        <RNText className={cn(buttonLabelVariants({ variant, size }), labelClassName)}>
+        <RNText
+          className={cn(buttonLabelVariants({ variant, size }), labelClassName)}
+        >
           {children}
         </RNText>
       ) : (

@@ -165,12 +165,20 @@ function isBlockedHostname(hostname: string): boolean {
     return true;
   }
 
-  if (
-    normalized === "::1" ||
-    normalized.startsWith("fc") ||
-    normalized.startsWith("fd")
-  ) {
-    return true;
+  const ipv6Hostname = normalized.replace(/^\[|\]$/g, "");
+  if (ipv6Hostname.includes(":")) {
+    if (
+      ipv6Hostname === "::1" ||
+      ipv6Hostname.startsWith("::ffff:") ||
+      ipv6Hostname.startsWith("fe8") ||
+      ipv6Hostname.startsWith("fe9") ||
+      ipv6Hostname.startsWith("fea") ||
+      ipv6Hostname.startsWith("feb") ||
+      ipv6Hostname.startsWith("fc") ||
+      ipv6Hostname.startsWith("fd")
+    ) {
+      return true;
+    }
   }
 
   return isPrivateIpv4(normalized);

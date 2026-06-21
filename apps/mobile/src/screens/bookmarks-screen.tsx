@@ -343,7 +343,15 @@ export default function BookmarksScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 returnKeyType="search"
-                className="min-h-[44px] flex-1 font-sans text-[15px] text-foreground"
+                style={{
+                  minHeight: 44,
+                  flex: 1,
+                  color: colors.foreground,
+                  fontFamily: "DMSans_400Regular",
+                  fontSize: 15,
+                  lineHeight: 20,
+                  letterSpacing: 0,
+                }}
               />
               {searchQuery.length > 0 ? (
                 <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>

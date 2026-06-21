@@ -1,5 +1,6 @@
 import { AdminShell } from "@/features/admin/admin-shell";
 import { AdminPageHeader, AdminStatCard } from "@/features/admin/admin-shared";
+import { SearchRepairPanel } from "@/features/admin/search-repair-panel";
 import { parseAdminSearchParams } from "@/features/admin/search-params";
 import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
@@ -144,6 +145,8 @@ function AdminPage() {
             icon={Mail}
           />
         </section>
+
+        <SearchRepairPanel />
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>

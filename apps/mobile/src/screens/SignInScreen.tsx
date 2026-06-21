@@ -15,28 +15,45 @@ import { Text } from "../components/ui/text";
 import { useThemeColors } from "../lib/theme";
 import { useAuth } from "../contexts/AuthContext";
 
+export type SignInStep = "email" | "otp";
+
 interface SignInScreenProps {
   onClose?: () => void;
+  email: string;
+  onEmailChange: (email: string) => void;
+  otp: string;
+  onOtpChange: (otp: string) => void;
+  step: SignInStep;
+  onStepChange: (step: SignInStep) => void;
 }
 
-export default function SignInScreen({ onClose }: SignInScreenProps) {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"email" | "otp">("email");
+export default function SignInScreen({
+  onClose,
+  email,
+  onEmailChange,
+  otp,
+  onOtpChange,
+  step,
+  onStepChange,
+}: SignInScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { sendOTP, verifyOTP } = useAuth();
   const colors = useThemeColors();
 
   const handleSendOTP = async () => {
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       Alert.alert("Error", "Please enter your email address");
       return;
     }
 
     setIsLoading(true);
     try {
-      await sendOTP(email.trim());
-      setStep("otp");
+      await sendOTP(normalizedEmail);
+      onEmailChange(normalizedEmail);
+      onOtpChange("");
+      onStepChange("otp");
     } catch (error) {
       Alert.alert(
         "Error",
@@ -55,7 +72,7 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
 
     setIsLoading(true);
     try {
-      await verifyOTP(email.trim(), otp.trim());
+      await verifyOTP(email.trim().toLowerCase(), otp.trim());
       onClose?.();
     } catch (error) {
       Alert.alert(
@@ -68,8 +85,8 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
   };
 
   const handleBackToEmail = () => {
-    setStep("email");
-    setOtp("");
+    onStepChange("email");
+    onOtpChange("");
   };
 
   return (
@@ -110,7 +127,7 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
               <Input
                 placeholder="000000"
                 value={otp}
-                onChangeText={setOtp}
+                onChangeText={onOtpChange}
                 keyboardType="number-pad"
                 maxLength={6}
                 autoComplete="one-time-code"
@@ -149,7 +166,7 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
               <Input
                 placeholder="you@example.com"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={onEmailChange}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}

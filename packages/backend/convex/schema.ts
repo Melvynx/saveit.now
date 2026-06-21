@@ -33,6 +33,7 @@ export const tagType = v.union(v.literal("USER"), v.literal("IA"));
 export default defineSchema({
   bookmarks: defineTable({
     userId: v.string(), // == betterAuth user id
+    legacyId: v.optional(v.string()),
     url: v.string(),
     type: v.optional(bookmarkType),
     title: v.optional(v.string()),
@@ -61,6 +62,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user_created", ["userId", "createdAt"])
+    .index("by_legacy_id", ["legacyId"])
     .index("by_user_type_created", ["userId", "type", "createdAt"])
     .index("by_user_status", ["userId", "status"])
     .index("by_user_url", ["userId", "url"])
@@ -115,6 +117,28 @@ export default defineSchema({
   })
     .index("by_user_started", ["userId", "startedAt"])
     .index("by_bookmark", ["bookmarkId"]),
+
+  searchEmbeddingRepairJobs: defineTable({
+    kind: v.literal("SEARCH_EMBEDDINGS"),
+    startedByUserId: v.string(),
+    status: v.union(
+      v.literal("RUNNING"),
+      v.literal("COMPLETED"),
+      v.literal("FAILED"),
+    ),
+    batchSize: v.number(),
+    scanned: v.number(),
+    candidates: v.number(),
+    embedded: v.number(),
+    skipped: v.number(),
+    failed: v.number(),
+    currentCursor: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_kind_created", ["kind", "createdAt"])
+    .index("by_kind_status_created", ["kind", "status", "createdAt"]),
 
   chatConversations: defineTable({
     userId: v.string(),

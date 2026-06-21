@@ -18,18 +18,18 @@ import { ShareIntentProvider } from "expo-share-intent";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import "../global.css";
 import { themeColors, useAppTheme } from "../src/lib/theme";
 import { AuthProvider } from "../src/contexts/AuthContext";
 import { authClient } from "../src/lib/auth-client";
+import { mobileConfig } from "../src/lib/config";
 
 // Convex client — singleton outside component to avoid re-creation on re-renders.
-const convex = new ConvexReactClient(
-  process.env.EXPO_PUBLIC_CONVEX_URL as string,
-  { unsavedChangesWarning: false },
-);
+const convex = new ConvexReactClient(mobileConfig.convexUrl, {
+  unsavedChangesWarning: false,
+});
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -41,7 +41,8 @@ export const unstable_settings = {
   initialRouteName: "index",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Keep the branded launch screen visible until fonts are ready, then fade it out.
+SplashScreen.setOptions({ duration: 280, fade: true });
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -83,17 +84,27 @@ function RootLayoutNav() {
   const isDark = currentTheme === "dark";
   const colors = isDark ? themeColors.dark : themeColors.light;
 
-  const navigationTheme = {
-    ...(isDark ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-      background: colors.background,
-      card: colors.card,
-      text: colors.foreground,
-      border: colors.border,
-      primary: colors.primary,
-    },
-  };
+  const navigationTheme = useMemo(
+    () => ({
+      ...(isDark ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+        background: colors.background,
+        card: colors.card,
+        text: colors.foreground,
+        border: colors.border,
+        primary: colors.primary,
+      },
+    }),
+    [
+      colors.background,
+      colors.border,
+      colors.card,
+      colors.foreground,
+      colors.primary,
+      isDark,
+    ],
+  );
 
   return (
     <ThemeProvider value={navigationTheme}>
@@ -101,6 +112,10 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="account"
+          options={{ presentation: "modal", headerShown: false }}
+        />
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", headerShown: false }}

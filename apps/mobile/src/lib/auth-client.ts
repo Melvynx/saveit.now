@@ -4,8 +4,10 @@ import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as SecureStore from "expo-secure-store";
 
+import { mobileConfig } from "./config";
+
 export const authClient = createAuthClient({
-  baseURL: process.env.EXPO_PUBLIC_CONVEX_SITE_URL,
+  baseURL: mobileConfig.convexSiteUrl,
   plugins: [
     expoClient({
       scheme: "saveit",
