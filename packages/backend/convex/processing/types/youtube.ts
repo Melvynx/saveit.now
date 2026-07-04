@@ -2,9 +2,9 @@ export type YoutubeMetadata = {
   youtubeId?: string;
   transcriptAvailable?: boolean;
   transcriptSource?: "extension" | "api" | "none";
-  transcript?: string;
+  transcriptCharacterCount?: number;
   transcriptExtractedAt?: string;
   summarySource?: "transcript" | "thumbnail" | "none";
-  thumbnailAnalysis?: string;
+  thumbnailAnalyzed?: boolean;
   [key: string]: unknown;
 };

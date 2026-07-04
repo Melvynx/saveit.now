@@ -1,6 +1,7 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
+import { getConvexSiteUrl } from "@/lib/convex-url";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -8,7 +9,7 @@ import { Typography } from "@workspace/ui/components/typography";
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
 
-const convexSiteUrl = import.meta.env?.VITE_CONVEX_SITE_URL ?? "";
+const convexSiteUrl = getConvexSiteUrl();
 
 export function UnsubscribeForm({ userId }: { userId: string }) {
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);

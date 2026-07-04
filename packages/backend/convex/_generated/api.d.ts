@@ -13,6 +13,7 @@ import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as api_extensions from "../api/extensions.js";
 import type * as api_helpers from "../api/helpers.js";
+import type * as api_mobile from "../api/mobile.js";
 import type * as api_v1 from "../api/v1.js";
 import type * as apiKeys_actions from "../apiKeys/actions.js";
 import type * as apiKeys_helpers from "../apiKeys/helpers.js";
@@ -99,6 +100,7 @@ declare const fullApi: ApiFromModules<{
   "admin/queries": typeof admin_queries;
   "api/extensions": typeof api_extensions;
   "api/helpers": typeof api_helpers;
+  "api/mobile": typeof api_mobile;
   "api/v1": typeof api_v1;
   "apiKeys/actions": typeof apiKeys_actions;
   "apiKeys/helpers": typeof apiKeys_helpers;

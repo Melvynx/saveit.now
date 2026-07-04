@@ -25,6 +25,7 @@ import {
   type BookmarkDetailDTO,
   type TagInBookmark,
 } from "./dto";
+import { cleanMetadataForStorage } from "../utils/metadata";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -134,15 +135,18 @@ async function createBookmarkCore(
     throwValidationError("Bookmark already exists");
   }
 
-  // 4. Merge transcript into metadata if present.
-  let finalMetadata = metadata ?? null;
+  // 4. Keep only bounded provenance metadata. Raw transcripts/content are
+  // processed outside the database and must not be persisted in Convex.
+  let finalMetadata = cleanMetadataForStorage(metadata);
   if (transcript) {
-    finalMetadata = {
+    finalMetadata = cleanMetadataForStorage({
       ...(finalMetadata ?? {}),
-      transcript,
-      transcriptSource: "extension",
-      transcriptExtractedAt: new Date().toISOString(),
-    };
+      youtubeTranscript: {
+        source: "extension",
+        extractedAt: new Date().toISOString(),
+        characterCount: transcript.length,
+      },
+    });
   }
 
   const now = Date.now();

@@ -45,7 +45,9 @@ export default defineSchema({
     ogImageUrl: v.optional(v.string()),
     ogDescription: v.optional(v.string()),
     imageDescription: v.optional(v.string()),
-    // transcript, youtubeId, articleContent, pdfUrl, tweetId, dims, etc.
+    // Bounded metadata only: IDs, external object URLs/keys, dimensions,
+    // provenance, counts. Do not store media bytes, transcripts, HTML,
+    // article markdown, data URLs, or other raw extracted content here.
     metadata: v.optional(v.any()),
     status: bookmarkStatus,
     starred: v.boolean(),
@@ -65,6 +67,7 @@ export default defineSchema({
     .index("by_legacy_id", ["legacyId"])
     .index("by_user_type_created", ["userId", "type", "createdAt"])
     .index("by_user_status", ["userId", "status"])
+    .index("by_status_and_updatedAt", ["status", "updatedAt"])
     .index("by_user_url", ["userId", "url"])
     .index("by_user_starred", ["userId", "starred"])
     .index("by_user_read", ["userId", "read"])
@@ -192,7 +195,9 @@ export default defineSchema({
     monthKey: v.string(), // e.g. "2026-06"
     monthlyRuns: v.number(),
     monthlyChatQueries: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_monthKey", ["monthKey"]),
 
   // Per-user dismissed changelog versions.
   changelogDismissals: defineTable({

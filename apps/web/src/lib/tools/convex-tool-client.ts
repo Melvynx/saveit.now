@@ -5,6 +5,7 @@
  * Tools live at: `${VITE_CONVEX_SITE_URL}/api/tools/<name>`
  */
 
+import { getConvexSiteUrl } from "@/lib/convex-url";
 import type { ZodType } from "zod";
 
 type ToolName =
@@ -14,7 +15,7 @@ type ToolName =
   | "og-images"
   | "youtube-metadata";
 
-const convexSiteUrl = import.meta.env?.VITE_CONVEX_SITE_URL ?? "";
+const convexSiteUrl = getConvexSiteUrl();
 
 /**
  * POST { url } to a public Convex tool httpAction and validate the response.

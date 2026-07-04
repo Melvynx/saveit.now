@@ -4,9 +4,13 @@
  */
 
 import type { Id } from "../_generated/dataModel";
-import { cleanMetadata, cleanPublicMetadata } from "../utils/metadata";
+import {
+  cleanMetadata,
+  cleanMetadataForStorage,
+  cleanPublicMetadata,
+} from "../utils/metadata";
 
-export { cleanMetadata, cleanPublicMetadata };
+export { cleanMetadata, cleanMetadataForStorage, cleanPublicMetadata };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,6 +70,7 @@ export type BookmarkDTO = {
   starred: boolean;
   read: boolean;
   processingError: string | null;
+  processingStep: number | null;
 };
 
 export type BookmarkDetailDTO = BookmarkDTO & {
@@ -159,6 +164,7 @@ export function buildBookmarkDTO(
     starred: bookmark.starred,
     read: bookmark.read,
     processingError: bookmark.processingError ?? null,
+    processingStep: bookmark.processingStep ?? null,
   };
 }
 
@@ -185,7 +191,9 @@ export function buildBookmarkDetailDTO(
  * `starred` and `read` are always forced to `false`. Never includes `note`,
  * `userId`, `vectorSummary`, `searchEmbedding`, etc.
  */
-export function buildPublicBookmarkDTO(bookmark: RawBookmark): PublicBookmarkDTO {
+export function buildPublicBookmarkDTO(
+  bookmark: RawBookmark,
+): PublicBookmarkDTO {
   return {
     id: bookmark._id,
     ...(bookmark.legacyId ? { legacyId: bookmark.legacyId } : {}),

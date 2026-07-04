@@ -12,6 +12,17 @@ import { throwNotFound } from "../utils/errors";
 import type { TagDTO, TagManagementDTO } from "../bookmarks/dto";
 import type { Id } from "../_generated/dataModel";
 
+const LEGACY_TAG_SEARCH_SCAN_LIMIT = 500;
+
+function toTagDTO(tag: any): TagDTO {
+  return {
+    _id: tag._id as Id<"tags">,
+    id: tag._id as string,
+    name: tag.name as string,
+    type: tag.type as "USER" | "IA",
+  };
+}
+
 // ---------------------------------------------------------------------------
 // list — paginated tag list, optional client-side text filter
 // ---------------------------------------------------------------------------
@@ -39,14 +50,54 @@ export const list = authQuery({
       );
     }
 
-    const tagDTOs: TagDTO[] = tags.map((tag) => ({
-      _id: tag._id as Id<"tags">,
-      id: tag._id as string,
-      name: tag.name as string,
-      type: tag.type as "USER" | "IA",
-    }));
+    const tagDTOs: TagDTO[] = tags.map(toTagDTO);
 
     return { ...paginatedResult, page: tagDTOs };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// legacySearch — compatibility query for /api/tags?q=...
+//
+// The old Prisma route filtered by name before slicing to the page size. Keep
+// the Convex read bounded to the current user's tags, then slice matches.
+// ---------------------------------------------------------------------------
+
+export const legacySearch = authQuery({
+  args: {
+    query: v.string(),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    limit: v.number(),
+  },
+  handler: async (ctx, args): Promise<any> => {
+    const userId = ctx.user.id;
+    const normalizedQuery = args.query.trim().toLowerCase();
+    const limit = Math.max(1, Math.min(Math.floor(args.limit), 50));
+    const offset =
+      typeof args.cursor === "string" && /^\d+$/.test(args.cursor)
+        ? Number(args.cursor)
+        : 0;
+
+    const candidates = await ctx.db
+      .query("tags")
+      .withIndex("by_user", (q: any) => q.eq("userId", userId))
+      .take(LEGACY_TAG_SEARCH_SCAN_LIMIT);
+
+    const matches = normalizedQuery
+      ? candidates.filter((tag: any) =>
+          (tag.name as string).toLowerCase().includes(normalizedQuery),
+        )
+      : candidates;
+
+    const page = matches.slice(offset, offset + limit).map(toTagDTO);
+    const nextOffset = offset + page.length;
+    const isDone = nextOffset >= matches.length;
+
+    return {
+      page,
+      isDone,
+      continueCursor: isDone ? "" : String(nextOffset),
+    };
   },
 });
 
@@ -76,12 +127,7 @@ export const getByBookmark = authQuery({
     for (const row of joinRows) {
       const tag = await ctx.db.get(row.tagId);
       if (tag) {
-        tags.push({
-          _id: tag._id as Id<"tags">,
-          id: tag._id as string,
-          name: tag.name as string,
-          type: tag.type as "USER" | "IA",
-        });
+        tags.push(toTagDTO(tag));
       }
     }
 

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { cleanMetadataForStorage } from "../utils/metadata";
 
 // Embedding model key constant (duplicated here to avoid importing from "use node" module)
 const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
@@ -211,6 +212,13 @@ export const applyResult = internalMutation({
     )) {
       if (key === "preview" && (value === null || value === undefined)) {
         if (existing?.preview) continue;
+      }
+      if (key === "metadata") {
+        patch[key] =
+          value === null || value === undefined
+            ? undefined
+            : (cleanMetadataForStorage(value) ?? undefined);
+        continue;
       }
       patch[key] = value === null ? undefined : value;
     }

@@ -14,55 +14,13 @@ import {
   bookmarkToSearchResult,
   cleanMetadata,
   extractDomain,
+  matchesSpecialFilters,
   type SearchResultDTO,
 } from "./helpers";
 
 // ---------------------------------------------------------------------------
-// Readable bookmark types (for READ / UNREAD special filters)
-// ---------------------------------------------------------------------------
-
-const READABLE_BOOKMARK_TYPES = ["ARTICLE", "YOUTUBE"] as const;
-
-// ---------------------------------------------------------------------------
 // Helpers used inside queries
 // ---------------------------------------------------------------------------
-
-/**
- * Applies special filters (READ / UNREAD / STAR) to a bookmark.
- * Filters are OR'd — a bookmark passes if it matches any of the active filters.
- * When no filters are active, the bookmark always passes.
- */
-function matchesSpecialFilters(
-  bookmark: { read: boolean; starred: boolean; type?: string | null },
-  specialFilters?: ("READ" | "UNREAD" | "STAR")[],
-): boolean {
-  if (!specialFilters || specialFilters.length === 0) return true;
-
-  for (const filter of specialFilters) {
-    if (
-      filter === "READ" &&
-      bookmark.read === true &&
-      READABLE_BOOKMARK_TYPES.includes(
-        bookmark.type as (typeof READABLE_BOOKMARK_TYPES)[number],
-      )
-    ) {
-      return true;
-    }
-    if (
-      filter === "UNREAD" &&
-      bookmark.read === false &&
-      READABLE_BOOKMARK_TYPES.includes(
-        bookmark.type as (typeof READABLE_BOOKMARK_TYPES)[number],
-      )
-    ) {
-      return true;
-    }
-    if (filter === "STAR" && bookmark.starred === true) {
-      return true;
-    }
-  }
-  return false;
-}
 
 /**
  * Loads the tag names for a set of bookmarkTags join rows.
@@ -259,7 +217,10 @@ export const searchByTags = internalQuery({
     // 3. Load bookmarks and build results
     const results: SearchResultDTO[] = [];
 
-    for (const [bmId, { count, matchedTagNames }] of bookmarkTagCounts.entries()) {
+    for (const [
+      bmId,
+      { count, matchedTagNames },
+    ] of bookmarkTagCounts.entries()) {
       const row: Doc<"bookmarks"> | null = await ctx.db.get(bmId);
       if (!row) continue;
 
@@ -424,7 +385,10 @@ export const listForBoost = internalQuery({
     bookmarkIds: v.array(v.id("bookmarks")),
     userId: v.string(),
   },
-  handler: async (ctx, args): Promise<Array<{ bookmarkId: string; openCount: number }>> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<Array<{ bookmarkId: string; openCount: number }>> => {
     const { bookmarkIds, userId } = args;
 
     const result: Array<{ bookmarkId: string; openCount: number }> = [];
@@ -437,7 +401,10 @@ export const listForBoost = internalQuery({
         )
         .collect();
 
-      result.push({ bookmarkId: bookmarkId as string, openCount: openRows.length });
+      result.push({
+        bookmarkId: bookmarkId as string,
+        openCount: openRows.length,
+      });
     }
 
     return result;

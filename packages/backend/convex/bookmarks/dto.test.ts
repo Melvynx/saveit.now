@@ -4,6 +4,7 @@ import {
   buildBookmarkDetailDTO,
   buildPublicBookmarkDTO,
   cleanMetadata,
+  cleanMetadataForStorage,
 } from "./dto";
 
 const baseBookmark = {
@@ -18,20 +19,21 @@ const baseBookmark = {
   metadata: {
     transcript: "private transcript",
     markdown: "# Public markdown",
+    width: 1200,
   },
   note: "private note",
   vectorSummary: "private vector summary",
 };
 
 describe("bookmark DTO mappers", () => {
-  it("removes transcript metadata before returning bookmark DTOs", () => {
+  it("removes raw content metadata before returning bookmark DTOs", () => {
     expect(cleanMetadata(baseBookmark.metadata)).toEqual({
-      markdown: "# Public markdown",
+      width: 1200,
     });
 
     const dto = buildBookmarkDTO(baseBookmark, [], 3);
 
-    expect(dto.metadata).toEqual({ markdown: "# Public markdown" });
+    expect(dto.metadata).toEqual({ width: 1200 });
     expect(dto.openCount).toBe(3);
     expect(dto.type).toBeNull();
     expect(dto.processingError).toBeNull();
@@ -55,10 +57,34 @@ describe("bookmark DTO mappers", () => {
       url: "https://example.com/article",
       starred: false,
       read: false,
-      metadata: { markdown: "# Public markdown" },
+      metadata: { width: 1200 },
     });
     expect(publicDto).not.toHaveProperty("userId");
     expect(publicDto).not.toHaveProperty("note");
     expect(publicDto).not.toHaveProperty("vectorSummary");
+  });
+
+  it("strips raw payloads from metadata before storage", () => {
+    expect(
+      cleanMetadataForStorage({
+        transcript: "raw transcript",
+        articleContent: "# article body",
+        screenshotDataUrl: "data:image/png;base64,abc",
+        imageBase64: "abc123",
+        youtubeTranscript: {
+          source: "extension",
+          characterCount: 2400,
+        },
+        pdfUrl: "https://cdn.saveit.now/users/u/bookmarks/b/file.pdf",
+        width: 1200,
+      }),
+    ).toEqual({
+      youtubeTranscript: {
+        source: "extension",
+        characterCount: 2400,
+      },
+      pdfUrl: "https://cdn.saveit.now/users/u/bookmarks/b/file.pdf",
+      width: 1200,
+    });
   });
 });

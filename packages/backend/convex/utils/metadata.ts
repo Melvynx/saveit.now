@@ -1,11 +1,21 @@
 const SENSITIVE_METADATA_KEYS = new Set([
   "transcript",
+  "rawtranscript",
   "rawhtml",
   "html",
   "sourcehtml",
   "articlehtml",
   "bodyhtml",
   "pagehtml",
+  "articlecontent",
+  "markdown",
+  "content",
+  "rawcontent",
+  "fullcontent",
+  "plaintext",
+  "text",
+  "body",
+  "bodytext",
   "searchembedding",
   "embedding",
   "vectorsummary",
@@ -20,17 +30,40 @@ const SENSITIVE_METADATA_KEYS = new Set([
   "password",
 ]);
 
+const STORAGE_PAYLOAD_KEYS = new Set([
+  "arraybuffer",
+  "base64",
+  "blob",
+  "buffer",
+  "bytes",
+  "dataurl",
+  "file",
+  "filedata",
+  "htmlcontent",
+  "imagedata",
+  "mediadata",
+  "raw",
+  "screenshotdata",
+  "screenshotdataurl",
+]);
+
 const PROTOTYPE_POLLUTION_KEYS = new Set([
   "__proto__",
   "constructor",
   "prototype",
 ]);
 
+const MAX_STORED_METADATA_STRING_LENGTH = 4096;
+const MAX_STORED_METADATA_ARRAY_ITEMS = 100;
+const MAX_STORED_METADATA_OBJECT_KEYS = 100;
+
 const PUBLIC_METADATA_KEYS = new Set([
-  "articleContent",
-  "markdown",
-  "content",
   "youtubeId",
+  "youtubeTranscript",
+  "transcriptAvailable",
+  "transcriptSource",
+  "transcriptCharacterCount",
+  "transcriptExtractedAt",
   "tweetId",
   "pdfUrl",
   "screenshotUrl",
@@ -51,7 +84,6 @@ const PUBLIC_METADATA_KEYS = new Set([
   "ext_alt_text",
   "type",
   "url",
-  "text",
   "id_str",
   "created_at",
   "favorite_count",
@@ -84,21 +116,39 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isBlockedKey(key: string): boolean {
+  const normalizedKey = key.toLowerCase();
   return (
     PROTOTYPE_POLLUTION_KEYS.has(key) ||
-    SENSITIVE_METADATA_KEYS.has(key.toLowerCase())
+    SENSITIVE_METADATA_KEYS.has(normalizedKey) ||
+    STORAGE_PAYLOAD_KEYS.has(normalizedKey) ||
+    normalizedKey.includes("base64") ||
+    normalizedKey.includes("dataurl") ||
+    normalizedKey.includes("arraybuffer")
   );
 }
 
 function sanitizeMetadataValue(
   value: unknown,
-  options: { publicOnly: boolean },
+  options: { publicOnly: boolean; forStorage: boolean },
 ): JsonValue | typeof OMIT {
   if (value === null) {
     return null;
   }
 
-  if (typeof value === "string" || typeof value === "boolean") {
+  if (typeof value === "string") {
+    if (options.forStorage) {
+      const trimmed = value.trim();
+      if (
+        trimmed.length > MAX_STORED_METADATA_STRING_LENGTH ||
+        /^data:/i.test(trimmed)
+      ) {
+        return OMIT;
+      }
+    }
+    return value;
+  }
+
+  if (typeof value === "boolean") {
     return value;
   }
 
@@ -108,7 +158,10 @@ function sanitizeMetadataValue(
 
   if (Array.isArray(value)) {
     const cleanedArray: JsonValue[] = [];
-    for (const item of value) {
+    const items = options.forStorage
+      ? value.slice(0, MAX_STORED_METADATA_ARRAY_ITEMS)
+      : value;
+    for (const item of items) {
       const cleaned = sanitizeMetadataValue(item, options);
       if (cleaned !== OMIT) {
         cleanedArray.push(cleaned);
@@ -122,7 +175,10 @@ function sanitizeMetadataValue(
   }
 
   const cleaned: Record<string, JsonValue> = {};
-  for (const [key, nestedValue] of Object.entries(value)) {
+  const entries = options.forStorage
+    ? Object.entries(value).slice(0, MAX_STORED_METADATA_OBJECT_KEYS)
+    : Object.entries(value);
+  for (const [key, nestedValue] of entries) {
     if (isBlockedKey(key)) {
       continue;
     }
@@ -142,7 +198,7 @@ function sanitizeMetadataValue(
 
 function cleanMetadataObject(
   metadata: unknown,
-  options: { publicOnly: boolean },
+  options: { publicOnly: boolean; forStorage: boolean },
 ): Record<string, unknown> | null {
   if (metadata === null) {
     return null;
@@ -164,7 +220,7 @@ export function cleanMetadata(
     return undefined as unknown as Record<string, unknown> | null;
   }
 
-  return cleanMetadataObject(metadata, { publicOnly: false });
+  return cleanMetadataObject(metadata, { publicOnly: false, forStorage: false });
 }
 
 export function cleanPublicMetadata(
@@ -174,5 +230,15 @@ export function cleanPublicMetadata(
     return undefined as unknown as Record<string, unknown> | null;
   }
 
-  return cleanMetadataObject(metadata, { publicOnly: true });
+  return cleanMetadataObject(metadata, { publicOnly: true, forStorage: false });
+}
+
+export function cleanMetadataForStorage(
+  metadata: unknown,
+): Record<string, unknown> | null {
+  if (metadata === undefined) {
+    return undefined as unknown as Record<string, unknown> | null;
+  }
+
+  return cleanMetadataObject(metadata, { publicOnly: false, forStorage: true });
 }

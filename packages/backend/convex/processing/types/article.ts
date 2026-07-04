@@ -1,4 +1,6 @@
 export type ArticleMetadata = {
-  articleContent?: string;
+  contentExtracted?: boolean;
+  contentCharacterCount?: number;
+  summarySource?: "article" | "screenshot";
   [key: string]: unknown;
 };

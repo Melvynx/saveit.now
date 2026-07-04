@@ -36,6 +36,85 @@ export type SearchResultDTO = {
   read: boolean;
 };
 
+const READABLE_BOOKMARK_TYPES = ["ARTICLE", "YOUTUBE"] as const;
+
+export type SearchFilterBookmark = {
+  type?: string | null;
+  status?: string | null;
+  starred: boolean;
+  read: boolean;
+  tags?: Array<{ tag: { name: string } }>;
+};
+
+export function matchesSpecialFilters(
+  bookmark: { read: boolean; starred: boolean; type?: string | null },
+  specialFilters?: ("READ" | "UNREAD" | "STAR")[],
+): boolean {
+  if (!specialFilters || specialFilters.length === 0) return true;
+
+  for (const filter of specialFilters) {
+    if (
+      filter === "READ" &&
+      bookmark.read === true &&
+      READABLE_BOOKMARK_TYPES.includes(
+        bookmark.type as (typeof READABLE_BOOKMARK_TYPES)[number],
+      )
+    ) {
+      return true;
+    }
+    if (
+      filter === "UNREAD" &&
+      bookmark.read === false &&
+      READABLE_BOOKMARK_TYPES.includes(
+        bookmark.type as (typeof READABLE_BOOKMARK_TYPES)[number],
+      )
+    ) {
+      return true;
+    }
+    if (filter === "STAR" && bookmark.starred === true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function matchesSearchFilters(
+  bookmark: SearchFilterBookmark,
+  filters: {
+    tags?: string[];
+    types?: string[];
+    specialFilters?: ("READ" | "UNREAD" | "STAR")[];
+    requireReady?: boolean;
+  },
+): boolean {
+  if (filters.requireReady === true && bookmark.status !== "READY") {
+    return false;
+  }
+
+  if (
+    filters.types &&
+    filters.types.length > 0 &&
+    !filters.types.includes(bookmark.type ?? "")
+  ) {
+    return false;
+  }
+
+  if (!matchesSpecialFilters(bookmark, filters.specialFilters)) {
+    return false;
+  }
+
+  if (filters.tags && filters.tags.length > 0) {
+    const bookmarkTagNames = new Set(
+      (bookmark.tags ?? []).map((tag) => tag.tag.name),
+    );
+    if (!filters.tags.some((tagName) => bookmarkTagNames.has(tagName))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Domain query detection
 // ---------------------------------------------------------------------------

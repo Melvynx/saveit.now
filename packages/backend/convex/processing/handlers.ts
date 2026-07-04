@@ -203,6 +203,7 @@ export async function processTweetBookmark(
   if (!tweetData) throw new Error(`Tweet not found for ${bookmark.url}`);
 
   const tweet = { ...tweetData, tweetId };
+  const tweetRecord = tweet as Record<string, any>;
 
   const data = {
     faviconUrl: tweet.user.profile_image_url_https,
@@ -294,7 +295,24 @@ ${tweetImageDescription}
     ogImageUrl: undefined,
     preview: undefined,
     imageDescription: tweetImageDescription,
-    metadata: tweet,
+    metadata: {
+      tweetId,
+      id_str: tweetRecord.id_str,
+      created_at: tweetRecord.created_at,
+      favorite_count: tweetRecord.favorite_count,
+      conversation_count: tweetRecord.conversation_count,
+      reply_count: tweetRecord.reply_count,
+      retweet_count: tweetRecord.retweet_count,
+      user: {
+        name: tweet.user.name,
+        screen_name: tweet.user.screen_name,
+        profile_image_url_https: tweet.user.profile_image_url_https,
+      },
+      mediaDetails: data.medias.map((media) => ({
+        media_url_https: media.url,
+        type: media.type,
+      })),
+    },
     tagNames,
     searchEmbedding,
     embeddingModel: searchEmbedding ? EMBEDDING_MODEL_KEY : undefined,
@@ -317,26 +335,14 @@ export async function processYouTubeBookmark(
   const bookmarkId = bookmark._id;
   const youtubeId = getVideoId(bookmark.url);
 
-  // Check for extension-provided transcript
-  const extensionTranscript =
-    bookmark.metadata &&
-    typeof bookmark.metadata === "object" &&
-    "transcript" in bookmark.metadata
-      ? (bookmark.metadata.transcript as string)
-      : null;
-
   // Fetch metadata via internal action
   const videoInfo = await ctx.runAction(
     internal.processing.youtube.fetchYouTubeMetadata,
     { videoId: youtubeId },
   ) as { title: string; thumbnail: string; transcript?: string };
 
-  const transcript = extensionTranscript || videoInfo.transcript;
-  const transcriptSource = extensionTranscript
-    ? "extension"
-    : videoInfo.transcript
-      ? "api"
-      : "none";
+  const transcript = videoInfo.transcript;
+  const transcriptSource = videoInfo.transcript ? "api" : "none";
 
   // Thumbnail fallback analysis if no transcript
   let thumbnailAnalysis: string | null = null;
@@ -423,13 +429,13 @@ export async function processYouTubeBookmark(
     youtubeId,
     transcriptAvailable: !!transcript,
     transcriptSource,
+    transcriptCharacterCount: transcript?.length ?? 0,
   };
   if (transcript) {
-    finalMetadata.transcript = transcript;
     finalMetadata.transcriptExtractedAt = new Date().toISOString();
     finalMetadata.summarySource = "transcript";
   } else if (thumbnailAnalysis) {
-    finalMetadata.thumbnailAnalysis = thumbnailAnalysis;
+    finalMetadata.thumbnailAnalyzed = true;
     finalMetadata.summarySource = "thumbnail";
   } else {
     finalMetadata.summarySource = "none";
@@ -611,7 +617,11 @@ ${screenshotAnalysis.description}
       typeof screenshotAnalysis.description === "string"
         ? screenshotAnalysis.description
         : null,
-    metadata: { articleContent: markdown },
+    metadata: {
+      contentExtracted: markdown.length > 0,
+      contentCharacterCount: markdown.length,
+      summarySource: markdown ? "article" : "screenshot",
+    },
     tagNames,
     searchEmbedding,
     embeddingModel: searchEmbedding ? EMBEDDING_MODEL_KEY : undefined,

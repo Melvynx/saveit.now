@@ -25,8 +25,9 @@ import { cn } from "@workspace/ui/lib/utils";
 import { BookmarkDialog } from "../bookmark-page/bookmark-page";
 import { ChatHeader } from "./components/chat-header";
 import { MessageItem } from "./components/message-item";
+import { getConvexSiteUrl } from "@/lib/convex-url";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
+const CONVEX_SITE_URL = getConvexSiteUrl();
 
 const SUGGESTIONS = [
   "Search my bookmarks",
@@ -34,6 +35,15 @@ const SUGGESTIONS = [
   "Find programming resources",
   "What have I saved about React?",
 ];
+
+function getFirstUserMessageText(messages: UIMessage[]) {
+  const firstUserMessage = messages.find((message) => message.role === "user");
+  const textPart = firstUserMessage?.parts.find((part) => part.type === "text");
+
+  return textPart?.type === "text" && textPart.text.trim()
+    ? textPart.text.trim()
+    : "New conversation";
+}
 
 function EmptyState({
   onSuggestionClick,
@@ -150,8 +160,9 @@ export function ChatPage() {
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationIdRef = useRef(conversationId);
+  const conversationCreationPromiseRef = useRef<Promise<string> | null>(null);
+  const conversationVersionRef = useRef(0);
   const convex = useConvex();
-  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [isRatingConversation, setIsRatingConversation] = useState(false);
 
   const bookmarkId = searchParams.get("b");
@@ -190,14 +201,40 @@ export function ChatPage() {
   const createConversation = useAction(
     api.chat.actions.createConversationWithTitle,
   );
-  const createConversationFromMessage = useCallback(
-    (firstMessage: string) => {
-      setIsCreatingConversation(true);
-      void createConversation({ firstMessage })
-        .then((data) => {
-          setConversationId(data.id);
+
+  const ensureConversationForFirstMessage = useCallback(
+    async (firstMessage: string) => {
+      if (conversationIdRef.current) {
+        return conversationIdRef.current;
+      }
+
+      if (!conversationCreationPromiseRef.current) {
+        const version = conversationVersionRef.current;
+
+        conversationCreationPromiseRef.current = createConversation({
+          firstMessage,
         })
-        .finally(() => setIsCreatingConversation(false));
+          .then((data) => {
+            const nextConversationId = data.id;
+
+            if (
+              conversationVersionRef.current === version &&
+              !conversationIdRef.current
+            ) {
+              conversationIdRef.current = nextConversationId;
+              setConversationId(nextConversationId);
+            }
+
+            return nextConversationId;
+          })
+          .finally(() => {
+            if (conversationVersionRef.current === version) {
+              conversationCreationPromiseRef.current = null;
+            }
+          });
+      }
+
+      return await conversationCreationPromiseRef.current;
     },
     [createConversation],
   );
@@ -244,12 +281,18 @@ export function ChatPage() {
         }
         return headers;
       },
-      prepareSendMessagesRequest({ messages }) {
+      async prepareSendMessagesRequest({ messages }) {
+        const requestConversationId =
+          conversationIdRef.current ??
+          (await ensureConversationForFirstMessage(
+            getFirstUserMessageText(messages),
+          ));
+
         return {
           body: {
             messages,
             enableThinking: true,
-            conversationId: conversationIdRef.current,
+            conversationId: requestConversationId,
           },
         };
       },
@@ -304,17 +347,9 @@ export function ChatPage() {
       console.error("Send failed:", error);
       toast.error("Failed to send message");
     });
-
-    // Create conversation in parallel if needed (non-blocking)
-    if (!conversationId && !isCreatingConversation) {
-      createConversationFromMessage(messageText);
-    }
   }, [
     input,
     isGenerating,
-    conversationId,
-    isCreatingConversation,
-    createConversationFromMessage,
     sendMessage,
   ]);
 
@@ -334,13 +369,8 @@ export function ChatPage() {
         console.error("Send failed:", error);
         toast.error("Failed to send message");
       });
-
-      // Create conversation in parallel if needed (non-blocking)
-      if (!conversationId && !isCreatingConversation) {
-        createConversationFromMessage(s);
-      }
     },
-    [conversationId, createConversationFromMessage, isCreatingConversation, sendMessage],
+    [sendMessage],
   );
 
   // Handle ?q= param for auto-submit from agentic search card
@@ -360,6 +390,8 @@ export function ChatPage() {
   ]);
 
   const handleNewConversation = useCallback(() => {
+    conversationVersionRef.current += 1;
+    conversationCreationPromiseRef.current = null;
     setConversationId(null);
     setMessages([]);
     setInput("");
@@ -377,6 +409,8 @@ export function ChatPage() {
           toast.error("Conversation not found");
           return;
         }
+        conversationVersionRef.current += 1;
+        conversationCreationPromiseRef.current = null;
         setConversationId(data._id as string);
         setMessages(data.messages as UIMessage[]);
         conversationIdRef.current = data._id as string;

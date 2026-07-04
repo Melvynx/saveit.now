@@ -19,8 +19,9 @@
  */
 
 import { v } from "convex/values";
-import { components } from "../_generated/api";
-import { mutation } from "../functions";
+import { components, internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import { internalMutation, mutation } from "../functions";
 import { throwForbidden } from "../utils/errors";
 
 // ---------------------------------------------------------------------------
@@ -42,6 +43,13 @@ function assertMigrationAllowed(migrationSecret: string): void {
 // ---------------------------------------------------------------------------
 
 const idMapEntry = v.object({ legacyId: v.string(), convexId: v.string() });
+const importProcessingKickoffItem = v.object({
+  bookmarkId: v.id("bookmarks"),
+  userId: v.string(),
+});
+
+const IMPORT_PROCESSING_STAGGER_MS = 100;
+const IMPORT_PROCESSING_KICKOFF_CHUNK_SIZE = 25;
 
 function normalizeText(value: unknown): string | null {
   if (value == null) return null;
@@ -88,6 +96,48 @@ function stableJson(value: unknown): string {
     return String(value);
   }
 }
+
+function shouldKickoffImportedBookmark(status: string): boolean {
+  return status === "PENDING" || status === "PROCESSING";
+}
+
+export const scheduleImportedBookmarkKickoffs = internalMutation({
+  args: {
+    items: v.array(importProcessingKickoffItem),
+    startIndex: v.optional(v.number()),
+  },
+  handler: async (ctx, { items, startIndex }) => {
+    const start = startIndex ?? 0;
+    const chunk = items.slice(
+      start,
+      start + IMPORT_PROCESSING_KICKOFF_CHUNK_SIZE,
+    );
+
+    for (let index = 0; index < chunk.length; index++) {
+      const item = chunk[index]!;
+      await ctx.scheduler.runAfter(
+        index * IMPORT_PROCESSING_STAGGER_MS,
+        internal.processing.workflow.kickoff,
+        { bookmarkId: item.bookmarkId, userId: item.userId },
+      );
+    }
+
+    const nextIndex = start + chunk.length;
+    if (nextIndex < items.length) {
+      await ctx.scheduler.runAfter(
+        chunk.length * IMPORT_PROCESSING_STAGGER_MS,
+        internal.migration.import.scheduleImportedBookmarkKickoffs,
+        { items, startIndex: nextIndex },
+      );
+    }
+
+    return {
+      scheduled: chunk.length,
+      nextIndex,
+      remaining: Math.max(0, items.length - nextIndex),
+    };
+  },
+});
 
 // ---------------------------------------------------------------------------
 // 1. importUsers
@@ -337,12 +387,21 @@ export const importBookmarks = mutation({
     assertMigrationAllowed(migrationSecret);
 
     const result: { legacyId: string; convexId: string }[] = [];
+    const processingKickoffs: Array<{
+      bookmarkId: Id<"bookmarks">;
+      userId: string;
+    }> = [];
 
     for (const bm of bookmarks) {
       const legacyId = normalizeText(bm.id)?.trim();
       const userId = normalizeText(bm.userId)?.trim();
       const url = normalizeText(bm.url)?.trim();
       if (!legacyId || !userId || !url) continue;
+      const status = bm.status as string as
+        | "PENDING"
+        | "PROCESSING"
+        | "READY"
+        | "ERROR";
 
       const bookmarkFields = {
         userId,
@@ -359,11 +418,7 @@ export const importBookmarks = mutation({
         ogDescription: bm.ogDescription ?? undefined,
         imageDescription: bm.imageDescription ?? undefined,
         metadata: bm.metadata ?? undefined,
-        status: bm.status as string as
-          | "PENDING"
-          | "PROCESSING"
-          | "READY"
-          | "ERROR",
+        status,
         starred: Boolean(bm.starred ?? false),
         read: Boolean(bm.read ?? false),
         // searchEmbedding and embeddingModel intentionally omitted — re-embed pass
@@ -376,6 +431,12 @@ export const importBookmarks = mutation({
         .first();
       if (existingByLegacyId) {
         await ctx.db.patch(existingByLegacyId._id, bookmarkFields as any);
+        if (shouldKickoffImportedBookmark(status)) {
+          processingKickoffs.push({
+            bookmarkId: existingByLegacyId._id as Id<"bookmarks">,
+            userId,
+          });
+        }
         result.push({ legacyId, convexId: existingByLegacyId._id as string });
         continue;
       }
@@ -389,6 +450,12 @@ export const importBookmarks = mutation({
       );
       if (existingWithoutLegacyId) {
         await ctx.db.patch(existingWithoutLegacyId._id, bookmarkFields as any);
+        if (shouldKickoffImportedBookmark(status)) {
+          processingKickoffs.push({
+            bookmarkId: existingWithoutLegacyId._id as Id<"bookmarks">,
+            userId,
+          });
+        }
         result.push({
           legacyId,
           convexId: existingWithoutLegacyId._id as string,
@@ -397,7 +464,18 @@ export const importBookmarks = mutation({
       }
 
       const convexId = await ctx.db.insert("bookmarks", bookmarkFields as any);
+      if (shouldKickoffImportedBookmark(status)) {
+        processingKickoffs.push({ bookmarkId: convexId, userId });
+      }
       result.push({ legacyId, convexId: convexId as string });
+    }
+
+    if (processingKickoffs.length > 0) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.migration.import.scheduleImportedBookmarkKickoffs,
+        { items: processingKickoffs },
+      );
     }
 
     return result;
@@ -690,9 +768,7 @@ export const importConversations = mutation({
           role === "assistant" || role === "system" ? role : "user";
         const content = m.content ?? m;
         const createdAt =
-          m.createdAt != null
-            ? toMs(m.createdAt as any)
-            : toMs(row.createdAt);
+          m.createdAt != null ? toMs(m.createdAt as any) : toMs(row.createdAt);
         const messageKey = `${validRole}:${createdAt}:${stableJson(
           content,
         ).slice(0, 500)}`;

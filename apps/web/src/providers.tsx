@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/features/dark-mode/theme-provider";
 import { PostHogProvider } from "@/features/posthog/pohsthog-provider";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
+import { getConvexUrl } from "@/lib/convex-url";
 import { api } from "@convex/_generated/api";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ClientOnly } from "@tanstack/react-router";
@@ -12,10 +13,7 @@ import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { TchaoProvider } from "tchao/react";
 import { useEffect } from "react";
 
-const convexUrl =
-  import.meta.env.VITE_CONVEX_URL ?? "https://tough-chameleon-916.convex.cloud";
-
-const convexClient = new ConvexReactClient(convexUrl);
+const convexClient = new ConvexReactClient(getConvexUrl());
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (

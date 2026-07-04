@@ -2,8 +2,10 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { AUTH_LIMITS } from "@/lib/auth-limits";
+import { useSession } from "@/lib/auth-client";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
+import { useNavigate } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -11,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Typography } from "@workspace/ui/components/typography";
 import { useAction } from "convex/react";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const freeFeatures = [
@@ -32,7 +34,21 @@ const proFeatures = [
 
 export function PricingSection() {
   const [monthly, setMonthly] = useState(false);
+  const session = useSession();
+  const navigate = useNavigate();
   const createCheckout = useAction(api.stripe.actions.createCheckout);
+
+  // Upgrading requires an authenticated Convex session (createCheckout is an
+  // authAction). Send logged-out visitors through sign-in and bring them back
+  // to /upgrade/new-pricing afterwards via the redirectUrl param.
+  useEffect(() => {
+    if (!session.isPending && !session.data?.user) {
+      void navigate({
+        to: "/signin",
+        search: { redirectUrl: "/upgrade/new-pricing" },
+      });
+    }
+  }, [navigate, session.data?.user, session.isPending]);
 
   const checkoutTask = useAsyncTask(
     async () => {
@@ -53,6 +69,12 @@ export function PricingSection() {
       },
     },
   );
+
+  // Logged-out visitors are being redirected by the effect above; render
+  // nothing to avoid flashing the pricing card before navigation completes.
+  if (!session.isPending && !session.data?.user) {
+    return null;
+  }
 
   return (
     <div className="py-12 sm:py-24">

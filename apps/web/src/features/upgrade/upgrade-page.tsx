@@ -3,9 +3,11 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
+import { useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Alert,
   AlertDescription,
@@ -32,11 +34,13 @@ import {
 } from "lucide-react";
 import { useAction } from "convex/react";
 import { usePostHog } from "posthog-js/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
+  const session = useSession();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
   );
@@ -44,6 +48,15 @@ export function UpgradePage() {
   const plan = useUserPlan();
   const posthog = usePostHog();
   const createCheckout = useAction(api.stripe.actions.createCheckout);
+
+  // Upgrading requires an authenticated Convex session (createCheckout is an
+  // authAction). Send logged-out visitors through sign-in and bring them back
+  // to /upgrade afterwards via the redirectUrl param.
+  useEffect(() => {
+    if (!session.isPending && !session.data?.user) {
+      void navigate({ to: "/signin", search: { redirectUrl: "/upgrade" } });
+    }
+  }, [navigate, session.data?.user, session.isPending]);
 
   const checkoutTask = useAsyncTask(
     async () => {
@@ -69,8 +82,14 @@ export function UpgradePage() {
     },
   );
 
+  // Logged-out visitors are being redirected by the effect above; render
+  // nothing to avoid flashing the pricing card before navigation completes.
+  if (!session.isPending && !session.data?.user) {
+    return null;
+  }
+
   return (
-    <MaxWidthContainer className="flex flex-row gap-12 w-full my-8 lg:my-12">
+    <MaxWidthContainer className="flex flex-col gap-12 w-full my-8 lg:my-12 lg:flex-row">
       <FeaturesList />
       <div className="flex-1 flex flex-col gap-4">
         {error ? (
@@ -171,6 +190,42 @@ export function UpgradePage() {
             )}
           </CardFooter>
         </Card>
+        <div className="rounded-lg border bg-card p-4">
+          <Typography variant="large" className="font-medium">
+            How to upgrade
+          </Typography>
+          <Typography variant="muted" className="mt-1">
+            SaveIt.pro is managed from the web. Subscriptions are not sold inside
+            the mobile apps — to go premium, upgrade here on saveit.now.
+          </Typography>
+          <ol className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">1.</span>
+              <span>
+                Sign in to your SaveIt.now account (you&apos;ll be brought back
+                to this page automatically).
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">2.</span>
+              <span>Pick a monthly or yearly plan above.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">3.</span>
+              <span>
+                Click <span className="text-foreground">Upgrade</span> to
+                complete a secure checkout with Stripe.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">4.</span>
+              <span>
+                Pro unlocks everywhere instantly — including the mobile app and
+                browser extensions.
+              </span>
+            </li>
+          </ol>
+        </div>
       </div>
     </MaxWidthContainer>
   );

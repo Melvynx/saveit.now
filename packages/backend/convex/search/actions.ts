@@ -21,6 +21,7 @@ import {
   extractDomain,
   isDomainQuery,
   isSearchQuery,
+  matchesSearchFilters,
   paginateResults,
   sortSearchResults,
   type SearchResultDTO,
@@ -31,6 +32,8 @@ import {
 // ---------------------------------------------------------------------------
 
 const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
+const VECTOR_SEARCH_DEFAULT_CANDIDATE_LIMIT = 50;
+const VECTOR_SEARCH_FILTERED_CANDIDATE_LIMIT = 256;
 
 // ---------------------------------------------------------------------------
 // Local embedQuery (mirrors processing/embeddings.ts embedQuery but for search)
@@ -87,46 +90,27 @@ async function runVectorSearch(
 
   // 1. Embed the query
   const vector = await embedQueryLocal(query.trim());
+  const hasPostFilters =
+    tags.length > 0 || types.length > 0 || specialFilters.length > 0;
+  const candidateLimit = hasPostFilters
+    ? VECTOR_SEARCH_FILTERED_CANDIDATE_LIMIT
+    : VECTOR_SEARCH_DEFAULT_CANDIDATE_LIMIT;
 
-  // 2. Vector search — always filter by userId; embeddingModel filter is post
+  // 2. Vector search — Convex vector filters support eq/or, not AND, so keep
+  // the ownership filter in the vector query and post-filter joined docs for
+  // model/type/tag/special-filter fidelity.
   const rawResults: Array<{ _id: string; _score: number }> =
     await ctx.vectorSearch("bookmarks", "by_search_embedding", {
       vector,
-      limit: 50,
+      limit: candidateLimit,
       filter: (q: any) => q.eq("userId", userId),
     });
 
-  // 3. Post-filter by embeddingModel (schema has it as filterField but we
-  //    post-filter for safety since we don't know if the index filterField is used
-  //    consistently across all documents).
+  // 3. Keep score-bearing results. Embedding model is also re-checked after
+  // loading docs so stale index entries cannot leak into results.
   const filteredResults = rawResults.filter((r: any) => r._score !== undefined);
-  // We do not filter by embeddingModel here at vector-search level since Convex
-  // index filterFields includes "embeddingModel"; we will re-check after loading docs.
 
-  // Helper: apply matchingDistance spread filter
-  const applySpread = (
-    items: Array<{ _id: string; _score: number }>,
-    spread: number,
-  ) => {
-    if (items.length === 0) return [];
-    const maxScore = items[0]!._score;
-    return items.filter((r) => r._score >= maxScore - spread);
-  };
-
-  // 4. Three-level fallback
-  let spreadResults = applySpread(filteredResults, matchingDistance);
-
-  if (spreadResults.length === 0 && filteredResults.length > 0) {
-    // Fallback 1: widen spread to 1.0
-    spreadResults = applySpread(filteredResults, 1.0);
-  }
-
-  if (spreadResults.length === 0 && filteredResults.length > 0) {
-    // Fallback 2: no spread, return all raw results
-    spreadResults = filteredResults;
-  }
-
-  if (spreadResults.length === 0) {
+  if (filteredResults.length === 0) {
     return {
       bookmarks: [],
       hasMore: false,
@@ -135,8 +119,20 @@ async function runVectorSearch(
     };
   }
 
-  // 5. Load bookmark docs (with ownership re-check)
-  const ids = spreadResults.map((r) => r._id) as any[];
+  // Helper: apply matchingDistance spread filter
+  const applySpread = <T extends { _score: number }>(
+    items: T[],
+    spread: number,
+  ) => {
+    if (items.length === 0) return [];
+    const maxScore = items[0]!._score;
+    return items.filter((r) => r._score >= maxScore - spread);
+  };
+
+  // 4. Load bookmark docs (with ownership re-check). The tag/type/special
+  // filters require joined docs, so apply the spread cutoff after post-filtering
+  // to avoid a non-matching top result suppressing valid candidates.
+  const ids = filteredResults.map((r) => r._id) as any[];
   const docs: any[] = await ctx.runQuery(
     internal.search.queries.loadForSearch,
     {
@@ -147,11 +143,42 @@ async function runVectorSearch(
 
   // 6. Build a score map
   const scoreMap = new Map<string, number>(
-    spreadResults.map((r) => [r._id, r._score]),
+    filteredResults.map((r) => [r._id, r._score]),
   );
 
+  const eligibleDocs = docs
+    .filter((doc) => doc.embeddingModel === EMBEDDING_MODEL_KEY)
+    .filter((doc) =>
+      matchesSearchFilters(doc, {
+        tags,
+        types,
+        specialFilters,
+        requireReady: true,
+      }),
+    )
+    .map((doc) => ({ doc, _score: scoreMap.get(doc._id) ?? 0 }));
+
+  let spreadDocs = applySpread(eligibleDocs, matchingDistance);
+
+  if (spreadDocs.length === 0 && eligibleDocs.length > 0) {
+    spreadDocs = applySpread(eligibleDocs, 1.0);
+  }
+
+  if (spreadDocs.length === 0 && eligibleDocs.length > 0) {
+    spreadDocs = eligibleDocs;
+  }
+
+  if (spreadDocs.length === 0) {
+    return {
+      bookmarks: [],
+      hasMore: false,
+      fromCache: false,
+      queryTime: Date.now() - startTime,
+    };
+  }
+
   // 7. Get open counts
-  const docIds = docs.map((d: any) => d._id) as any[];
+  const docIds = spreadDocs.map(({ doc }) => doc._id) as any[];
   const openCountItems: Array<{ bookmarkId: string; openCount: number }> =
     await ctx.runQuery(internal.search.queries.listForBoost, {
       bookmarkIds: docIds,
@@ -164,11 +191,8 @@ async function runVectorSearch(
   // 8. Build result DTOs
   const results: SearchResultDTO[] = [];
 
-  for (const doc of docs) {
-    // Post-filter: only docs that have the correct embeddingModel
-    if (doc.embeddingModel !== EMBEDDING_MODEL_KEY) continue;
-
-    const rawScore = scoreMap.get(doc._id) ?? 0;
+  for (const { doc, _score } of spreadDocs) {
+    const rawScore = _score;
     const baseScore = 100 * rawScore * 0.6;
     const openCount = openCountMap.get(doc._id) ?? 0;
     const score = applyOpenFrequencyBoost(baseScore, openCount);
