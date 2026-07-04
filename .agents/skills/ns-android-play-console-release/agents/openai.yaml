@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android Play Console Release"
+  short_description: "Finish Google Play internal releases"
+  default_prompt: "Use $ns-android-play-console-release to build, validate, and upload a NowStack Android internal release."

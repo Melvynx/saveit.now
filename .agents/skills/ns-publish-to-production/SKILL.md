@@ -15,7 +15,7 @@ This skill covers:
 - Convex production deployment and env verification.
 - `web-app/` production build/deploy preparation.
 - Runtime-secret placement between Convex, web public env, and mobile public env.
-- Handoff to `ns-deploy-ios-app`, `ns-deploy-android-app`, and `ns-generate-store-screenshots`.
+- Handoff to `ns-ios-deploy-app`, `ns-deploy-android-app`, and `ns-generate-store-screenshots`.
 
 This skill does not submit App Store or Google Play builds directly. Use the dedicated store skills for that.
 </scope>
@@ -70,7 +70,7 @@ See `ns-web-deploy` and `docs/production-checklist.md` stage 2 for the step-by-s
 Before declaring production complete:
 
 - Run `ns-generate-store-screenshots` if store screenshots are missing or stale.
-- Use `ns-deploy-ios-app` for TestFlight/App Store Connect (`asc` workflow).
+- Use `ns-ios-deploy-app` for TestFlight/App Store Connect (`asc` workflow).
 - Use `ns-deploy-android-app` for Google Play (`gpc` workflow).
 - Verify production Convex URLs and public app URLs match `site-config.ts`.
 </mobile_handoff>

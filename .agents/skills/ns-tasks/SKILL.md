@@ -1,6 +1,6 @@
 ---
 name: ns-tasks
-description: Turn .agents/plan/PRD.md and .agents/plan/ARCHITECTURE.md into scoped task files under .agents/plan/tasks/. Use for create tasks, ns tasks, break this into tickets, or the planning step after ns-prd and ns-architecture.
+description: Slice a NowStack Mobile app's .agents/plan/PRD.md + .agents/plan/ARCHITECTURE.md into well-scoped, implementable task files under .agents/plan/tasks/, each an autonomous 1–3h vertical slice (Convex schema/function → Expo screen → wiring) with success criteria, dependencies, and verification commands. Use for "create tasks", "ns tasks", "break this into tickets", or as the third planning step after ns-prd and ns-architecture. Both docs must exist first.
 ---
 
 # ns-tasks — Mobile implementation tasks

@@ -1,6 +1,6 @@
 ---
 name: ns-prd
-description: Create a lean mobile Product Requirements Document for NowStack Mobile and save .agents/plan/PRD.md. Use for write a PRD, ns prd, define the product, plan my app, or the first planning step before ns-architecture and ns-tasks.
+description: Create a lean, mobile-aware Product Requirements Document for a NowStack Mobile app through interactive discovery, then save it to .agents/plan/PRD.md. Use for "write a PRD", "ns prd", "define the product", "plan my app", or as the first planning step before ns-architecture and ns-tasks. Mobile-flavored — personas, onboarding/paywall flow, platforms (iOS/Android/web), IAP vs subscription monetization, store scope. Feeds ns-init-project (site-config) and the rest of the planning pipeline.
 ---
 
 # ns-prd — Mobile Product Requirements Document

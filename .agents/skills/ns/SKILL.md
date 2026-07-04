@@ -1,12 +1,24 @@
 ---
 name: ns
-description: "NowStack Mobile product CLI. Use for `/ns` goals and subcommands: onboard, setup, dev, check, notification, release, ios setup/testflight/audit/distribute/verification, android beta/distribute, web deploy, status. Routes workflows; `ios testflight --expo` opts into EAS cloud."
-argument-hint: "[onboard|create-app|prd|architecture|tasks|doctor|accounts|setup|setup-ios|setup-expo|check|set-admin|dev|stripe|r2|notification|screenshots|images|docs|optimize|release|ios setup|ios testflight|ios audit|ios distribute|ios verification|android beta|android distribute|web deploy|status] or a goal in natural language"
+description: "NowStack Mobile product CLI. Use for `/ns` goals: onboard, setup, ios local-setup/setup/testflight/audit/distribute/verification/deeplink/notification, android setup/beta/distribute, setup-expo, dev, check, release, web deploy/landing-page, status."
+argument-hint: "[onboard|create-app|prd|architecture|tasks|doctor|accounts|setup|setup-ios|setup-android|setup-expo|check|set-admin|dev|stripe|r2|notification|screenshots|icon|images|docs|optimize|release|ios local-setup|ios setup|ios testflight|ios audit|ios distribute|ios verification|ios deeplink|ios notification|android setup|android beta|android distribute|web deploy|web landing-page|status] or a goal in natural language"
 ---
 
 # NowStack - Product CLI
 
 One command for the whole app lifecycle. This skill is the INDEX that ROUTES and SEQUENCES — each workflow is its own standalone `ns-*` skill (auto-invocable on its own, e.g. "deploy my app" can trigger `ns-web-deploy` / `ns-ios-distribute` directly). Never duplicate their content here; invoke or read the target skill.
+
+## Platform Build Routing
+
+For every mobile build, beta, TestFlight, Play, release, or store-submission workflow, detect the user's OS before choosing a build path:
+
+```bash
+uname -s   # Darwin = macOS; Linux = Linux; Windows = use PowerShell/Node platform checks
+```
+
+- **macOS / Darwin**: local build paths are allowed for both iOS and Android (`eas build --local`, Xcode, Gradle/Android Studio). Prefer local builds by default when signing/tooling is available.
+- **Windows or Linux**: do not attempt local iOS or Android production builds. Load/follow `.agents/skills/ns-setup-expo/SKILL.md` first, verify `eas-cli`, `eas whoami`, linked `easProjectId`, and `expo-doctor`, then use EAS cloud builds for the build artifact.
+- If `uname` is unavailable, detect with `node -p "process.platform"` or PowerShell. Treat `darwin` as macOS; treat `win32` and `linux` as EAS-cloud-only for production mobile builds.
 
 Parse `$ARGUMENTS`:
 1. Starts with a known subcommand → route per the tables below; the rest of the line is context for the target workflow.
@@ -27,11 +39,13 @@ Parse `$ARGUMENTS`:
 | `dev` | Run the app locally | inline, see Dev below |
 | `stripe` | Configure Stripe payments (web/Android) | `.agents/skills/ns-setup-stripe/SKILL.md` |
 | `r2` | Set up Cloudflare R2 image/file uploads (bucket, S3 creds, Convex env) | `.agents/skills/ns-setup-r2/SKILL.md` |
-| `notification` (alias `notifications`, `push`) | Set up Expo push notifications with Convex tokens/preferences/logs, admin tests, and iOS/APNs verification | `.agents/skills/ns-notification/SKILL.md` |
-| `setup-ios` | Set up the **local** iOS dev env (Xcode license/CLT/first-launch, Simulator runtime, CocoaPods, Watchman, deps) and run the first `npm run ios` in the Simulator. macOS only. NOT the TestFlight signing setup — that's `ios setup` | `.agents/skills/ns-setup-ios/SKILL.md` |
-| `setup-expo` | Set up the **Expo/EAS platform** layer: eas-cli, log into the Expo account, link the EAS project (writes `easProjectId` into `site-config.ts`), validate with `expo-doctor`. Cross-platform. NOT the local Mac toolchain (`setup-ios`) nor the build itself (`ios testflight`) | `.agents/skills/ns-setup-expo/SKILL.md` |
+| `notification` (alias `notifications`, `push`) | Set up iOS/APNs-oriented Expo push notifications with Convex tokens/preferences/logs and admin tests | `.agents/skills/ns-ios-notification/SKILL.md` |
+| `setup-ios` | Legacy alias for `ios local-setup` | `.agents/skills/ns-ios-setup/SKILL.md` |
+| `setup-android` | Set up the **local** Android dev env (Android Studio, SDK tools, JDK 17, Pixel AVD) and run the first `npm run android` in the emulator. macOS local path; Windows/Linux release builds route through EAS. NOT the Play internal/production release setup — that's `android beta` / `android distribute` | `.agents/skills/ns-setup-android/SKILL.md` |
+| `setup-expo` | Set up the **Expo/EAS platform** layer: eas-cli, log into the Expo account, link the EAS project (writes `easProjectId` into `site-config.ts`), validate with `expo-doctor`. Required before Windows/Linux cloud builds. NOT the local Mac toolchain (`ios local-setup`) nor the build itself (`ios testflight`) | `.agents/skills/ns-setup-expo/SKILL.md` |
 | `screenshots` | Generate store screenshots | `.agents/skills/ns-generate-store-screenshots/SKILL.md` |
-| `images` | Generate app icon, onboarding backgrounds, splash. REQUIRES an image-generation tool (Codex/gpt-image); other agents follow its fallback | `.agents/skills/ns-images/SKILL.md` |
+| `icon` (alias `app-icon`, `logo`) | Generate the **app icon/logo system**: exactly 8 different iOS-quality icon candidates first, one polished final iOS icon next, then Android adaptive + favicon/web logo assets. REQUIRES an image-generation tool (Codex/gpt-image); other agents follow its fallback | `.agents/skills/ns-icon/SKILL.md` |
+| `images` | Generate onboarding backgrounds, splash, brand art (NOT the icon — that's `icon`). REQUIRES an image-generation tool (Codex/gpt-image); other agents follow its fallback | `.agents/skills/ns-images/SKILL.md` |
 | `docs` | Write/update repo docs in `docs/` (house style, real paths, verified commands) | `.agents/skills/ns-add-documentation/SKILL.md` |
 | `optimize` | Performance/quality pass across Convex, Expo, and TanStack Start | `.agents/skills/ns-optimizer/SKILL.md` |
 | `release` | Cut a release: bump version, generate changelog, promote the latest TestFlight + Play-internal build to production (no rebuild) | `.agents/skills/ns-release/SKILL.md` |
@@ -52,29 +66,35 @@ Parse `$ARGUMENTS`:
 
 | Subcommand | What it does | Follow this file |
 | --- | --- | --- |
+| `ios local-setup` (alias `setup-ios`) | Set up the **local** iOS dev env (Xcode license/CLT/first-launch, Simulator runtime, CocoaPods, Watchman, deps) and run the first `npm run ios` in the Simulator. macOS only. NOT the TestFlight signing setup — that's `ios setup` | `.agents/skills/ns-ios-setup/SKILL.md` |
 | `ios setup` | EAS project init + Convex prod wiring + Apple signing credentials (everything BEFORE the first build) | `.agents/skills/ns-ios-testflight/SKILL.md` phases A-D only — stop before the build and report readiness |
 | `ios audit` | Read-only App Store Review Guideline audit before submission (IAP/Restore, in-app account deletion, Sign in with Apple parity, permission strings, privacy/AI disclosure, export compliance) → triaged blockers/warnings/manual-gates report | `.agents/skills/ns-ios-audit/SKILL.md` |
-| `ios testflight` | Production local build + TestFlight upload by default; pass `--expo` only for an EAS cloud build (runs setup first if needed) | `.agents/skills/ns-ios-testflight/SKILL.md` end to end |
+| `ios testflight` | OS-aware production build + TestFlight upload: macOS defaults to local `eas build --local`; Windows/Linux must run `ns-setup-expo` then use EAS cloud | `.agents/skills/ns-ios-testflight/SKILL.md` end to end |
 | `ios distribute` | TestFlight build → screenshots, metadata, IAP, compliance, review submission | `.agents/skills/ns-ios-distribute/SKILL.md` |
 | `ios verification` (alias `verify`) | Verify a `mobile-app/**` change in the Simulator via `xcrun simctl` — single-agent (one Metro on 8081) or parallel multi-agent (dedicated Simulator + Metro port per agent), deep-link nav, temp preview route, programmatic OTP test login (`appstoretest@email.com` / `123456`) | `.agents/skills/ns-ios-verification/SKILL.md` |
+| `ios deeplink` (alias `deeplink`, `universal-links`) | Fix and verify iOS Universal Links, TestFlight deeplinks, AASA, associated domains, and auth return flows | `.agents/skills/ns-ios-deeplink/SKILL.md` |
+| `ios notification` (alias `notifications`, `push`) | Set up iOS/APNs-oriented Expo push notifications and verify delivery with EAS/TestFlight constraints | `.agents/skills/ns-ios-notification/SKILL.md` |
 
-`testflight` alone = `ios testflight` (`ns-ios-testflight`). `distribute` alone = `ios distribute` (`ns-ios-distribute`). `audit` alone = `ios audit` (`ns-ios-audit`) — run it before `distribute` to clear predictable App Store rejections. For asc-level store details: `.agents/skills/ns-deploy-ios-app/SKILL.md`.
+`testflight` alone = `ios testflight` (`ns-ios-testflight`). `distribute` alone = `ios distribute` (`ns-ios-distribute`). `audit` alone = `ios audit` (`ns-ios-audit`) — run it before `distribute` to clear predictable App Store rejections. For asc-level store details: `.agents/skills/ns-ios-deploy-app/SKILL.md`.
 
-> **`ios setup` (signing) vs `setup-ios` (local dev) — don't confuse them.** `ios setup` wires EAS project metadata, production Convex URLs, and Apple **signing** credentials for TestFlight. `ios testflight` now builds locally by default and needs the Mac toolchain; pass `--expo` only to use an EAS cloud build. `setup-ios` (top-level) sets up Xcode, Simulator, and CocoaPods so `npm run ios` previews the dev build on this Mac.
+> **`ios setup` (signing) vs `ios local-setup` (local dev) — don't confuse them.** `ios setup` wires EAS project metadata, production Convex URLs, and Apple **signing** credentials for TestFlight. `ios testflight` chooses the build path from the OS: local on macOS, EAS cloud on Windows/Linux after `ns-setup-expo`. `ios local-setup` sets up Xcode, Simulator, and CocoaPods so `npm run ios` previews the dev build on this Mac. `setup-ios` remains a legacy alias.
 
 ### `android` namespace
 
-Mirrors iOS: `beta` is the testing-track (TestFlight-equivalent) surface, `distribute` is the production release.
+Mirrors iOS: `setup` is local development, `beta` is the testing-track (TestFlight-equivalent) surface, `distribute` is the production release.
 
 | Subcommand | What it does | Follow this file |
 | --- | --- | --- |
-| `android beta` | Build a signed AAB + upload to the Play **internal** track for testers | `.agents/skills/ns-android-beta/SKILL.md` |
+| `android setup` | Android Studio + SDK + latest practical Pixel emulator + local Expo Android development build | `.agents/skills/ns-setup-android/SKILL.md` |
+| `android beta` | OS-aware signed AAB + Play **internal** track upload: macOS can build locally; Windows/Linux must run `ns-setup-expo` then use EAS cloud | `.agents/skills/ns-android-beta/SKILL.md` |
+| `android play-console-release` | Finish Play Console setup and internal-track upload when `gpc` hits rejected-update or commit timing bugs | `.agents/skills/ns-android-play-console-release/SKILL.md` |
 | `android distribute` | Promote the tested internal build to **production** → listing, Data safety, content rating, staged rollout | `.agents/skills/ns-android-distribute/SKILL.md` (deep gpc details: `.agents/skills/ns-deploy-android-app/SKILL.md`) |
 
 ### `web` namespace
 
 | Subcommand | What it does | Follow this file |
 | --- | --- | --- |
+| `web landing-page` (aliases `web landing`, `landing-page`) | Refresh the public landing page style using live reference screenshots, user keep/change direction, and web screenshot verification | `.agents/skills/ns-web-landing-page/SKILL.md` |
 | `web deploy` | Deploy the web app to Vercel with Convex shipped alongside (deploy key + env wiring) | `.agents/skills/ns-web-deploy/SKILL.md` |
 
 Unknown subcommand → show these tables, then run Lifecycle Status.

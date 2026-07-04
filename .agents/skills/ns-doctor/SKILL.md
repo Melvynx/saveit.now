@@ -1,6 +1,6 @@
 ---
 name: ns-doctor
-description: Install and verify NowStack Mobile developer tools on this machine. Use for ns doctor, install the CLIs, missing-tool errors, or setup before ns-setup-accounts. Covers Node, eas, vercel, convex, asc, gpc, fastlane, bun, gcloud, Xcode, and Android Studio.
+description: Install and verify every developer tool NowStack Mobile needs on this machine (Node, eas, vercel, convex, asc, gpc, fastlane, bun, gcloud, + Xcode/Android Studio). Cross-platform — Homebrew/npm on macOS, apt/curl on Linux, winget/scoop on Windows. Use for "install the CLIs", "set up my machine", "ns doctor", missing-tool errors, or right before /ns accounts. Proposes to install everything missing in one pass.
 ---
 
 # ns-doctor — Machine setup

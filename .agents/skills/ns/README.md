@@ -11,9 +11,11 @@ Human documentation for the `ns` skill family: architecture, design decisions, a
 ├── ns/SKILL.md        # index: subcommand tables, NL mode, lifecycle status
 ├── ns/README.md       # this file (humans only)
 ├── ns-web-deploy/           # Vercel + Convex deploy (production deploy key)
+├── ns-ios-setup/            # iOS local toolchain: Xcode + Simulator + CocoaPods
 ├── ns-ios-testflight/       # iOS beta: local app → TestFlight build
 ├── ns-ios-distribute/       # iOS release: TestFlight → App Store review
-├── ns-notification/         # Expo push + Convex notifications + iOS/APNs checks
+├── ns-ios-deeplink/         # iOS Universal Links + auth callback deeplinks
+├── ns-ios-notification/     # Expo push + Convex notifications + iOS/APNs checks
 ├── ns-android-beta/         # Android beta: build AAB → Play internal track
 ├── ns-android-distribute/   # Android release: promote internal → production
 ├── ns-release/              # version bump + changelog + promote latest beta builds
@@ -32,14 +34,18 @@ Each `ns-*` skill has a description tuned for **self-invocation** — overlappin
 | `/ns check` | inline → `npm run check-setup` |
 | `/ns dev` | inline |
 | `/ns stripe` | `../ns-setup-stripe` |
-| `/ns notification` | `../ns-notification` |
+| `/ns setup-ios` | `../ns-ios-setup` (legacy alias for `/ns ios local-setup`) |
+| `/ns notification` | `../ns-ios-notification` |
 | `/ns screenshots` | `../ns-generate-store-screenshots` |
 | `/ns images` | `../ns-images` |
 | `/ns docs` | `../ns-add-documentation` |
 | `/ns optimize` | `../ns-optimizer` |
+| `/ns ios local-setup` | `../ns-ios-setup` |
 | `/ns ios setup` | `../ns-ios-testflight` (phases A-D) |
 | `/ns ios testflight` | `../ns-ios-testflight` (all phases) |
 | `/ns ios distribute` | `../ns-ios-distribute` |
+| `/ns ios deeplink` | `../ns-ios-deeplink` |
+| `/ns ios notification` | `../ns-ios-notification` |
 | `/ns android beta` | `../ns-android-beta` |
 | `/ns android distribute` | `../ns-android-distribute` |
 | `/ns web deploy` | `../ns-web-deploy` |
@@ -50,7 +56,7 @@ Each `ns-*` skill has a description tuned for **self-invocation** — overlappin
 
 1. **Standalone skills over umbrella+references.** Auto-discovery keys off each skill's `description`. Top-level `ns-*` skills auto-invoke; references buried in one skill do not. The index still exists for explicit multi-step orchestration.
 2. **Self-invocation descriptions.** Every `ns-*` description front-loads natural-language triggers ("deploy my app", "submit for review", "publish to TestFlight") so a student's request reaches the right skill without naming it.
-3. **Deep tool skills stay separate.** `ns-deploy-ios-app` (asc) and `ns-deploy-android-app` (gpc) are detailed CLI references; `ns-ios-distribute` / `ns-android-distribute` point to them for tool minutiae instead of duplicating.
+3. **Deep tool skills stay separate.** `ns-ios-deploy-app` (asc) and `ns-deploy-android-app` (gpc) are detailed CLI references; `ns-ios-distribute` / `ns-android-distribute` point to them for tool minutiae instead of duplicating.
 4. **Symmetric beta/release per platform.** iOS: `ns-ios-testflight` (beta) → `ns-ios-distribute` (release). Android: `ns-android-beta` (internal track) → `ns-android-distribute` (production promote). `ns-release` sits above both — it bumps the version, generates the changelog, and promotes the already-validated beta builds to production (never rebuilds).
 5. **Repo-only tooling.** `eas-cli`, `asc`, `gpc`, `openssl`, `node`, Maestro, and the repo scripts below. Secrets come from env vars, never hardcoded.
 6. **Confirmation policy.** Store mutations need explicit confirmation; the index's NL mode confirms a whole plan once but always re-confirms the final App Store review submission.

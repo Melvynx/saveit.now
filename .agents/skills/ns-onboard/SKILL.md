@@ -1,6 +1,6 @@
 ---
 name: ns-onboard
-description: First-run setup wizard for a freshly cloned NowStack Mobile repo. Use for set up my project, initial setup, onboard me, ns onboard, or I just cloned this. Installs CLIs, connects accounts, wires Convex, creates a clean Git repo, gathers the brief, and rebrands the app.
+description: First-run setup wizard for a freshly cloned NowStack Mobile. Installs the machine's CLIs, connects every account, wires Convex, creates YOUR own clean Git repo, gathers the product brief, then rebrands the boilerplate into your app. Use for "set up my project", "initial setup", "onboard me", "ns onboard", "I just cloned this", or the very first run.
 ---
 
 # ns-onboard — First-run wizard

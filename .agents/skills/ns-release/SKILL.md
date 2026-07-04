@@ -1,6 +1,6 @@
 ---
 name: ns-release
-description: Cut a NowStack Mobile release by bumping version, generating changelog and release notes, and promoting tested TestFlight and Play internal builds. Use for release the app, ship latest TestFlight version, release v1.2, publish update, or cut a release.
+description: Cut a NowStack Mobile release. Bump version, generate changelog, and promote existing TestFlight/Play internal builds to production. Does not rebuild.
 ---
 
 # Release - NowStack Mobile
@@ -21,8 +21,10 @@ Turn "the beta build is verified" into "a versioned, documented production relea
 ```bash
 git status --short            # clean tree; commit/stash first
 git rev-parse --abbrev-ref HEAD
+uname -s || node -p "process.platform"
 ```
 - Confirm a verified build exists on each target surface: TestFlight (iOS) and the Play internal track (Android). Skip a platform the user isn't releasing.
+- If a requested platform has no beta build yet, do not rebuild inside this skill. Delegate to the OS-aware build skill first: `ns-ios-testflight` for iOS or `ns-android-beta` for Android. Those skills decide local macOS vs. Windows/Linux EAS cloud and run `ns-setup-expo` when required.
 - Ask which platforms to release (iOS, Android, or both).
 </phase>
 

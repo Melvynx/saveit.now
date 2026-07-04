@@ -1,6 +1,6 @@
 ---
 name: ns-ios-distribute
-description: Make a NowStack Mobile iOS app ready for the App Store and submit for review - screenshots, metadata, IAP, age rating, demo account, validation, submit. Use for "deploy my app", "release on the App Store", "submit for review", or "make my app ready".
+description: Prepare and submit NowStack Mobile iOS App Store releases. Use for real 6.5-inch app screenshots, metadata, IAP, review details, validation, and submit.
 ---
 
 # iOS Distribute - NowStack Mobile
@@ -8,7 +8,7 @@ description: Make a NowStack Mobile iOS app ready for the App Store and submit f
 Take a TestFlight-ready app all the way to App Store review submission: store screenshots, metadata, IAP pricing/availability, age rating, review details with demo account, validation, and submit. If no build is on TestFlight yet, run `ns-ios-testflight` first.
 
 <objective>
-Orchestrate the full App Store distribution after a build is on TestFlight. This is the proven end-to-end flow (battle-tested on a real app built from this boilerplate, reaching zero `asc validate` errors): screenshots → store version + metadata → IAP readiness → compliance → review details → validate → submit.
+Orchestrate the full App Store distribution after a build is on TestFlight. This is the proven end-to-end flow (battle-tested on a real app built from this boilerplate, reaching zero `asc validate` errors): real app screenshots → store version + metadata → IAP readiness → compliance → review details → validate → submit.
 
 Everything runs with repo tools and public CLIs only:
 - `mobile-app/scripts/asc-api.mjs` for all App Store Connect API calls (`ASC_KEY_ID`/`ASC_ISSUER_ID`/`ASC_P8_PATH` env vars).
@@ -19,7 +19,7 @@ Sequencing with the rest of the lifecycle:
 1. No processed build yet → run the `ns-ios-testflight` skill first.
 2. Screenshot capture details → `.agents/skills/ns-generate-store-screenshots/SKILL.md`.
 3. This file — version, metadata, IAP, compliance, review, submit.
-For deep platform specifics use `.agents/skills/ns-deploy-ios-app/SKILL.md` / `.agents/skills/ns-deploy-android-app/SKILL.md`.
+For deep platform specifics use `.agents/skills/ns-ios-deploy-app/SKILL.md` / `.agents/skills/ns-deploy-android-app/SKILL.md`.
 </objective>
 
 <state_variables>
@@ -31,13 +31,15 @@ For deep platform specifics use `.agents/skills/ns-deploy-ios-app/SKILL.md` / `.
 | `{app_info_id}` / `{app_info_loc_id}` | from `GET /v1/apps/{asc_app_id}/appInfos` (+ its localizations) |
 | `{build_db_id}` | processed build id from `GET /v1/builds?filter[app]={asc_app_id}` |
 | `{subscription_id}` / `{sub_group_id}` | if the app sells a subscription |
-| `{screenshots_dir}` | dated output of the screenshot run, e.g. `documents/store-screenshots/<date>/ios/iphone-67/en-US` |
+| `{screenshots_dir}` | dated output of the screenshot run, e.g. `documents/store-screenshots/<date>/ios/iphone-65/en-US` |
 </state_variables>
 
 <critical_safety>
 - Every mutation against App Store Connect is externally visible. Confirm with the user before: uploading screenshots, changing pricing/availability, and ABOVE ALL the final review submission.
 - Never print or commit ASC credentials. `documents/store-screenshots/` is gitignored — keep it that way.
 - Screenshots must contain only demo data (the seeded demo account), never real user content.
+- Screenshots must be raw captures of the real app UI. Do not create screenshot-only routes, fake marketing screens, fake text overlays, fake cards, fake product claims, or composite promo images unless the user explicitly asks for framed marketing assets.
+- If a previous agent created `/store/*`, `store/[shot]`, or any other fake screenshot route, stop and remove/ignore it before capturing or uploading App Store screenshots.
 - Metadata values (URLs, support email, price) come from `site-config.ts` — do not invent them.
 </critical_safety>
 
@@ -71,20 +73,21 @@ node mobile-app/scripts/asc-api.mjs GET "/v1/builds?filter[app]={asc_app_id}&lim
 </phase>
 
 <phase n="B" title="Store screenshots">
-Follow `.agents/skills/ns-generate-store-screenshots/SKILL.md` for the full workflow. The proven recipe:
+Follow `.agents/skills/ns-generate-store-screenshots/SKILL.md` for the full workflow, but the rules in this phase override it whenever there is a conflict about device size, dimensions, screenshot routes, or generated marketing/composite screens. The proven recipe:
 
-1. **Demo data**: create/verify a seed function (e.g. `convex/seedStoreDemo.ts`, app-specific) so screens show rich, realistic content. Sign in with the built-in review account `appstoretest@email.com` / OTP `123456`.
-2. **Paywall capture**: temporarily set `EXPO_PUBLIC_ALLOW_DEV_PAYMENT_BYPASS=false` so the real paywall renders (restore afterwards).
-3. **Device**: iPhone 14 Plus simulator → native 1284x2778 = Apple display type `IPHONE_65` (the 6.7" set, required for iPhone listings):
+1. **Real app UI only**: capture the application screens as a user would see them: onboarding, auth, signed-in home/dashboard, real feature screen, real paywall, and real settings/account/privacy screen. Demo data is allowed; fake screenshot-only pages, fake cards, marketing layouts, and invented overlay copy are not allowed.
+2. **Demo data/session**: create/verify a seed function (e.g. `convex/seedStoreDemo.ts`, app-specific) so real screens show clean demo content. Sign in with the built-in review account `appstoretest@email.com` / OTP `123456` for auth-gated screens. Never use real personal data.
+3. **Paywall capture**: temporarily set `EXPO_PUBLIC_ALLOW_DEV_PAYMENT_BYPASS=false` so the real paywall renders (restore afterwards). The paywall screenshot must be the actual in-app paywall, not a recreated promo screen.
+4. **Device**: always use the App Store "iPhone 6.5 Display" slot: iPhone 11 Pro Max / XS Max class simulator → native 1242x2688 = Apple display type `IPHONE_65`. Do not use iPhone 14 Plus / iPhone 15 Pro Max / 6.7-inch screenshots unless the user explicitly asks for another slot.
 
 ```bash
-xcrun simctl create "store-iphone-65" "com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus" <runtime>
+xcrun simctl create "store-iphone-65" "com.apple.CoreSimulator.SimDeviceType.iPhone-11-Pro-Max" <runtime>
 cd mobile-app && npm run screenshots:store:ios            # dry-run first, always
 npm run screenshots:store:ios -- --execute                # after user confirms
 ```
 
-4. Maestro flows live in `mobile-app/maestro/store/` (Maestro needs JDK 17: `export JAVA_HOME=/opt/homebrew/opt/openjdk@17`). Robust flow patterns: `extendedWaitUntil: {visible: "<text>", timeout: 10000}` before every tap; conditional paywall dismissal with `runFlow: when: visible:`.
-5. **Validate**: `sips -g pixelWidth -g pixelHeight *.png` — every file must be exactly 1284x2778. Then visual QA each PNG (read the images): no dev overlays, no status-bar clutter, no placeholder copy.
+5. Maestro flows live in `mobile-app/maestro/store/` (Maestro needs JDK 17: `export JAVA_HOME=/opt/homebrew/opt/openjdk@17`). Robust flow patterns: `extendedWaitUntil: {visible: "<text>", timeout: 10000}` before every tap; conditional paywall dismissal with `runFlow: when: visible:`.
+6. **Validate**: `sips -g pixelWidth -g pixelHeight *.png` — every file must be exactly 1242x2688. Then visual QA each PNG (read the images): real app screen, no fake route, no dev overlays, no status-bar clutter, no placeholder copy, no invented claims.
 </phase>
 
 <phase n="C" title="Version, build, metadata">
@@ -126,7 +129,7 @@ asc subscriptions pricing equalize --subscription-id {subscription_id} \
 node mobile-app/scripts/asc-api.mjs GET "/v1/territories?limit=200"   # collect ids
 # POST /v2/appAvailabilities with app relationship + territoryAvailabilities for every territory
 
-# review screenshot for the subscription (the paywall capture works)
+# review screenshot for the subscription/IAP (use the real in-app paywall capture)
 asc subscriptions review screenshots create --subscription-id {subscription_id} \
   --file "{screenshots_dir}/<paywall>.png"
 ```
@@ -171,7 +174,8 @@ Report: version, build number, what was submitted, expected review timeline, and
 </phase>
 
 <failure_modes>
-- **`asc validate` error: missing screenshots** → wrong display type. iPhone 6.7" = `IPHONE_65`; sizes must be exactly 1284x2778 (or 1290x2796 for iPhone 15 Pro Max class).
+- **`asc validate` error: missing screenshots** → wrong display type or wrong dimensions. App Store "iPhone 6.5 Display" = `IPHONE_65`; screenshots must be exactly 1242x2688.
+- **Screenshots show a fake `/store` route, marketing card, or invented overlay copy** → discard the set. Capture the real app screens only, with demo data if needed.
 - **`pricing availability edit: app availability not found`** → availability was never initialized; use `POST /v2/appAvailabilities` (v2!) with all territories, then retry.
 - **Subscription review screenshot stuck in AWAITING_UPLOAD/processing** → delete the asset and re-upload the PNG.
 - **Paywall screenshot shows "Continue (Dev)"** → `EXPO_PUBLIC_ALLOW_DEV_PAYMENT_BYPASS` was true during capture; set it false, relaunch, recapture.
@@ -182,7 +186,7 @@ Report: version, build number, what was submitted, expected review timeline, and
 </failure_modes>
 
 <success_metrics>
-- All screenshots 1284x2778, demo data only, uploaded to the right localization + display type.
+- All screenshots are 1242x2688 raw captures of the real app UI, demo data only, uploaded to the right localization + `IPHONE_65` display type.
 - Metadata, category, copyright, age rating, content rights all set via API (idempotent — re-running is safe).
 - Subscription (if any) `READY_TO_SUBMIT` with localized name, price, availability, and review screenshot.
 - `asc validate` returns zero errors.

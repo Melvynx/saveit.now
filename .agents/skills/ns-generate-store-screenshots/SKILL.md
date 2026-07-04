@@ -17,7 +17,7 @@ Use this workflow when:
 - Preparing the first NowStack Mobile App Store or Google Play submission.
 - Updating screenshots after UI, onboarding, paywall, auth, or branding changes.
 - The user says: "create screenshots", "screenshots App Store", "screenshots Play Store", "automate screenshots", "avec l'IA", or asks for launch/store assets.
-- Running `ns-deploy-ios-app` or `ns-deploy-android-app` and the store listing lacks fresh screenshots.
+- Running `ns-ios-deploy-app` or `ns-deploy-android-app` and the store listing lacks fresh screenshots.
 
 Do NOT use this for:
 
@@ -276,7 +276,7 @@ documents/store-screenshots/YYYY-MM-DD/
 </export_structure>
 
 <integration_with_store_deploy>
-`ns-deploy-ios-app` and `ns-deploy-android-app` must treat screenshots as a release gate:
+`ns-ios-deploy-app` and `ns-deploy-android-app` must treat screenshots as a release gate:
 
 - If screenshots are missing, run this skill before submission.
 - If screenshots are stale relative to UI/paywall/branding changes, regenerate them.

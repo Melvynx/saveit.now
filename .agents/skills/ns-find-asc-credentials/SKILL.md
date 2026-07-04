@@ -1,6 +1,6 @@
 ---
 name: ns-find-asc-credentials
-description: Find App Store Connect API credentials and log in with asc. Use when asc auth is needed, credentials are unknown, the user asks to login to App Store Connect or find my ASC key, or before ns-deploy-ios-app.
+description: Find App Store Connect API credentials (key ID, issuer ID, .p8 file) on the user's machine and signed-in browser session, then log in with asc CLI. Use when asc auth is needed, credentials are unknown, user says "login to App Store Connect" or "find my ASC key", or before ns-ios-deploy-app.
 ---
 
 # Find App Store Connect Credentials

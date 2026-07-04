@@ -4,31 +4,41 @@ import { spawnSync } from "node:child_process";
 //
 // Three modes, in priority order:
 //
-// 1. VITE_CONVEX_URL is already set in the environment → MANUAL OVERRIDE.
-//    Skip `convex deploy` entirely and build against that URL. Used for the
-//    branch preview so it can point at an existing deployment (e.g. the dev
-//    deployment that already holds migrated data) without deploying functions
-//    to a fresh, empty preview deployment.
+// 1. Convex deploy credentials are present → DEPLOY.
+//    Run `convex deploy`, even when VITE_CONVEX_URL is preset. This keeps
+//    production from silently building against a stale/manual deployment URL.
 //
-// 2. A Convex deploy key is present (CONVEX_DEPLOY_KEY in Vercel env) → DEPLOY.
-//    Run `convex deploy`, which deploys the functions to the target deployment
-//    (prod) and injects that deployment's URL into VITE_CONVEX_URL for the
-//    build. No manual VITE_CONVEX_URL needed — the deploy key creates it.
-//    build-web.mjs derives VITE_CONVEX_SITE_URL (.site) from it.
+// 2. SKIP_CONVEX_DEPLOY=1 with VITE_CONVEX_URL set → MANUAL OVERRIDE.
+//    Skip `convex deploy` and build against the supplied URL. Used for branch
+//    previews/worktrees that intentionally point at an existing deployment.
 //
-// 3. Neither → build against whatever env is configured (local fallback).
+// 3. No deploy credentials, but VITE_CONVEX_URL is set → BUILD ONLY.
+//
+// Any path without a deploy and without VITE_CONVEX_URL fails fast. The app
+// must never build against a hardcoded Convex fallback.
 
 const hasManualConvexUrl = Boolean(process.env.VITE_CONVEX_URL);
+const skipConvexDeploy = process.env.SKIP_CONVEX_DEPLOY === "1";
 
-const hasConvexDeployCredentials =
-  !hasManualConvexUrl &&
-  Boolean(
-    process.env.CONVEX_DEPLOY_KEY ||
-      (process.env.CONVEX_SELF_HOSTED_URL &&
-        process.env.CONVEX_SELF_HOSTED_ADMIN_KEY),
+const hasConvexDeployCredentials = Boolean(
+  process.env.CONVEX_DEPLOY_KEY ||
+    (process.env.CONVEX_SELF_HOSTED_URL &&
+      process.env.CONVEX_SELF_HOSTED_ADMIN_KEY),
+);
+
+const shouldDeployConvex = hasConvexDeployCredentials && !skipConvexDeploy;
+
+if (!shouldDeployConvex && !hasManualConvexUrl) {
+  const reason = skipConvexDeploy
+    ? "SKIP_CONVEX_DEPLOY=1 requires VITE_CONVEX_URL to be set."
+    : "CONVEX_DEPLOY_KEY/VITE_CONVEX_URL are not set.";
+  console.error(
+    `[vercel-build] ${reason} Refusing to build without an explicit Convex deployment URL.`,
   );
+  process.exit(1);
+}
 
-const command = hasConvexDeployCredentials
+const command = shouldDeployConvex
   ? [
       "pnpm",
       "--filter",
@@ -45,17 +55,19 @@ const command = hasConvexDeployCredentials
     ]
   : ["node", "scripts/build-web.mjs"];
 
-if (hasManualConvexUrl) {
+if (shouldDeployConvex) {
   console.log(
-    `[vercel-build] VITE_CONVEX_URL already set (${process.env.VITE_CONVEX_URL}); skipping convex deploy and building against it.`,
+    hasManualConvexUrl
+      ? "[vercel-build] Deploying Convex + building web; deploy output overrides preset VITE_CONVEX_URL."
+      : "[vercel-build] Deploying Convex + building web (VITE_CONVEX_URL auto-injected).",
   );
-} else if (hasConvexDeployCredentials) {
+} else if (skipConvexDeploy) {
   console.log(
-    "[vercel-build] Deploying Convex + building web (VITE_CONVEX_URL auto-injected).",
+    `[vercel-build] SKIP_CONVEX_DEPLOY=1; building web against VITE_CONVEX_URL=${process.env.VITE_CONVEX_URL}.`,
   );
 } else {
   console.log(
-    "[vercel-build] No Convex deploy credentials found; building web against the configured VITE_CONVEX_URL.",
+    `[vercel-build] No Convex deploy credentials found; building web against VITE_CONVEX_URL=${process.env.VITE_CONVEX_URL}.`,
   );
 }
 

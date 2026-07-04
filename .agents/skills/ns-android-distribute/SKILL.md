@@ -1,6 +1,6 @@
 ---
 name: ns-android-distribute
-description: Release a tested NowStack Mobile Android build to Google Play production. Use for release on Android, publish to Play production, promote to production, store listing, screenshots, Data safety, content rating, release notes, validation, and staged rollout.
+description: Release a NowStack Mobile Android app to Google Play production - listing, screenshots, Data safety, content rating, release notes, then promote the tested internal build to the production track with a staged rollout. Use for "release on Android", "publish to Play production", "promote to production", "ship the Android update". If no build is on a testing track yet, run ns-android-beta first.
 ---
 
 # Android Distribute - NowStack Mobile

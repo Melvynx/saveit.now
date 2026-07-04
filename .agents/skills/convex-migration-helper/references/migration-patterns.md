@@ -1,7 +1,6 @@
 # Migration Patterns Reference
 
-Common migration patterns, zero-downtime strategies, and verification techniques
-for Convex schema and data migrations.
+Common migration patterns, zero-downtime strategies, and verification techniques for Convex schema and data migrations.
 
 ## Adding a Required Field
 
@@ -10,7 +9,7 @@ for Convex schema and data migrations.
 users: defineTable({
   name: v.string(),
   role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
-}).index("by_role", ["role"]);
+})
 
 // Migration: backfill the field
 export const addDefaultRole = migrations.define({
@@ -26,13 +25,12 @@ export const addDefaultRole = migrations.define({
 users: defineTable({
   name: v.string(),
   role: v.union(v.literal("user"), v.literal("admin")),
-});
+})
 ```
 
 ## Deleting a Field
 
-Mark the field optional first, migrate data to remove it, then remove from
-schema:
+Mark the field optional first, migrate data to remove it, then remove from schema:
 
 ```typescript
 // Deploy 1: Make optional
@@ -53,8 +51,7 @@ export const removeIsPro = migrations.define({
 
 ## Changing a Field Type
 
-Prefer creating a new field. You can combine adding and deleting in one
-migration:
+Prefer creating a new field. You can combine adding and deleting in one migration:
 
 ```typescript
 // Deploy 1: Add new field, keep old field optional
@@ -101,9 +98,7 @@ export const extractPreferences = migrations.define({
 });
 ```
 
-Make sure your code is already writing to the new `userPreferences` table for
-new users before running this migration, so you don't miss documents created
-during the migration window.
+Make sure your code is already writing to the new `userPreferences` table for new users before running this migration, so you don't miss documents created during the migration window.
 
 ## Cleaning Up Orphaned Documents
 
@@ -125,21 +120,18 @@ export const deleteOrphanedEmbeddings = migrations.define({
 
 ## Zero-Downtime Strategies
 
-During the migration window, your app must handle both old and new data formats.
-There are two main strategies.
+During the migration window, your app must handle both old and new data formats. There are two main strategies.
 
 ### Dual Write (Preferred)
 
-Write to both old and new structures. Read from the old structure until
-migration is complete.
+Write to both old and new structures. Read from the old structure until migration is complete.
 
 1. Deploy code that writes both formats, reads old format
 2. Run migration on existing data
 3. Deploy code that reads new format, still writes both
 4. Deploy code that only reads and writes new format
 
-This is preferred because you can safely roll back at any point, the old format
-is always up to date.
+This is preferred because you can safely roll back at any point, the old format is always up to date.
 
 ```typescript
 // Bad: only writing to new structure before migration is done
@@ -175,9 +167,7 @@ Read both formats. Write only the new format.
 2. Run migration on existing data
 3. Deploy code that reads and writes only new format
 
-This avoids duplicating writes, which is useful when having two copies of data
-could cause inconsistencies. The downside is that rolling back to before step 1
-is harder, since new documents only have the new format.
+This avoids duplicating writes, which is useful when having two copies of data could cause inconsistencies. The downside is that rolling back to before step 1 is harder, since new documents only have the new format.
 
 ```typescript
 // Good: reading both formats, preferring new
@@ -189,8 +179,7 @@ function getTeamPlan(team: Doc<"teams">): "basic" | "pro" {
 
 ## Small Table Shortcut
 
-For small tables (a few thousand documents at most), you can migrate in a single
-`internalMutation` without the component:
+For small tables (a few thousand documents at most), you can migrate in a single `internalMutation` without the component:
 
 ```typescript
 import { internalMutation } from "./_generated/server";
@@ -211,8 +200,7 @@ export const backfillSmallTable = internalMutation({
 npx convex run migrations:backfillSmallTable
 ```
 
-Only use `.collect()` when you are certain the table is small. For anything
-larger, use the migrations component.
+Only use `.collect()` when you are certain the table is small. For anything larger, use the migrations component.
 
 ## Verifying a Migration
 
@@ -225,7 +213,7 @@ export const verifyMigration = query({
   handler: async (ctx) => {
     const remaining = await ctx.db
       .query("users")
-      .withIndex("by_role", (q) => q.eq("role", undefined))
+      .filter((q) => q.eq(q.field("role"), undefined))
       .take(10);
 
     return {

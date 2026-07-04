@@ -1,17 +1,21 @@
 ---
 name: ns-setup-expo
-description: "Set up the Expo/EAS account layer for NowStack Mobile: eas-cli, Expo login, EAS project link, easProjectId, and expo-doctor. Use for `/ns setup-expo`, EAS init, or before local TestFlight/optional `--expo` cloud builds."
+description: Set up the Expo/EAS account layer for NowStack Mobile: eas-cli, Expo login, EAS project link, easProjectId, and expo-doctor. Required before Windows/Linux cloud builds.
 ---
 
 # ns-setup-expo — Expo / EAS platform setup
 
 <objective>
-Get the **Expo side** ready: `eas-cli` installed, signed into the Expo account, the app **linked to an EAS project** (`easProjectId`), and `expo-doctor` green. This is the platform/account layer that EAS versioning, local builds, and optional `--expo` cloud builds depend on.
+Get the **Expo side** ready: `eas-cli` installed, signed into the Expo account, the app **linked to an EAS project** (`easProjectId`), and `expo-doctor` green. This is the platform/account layer that EAS versioning, macOS local EAS builds, and required Windows/Linux cloud builds depend on.
 
-It is NOT the local Mac toolchain (Xcode, Simulator, CocoaPods → `/ns setup-ios`), NOT the everyday run loop (`/ns dev` → `npm run ios`/`start`), and NOT the signing + build itself (`/ns ios setup` → `/ns ios testflight`). Those can come before or after; this skill owns *Expo account + project wiring + project health*.
+It is NOT the local Mac toolchain (Xcode, Simulator, CocoaPods → `/ns ios local-setup`), NOT the everyday run loop (`/ns dev` → `npm run ios`/`start`), and NOT the signing + build itself (`/ns ios setup` → `/ns ios testflight`). Those can come before or after; this skill owns *Expo account + project wiring + project health*.
 
 Detect what's already done, do only the gaps, confirm once before creating the Expo project (it's an outward-facing resource on the user's account).
 </objective>
+
+<platform_context>
+Every mobile build/release skill must check the OS first. When the OS is Windows or Linux, those skills must load/follow this skill before any iOS TestFlight or Android Play build, because the production build artifact must come from EAS cloud. On macOS, this skill is still needed for EAS project/versioning and can support local EAS builds, but it is not a replacement for Xcode or Android Studio local tooling.
+</platform_context>
 
 <components>
 | Step | Check | Fix |
@@ -37,11 +41,11 @@ Flow when `easProjectId` is still the `xxxxxxxx-…` placeholder:
 2. **Install/login gaps.** eas-cli + deps + `eas login` — idempotent, skip anything already done. Never re-login if `whoami` already resolves.
 3. **Link the project** (only if `easProjectId` is a placeholder): confirm, `eas init`, then write the UUID into `site-config.ts` per the wiring above.
 4. **Validate.** `npx expo-doctor` from `mobile-app/`. Report each finding; fix obvious config issues (version mismatches it names), surface the rest.
-5. **Report.** Logged-in account, the linked `easProjectId`, expo-doctor result. Point next at `/ns setup-ios` (local preview/builds on a Mac) or `/ns ios testflight` (first TestFlight build; add `--expo` only for cloud).
+5. **Report.** Logged-in account, the linked `easProjectId`, expo-doctor result. Point next at `/ns ios local-setup` (local preview/builds on a Mac), `/ns ios testflight` (macOS local by default; Windows/Linux cloud), or `/ns android beta` (macOS local allowed; Windows/Linux cloud).
 </workflow>
 
 <rules>
-- This is the Expo **account/platform** layer only. Local Mac toolchain → `/ns setup-ios`; run loop → `/ns dev`; signing + build → `/ns ios setup` → `/ns ios testflight`.
+- This is the Expo **account/platform** layer only. Local Mac toolchain → `/ns ios local-setup`; run loop → `/ns dev`; signing + build → `/ns ios setup` → `/ns ios testflight`.
 - `easProjectId` lives in `site-config.ts` (read by `app.config.ts`). Write it there — never hardcode it into `app.json`/`app.config.ts`.
 - Creating an EAS project is outward-facing → one explicit confirmation before `eas init`. Never create store/build resources or trigger a build here.
 - Idempotent: skip login if `eas whoami` resolves; skip `eas init` if `easProjectId` is already a real UUID.
@@ -56,5 +60,5 @@ eas whoami                                   # logged-in account
 grep -m1 easProjectId site-config.ts         # real UUID, not xxxxxxxx-…
 cd mobile-app && npx expo-doctor             # project health (run last)
 ```
-Green path: signed in, `easProjectId` is a UUID, `expo-doctor` reports no issues. Then `/ns setup-ios` (preview/local build toolchain) or `/ns ios testflight` (TestFlight build; local by default).
+Green path: signed in, `easProjectId` is a UUID, `expo-doctor` reports no issues. Then `/ns ios local-setup` on macOS for preview tooling, `/ns ios testflight` for TestFlight, or `/ns android beta` for Play internal builds.
 </verification>

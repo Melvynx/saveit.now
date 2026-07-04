@@ -51,6 +51,7 @@ sync_missing_env_value BETTER_AUTH_COOKIE_PREFIX
 sync_missing_env_value SITE_URL
 sync_missing_env_value BETTER_AUTH_TRUSTED_ORIGINS
 sync_missing_env_value APPSTORE_TEST_EMAIL
+sync_missing_env_value EXTENSION_ALLOWED_ORIGINS
 # OAuth providers
 sync_missing_env_value GITHUB_CLIENT_ID
 sync_missing_env_value GITHUB_CLIENT_SECRET

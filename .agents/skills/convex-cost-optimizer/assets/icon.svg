@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Convex Cost Optimizer</title>
+  <rect width="64" height="64" rx="14" fill="#16A34A"/>
+  <path d="M18 43h28" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M20 36l10-10 8 8 10-14" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="36" r="3" fill="#DCFCE7"/>
+  <circle cx="30" cy="26" r="3" fill="#DCFCE7"/>
+  <circle cx="38" cy="34" r="3" fill="#DCFCE7"/>
+  <circle cx="48" cy="20" r="3" fill="#DCFCE7"/>
+</svg>

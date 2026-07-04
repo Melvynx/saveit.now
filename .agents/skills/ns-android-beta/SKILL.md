@@ -1,24 +1,37 @@
 ---
 name: ns-android-beta
-description: Build and upload a NowStack Mobile Android beta to a Play internal or closed testing track. Use for build Android, Android beta, internal testing, signed AABs, prod Convex wiring, or shipping Android to testers before ns-android-distribute.
+description: Build a NowStack Mobile Android app and upload it to a Play testing track. Always check OS first: macOS may build locally; Windows/Linux must run ns-setup-expo and use EAS cloud.
 ---
 
 # Android Beta - NowStack Mobile
 
 Take a NowStack Mobile app from local dev to an installable build on a Play **testing track** (internal first, then closed). This is the Android beta surface — the equivalent of iOS TestFlight. For the production release (promote to the production track + listing + staged rollout) use `ns-android-distribute`. The deep Google Play Console (gpc) tool reference is `.agents/skills/ns-deploy-android-app/SKILL.md` — read it for the upload/track commands. Run the steps here in order.
 
+<platform_build_routing>
+Before choosing a build command, detect the OS:
+
+```bash
+uname -s || node -p "process.platform"
+```
+
+- `Darwin` / `darwin`: local Android production builds are allowed if Android Studio/SDK/Gradle signing are ready. Prefer the local build path when available; EAS cloud is still allowed if the user explicitly wants it.
+- `Linux`, `win32`, or Windows PowerShell: do not attempt local Android production builds. Load/follow `.agents/skills/ns-setup-expo/SKILL.md`; verify `eas-cli`, `eas whoami`, a real `easProjectId` in `site-config.ts`, and `cd mobile-app && npx expo-doctor`. Then use EAS cloud to produce the signed `.aab`.
+- If Expo/EAS setup is incomplete on Windows/Linux, stop after fixing `ns-setup-expo`; do not continue to Play upload until the account and project link are green.
+</platform_build_routing>
+
 <prerequisites>
 Ask once, as a group (the agent cannot create these):
 1. **Google Play Developer account** (one-time $25, verified).
 2. **A Play Console app** for the package name in `site-config.ts > androidPackage`.
 3. **A Play service-account JSON** with the Google Play Developer API enabled (for `gpc`/fastlane upload).
-4. **Expo account** logged in (`npx eas-cli@latest whoami`) if building with EAS.
+4. **Expo account** logged in and linked (`npx eas-cli@latest whoami`, real `easProjectId`) if building with EAS, and always on Windows/Linux.
 </prerequisites>
 
 <step n="1" title="Preflight">
 ```bash
 npm run check-setup          # easProjectId must be real (Android builds need EAS too)
 cd mobile-app && npx tsc --noEmit && npm run lint
+uname -s || node -p "process.platform"
 ```
 Confirm `site-config.ts`: `androidPackage`, `payment.productIds.google`, `version`. Package name is permanent once the Play listing exists.
 </step>
@@ -28,11 +41,22 @@ Same prod backend as iOS — if `ns-ios-testflight` already wired prod Convex + 
 </step>
 
 <step n="3" title="Build a signed AAB">
+On Windows/Linux, first complete `ns-setup-expo`, then run the EAS cloud build:
+
 ```bash
 cd mobile-app
-eas build --platform android --profile production
+npx eas-cli@latest build --platform android --profile production --non-interactive
 ```
-EAS manages the Android keystore (first build prompts to generate one; let EAS keep it). Download the `.aab` artifact when the build reaches FINISHED. (Local Gradle build is an alternative if the user avoids EAS.)
+
+On macOS, local builds are allowed when the Android SDK/toolchain is ready. Prefer the repo's local EAS build when avoiding cloud credits but still using EAS-managed Android signing:
+
+```bash
+cd mobile-app
+npx eas-cli@latest build --platform android --profile production \
+  --local --non-interactive --output /tmp/{slug}.aab
+```
+
+EAS manages the Android keystore (first build prompts to generate one; let EAS keep it). Download the `.aab` artifact when a cloud build reaches FINISHED, or use the explicit `/tmp/{slug}.aab` path from the local build. Do not use local Gradle production builds on Windows/Linux for this workflow.
 </step>
 
 <step n="4" title="In-app product (if the app sells anything)">
@@ -59,6 +83,7 @@ Add testers to the internal track in Play Console, install via the opt-in link, 
 - **App opens but can't reach backend** → AAB built before `eas.json` had prod Convex URLs; rebuild.
 - **Purchases fail in review** → the Google managed product id doesn't match `payment.productIds.google`, or isn't activated.
 - **Signing/keystore confusion** → let EAS own the keystore; don't mix locally-generated and EAS keystores across builds.
+- **Windows/Linux local build request** → run `ns-setup-expo` and use EAS cloud; do not try to install Android Studio/Gradle signing for production release builds.
 </failure_modes>
 
 <success_metrics>

@@ -1,6 +1,6 @@
 ---
 name: ns-setup-accounts
-description: Connect NowStack Mobile external accounts with programmatic API access. Use for setup accounts, connect my accounts, first-run onboarding, or check-setup CLI/auth gaps. Covers Convex, Expo/EAS, Apple Developer, Vercel, Stripe, and Google Play.
+description: Connect every external account NowStack Mobile needs (Convex, Expo/EAS, Apple Developer, Vercel, Stripe, Google Play) by acquiring PROGRAMMATIC API ACCESS for each, then doing everything automatically through that access. Use for "setup accounts", "connect my accounts", first-run onboarding, or when check-setup reports CLI/auth gaps. The skill obtains a token/key per service, stores it in the right place, and only asks the user for the irreducible manual steps (browser signup, 2FA, one-time key download). Every account is skippable.
 ---
 
 # Setup Accounts - NowStack Mobile

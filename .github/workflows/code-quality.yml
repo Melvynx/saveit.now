@@ -46,8 +46,38 @@ jobs:
         env:
           CI: true
 
+      - name: Typecheck web
+        run: pnpm ts
+        working-directory: apps/web
+        env:
+          CI: true
+
+      - name: Lint web
+        run: pnpm lint
+        working-directory: apps/web
+        env:
+          CI: true
+
       - name: Run unit tests
         run: pnpm test:ci
         working-directory: apps/web
+        env:
+          CI: true
+
+      - name: Generate Convex code
+        run: pnpm exec convex codegen
+        working-directory: packages/backend
+        env:
+          CI: true
+
+      - name: Typecheck backend
+        run: pnpm exec tsc --noEmit -p convex
+        working-directory: packages/backend
+        env:
+          CI: true
+
+      - name: Test backend
+        run: pnpm exec vitest run
+        working-directory: packages/backend
         env:
           CI: true

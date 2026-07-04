@@ -1,6 +1,6 @@
 ---
 name: ns-create-app
-description: Turn an app idea into a NowStack Mobile build-ready plan. Use for create app, ns create-app, plan a new app, I have an app idea, or starting a product from scratch. Routes through ns-prd, ns-architecture, and ns-tasks.
+description: Turn a NowStack Mobile app idea into a build-ready plan. Orchestrates PRD, architecture, and tasks; optionally applies the site-config brief and hands off to implementation. Use for `ns create-app`, "create app", "plan a new app", "I have an app idea", or starting a product from scratch.
 ---
 
 # ns-create-app — App creation wizard
@@ -35,7 +35,7 @@ Invoke **`ns-tasks`** — read PRD + ARCHITECTURE, write `.agents/plan/tasks/*.m
 <step n="4" title="Apply config + hand off">
 - If config-relevant facts emerged (title, slug, bundleId, description, price, IAP product ids, admin emails), offer **`/ns setup`** (`ns-init-project`) to write them into `site-config.ts` — confirm before mutating config.
 - Summarize: the three docs written, the build order, and the first 1–2 tasks.
-- Hand off to implementation: run tasks with the **`apex`** skill (structured) or **`oneshot`** (single small task). For the local run loop: `/ns setup-ios` then `/ns dev`.
+- Hand off to implementation: run tasks with the **`apex`** skill (structured) or **`oneshot`** (single small task). For the local run loop: `/ns ios local-setup` then `/ns dev`.
 </step>
 
 <rules>
@@ -49,5 +49,5 @@ Invoke **`ns-tasks`** — read PRD + ARCHITECTURE, write `.agents/plan/tasks/*.m
 
 <verification>
 - `.agents/plan/PRD.md`, `.agents/plan/ARCHITECTURE.md`, and `.agents/plan/tasks/` all present and consistent (every PRD must-have → architecture mapping → ≥1 task).
-- End by pointing at the first task + the implementation skill (`apex`/`oneshot`) and the run loop (`/ns setup-ios` → `/ns dev`).
+- End by pointing at the first task + the implementation skill (`apex`/`oneshot`) and the run loop (`/ns ios local-setup` → `/ns dev`).
 </verification>

@@ -16,7 +16,7 @@ This skill does not use EAS Submit for Android uploads. The target flow is:
 4. Upload to the internal track with `gpc publish` or `gpc releases upload`.
 5. Monitor, promote, halt, or roll out with `gpc status`, `gpc watch`, and `gpc releases promote`.
 
-Fastlane `supply` remains the stable fallback if `gpc` is blocked. EAS may appear only as an optional fallback to produce an `.aab` if the user explicitly asks for it. Google Play automation belongs to `gpc`.
+Fastlane `supply` remains the stable fallback if `gpc` is blocked. Build artifact generation is OS-aware: macOS may use local Gradle or local EAS, while Windows/Linux must load `ns-setup-expo` and use EAS cloud to produce the `.aab`. Google Play automation belongs to `gpc`.
 </objective>
 
 <when_to_use>
@@ -29,7 +29,7 @@ Use this workflow when:
 
 Do NOT use this for:
 
-- iOS/App Store submissions (use `ns-deploy-ios-app`).
+- iOS/App Store submissions (use `ns-ios-deploy-app`).
 - Local emulator/dev builds (`npm run android`, `npx expo start`).
 - EAS Submit unless the user explicitly overrides this skill.
 - Creating or submitting real Google Play resources without a dry run/validation and explicit confirmation.
@@ -167,7 +167,14 @@ Automation target:
 </metadata_and_screenshot_automation>
 
 <build_aab>
-This skill needs a signed production `.aab`. Prefer local Gradle when the user wants no EAS.
+This skill needs a signed production `.aab`. Detect the OS before choosing the build path:
+
+```bash
+uname -s || node -p "process.platform"
+```
+
+- **macOS / Darwin**: local Android production builds are allowed. Prefer local Gradle when the user wants no EAS, or local EAS when the repo is already configured for EAS-managed signing.
+- **Windows/Linux**: do not attempt local Android production builds. Load/follow `.agents/skills/ns-setup-expo/SKILL.md`, verify `eas-cli`, `eas whoami`, linked `easProjectId`, and `expo-doctor`, then use EAS cloud to produce the `.aab`.
 
 Local Expo/Gradle path:
 
@@ -187,7 +194,16 @@ mobile-app/android/app/build/outputs/bundle/release/app-release.aab
 
 Stop if signing is not configured for release. Do not invent keystore credentials or write secrets into tracked Gradle files.
 
-Optional fallback only if the user explicitly allows EAS for build artifact generation:
+macOS local EAS path, when avoiding cloud credits but using EAS-managed signing:
+
+```bash
+cd mobile-app
+npm run env:prod
+npx eas-cli@latest build --platform android --profile production \
+  --local --non-interactive --output /tmp/{slug}.aab
+```
+
+Windows/Linux required cloud path, and optional macOS fallback if the user explicitly allows EAS cloud for build artifact generation:
 
 ```bash
 cd mobile-app

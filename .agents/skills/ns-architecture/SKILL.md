@@ -1,6 +1,6 @@
 ---
 name: ns-architecture
-description: Design NowStack Mobile architecture from .agents/plan/PRD.md and write .agents/plan/ARCHITECTURE.md. Use for ns architecture, schema and screen planning, or the planning step between ns-prd and ns-tasks.
+description: Design the technical architecture for a NowStack Mobile app from .agents/plan/PRD.md, mapping the product onto the FIXED boilerplate stack (Convex schema + functions, Expo Router screens, Better Auth, Apple IAP/Stripe, R2), then save .agents/plan/ARCHITECTURE.md. Use for "design the architecture", "ns architecture", "plan the schema and screens", or as the second planning step after ns-prd and before ns-tasks. Not a blank-slate stack design — the stack is set; this maps features onto it.
 ---
 
 # ns-architecture — Mobile technical architecture

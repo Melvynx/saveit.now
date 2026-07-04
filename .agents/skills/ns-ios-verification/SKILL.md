@@ -1,6 +1,6 @@
 ---
 name: ns-ios-verification
-description: Verify NowStack Mobile iOS and Expo changes through xcrun simctl. Use for verify the mobile app, test on the simulator, check this screen renders, ns ios verification, or after mobile-app changes. Supports deep links, screenshots, temp no-auth preview routes, and OTP sign-in.
+description: Verify NowStack Mobile iOS/Expo changes in the Apple Simulator with `xcrun simctl`. Covers single or parallel Metro/device flows, deep-link navigation, preview routes, and OTP sign-in. Use for `ns ios verification`, "test on simulator", or changed `mobile-app/**`; never use computer-use.
 ---
 
 # ns-ios-verification — Drive the iOS Simulator to prove a mobile change works
@@ -15,7 +15,7 @@ See a `mobile-app/**` change actually rendered and behaving correctly in the App
 </objective>
 
 <platform_guard>
-iOS verification requires macOS (Xcode + Simulator). `uname -s` must be `Darwin`. A dev build must already exist (`/ns setup-ios` → `npm run ios` once). Native modules (Stripe, IAP, Apple Sign In) only exist in the dev build, never Expo Go.
+iOS verification requires macOS (Xcode + Simulator). `uname -s` must be `Darwin`. A dev build must already exist (`/ns ios local-setup` → `npm run ios` once). Native modules (Stripe, IAP, Apple Sign In) only exist in the dev build, never Expo Go.
 </platform_guard>
 
 ## Toolchain (every command)
