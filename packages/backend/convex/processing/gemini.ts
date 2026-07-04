@@ -1,25 +1,14 @@
 "use node";
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject, generateText } from "ai";
 import type { ZodSchema } from "zod";
-
-const google = createGoogleGenerativeAI({});
+import { withGeminiFallback } from "../lib/gemini_provider";
 
 export const GEMINI_MODEL_IDS = {
   cheap: "gemini-3.1-flash-lite",
   normal: "gemini-3.1-pro-preview",
   embedding: "gemini-embedding-2",
 } as const;
-
-export const GEMINI_MODELS = {
-  get cheap() {
-    return google(GEMINI_MODEL_IDS.cheap);
-  },
-  get normal() {
-    return google(GEMINI_MODEL_IDS.normal);
-  },
-};
 
 /**
  * generateSummary — wrapper around generateText using Gemini.
@@ -29,12 +18,13 @@ export async function generateSummary(
   userInput: string,
   model?: string,
 ): Promise<string> {
-  const m = model ? google(model) : GEMINI_MODELS.cheap;
-  const result = await generateText({
-    model: m,
-    system: systemPrompt,
-    prompt: userInput,
-  });
+  const result = await withGeminiFallback((google) =>
+    generateText({
+      model: google(model ?? GEMINI_MODEL_IDS.cheap),
+      system: systemPrompt,
+      prompt: userInput,
+    }),
+  );
   return result.text || "";
 }
 
@@ -47,13 +37,14 @@ export async function generateStructured<T>(
   schema: ZodSchema<T>,
   model?: string,
 ): Promise<T> {
-  const m = model ? google(model) : GEMINI_MODELS.cheap;
-  const result = await generateObject({
-    model: m,
-    system: systemPrompt,
-    prompt: userPrompt,
-    schema,
-  });
+  const result = await withGeminiFallback((google) =>
+    generateObject({
+      model: google(model ?? GEMINI_MODEL_IDS.cheap),
+      system: systemPrompt,
+      prompt: userPrompt,
+      schema,
+    }),
+  );
   return result.object as T;
 }
 

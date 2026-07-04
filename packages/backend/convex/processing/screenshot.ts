@@ -4,11 +4,9 @@ import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { generateObject } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import { IMAGE_ANALYSIS_PROMPT } from "./gemini";
-
-const google = createGoogleGenerativeAI({});
+import { withGeminiFallback } from "../lib/gemini_provider";
 
 export interface ScreenshotAnalysisResult {
   description: string | null;
@@ -155,21 +153,21 @@ async function analyzeImageBase64(
   base64: string,
   prompt: string,
 ): Promise<ScreenshotAnalysisResult> {
-  const result = await generateObject({
-    model: google(
-      process.env.GEMINI_CHEAP_MODEL ?? "gemini-3.1-flash-lite",
-    ),
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image", image: base64 },
-        ],
-      },
-    ],
-    schema: SCREENSHOT_ANALYSIS_SCHEMA,
-  });
+  const result = await withGeminiFallback((google) =>
+    generateObject({
+      model: google(process.env.GEMINI_CHEAP_MODEL ?? "gemini-3.1-flash-lite"),
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image", image: base64 },
+          ],
+        },
+      ],
+      schema: SCREENSHOT_ANALYSIS_SCHEMA,
+    }),
+  );
 
   const analysis = result.object;
   if (analysis.isInvalid) {

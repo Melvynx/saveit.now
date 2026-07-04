@@ -1,6 +1,5 @@
 // httpActions MUST run in the default (V8) runtime — never "use node".
 // The Vercel AI SDK (streamText + @ai-sdk/google) is fetch-based and runs in V8.
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import {
   convertToModelMessages,
@@ -14,6 +13,7 @@ import { z } from "zod";
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { authComponent, createAuth } from "../auth/config";
+import { withGeminiFallback } from "../lib/gemini_provider";
 
 // ---------------------------------------------------------------------------
 // System prompt (verbatim from Spec 06 §2.1)
@@ -625,32 +625,32 @@ You can filter by:
   };
 
   // ---- Stream text ----
-  const google = createGoogleGenerativeAI({});
-  const model = google("gemini-3.1-pro-preview");
   const thinkingConfig = getThinkingConfig(enableThinking);
 
-  const result = streamText({
-    model,
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages as UIMessage[]),
-    tools,
-    stopWhen: stepCountIs(20),
-    providerOptions: thinkingConfig.providerOptions,
-    onFinish: async ({ response }) => {
-      // Persist messages if a conversationId was provided.
-      if (conversationId) {
-        try {
-          await ctx.runMutation(internal.chat.mutations.addMessages, {
-            conversationId: conversationId as never,
-            userId,
-            messages: response.messages,
-          });
-        } catch (err) {
-          console.warn("[chat.stream] addMessages failed", err);
+  const result = await withGeminiFallback(async (google) =>
+    streamText({
+      model: google("gemini-3.1-pro-preview"),
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(messages as UIMessage[]),
+      tools,
+      stopWhen: stepCountIs(20),
+      providerOptions: thinkingConfig.providerOptions,
+      onFinish: async ({ response }) => {
+        // Persist messages if a conversationId was provided.
+        if (conversationId) {
+          try {
+            await ctx.runMutation(internal.chat.mutations.addMessages, {
+              conversationId: conversationId as never,
+              userId,
+              messages: response.messages,
+            });
+          } catch (err) {
+            console.warn("[chat.stream] addMessages failed", err);
+          }
         }
-      }
-    },
-  });
+      },
+    }),
+  );
 
   const streamResponse = result.toUIMessageStreamResponse({
     originalMessages: messages as UIMessage[],

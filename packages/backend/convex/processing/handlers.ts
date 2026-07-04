@@ -9,7 +9,6 @@
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { generateText, generateObject } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import * as cheerio from "cheerio";
 // @ts-ignore — turndown has no official TS types in this runtime
@@ -43,12 +42,7 @@ import {
   isScreenshotUrlValid,
 } from "./screenshot";
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
-
-const google = createGoogleGenerativeAI({});
-
-function getCheapModel() {
-  return google(GEMINI_MODEL_IDS.cheap);
-}
+import { withGeminiFallback } from "../lib/gemini_provider";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -80,12 +74,14 @@ async function generateAndCreateTagNames(
       ? `${systemPrompt}\n\nExisting user tags: ${existingTagNames.join(", ")}\nPrioritize reusing these existing tags when appropriate before creating new ones.`
       : systemPrompt;
 
-  const result = await generateObject({
-    model: getCheapModel(),
-    system: enhancedSystemPrompt,
-    prompt,
-    schema: z.object({ tags: z.array(z.string()) }),
-  });
+  const result = await withGeminiFallback((google) =>
+    generateObject({
+      model: google(GEMINI_MODEL_IDS.cheap),
+      system: enhancedSystemPrompt,
+      prompt,
+      schema: z.object({ tags: z.array(z.string()) }),
+    }),
+  );
 
   return (result.object as { tags?: string[] }).tags ?? [];
 }
@@ -869,11 +865,13 @@ Focus on finding the main product being sold, its price, brand, and other key de
       category: z.string().optional().describe("Product category"),
     });
 
-    const result = await generateObject({
-      model: getCheapModel(),
-      schema: ProductExtractionSchema,
-      prompt,
-    });
+    const result = await withGeminiFallback((google) =>
+      generateObject({
+        model: google(GEMINI_MODEL_IDS.cheap),
+        schema: ProductExtractionSchema,
+        prompt,
+      }),
+    );
 
     return {
       name: result.object.name,
@@ -1124,24 +1122,26 @@ export async function processImageBookmark(
 
   const base64Content = buffer.toString("base64");
 
-  const imageAnalysisResult = await generateText({
-    model: getCheapModel(),
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Analyze this image in detail. Describe what you see, including objects, people, colors, composition, style, and any text visible in the image.",
-          },
-          {
-            type: "image",
-            image: base64Content,
-          },
-        ],
-      },
-    ],
-  });
+  const imageAnalysisResult = await withGeminiFallback((google) =>
+    generateText({
+      model: google(GEMINI_MODEL_IDS.cheap),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this image in detail. Describe what you see, including objects, people, colors, composition, style, and any text visible in the image.",
+            },
+            {
+              type: "image",
+              image: base64Content,
+            },
+          ],
+        },
+      ],
+    }),
+  );
 
   const imageAnalysis = imageAnalysisResult.text;
 
@@ -1224,23 +1224,25 @@ export async function processPdfBookmark(
   );
 
   // Gemini multimodal PDF analysis
-  const pdfAnalysisResult = await generateText({
-    model: getCheapModel(),
-    system: PDF_SUMMARY_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Here is the PDF file" },
-          {
-            type: "file",
-            data: new Uint8Array(pdfContent),
-            mediaType: "application/pdf",
-          },
-        ],
-      },
-    ],
-  });
+  const pdfAnalysisResult = await withGeminiFallback((google) =>
+    generateText({
+      model: google(GEMINI_MODEL_IDS.cheap),
+      system: PDF_SUMMARY_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Here is the PDF file" },
+            {
+              type: "file",
+              data: new Uint8Array(pdfContent),
+              mediaType: "application/pdf",
+            },
+          ],
+        },
+      ],
+    }),
+  );
 
   const pdfAnalysis = pdfAnalysisResult.text;
 

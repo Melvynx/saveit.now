@@ -9,12 +9,12 @@
  * "use node" with query registrations.
  */
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { authAction } from "../functions";
+import { withGeminiFallback } from "../lib/gemini_provider";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,18 +76,11 @@ export const suggestCleanup = authAction({
 
     const tagNames = tagsWithCounts.map((t) => t.name);
 
-    // Call Gemini generateObject.
-    const google = createGoogleGenerativeAI({
-      apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? "",
-    });
-
-    // GEMINI_MODEL_IDS.normal = "gemini-3.1-pro-preview" per Contract §D.
-    const model = google("gemini-3.1-pro-preview");
-
-    const { object } = await generateObject({
-      model,
-      schema: TagCleanupResponseSchema,
-      system: `You are a tag organization expert. Analyze the provided tags and identify consolidation opportunities to reduce redundancy while maintaining semantic meaning.
+    const { object } = await withGeminiFallback((google) =>
+      generateObject({
+        model: google("gemini-3.1-pro-preview"),
+        schema: TagCleanupResponseSchema,
+        system: `You are a tag organization expert. Analyze the provided tags and identify consolidation opportunities to reduce redundancy while maintaining semantic meaning.
 
 Look for:
 1. Semantic duplicates (react vs React vs ReactJS vs react.js)
@@ -106,8 +99,9 @@ Rules:
 - Minimum 2 tags per consolidation group
 
 Return empty suggestions array if no clear consolidations are found.`,
-      prompt: `Analyze these tags for consolidation opportunities:\n\nTags: ${tagNames.join(", ")}\n\nIdentify which tags should be consolidated and suggest the best canonical form for each group.`,
-    });
+        prompt: `Analyze these tags for consolidation opportunities:\n\nTags: ${tagNames.join(", ")}\n\nIdentify which tags should be consolidated and suggest the best canonical form for each group.`,
+      }),
+    );
 
     // Build a lookup map: name → tag info.
     const tagByName = new Map(tagsWithCounts.map((t) => [t.name, t]));
