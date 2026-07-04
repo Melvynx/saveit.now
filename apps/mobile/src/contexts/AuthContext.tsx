@@ -1,14 +1,5 @@
-import { useQuery } from "convex/react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { api } from "@convex/_generated/api";
 import { authClient } from "../lib/auth-client";
-
-export type UserLimits = {
-  bookmarks: number;
-  monthlyBookmarkRuns: number;
-  canExport: number;
-  apiAccess: number;
-};
 
 interface User {
   id: string;
@@ -17,33 +8,16 @@ interface User {
   image?: string | null;
 }
 
-interface UserPlan {
-  name: "free" | "pro";
-  limits: UserLimits;
-}
-
-const DEFAULT_LIMITS: UserLimits = {
-  bookmarks: 20,
-  monthlyBookmarkRuns: 20,
-  canExport: 0,
-  apiAccess: 0,
-};
-
 interface AuthContextType {
   user: User | null;
-  plan: UserPlan;
   isLoading: boolean;
-  isPlanLoading: boolean;
   isSigningOut: boolean;
   isAuthenticated: boolean;
   sendOTP: (email: string) => Promise<void>;
   verifyOTP: (email: string, otp: string) => Promise<void>;
+  signInWithSocial: (provider: "google" | "github") => Promise<void>;
   signOut: () => Promise<void>;
   signOutWithNavigation: (navigate: () => void) => Promise<void>;
-  /** @deprecated Convex queries are reactive — no manual refresh needed */
-  refreshPlan: () => Promise<void>;
-  /** @deprecated Convex queries are reactive — no polling needed */
-  refreshPlanWithRetry: (expectedPlan?: "pro" | "free") => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -98,26 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoading =
     session.isPending || (hasBetterAuthSession && !isConvexTokenReady);
 
-  // Reactive plan query — automatically updated when Stripe webhook lands.
-  const userLimits = useQuery(
-    api.users.queries.getLimits,
-    isAuthenticated ? {} : "skip",
-  );
-
-  const plan: UserPlan = userLimits
-    ? {
-        name: (userLimits.plan as "free" | "pro") ?? "free",
-        limits: {
-          bookmarks: userLimits.limits.bookmarks,
-          monthlyBookmarkRuns: userLimits.limits.monthlyBookmarkRuns,
-          canExport: userLimits.limits.canExport,
-          apiAccess: userLimits.limits.apiAccess,
-        },
-      }
-    : { name: "free", limits: DEFAULT_LIMITS };
-
-  const isPlanLoading = isAuthenticated && userLimits === undefined;
-
   const sendOTP = async (email: string) => {
     const result = await authClient.emailOtp.sendVerificationOtp({
       email,
@@ -131,6 +85,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyOTP = async (email: string, otp: string) => {
     const result = await authClient.signIn.emailOtp({ email, otp });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  };
+
+  const signInWithSocial = async (provider: "google" | "github") => {
+    const result = await authClient.signIn.social({
+      provider,
+      callbackURL: "/",
+    });
 
     if (result.error) {
       throw new Error(result.error.message);
@@ -154,36 +119,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate();
   };
 
-  // Convex queries are reactive — no manual refresh needed. Keep API surface
-  // for backwards compatibility.
-  const refreshPlan = async () => {
-    // No-op: Convex subscription handles updates automatically.
-  };
-
-  const refreshPlanWithRetry = async (
-    _expectedPlan: "pro" | "free" = "pro",
-  ): Promise<boolean> => {
-    // No-op: Convex subscription handles updates automatically.
-    // The caller (e.g. upgrade/success redirect) should watch the reactive
-    // query value instead of polling.
-    return true;
-  };
-
   return (
     <AuthContext.Provider
       value={{
         user,
-        plan,
         isLoading,
-        isPlanLoading,
         isSigningOut,
         isAuthenticated,
         sendOTP,
         verifyOTP,
+        signInWithSocial,
         signOut,
         signOutWithNavigation,
-        refreshPlan,
-        refreshPlanWithRetry,
       }}
     >
       {children}

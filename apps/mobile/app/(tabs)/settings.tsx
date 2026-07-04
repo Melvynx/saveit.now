@@ -112,6 +112,11 @@ export default function TabTwoScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
 
+  const openUpgrade = async () => {
+    hapticSelection();
+    await WebBrowser.openBrowserAsync("https://saveit.now/upgrade");
+  };
+
   const openDocumentation = async () => {
     await WebBrowser.openBrowserAsync("https://saveit.now/docs");
   };
@@ -153,13 +158,29 @@ export default function TabTwoScreen() {
       }}
     >
       <View className="gap-5">
+        <Section title="SaveIt Pro">
+          <SettingsRow
+            isFirst
+            icon="sparkles-outline"
+            title="Upgrade to Pro"
+            description="Go premium on saveit.now — unlimited bookmarks & more"
+            onPress={openUpgrade}
+          />
+          <View className="border-t border-border px-4 py-3">
+            <Text className="font-sans text-[13px] text-muted-foreground">
+              Subscriptions are managed on the web. Open saveit.now/upgrade,
+              sign in, and choose a plan — Pro then unlocks here automatically.
+            </Text>
+          </View>
+        </Section>
+
         <Section title="Account">
           <SettingsRow
             isFirst
             icon="person-circle-outline"
             title="Account"
             description={
-              user.email ?? "Email, name, plan, and account controls"
+              user.email ?? "Email, name, and account controls"
             }
             onPress={() => router.push("/account")}
           />

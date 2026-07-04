@@ -5,7 +5,7 @@ import { type Bookmark } from "../lib/api-client";
 import { hapticSelection } from "../lib/haptics";
 import { useThemeColors } from "../lib/theme";
 import { getDomainName } from "../lib/utils";
-import { LoadingSpinner } from "./ui/loading";
+import { BookmarkItemPending } from "./bookmark-item-pending";
 import { BookmarkItemTweet } from "./bookmark-item-tweet";
 import { BookmarkItemYoutube } from "./bookmark-item-youtube";
 
@@ -46,6 +46,17 @@ export function BookmarkItem({
   onToggleStar,
   onToggleRead,
 }: BookmarkItemProps) {
+  if (bookmark.status === "PENDING" || bookmark.status === "PROCESSING") {
+    return (
+      <BookmarkItemPending
+        bookmark={bookmark}
+        onPress={onPress}
+        onToggleStar={onToggleStar}
+        onToggleRead={onToggleRead}
+      />
+    );
+  }
+
   if (bookmark.type === "YOUTUBE" && bookmark.metadata?.youtubeId) {
     return (
       <BookmarkItemYoutube
@@ -104,11 +115,6 @@ function BookmarkItemPage({
           style={{ height: 180, width: "100%" }}
           resizeMode="cover"
         />
-        {bookmark.status === "PENDING" && (
-          <View className="absolute inset-0 items-center justify-center bg-black/50">
-            <LoadingSpinner color="#FFFFFF" />
-          </View>
-        )}
         <View className="absolute right-2 top-2 flex-row gap-1.5">
           <CardActionButton
             icon={bookmark.starred ? "star" : "star-outline"}

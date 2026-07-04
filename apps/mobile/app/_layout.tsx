@@ -31,6 +31,11 @@ const convex = new ConvexReactClient(mobileConfig.convexUrl, {
   unsavedChangesWarning: false,
 });
 
+const shareIntentOptions = {
+  resetOnBackground: false,
+  scheme: "saveit",
+};
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -70,7 +75,7 @@ export default function RootLayout() {
 
   return (
     <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-      <ShareIntentProvider>
+      <ShareIntentProvider options={shareIntentOptions}>
         <AuthProvider>
           <RootLayoutNav />
         </AuthProvider>

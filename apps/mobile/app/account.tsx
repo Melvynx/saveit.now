@@ -270,7 +270,7 @@ function isValidEmail(value: string) {
 }
 
 export default function AccountScreen() {
-  const { user, plan, signOutWithNavigation } = useAuth();
+  const { user, signOutWithNavigation } = useAuth();
   const session = authClient.useSession();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -284,11 +284,6 @@ export default function AccountScreen() {
 
   const currentName = user?.name?.trim() ?? "";
   const currentEmail = user?.email ?? "";
-  const isPro = plan.name === "pro";
-  const planLabel = isPro ? "SaveIt Pro" : "Free";
-  const bookmarkLimit = isPro
-    ? "Unlimited bookmarks"
-    : `${plan.limits.bookmarks} bookmarks`;
 
   const handleSubmitName = async (nextName: string) => {
     if (nameSaving) return;
@@ -490,11 +485,6 @@ export default function AccountScreen() {
                 action={
                   <RowEditButton onPress={() => setNameSheetOpen(true)} />
                 }
-              />
-              <AccountDetailRow
-                bordered
-                label="Plan"
-                value={`${planLabel} - ${bookmarkLimit}`}
               />
             </View>
           </View>

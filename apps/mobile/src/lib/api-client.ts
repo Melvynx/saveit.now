@@ -27,23 +27,6 @@ export const BOOKMARK_TYPES: BookmarkType[] = [
   "PRODUCT",
 ];
 
-export interface UserLimits {
-  bookmarks: number;
-  monthlyBookmarkRuns: number;
-  canExport: number;
-  apiAccess: number;
-}
-
-export interface UserPlanResponse {
-  plan: "free" | "pro";
-  limits: UserLimits;
-  subscription: {
-    id: string;
-    status: string;
-    periodEnd: string;
-  } | null;
-}
-
 interface TweetUser {
   name: string;
   screen_name: string;
@@ -80,6 +63,7 @@ export interface Bookmark {
   type?: BookmarkType;
   faviconUrl?: string;
   status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
+  processingStep?: number;
   metadata?: BookmarkMetadata;
   tags: Array<{
     tag: {

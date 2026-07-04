@@ -21,15 +21,16 @@
       }
     },
     "production": {
+      "credentialsSource": "local",
       "pnpm": "10.4.1",
       "ios": {
         "image": "latest",
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://saveit.now",
-        "EXPO_PUBLIC_CONVEX_URL": "https://tough-chameleon-916.convex.cloud",
-        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://tough-chameleon-916.convex.site",
+        "EXPO_PUBLIC_API_URL": "https://beta.saveit.now",
+        "EXPO_PUBLIC_CONVEX_URL": "https://charming-spider-722.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://charming-spider-722.convex.site",
         "RN_PRIVACY_MANIFEST_AGGREGATION": "false",
         "EX_DEV_CLIENT_NETWORK_INSPECTOR": "false"
       }

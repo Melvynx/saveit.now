@@ -19,6 +19,8 @@ export type SignInStep = "email" | "otp";
 
 interface SignInScreenProps {
   onClose?: () => void;
+  onVerified?: () => void;
+  closeOnVerified?: boolean;
   email: string;
   onEmailChange: (email: string) => void;
   otp: string;
@@ -29,6 +31,8 @@ interface SignInScreenProps {
 
 export default function SignInScreen({
   onClose,
+  onVerified,
+  closeOnVerified = true,
   email,
   onEmailChange,
   otp,
@@ -37,8 +41,31 @@ export default function SignInScreen({
   onStepChange,
 }: SignInScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { sendOTP, verifyOTP } = useAuth();
+  const [socialLoading, setSocialLoading] = useState<
+    "google" | "github" | null
+  >(null);
+  const { sendOTP, verifyOTP, signInWithSocial } = useAuth();
   const colors = useThemeColors();
+
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    setSocialLoading(provider);
+    try {
+      await signInWithSocial(provider);
+      onVerified?.();
+      if (closeOnVerified) {
+        onClose?.();
+      }
+    } catch {
+      Alert.alert(
+        "Sign in failed",
+        `Could not sign in with ${
+          provider === "google" ? "Google" : "GitHub"
+        }. Please try again.`,
+      );
+    } finally {
+      setSocialLoading(null);
+    }
+  };
 
   const handleSendOTP = async () => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -54,10 +81,10 @@ export default function SignInScreen({
       onEmailChange(normalizedEmail);
       onOtpChange("");
       onStepChange("otp");
-    } catch (error) {
+    } catch {
       Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to send OTP",
+        "Could not send code",
+        "Check the email address and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -73,11 +100,14 @@ export default function SignInScreen({
     setIsLoading(true);
     try {
       await verifyOTP(email.trim().toLowerCase(), otp.trim());
-      onClose?.();
-    } catch (error) {
+      onVerified?.();
+      if (closeOnVerified) {
+        onClose?.();
+      }
+    } catch {
       Alert.alert(
-        "Verification Failed",
-        error instanceof Error ? error.message : "Invalid code",
+        "Verification failed",
+        "The code is invalid or expired. Request a new code and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -178,10 +208,50 @@ export default function SignInScreen({
 
               <Button
                 onPress={handleSendOTP}
-                disabled={!email.trim()}
+                disabled={!email.trim() || socialLoading !== null}
                 loading={isLoading}
               >
                 {isLoading ? "Sending..." : "Continue"}
+              </Button>
+
+              <View className="my-1 flex-row items-center gap-3">
+                <View className="h-px flex-1 bg-border" />
+                <Text variant="caption" className="text-muted-foreground">
+                  or
+                </Text>
+                <View className="h-px flex-1 bg-border" />
+              </View>
+
+              <Button
+                variant="outline"
+                onPress={() => handleSocialSignIn("google")}
+                loading={socialLoading === "google"}
+                disabled={isLoading || socialLoading !== null}
+              >
+                <Ionicons
+                  name="logo-google"
+                  size={18}
+                  color={colors.foreground}
+                />
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  Continue with Google
+                </Text>
+              </Button>
+
+              <Button
+                variant="outline"
+                onPress={() => handleSocialSignIn("github")}
+                loading={socialLoading === "github"}
+                disabled={isLoading || socialLoading !== null}
+              >
+                <Ionicons
+                  name="logo-github"
+                  size={18}
+                  color={colors.foreground}
+                />
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  Continue with GitHub
+                </Text>
               </Button>
             </View>
           </Animated.View>
