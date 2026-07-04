@@ -436,6 +436,44 @@ export const pageNeedingEmbedding = internalQuery({
 });
 
 // ---------------------------------------------------------------------------
+// getBookmarksForReembed
+// ---------------------------------------------------------------------------
+
+/**
+ * getBookmarksForReembed — fetches exact bookmark IDs for targeted delta
+ * embedding. Used by the Node action in reembed.ts so delta imports do not scan
+ * the full bookmarks table.
+ */
+export const getBookmarksForReembed = internalQuery({
+  args: {
+    ids: v.array(v.id("bookmarks")),
+  },
+  returns: v.array(
+    v.object({
+      id: v.id("bookmarks"),
+      title: v.union(v.string(), v.null()),
+      vectorSummary: v.union(v.string(), v.null()),
+      summary: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: async (ctx, { ids }) => {
+    const docs = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    return docs.flatMap((doc) =>
+      doc
+        ? [
+            {
+              id: doc._id,
+              title: doc.title ?? null,
+              vectorSummary: doc.vectorSummary ?? null,
+              summary: doc.summary ?? null,
+            },
+          ]
+        : [],
+    );
+  },
+});
+
+// ---------------------------------------------------------------------------
 // patchEmbedding
 // ---------------------------------------------------------------------------
 

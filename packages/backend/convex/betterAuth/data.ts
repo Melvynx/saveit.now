@@ -159,6 +159,22 @@ export const insertUser = mutationGeneric({
       .withIndex("email", (q) => q.eq("email", args.email))
       .first();
     if (existing) {
+      await ctx.db.patch(existing._id, {
+        name: args.name,
+        emailVerified: args.emailVerified,
+        image: args.image ?? null,
+        updatedAt: args.updatedAt,
+        role: args.role ?? null,
+        banned: args.banned ?? null,
+        banReason: args.banReason ?? null,
+        banExpires: args.banExpires ?? null,
+        stripeCustomerId: args.stripeCustomerId ?? null,
+        onboarding: args.onboarding ?? null,
+        unsubscribed: args.unsubscribed ?? null,
+        publicLinkSlug: args.publicLinkSlug ?? null,
+        publicLinkEnabled: args.publicLinkEnabled ?? null,
+        ...(args.metadata !== undefined ? { metadata: args.metadata } : {}),
+      });
       return existing._id as string;
     }
 
@@ -212,6 +228,14 @@ export const insertAccount = mutationGeneric({
       )
       .first();
     if (existing) {
+      await ctx.db.patch(existing._id, {
+        userId: args.userId,
+        accessToken: args.accessToken ?? null,
+        refreshToken: args.refreshToken ?? null,
+        idToken: args.idToken ?? null,
+        scope: args.scope ?? null,
+        updatedAt: args.updatedAt,
+      });
       return existing._id as string;
     }
 

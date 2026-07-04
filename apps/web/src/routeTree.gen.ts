@@ -52,6 +52,7 @@ import { Route as LandingHeader2RouteImport } from "./routes/landing.header-2";
 import { Route as LandingHeaderRouteImport } from "./routes/landing.header";
 import { Route as DocsSlugRouteImport } from "./routes/docs.$slug";
 import { Route as ChangelogVersionsRouteImport } from "./routes/changelog.versions";
+import { Route as AuthMobileLoginRouteImport } from "./routes/auth.mobile-login";
 import { Route as AppAgentsRouteImport } from "./routes/app.agents";
 import { Route as ApiTagsRouteImport } from "./routes/api.tags";
 import { Route as ApiBugReportRouteImport } from "./routes/api.bug-report";
@@ -288,6 +289,11 @@ const ChangelogVersionsRoute = ChangelogVersionsRouteImport.update({
   path: "/versions",
   getParentRoute: () => ChangelogRoute,
 } as any);
+const AuthMobileLoginRoute = AuthMobileLoginRouteImport.update({
+  id: "/auth/mobile-login",
+  path: "/auth/mobile-login",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const AppAgentsRoute = AppAgentsRouteImport.update({
   id: "/agents",
   path: "/agents",
@@ -428,6 +434,7 @@ export interface FileRoutesByFullPath {
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
+  "/auth/mobile-login": typeof AuthMobileLoginRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
   "/landing/header": typeof LandingHeaderRoute;
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
+  "/auth/mobile-login": typeof AuthMobileLoginRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
   "/landing/header": typeof LandingHeaderRoute;
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
+  "/auth/mobile-login": typeof AuthMobileLoginRoute;
   "/changelog/versions": typeof ChangelogVersionsRoute;
   "/docs/$slug": typeof DocsSlugRoute;
   "/landing/header": typeof LandingHeaderRoute;
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | "/api/bug-report"
     | "/api/tags"
     | "/app/agents"
+    | "/auth/mobile-login"
     | "/changelog/versions"
     | "/docs/$slug"
     | "/landing/header"
@@ -691,6 +701,7 @@ export interface FileRouteTypes {
     | "/api/bug-report"
     | "/api/tags"
     | "/app/agents"
+    | "/auth/mobile-login"
     | "/changelog/versions"
     | "/docs/$slug"
     | "/landing/header"
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | "/api/bug-report"
     | "/api/tags"
     | "/app/agents"
+    | "/auth/mobile-login"
     | "/changelog/versions"
     | "/docs/$slug"
     | "/landing/header"
@@ -816,6 +828,7 @@ export interface RootRouteChildren {
   ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren;
   ApiBugReportRoute: typeof ApiBugReportRoute;
   ApiTagsRoute: typeof ApiTagsRoute;
+  AuthMobileLoginRoute: typeof AuthMobileLoginRoute;
   LandingHeaderRoute: typeof LandingHeaderRoute;
   LandingHeader2Route: typeof LandingHeader2Route;
   PBookmarkIdRoute: typeof PBookmarkIdRouteWithChildren;
@@ -1130,6 +1143,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/changelog/versions";
       preLoaderRoute: typeof ChangelogVersionsRouteImport;
       parentRoute: typeof ChangelogRoute;
+    };
+    "/auth/mobile-login": {
+      id: "/auth/mobile-login";
+      path: "/auth/mobile-login";
+      fullPath: "/auth/mobile-login";
+      preLoaderRoute: typeof AuthMobileLoginRouteImport;
+      parentRoute: typeof rootRouteImport;
     };
     "/app/agents": {
       id: "/app/agents";
@@ -1470,6 +1490,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
   ApiBugReportRoute: ApiBugReportRoute,
   ApiTagsRoute: ApiTagsRoute,
+  AuthMobileLoginRoute: AuthMobileLoginRoute,
   LandingHeaderRoute: LandingHeaderRoute,
   LandingHeader2Route: LandingHeader2Route,
   PBookmarkIdRoute: PBookmarkIdRouteWithChildren,

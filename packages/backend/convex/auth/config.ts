@@ -4,7 +4,7 @@ import { requireRunMutationCtx } from "@convex-dev/better-auth/utils";
 import { apiKey } from "@better-auth/api-key";
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
-import { admin, emailOTP, magicLink } from "better-auth/plugins";
+import { admin, emailOTP, magicLink, oneTimeToken } from "better-auth/plugins";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
@@ -286,6 +286,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
       defaultPrefix: "saveit_",
       rateLimit: { enabled: false },
     }),
+    oneTimeToken(),
     expo(),
     crossDomain({ siteUrl }),
     // convex() MUST be the last plugin.

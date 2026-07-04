@@ -17,10 +17,37 @@ import {
 } from "../src/lib/share-intent-payload";
 import type { SignInStep } from "../src/screens/SignInScreen";
 
-function mutationErrorToCopy(error: unknown): ShareSaveError {
+const SAVE_TIMEOUT_MS = 30000;
+
+function getMutationErrorMessage(error: unknown) {
+  const data =
+    typeof error === "object" && error !== null && "data" in error
+      ? (error as { data?: unknown }).data
+      : null;
+
+  const dataMessage =
+    typeof data === "string"
+      ? data
+      : typeof data === "object" &&
+          data !== null &&
+          "message" in data &&
+          typeof data.message === "string"
+        ? data.message
+        : null;
+
   const rawMessage =
-    error instanceof Error ? error.message : String(error ?? "Unknown error");
-  const message = rawMessage.replace(/^Error:\s*/i, "").trim();
+    dataMessage ??
+    (error instanceof Error ? error.message : String(error ?? "Unknown error"));
+
+  return rawMessage
+    .replace(/^Error:\s*/i, "")
+    .replace(/^Uncaught ConvexError:\s*/i, "")
+    .replace(/^ConvexError:\s*/i, "")
+    .trim();
+}
+
+function mutationErrorToCopy(error: unknown): ShareSaveError {
+  const message = getMutationErrorMessage(error);
 
   if (/already exists|duplicate/i.test(message)) {
     return {
@@ -42,8 +69,7 @@ function mutationErrorToCopy(error: unknown): ShareSaveError {
   if (/limit|maximum/i.test(message)) {
     return {
       title: "Limit reached",
-      message:
-        "Your current plan limit was reached. Open SaveIt to manage your plan or remove older bookmarks.",
+      message,
       retryable: false,
     };
   }
@@ -98,6 +124,7 @@ export default function ShareHandler() {
   const [otp, setOtp] = useState("");
   const [signInStep, setSignInStep] = useState<SignInStep>("email");
   const emptyStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProcessedShareIntentRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -154,6 +181,37 @@ export default function ShareHandler() {
     setPayloadError(null);
   }, [hasShareIntent, payloadError?.code]);
 
+  const needsAuth = Boolean(payload && !isAuthLoading && !user);
+  const isSavingPending = Boolean(
+    payload && !payloadError && !shareIntentError && !saveError && !needsAuth,
+  );
+
+  useEffect(() => {
+    if (!isSavingPending) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      hapticWarning();
+      setSaveError({
+        title: "Something went wrong",
+        message: "Something went wrong. Try again.",
+        retryable: true,
+      });
+    }, SAVE_TIMEOUT_MS);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [isSavingPending]);
+
   useEffect(() => {
     if (!payload || !isAuthenticated || hasStartedCreate || saveError) {
       return;
@@ -201,7 +259,6 @@ export default function ShareHandler() {
     setHasStartedCreate(false);
   };
 
-  const needsAuth = Boolean(payload && !isAuthLoading && !user);
   const activeError =
     payloadError ??
     (shareIntentError

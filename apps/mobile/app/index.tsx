@@ -1,7 +1,14 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useShareIntentContext } from "expo-share-intent";
-import { useCallback, useState } from "react";
-import { Modal, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Keyboard,
+  Modal,
+  Platform,
+  View,
+  useWindowDimensions,
+  type KeyboardEvent,
+} from "react-native";
 
 import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
@@ -10,6 +17,7 @@ import SignInScreen, { type SignInStep } from "../src/screens/SignInScreen";
 
 export default function IndexPage() {
   const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
   const params = useLocalSearchParams();
   const { hasShareIntent, isReady: isShareIntentReady } =
     useShareIntentContext();
@@ -19,13 +27,48 @@ export default function IndexPage() {
   const [signInEmail, setSignInEmail] = useState("");
   const [signInOtp, setSignInOtp] = useState("");
   const [signInStep, setSignInStep] = useState<SignInStep>("email");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const signInSheetHeight = windowHeight * 0.7;
+  const signInKeyboardInset = keyboardHeight > 0 ? keyboardHeight + 16 : 0;
 
   const closeSignIn = useCallback(() => {
     setShowSignIn(false);
     setSignInEmail("");
     setSignInOtp("");
     setSignInStep("email");
+    setKeyboardHeight(0);
   }, []);
+
+  useEffect(() => {
+    if (!showSignIn) {
+      setKeyboardHeight(0);
+      return;
+    }
+
+    const handleKeyboardShow = (event: KeyboardEvent) => {
+      Keyboard.scheduleLayoutAnimation(event);
+      setKeyboardHeight(event.endCoordinates.height);
+    };
+    const handleKeyboardHide = (event: KeyboardEvent) => {
+      Keyboard.scheduleLayoutAnimation(event);
+      setKeyboardHeight(0);
+    };
+
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      handleKeyboardShow,
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      handleKeyboardHide,
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [showSignIn]);
 
   useFocusEffect(
     useCallback(() => {
@@ -67,9 +110,16 @@ export default function IndexPage() {
           onRequestClose={closeSignIn}
         >
           <View className="flex-1 justify-end bg-black/50">
-            <View className="h-[70%] overflow-hidden rounded-t-[28px] bg-background">
+            <View
+              className="overflow-hidden rounded-t-[28px] bg-background"
+              style={{
+                height: signInSheetHeight,
+              }}
+            >
               <SignInScreen
                 onClose={closeSignIn}
+                keyboardAvoidingEnabled={false}
+                keyboardBottomInset={signInKeyboardInset}
                 email={signInEmail}
                 onEmailChange={setSignInEmail}
                 otp={signInOtp}

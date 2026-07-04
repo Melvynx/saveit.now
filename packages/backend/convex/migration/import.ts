@@ -28,7 +28,7 @@ import { throwForbidden } from "../utils/errors";
 // Gate
 // ---------------------------------------------------------------------------
 
-function assertMigrationAllowed(migrationSecret: string): void {
+export function assertMigrationAllowed(migrationSecret: string): void {
   if (process.env.ALLOW_MIGRATION !== "true") {
     throwForbidden("Migration not enabled");
   }
@@ -42,7 +42,11 @@ function assertMigrationAllowed(migrationSecret: string): void {
 // Return type shared by import helpers
 // ---------------------------------------------------------------------------
 
-const idMapEntry = v.object({ legacyId: v.string(), convexId: v.string() });
+const idMapEntry = v.object({
+  legacyId: v.string(),
+  convexId: v.string(),
+  created: v.optional(v.boolean()),
+});
 const importProcessingKickoffItem = v.object({
   bookmarkId: v.id("bookmarks"),
   userId: v.string(),
@@ -99,6 +103,35 @@ function stableJson(value: unknown): string {
 
 function shouldKickoffImportedBookmark(status: string): boolean {
   return status === "PENDING" || status === "PROCESSING";
+}
+
+async function bumpImportedBookmarkCount(
+  ctx: { db: any },
+  userId: string,
+  delta: number,
+): Promise<void> {
+  const now = new Date();
+  const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+
+  const counters = await ctx.db
+    .query("userCounters")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .first();
+
+  if (!counters) {
+    await ctx.db.insert("userCounters", {
+      userId,
+      bookmarkCount: Math.max(0, delta),
+      monthKey,
+      monthlyRuns: 0,
+      monthlyChatQueries: 0,
+    });
+    return;
+  }
+
+  await ctx.db.patch(counters._id, {
+    bookmarkCount: Math.max(0, (counters.bookmarkCount ?? 0) + delta),
+  });
 }
 
 export const scheduleImportedBookmarkKickoffs = internalMutation({
@@ -334,6 +367,9 @@ export const importTags = mutation({
         )
         .first();
       if (existing) {
+        await ctx.db.patch(existing._id, {
+          type: (tag.type === "IA" ? "IA" : "USER") as "USER" | "IA",
+        });
         result.push({ legacyId, convexId: existing._id as string });
         continue;
       }
@@ -386,7 +422,8 @@ export const importBookmarks = mutation({
   handler: async (ctx, { bookmarks, migrationSecret }) => {
     assertMigrationAllowed(migrationSecret);
 
-    const result: { legacyId: string; convexId: string }[] = [];
+    const result: { legacyId: string; convexId: string; created?: boolean }[] =
+      [];
     const processingKickoffs: Array<{
       bookmarkId: Id<"bookmarks">;
       userId: string;
@@ -437,7 +474,11 @@ export const importBookmarks = mutation({
             userId,
           });
         }
-        result.push({ legacyId, convexId: existingByLegacyId._id as string });
+        result.push({
+          legacyId,
+          convexId: existingByLegacyId._id as string,
+          created: false,
+        });
         continue;
       }
       const existingByUserUrl = await (ctx.db.query("bookmarks") as any)
@@ -459,15 +500,17 @@ export const importBookmarks = mutation({
         result.push({
           legacyId,
           convexId: existingWithoutLegacyId._id as string,
+          created: false,
         });
         continue;
       }
 
       const convexId = await ctx.db.insert("bookmarks", bookmarkFields as any);
+      await bumpImportedBookmarkCount(ctx, userId, 1);
       if (shouldKickoffImportedBookmark(status)) {
         processingKickoffs.push({ bookmarkId: convexId, userId });
       }
-      result.push({ legacyId, convexId: convexId as string });
+      result.push({ legacyId, convexId: convexId as string, created: true });
     }
 
     if (processingKickoffs.length > 0) {

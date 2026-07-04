@@ -5,6 +5,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -21,6 +23,8 @@ interface SignInScreenProps {
   onClose?: () => void;
   onVerified?: () => void;
   closeOnVerified?: boolean;
+  keyboardAvoidingEnabled?: boolean;
+  keyboardBottomInset?: number;
   email: string;
   onEmailChange: (email: string) => void;
   otp: string;
@@ -33,6 +37,8 @@ export default function SignInScreen({
   onClose,
   onVerified,
   closeOnVerified = true,
+  keyboardAvoidingEnabled = true,
+  keyboardBottomInset = 0,
   email,
   onEmailChange,
   otp,
@@ -46,6 +52,13 @@ export default function SignInScreen({
   >(null);
   const { sendOTP, verifyOTP, signInWithSocial } = useAuth();
   const colors = useThemeColors();
+  const normalizedKeyboardBottomInset = Math.max(0, keyboardBottomInset);
+  const hasExplicitKeyboardInset = normalizedKeyboardBottomInset > 0;
+  const shouldUseIOSScrollInsets =
+    Platform.OS === "ios" &&
+    (keyboardAvoidingEnabled || hasExplicitKeyboardInset);
+  const shouldUseKeyboardAvoidingView =
+    keyboardAvoidingEnabled && Platform.OS !== "ios";
 
   const handleSocialSignIn = async (provider: "google" | "github") => {
     setSocialLoading(provider);
@@ -121,10 +134,35 @@ export default function SignInScreen({
 
   return (
     <KeyboardAvoidingView
+      enabled={shouldUseKeyboardAvoidingView}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+      style={styles.keyboardAvoidingView}
     >
-      <View className="flex-1 bg-background px-6 pt-3">
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={[
+          styles.contentContainer,
+          Platform.OS !== "ios" && hasExplicitKeyboardInset
+            ? { paddingBottom: 32 + normalizedKeyboardBottomInset }
+            : null,
+        ]}
+        contentInset={
+          Platform.OS === "ios" && hasExplicitKeyboardInset
+            ? { bottom: normalizedKeyboardBottomInset }
+            : undefined
+        }
+        scrollIndicatorInsets={
+          Platform.OS === "ios" && hasExplicitKeyboardInset
+            ? { bottom: normalizedKeyboardBottomInset }
+            : undefined
+        }
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={
+          shouldUseIOSScrollInsets && !hasExplicitKeyboardInset
+        }
+        showsVerticalScrollIndicator={false}
+      >
         <View className="mb-5 flex-row items-center justify-between">
           <View className="w-10" />
           <View className="h-[5px] w-10 rounded-full bg-border" />
@@ -256,7 +294,19 @@ export default function SignInScreen({
             </View>
           </Animated.View>
         )}
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+});

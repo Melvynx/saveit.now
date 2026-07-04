@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurHeaderScreen } from "../../src/components/ui/blur-header-screen";
 import { Text } from "../../src/components/ui/text";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { authClient } from "../../src/lib/auth-client";
+import { mobileConfig } from "../../src/lib/config";
 import { hapticSelection } from "../../src/lib/haptics";
 import { useAppTheme, useThemeColors } from "../../src/lib/theme";
 
@@ -32,6 +34,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     </View>
   );
 }
+
+const getWebUrl = (path: string) => {
+  const baseUrl = mobileConfig.apiUrl.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+};
 
 function SettingsRow({
   icon,
@@ -114,15 +122,32 @@ export default function TabTwoScreen() {
 
   const openUpgrade = async () => {
     hapticSelection();
-    await WebBrowser.openBrowserAsync("https://saveit.now/upgrade");
+    const upgradeUrl = getWebUrl("/upgrade");
+
+    try {
+      const result = await authClient.oneTimeToken.generate();
+      const token = result.data?.token;
+
+      if (token) {
+        const loginUrl = new URL("/auth/mobile-login", mobileConfig.apiUrl);
+        loginUrl.searchParams.set("token", token);
+        loginUrl.searchParams.set("redirect", "/upgrade");
+        await WebBrowser.openBrowserAsync(loginUrl.toString());
+        return;
+      }
+    } catch {
+      // Fall back to the plain web upgrade page if token generation fails.
+    }
+
+    await WebBrowser.openBrowserAsync(upgradeUrl);
   };
 
   const openDocumentation = async () => {
-    await WebBrowser.openBrowserAsync("https://saveit.now/docs");
+    await WebBrowser.openBrowserAsync(getWebUrl("/docs"));
   };
 
   const openHelp = async () => {
-    await WebBrowser.openBrowserAsync("https://saveit.now/help");
+    await WebBrowser.openBrowserAsync(getWebUrl("/help"));
   };
 
   const openBugReport = () => {
@@ -168,8 +193,9 @@ export default function TabTwoScreen() {
           />
           <View className="border-t border-border px-4 py-3">
             <Text className="font-sans text-[13px] text-muted-foreground">
-              Subscriptions are managed on the web. Open saveit.now/upgrade,
-              sign in, and choose a plan — Pro then unlocks here automatically.
+              Subscriptions are managed on the web. Open
+              beta.saveit.now/upgrade, sign in, and choose a plan — Pro then
+              unlocks here automatically.
             </Text>
           </View>
         </Section>
@@ -179,9 +205,7 @@ export default function TabTwoScreen() {
             isFirst
             icon="person-circle-outline"
             title="Account"
-            description={
-              user.email ?? "Email, name, and account controls"
-            }
+            description={user.email ?? "Email, name, and account controls"}
             onPress={() => router.push("/account")}
           />
         </Section>

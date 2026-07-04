@@ -17,9 +17,11 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalAction } from "../functions";
+import { action, internalAction } from "../functions";
 import { embedDocument, EMBEDDING_MODEL_KEY } from "../processing/embeddings";
 import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
+import { throwForbidden } from "../utils/errors";
 
 // Batch size: embed up to 20 bookmarks per action invocation.
 const DEFAULT_BATCH_SIZE = 20;
@@ -50,10 +52,73 @@ type PageNeedingEmbeddingResult = {
   scanned: number;
 };
 
+type TargetedBookmarkForEmbedding = {
+  id: Id<"bookmarks">;
+  title: string | null;
+  vectorSummary: string | null;
+  summary: string | null;
+};
+
+type EmbedExactStats = {
+  embedded: number;
+  skipped: number;
+  failed: number;
+};
+
 function clampBatchSize(batchSize: number | undefined): number {
   const value = batchSize ?? DEFAULT_BATCH_SIZE;
   if (!Number.isFinite(value)) return DEFAULT_BATCH_SIZE;
   return Math.min(MAX_BATCH_SIZE, Math.max(1, Math.trunc(value)));
+}
+
+function assertMigrationAllowed(migrationSecret: string): void {
+  if (process.env.ALLOW_MIGRATION !== "true") {
+    throwForbidden("Migration not enabled");
+  }
+  const expectedSecret = process.env.MIGRATION_SECRET;
+  if (!expectedSecret || migrationSecret !== expectedSecret) {
+    throwForbidden("Migration not authorized");
+  }
+}
+
+function buildEmbeddingText(doc: TargetedBookmarkForEmbedding): string {
+  const titlePart = doc.title?.trim() ?? "";
+  const bodyPart = doc.vectorSummary?.trim() || doc.summary?.trim() || "";
+  return bodyPart ? `${titlePart}\n${bodyPart}`.trim() : titlePart;
+}
+
+async function embedExactBookmarks(
+  ctx: ActionCtx,
+  docs: TargetedBookmarkForEmbedding[],
+): Promise<EmbedExactStats> {
+  let embedded = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const doc of docs) {
+    const text = buildEmbeddingText(doc);
+
+    if (!text) {
+      skipped += 1;
+      console.warn(`[reembed] skipped bookmark ${doc.id}: empty text`);
+      continue;
+    }
+
+    try {
+      const embedding = await embedDocument(text);
+      await ctx.runMutation(internal.migration.reembed_helpers.patchEmbedding, {
+        id: doc.id,
+        embedding,
+        model: EMBEDDING_MODEL_KEY,
+      });
+      embedded += 1;
+    } catch (err) {
+      console.error(`[reembed] failed for bookmark ${doc.id}:`, err);
+      failed += 1;
+    }
+  }
+
+  return { embedded, skipped, failed };
 }
 
 // ---------------------------------------------------------------------------
@@ -105,39 +170,7 @@ export const reembedBatch = internalAction({
       },
     );
 
-    let embedded = 0;
-    let skipped = 0;
-    let failed = 0;
-
-    for (const doc of page) {
-      const titlePart = doc.title?.trim() ?? "";
-      const bodyPart = doc.vectorSummary?.trim() || doc.summary?.trim() || "";
-      const text = bodyPart ? `${titlePart}\n${bodyPart}`.trim() : titlePart;
-
-      if (!text) {
-        // Nothing to embed: keep scanning so one blank row doesn't block repair.
-        skipped += 1;
-        console.warn(`[reembed] skipped bookmark ${doc.id}: empty text`);
-        continue;
-      }
-
-      try {
-        const embedding = await embedDocument(text);
-        await ctx.runMutation(
-          internal.migration.reembed_helpers.patchEmbedding,
-          {
-            id: doc.id,
-            embedding,
-            model: EMBEDDING_MODEL_KEY,
-          },
-        );
-        embedded += 1;
-      } catch (err) {
-        // Log and continue — a failed embed should not abort the whole batch.
-        console.error(`[reembed] failed for bookmark ${doc.id}:`, err);
-        failed += 1;
-      }
-    }
+    const { embedded, skipped, failed } = await embedExactBookmarks(ctx, page);
 
     // Schedule next batch if more remain.
     const scheduledNext = !isDone && continueCursor !== null;
@@ -170,6 +203,41 @@ export const reembedBatch = internalAction({
     }
     console.log("[reembed] batch complete", stats);
     return stats;
+  },
+});
+
+/**
+ * reembedBookmarks — public, ALLOW_MIGRATION-gated targeted embedding action.
+ * It embeds only the provided bookmark IDs, avoiding the full-table scan used
+ * by reembedBatch.
+ */
+export const reembedBookmarks = action({
+  args: {
+    migrationSecret: v.string(),
+    bookmarkIds: v.array(v.id("bookmarks")),
+  },
+  returns: v.object({
+    embedded: v.number(),
+    skipped: v.number(),
+    failed: v.number(),
+  }),
+  handler: async (ctx, { migrationSecret, bookmarkIds }) => {
+    assertMigrationAllowed(migrationSecret);
+    const uniqueIds = Array.from(new Set(bookmarkIds));
+    if (uniqueIds.length === 0) {
+      return { embedded: 0, skipped: 0, failed: 0 };
+    }
+
+    const docs: TargetedBookmarkForEmbedding[] = await ctx.runQuery(
+      internal.migration.reembed_helpers.getBookmarksForReembed,
+      { ids: uniqueIds },
+    );
+    const stats = await embedExactBookmarks(ctx, docs);
+    const missing = uniqueIds.length - docs.length;
+    if (missing > 0) {
+      console.warn(`[reembed] ${missing} requested bookmark IDs were missing`);
+    }
+    return { ...stats, skipped: stats.skipped + missing };
   },
 });
 
