@@ -64,8 +64,33 @@ jobs:
         env:
           CI: true
 
-      - name: Generate Convex code
-        run: pnpm exec convex codegen
+      - name: Verify Convex generated code
+        run: |
+          tmp_dir="${RUNNER_TEMP:-/tmp}/convex-codegen-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+          mkdir -p "$tmp_dir"
+
+          had_env_local=0
+          had_gitignore=0
+          had_convex_dir=0
+          [ -e .env.local ] && had_env_local=1
+          [ -e .gitignore ] && had_gitignore=1
+          [ -e .convex ] && had_convex_dir=1
+
+          cleanup() {
+            if [ "$had_env_local" -eq 0 ] && [ -e .env.local ]; then
+              mv .env.local "$tmp_dir/.env.local"
+            fi
+            if [ "$had_gitignore" -eq 0 ] && [ -e .gitignore ]; then
+              mv .gitignore "$tmp_dir/.gitignore"
+            fi
+            if [ "$had_convex_dir" -eq 0 ] && [ -e .convex ]; then
+              mv .convex "$tmp_dir/.convex"
+            fi
+          }
+          trap cleanup EXIT
+
+          env -u CONVEX_DEPLOYMENT CONVEX_AGENT_MODE=anonymous pnpm exec convex dev --once --typecheck disable --tail-logs disable
+          git diff --exit-code -- convex/_generated
         working-directory: packages/backend
         env:
           CI: true
