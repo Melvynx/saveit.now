@@ -167,14 +167,14 @@ function HeroStyle3() {
 // Style 4: Dark Dramatic
 function HeroStyle4() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6 py-24 bg-foreground text-background">
+    <section className="relative min-h-screen flex items-center justify-center px-4 py-24 bg-foreground text-background sm:px-6">
       <StyleLabel number={4} name="Dark Dramatic" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--primary-rgb),0.15),transparent_70%)]" />
-      <div className="relative max-w-4xl mx-auto text-center">
-        <p className="text-primary font-mono text-sm tracking-widest uppercase mb-6">
+      <div className="relative max-w-full mx-auto text-center">
+        <p className="text-primary font-mono text-sm tracking-[0.2em] uppercase mb-6 sm:tracking-widest">
           The future of bookmarking
         </p>
-        <h1 className="text-6xl md:text-8xl font-black">
+        <h1 className="text-5xl sm:text-6xl md:text-8xl font-black">
           AGENTIC
           <br />
           <span className="text-primary">BOOKMARKS</span>

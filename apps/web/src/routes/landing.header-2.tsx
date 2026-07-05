@@ -44,12 +44,12 @@ function StyleLabel({ number, name }: { number: number; name: string }) {
 // Style 11: Brutalist Typography
 function HeroStyle11() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6 py-24 bg-background">
+    <section className="relative min-h-screen flex items-center justify-center px-4 py-24 bg-background sm:px-6">
       <StyleLabel number={11} name="Brutalist" />
-      <div className="max-w-6xl mx-auto">
-        <div className="border-4 border-foreground p-8 md:p-16">
+      <div className="max-w-full mx-auto">
+        <div className="border-4 border-foreground p-4 sm:p-8 md:p-12 lg:p-16">
           <p className="font-mono text-sm mb-4">[WORLD PREMIERE]</p>
-          <h1 className="text-6xl md:text-[10rem] font-black leading-[0.85] tracking-tighter uppercase">
+          <h1 className="text-[3.25rem] sm:text-6xl md:text-[6rem] lg:text-[10rem] font-black leading-[0.85] tracking-tighter uppercase">
             Agentic
             <br />
             <span className="text-primary">Book</span>marks
@@ -260,18 +260,18 @@ function HeroStyle17() {
   return (
     <section className="relative min-h-screen flex items-center justify-center px-6 py-24">
       <StyleLabel number={17} name="Letter Spacing" />
-      <div className="max-w-5xl mx-auto text-center">
-        <p className="text-sm tracking-[0.5em] text-muted-foreground uppercase mb-8">
+      <div className="w-full max-w-full mx-auto text-center">
+        <p className="text-sm tracking-[0.35em] text-muted-foreground uppercase mb-8 md:tracking-[0.5em]">
           Introducing
         </p>
         <h1 className="font-light">
-          <span className="block text-4xl md:text-6xl tracking-[0.2em]">
+          <span className="block text-4xl md:text-5xl lg:text-6xl tracking-[0.2em]">
             THE FIRST
           </span>
-          <span className="block text-7xl md:text-[12rem] font-black tracking-tight text-primary leading-none my-4">
+          <span className="block text-7xl md:text-[8rem] lg:text-[12rem] font-black tracking-tight text-primary leading-none my-4">
             AGENTIC
           </span>
-          <span className="block text-4xl md:text-6xl tracking-[0.2em]">
+          <span className="block text-4xl md:text-5xl lg:text-6xl tracking-[0.2em]">
             BOOKMARK MANAGER
           </span>
         </h1>

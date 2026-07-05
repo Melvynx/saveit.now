@@ -92,7 +92,7 @@ export function BookmarksPage() {
 
   return (
     <div
-      className="flex w-screen flex-col gap-4 px-4 py-4 lg:px-12 mx-auto"
+      className="flex w-full flex-col gap-4 px-4 py-4 lg:px-12 mx-auto"
       style={{
         maxWidth: 3000,
       }}

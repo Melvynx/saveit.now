@@ -88,20 +88,24 @@ function DocPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex min-w-0 flex-1">
         <DocsSidebar groupedDocs={groupedDocs} />
         <main
           className={
-            hasApiExamples ? "flex-1 xl:pr-[400px]" : toc.length > 0 ? "flex-1 xl:pr-64" : "flex-1"
+            hasApiExamples
+              ? "min-w-0 flex-1 xl:pr-[400px]"
+              : toc.length > 0
+                ? "min-w-0 flex-1 xl:pr-64"
+                : "min-w-0 flex-1"
           }
         >
-          <div className="mx-auto px-6 py-8">
-            <article className="mx-auto flex max-w-prose flex-col gap-6">
+          <div className="mx-auto w-full min-w-0 max-w-full px-4 py-8 sm:px-6">
+            <article className="mx-auto flex w-full min-w-0 max-w-prose flex-col gap-6">
               <div className="flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start justify-between gap-4">
                   <Typography
                     variant="h1"
-                    className="flex-1 text-4xl font-bold tracking-tight"
+                    className="min-w-0 flex-1 text-4xl font-bold tracking-tight"
                   >
                     {doc.frontmatter.title}
                   </Typography>
@@ -118,7 +122,7 @@ function DocPage() {
               </div>
 
               <div
-                className="typography"
+                className="typography min-w-0 max-w-full overflow-hidden [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:overflow-y-hidden [&_pre]:whitespace-pre [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
 

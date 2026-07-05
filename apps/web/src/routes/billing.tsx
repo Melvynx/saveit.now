@@ -5,7 +5,7 @@ import {
   AlertTitle,
 } from "@workspace/ui/components/alert";
 import { createFileRoute } from "@tanstack/react-router";
-import { useAction } from "convex/react";
+import { useAction, useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,9 +15,12 @@ export const Route = createFileRoute("/billing")({
 
 function BillingPage() {
   const createBillingPortal = useAction(api.stripe.actions.createBillingPortal);
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+
     let cancelled = false;
 
     async function redirectToPortal() {
@@ -40,7 +43,7 @@ function BillingPage() {
     return () => {
       cancelled = true;
     };
-  }, [createBillingPortal]);
+  }, [createBillingPortal, isAuthenticated, isLoading]);
 
   if (error) {
     return (

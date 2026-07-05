@@ -111,14 +111,14 @@ export function AccountShell({
     description ?? meta?.description ?? "Manage your SaveIt.now account."
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="overflow-x-hidden">
       <AccountSidebar
         user={user}
         pathname={location.pathname}
       />
-      <SidebarInset className="border-border border">
+      <SidebarInset className="border-border min-w-0 border">
         <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full min-w-0 max-w-5xl items-center gap-3 px-4 sm:px-6 lg:px-8">
             <SidebarTrigger
               variant="outline"
               className="size-8 cursor-pointer"
@@ -133,7 +133,7 @@ export function AccountShell({
             </div>
           </div>
         </header>
-        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 p-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-4 p-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </SidebarInset>
