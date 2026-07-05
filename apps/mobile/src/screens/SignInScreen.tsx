@@ -1,13 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
+  type KeyboardEvent,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -24,7 +26,6 @@ interface SignInScreenProps {
   onVerified?: () => void;
   closeOnVerified?: boolean;
   keyboardAvoidingEnabled?: boolean;
-  keyboardBottomInset?: number;
   email: string;
   onEmailChange: (email: string) => void;
   otp: string;
@@ -38,7 +39,6 @@ export default function SignInScreen({
   onVerified,
   closeOnVerified = true,
   keyboardAvoidingEnabled = true,
-  keyboardBottomInset = 0,
   email,
   onEmailChange,
   otp,
@@ -50,9 +50,10 @@ export default function SignInScreen({
   const [socialLoading, setSocialLoading] = useState<
     "google" | "github" | null
   >(null);
+  const [observedKeyboardInset, setObservedKeyboardInset] = useState(0);
   const { sendOTP, verifyOTP, signInWithSocial } = useAuth();
   const colors = useThemeColors();
-  const normalizedKeyboardBottomInset = Math.max(0, keyboardBottomInset);
+  const normalizedKeyboardBottomInset = Math.max(0, observedKeyboardInset);
   const hasExplicitKeyboardInset = normalizedKeyboardBottomInset > 0;
   const shouldUseIOSScrollInsets =
     Platform.OS === "ios" &&
@@ -132,6 +133,43 @@ export default function SignInScreen({
     onOtpChange("");
   };
 
+  useEffect(() => {
+    if (keyboardAvoidingEnabled) {
+      setObservedKeyboardInset(0);
+      return;
+    }
+
+    const updateFromMetrics = () => {
+      const metrics = Keyboard.metrics();
+      setObservedKeyboardInset(metrics?.height ? metrics.height + 16 : 0);
+    };
+    const handleKeyboardShow = (event: KeyboardEvent) => {
+      setObservedKeyboardInset(event.endCoordinates.height + 16);
+    };
+    const handleKeyboardHide = () => {
+      setObservedKeyboardInset(0);
+    };
+
+    updateFromMetrics();
+
+    const subscriptions =
+      Platform.OS === "ios"
+        ? [
+            Keyboard.addListener("keyboardWillShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardDidShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardWillHide", handleKeyboardHide),
+            Keyboard.addListener("keyboardDidHide", handleKeyboardHide),
+          ]
+        : [
+            Keyboard.addListener("keyboardDidShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardDidHide", handleKeyboardHide),
+          ];
+
+    return () => {
+      subscriptions.forEach((subscription) => subscription.remove());
+    };
+  }, [keyboardAvoidingEnabled]);
+
   return (
     <KeyboardAvoidingView
       enabled={shouldUseKeyboardAvoidingView}
@@ -142,20 +180,13 @@ export default function SignInScreen({
         className="flex-1 bg-background"
         contentContainerStyle={[
           styles.contentContainer,
-          Platform.OS !== "ios" && hasExplicitKeyboardInset
-            ? { paddingBottom: 32 + normalizedKeyboardBottomInset }
+          hasExplicitKeyboardInset
+            ? {
+                flexGrow: 0,
+                paddingBottom: 32 + normalizedKeyboardBottomInset,
+              }
             : null,
         ]}
-        contentInset={
-          Platform.OS === "ios" && hasExplicitKeyboardInset
-            ? { bottom: normalizedKeyboardBottomInset }
-            : undefined
-        }
-        scrollIndicatorInsets={
-          Platform.OS === "ios" && hasExplicitKeyboardInset
-            ? { bottom: normalizedKeyboardBottomInset }
-            : undefined
-        }
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={

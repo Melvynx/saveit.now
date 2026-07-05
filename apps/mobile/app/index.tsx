@@ -1,14 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useShareIntentContext } from "expo-share-intent";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Keyboard,
-  Modal,
-  Platform,
-  View,
-  useWindowDimensions,
-  type KeyboardEvent,
-} from "react-native";
+import { useCallback, useState } from "react";
+import { Modal, View, useWindowDimensions } from "react-native";
 
 import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
@@ -27,48 +20,15 @@ export default function IndexPage() {
   const [signInEmail, setSignInEmail] = useState("");
   const [signInOtp, setSignInOtp] = useState("");
   const [signInStep, setSignInStep] = useState<SignInStep>("email");
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const signInSheetHeight = windowHeight * 0.7;
-  const signInKeyboardInset = keyboardHeight > 0 ? keyboardHeight + 16 : 0;
 
   const closeSignIn = useCallback(() => {
     setShowSignIn(false);
     setSignInEmail("");
     setSignInOtp("");
     setSignInStep("email");
-    setKeyboardHeight(0);
   }, []);
-
-  useEffect(() => {
-    if (!showSignIn) {
-      setKeyboardHeight(0);
-      return;
-    }
-
-    const handleKeyboardShow = (event: KeyboardEvent) => {
-      Keyboard.scheduleLayoutAnimation(event);
-      setKeyboardHeight(event.endCoordinates.height);
-    };
-    const handleKeyboardHide = (event: KeyboardEvent) => {
-      Keyboard.scheduleLayoutAnimation(event);
-      setKeyboardHeight(0);
-    };
-
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      handleKeyboardShow,
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      handleKeyboardHide,
-    );
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [showSignIn]);
 
   useFocusEffect(
     useCallback(() => {
@@ -119,7 +79,6 @@ export default function IndexPage() {
               <SignInScreen
                 onClose={closeSignIn}
                 keyboardAvoidingEnabled={false}
-                keyboardBottomInset={signInKeyboardInset}
                 email={signInEmail}
                 onEmailChange={setSignInEmail}
                 otp={signInOtp}
