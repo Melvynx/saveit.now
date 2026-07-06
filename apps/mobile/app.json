@@ -2,7 +2,7 @@
   "expo": {
     "name": "SaveIt",
     "slug": "saveit-mobile",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "saveit",
@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026070402",
+      "buildNumber": "2026070601",
       "usesAppleSignIn": true
     },
     "android": {
@@ -54,7 +54,11 @@
             "NSExtensionActivationSupportsMovieWithMaxCount": 1,
             "NSExtensionActivationSupportsText": true
           },
-          "androidIntentFilters": ["text/*", "image/*", "video/*"]
+          "androidIntentFilters": [
+            "text/*",
+            "image/*",
+            "video/*"
+          ]
         }
       ],
       "expo-apple-authentication",
