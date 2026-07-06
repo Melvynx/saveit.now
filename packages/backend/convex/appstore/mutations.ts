@@ -51,7 +51,15 @@ function derivePatch(
     };
   }
 
-  if (effectiveStatus === 3 || effectiveStatus === 4) {
+  if (effectiveStatus === 3) {
+    return {
+      plan: "free" as const,
+      status: "billing_retry",
+      cancelAtPeriodEnd: false,
+    };
+  }
+
+  if (effectiveStatus === 4) {
     return {
       plan: "pro" as const,
       status: "past_due",

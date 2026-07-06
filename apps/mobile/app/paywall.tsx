@@ -14,7 +14,6 @@ import { StatusScreen } from "../src/components/ui/status-screen";
 import { Text } from "../src/components/ui/text";
 import { hapticSuccess } from "../src/lib/haptics";
 import {
-  endIapConnection,
   finishTransaction,
   getProSubscriptions,
   initIapConnection,
@@ -145,10 +144,6 @@ export default function PaywallScreen() {
     if (!isIapAvailable()) return;
 
     void initIapConnection();
-
-    return () => {
-      void endIapConnection();
-    };
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,5 @@
 import { Platform } from "react-native";
 import {
-  endConnection,
   fetchProducts,
   finishTransaction as finishIapTransaction,
   getAvailablePurchases,
@@ -95,18 +94,6 @@ export async function initIapConnection() {
   }
 }
 
-export async function endIapConnection() {
-  if (!isIapAvailable() || !connectionPromise) return;
-
-  try {
-    await connectionPromise;
-    await endConnection();
-  } finally {
-    connectionPromise = null;
-    isConnected = false;
-  }
-}
-
 export async function getProSubscriptions(): Promise<ProSubscription[]> {
   assertIapAvailable();
   await initIapConnection();
@@ -172,6 +159,28 @@ export async function restore(): Promise<ProPurchase[]> {
 
   const purchases = (await getAvailablePurchases({
     onlyIncludeActiveItemsIOS: true,
+  })) as Purchase[];
+
+  return purchases
+    .filter((purchase: Purchase) => PRO_PRODUCT_ID_SET.has(purchase.productId))
+    .map((purchase: Purchase) => {
+      const originalTransactionId = getOriginalTransactionId(purchase);
+      if (!originalTransactionId) return null;
+
+      return {
+        originalTransactionId,
+        purchase,
+      };
+    })
+    .filter((purchase): purchase is ProPurchase => purchase !== null);
+}
+
+export async function getAvailableProPurchases(): Promise<ProPurchase[]> {
+  assertIapAvailable();
+  await initIapConnection();
+
+  const purchases = (await getAvailablePurchases({
+    onlyIncludeActiveItemsIOS: false,
   })) as Purchase[];
 
   return purchases

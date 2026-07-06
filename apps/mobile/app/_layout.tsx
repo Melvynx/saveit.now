@@ -25,6 +25,7 @@ import { themeColors, useAppTheme } from "../src/lib/theme";
 import { AuthProvider } from "../src/contexts/AuthContext";
 import { authClient } from "../src/lib/auth-client";
 import { mobileConfig } from "../src/lib/config";
+import { useIapRecovery } from "../src/lib/hooks/use-iap-recovery";
 
 // Convex client — singleton outside component to avoid re-creation on re-renders.
 const convex = new ConvexReactClient(mobileConfig.convexUrl, {
@@ -85,6 +86,8 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  useIapRecovery();
+
   const { currentTheme } = useAppTheme();
   const isDark = currentTheme === "dark";
   const colors = isDark ? themeColors.dark : themeColors.light;
