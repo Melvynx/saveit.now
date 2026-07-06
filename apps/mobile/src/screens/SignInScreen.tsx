@@ -48,10 +48,10 @@ export default function SignInScreen({
 }: SignInScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<
-    "google" | "github" | null
+    "apple" | "google" | "github" | null
   >(null);
   const [observedKeyboardInset, setObservedKeyboardInset] = useState(0);
-  const { sendOTP, verifyOTP, signInWithSocial } = useAuth();
+  const { sendOTP, verifyOTP, signInWithSocial, signInWithApple } = useAuth();
   const colors = useThemeColors();
   const normalizedKeyboardBottomInset = Math.max(0, observedKeyboardInset);
   const hasExplicitKeyboardInset = normalizedKeyboardBottomInset > 0;
@@ -75,6 +75,20 @@ export default function SignInScreen({
         `Could not sign in with ${
           provider === "google" ? "Google" : "GitHub"
         }. Please try again.`,
+      );
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setSocialLoading("apple");
+    try {
+      await signInWithApple();
+    } catch {
+      Alert.alert(
+        "Sign in failed",
+        "Could not sign in with Apple. Please try again.",
       );
     } finally {
       setSocialLoading(null);
@@ -290,6 +304,20 @@ export default function SignInScreen({
                 </Text>
                 <View className="h-px flex-1 bg-border" />
               </View>
+
+              {Platform.OS === "ios" ? (
+                <Button
+                  onPress={handleAppleSignIn}
+                  loading={socialLoading === "apple"}
+                  disabled={isLoading || socialLoading !== null}
+                  className="bg-black"
+                >
+                  <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
+                  <Text className="font-sans-semibold text-[15px] text-white">
+                    Continue with Apple
+                  </Text>
+                </Button>
+              ) : null}
 
               <Button
                 variant="outline"

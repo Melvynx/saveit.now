@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026070402"
+      "buildNumber": "2026070402",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -56,6 +57,7 @@
           "androidIntentFilters": ["text/*", "image/*", "video/*"]
         }
       ],
+      "expo-apple-authentication",
       "expo-font",
       "expo-secure-store",
       "expo-web-browser"

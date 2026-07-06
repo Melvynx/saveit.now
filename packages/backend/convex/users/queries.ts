@@ -26,7 +26,9 @@ export const getLimits = authQuery({
       .first();
 
     const plan: "free" | "pro" =
-      sub && isActiveSubscriptionStatus(sub.status ?? null) ? "pro" : "free";
+      sub && isActiveSubscriptionStatus(sub.status ?? null, sub.provider)
+        ? "pro"
+        : "free";
 
     const metadata = (ctx.user as { metadata?: unknown }).metadata;
     const limits = getPlansLimits(plan, metadata);

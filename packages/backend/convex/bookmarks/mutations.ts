@@ -490,7 +490,8 @@ export const exportCsv = authMutation({
       .first();
 
     const plan =
-      subscription && isActiveSubscriptionStatus(subscription.status)
+      subscription &&
+      isActiveSubscriptionStatus(subscription.status, subscription.provider)
         ? "pro"
         : "free";
     const limits = getLimits(plan);

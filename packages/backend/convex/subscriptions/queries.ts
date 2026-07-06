@@ -16,7 +16,9 @@ type SubscriptionDTO = {
   id: string;
   userId: string;
   plan: "free" | "pro";
+  provider: "stripe" | "revenuecat" | null;
   status: string | null;
+  revenuecatProductId: string | null;
   periodStart: number | null;
   periodEnd: number | null;
   cancelAtPeriodEnd: boolean | null;
@@ -46,6 +48,8 @@ type UserLimits = {
   subscription: {
     id: string;
     status: string;
+    provider: "stripe" | "revenuecat" | null;
+    revenuecatProductId: string | null;
     periodEnd: number | null;
   } | null;
 };
@@ -71,7 +75,9 @@ export const getMine = authQuery({
       id: sub._id,
       userId: sub.userId,
       plan: (sub.plan === "pro" ? "pro" : "free") as "free" | "pro",
+      provider: sub.provider ?? null,
       status: sub.status ?? null,
+      revenuecatProductId: sub.revenuecatProductId ?? null,
       periodStart: sub.periodStart ?? null,
       periodEnd: sub.periodEnd ?? null,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? null,
@@ -98,7 +104,7 @@ export const getUserPlan = authQuery({
 
     // 2. Derive plan from subscription status.
     const isActive = sub
-      ? isActiveSubscriptionStatus(sub.status)
+      ? isActiveSubscriptionStatus(sub.status, sub.provider)
       : false;
     const plan: "free" | "pro" =
       isActive && sub?.plan === "pro" ? "pro" : "free";
@@ -119,6 +125,8 @@ export const getUserPlan = authQuery({
       ? {
           id: sub._id as string,
           status: sub.status ?? "unknown",
+          provider: sub.provider ?? null,
+          revenuecatProductId: sub.revenuecatProductId ?? null,
           periodEnd: sub.periodEnd ?? null,
         }
       : null;

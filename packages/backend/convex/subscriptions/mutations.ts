@@ -36,10 +36,12 @@ export const upsertFromWebhook = internalMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         plan: args.plan,
+        provider: "stripe",
         status: args.status,
         periodStart: args.periodStart,
         periodEnd: args.periodEnd,
         cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+        revenuecatProductId: undefined,
         ...(args.stripeCustomerId !== undefined
           ? { stripeCustomerId: args.stripeCustomerId }
           : {}),
@@ -52,12 +54,14 @@ export const upsertFromWebhook = internalMutation({
       await ctx.db.insert("subscriptions", {
         userId: args.userId,
         plan: args.plan,
+        provider: "stripe",
         status: args.status,
         periodStart: args.periodStart,
         periodEnd: args.periodEnd,
         cancelAtPeriodEnd: args.cancelAtPeriodEnd,
         stripeCustomerId: args.stripeCustomerId,
         stripeSubscriptionId: args.stripeSubscriptionId,
+        revenuecatProductId: undefined,
         createdAt: now,
         updatedAt: now,
       });
@@ -100,10 +104,12 @@ export const updateFromWebhook = internalMutation({
 
     await ctx.db.patch(existing._id, {
       plan: args.plan,
+      provider: "stripe",
       status: args.status,
       periodStart: args.periodStart,
       periodEnd: args.periodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+      revenuecatProductId: undefined,
       updatedAt: Date.now(),
     });
 

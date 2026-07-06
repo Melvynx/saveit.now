@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { type ReactNode } from "react";
-import { Pressable, Switch, View } from "react-native";
+import { Linking, Platform, Pressable, Switch, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { api } from "@convex/_generated/api";
 import { BlurHeaderScreen } from "../../src/components/ui/blur-header-screen";
 import { Text } from "../../src/components/ui/text";
 import { useAuth } from "../../src/contexts/AuthContext";
@@ -119,9 +121,21 @@ export default function TabTwoScreen() {
   const { currentTheme, toggleTheme } = useAppTheme();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const userPlan = useQuery(api.subscriptions.queries.getUserPlan);
+  const isPro = userPlan?.plan === "pro";
+  const isAppStorePro =
+    Platform.OS === "ios" &&
+    isPro &&
+    userPlan.subscription?.provider === "revenuecat";
 
   const openUpgrade = async () => {
     hapticSelection();
+
+    if (Platform.OS === "ios") {
+      router.push("/paywall");
+      return;
+    }
+
     const upgradeUrl = getWebUrl("/upgrade");
 
     try {
@@ -140,6 +154,11 @@ export default function TabTwoScreen() {
     }
 
     await WebBrowser.openBrowserAsync(upgradeUrl);
+  };
+
+  const openAppleSubscriptionManagement = async () => {
+    hapticSelection();
+    await Linking.openURL("https://apps.apple.com/account/subscriptions");
   };
 
   const openDocumentation = async () => {
@@ -184,20 +203,43 @@ export default function TabTwoScreen() {
     >
       <View className="gap-5">
         <Section title="SaveIt Pro">
-          <SettingsRow
-            isFirst
-            icon="sparkles-outline"
-            title="Upgrade to Pro"
-            description="Go premium on saveit.now — unlimited bookmarks & more"
-            onPress={openUpgrade}
-          />
-          <View className="border-t border-border px-4 py-3">
-            <Text className="font-sans text-[13px] text-muted-foreground">
-              Subscriptions are managed on the web. Open
-              beta.saveit.now/upgrade, sign in, and choose a plan — Pro then
-              unlocks here automatically.
-            </Text>
-          </View>
+          {isPro ? (
+            <>
+              <SettingsRow
+                isFirst
+                icon="sparkles"
+                title="SaveIt Pro"
+                description="Active"
+              />
+              {isAppStorePro ? (
+                <SettingsRow
+                  icon="card-outline"
+                  title="Manage subscription"
+                  description="Open App Store subscription settings"
+                  onPress={openAppleSubscriptionManagement}
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <SettingsRow
+                isFirst
+                icon="sparkles-outline"
+                title="Upgrade to Pro"
+                description="Go premium on saveit.now — unlimited bookmarks & more"
+                onPress={openUpgrade}
+              />
+              {Platform.OS === "ios" ? null : (
+                <View className="border-t border-border px-4 py-3">
+                  <Text className="font-sans text-[13px] text-muted-foreground">
+                    Subscriptions are managed on the web. Open
+                    beta.saveit.now/upgrade, sign in, and choose a plan — Pro
+                    then unlocks here automatically.
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
         </Section>
 
         <Section title="Account">

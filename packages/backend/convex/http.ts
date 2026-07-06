@@ -46,6 +46,47 @@ http.route({
   }),
 });
 
+// --- RevenueCat webhook (shared secret in Authorization header) ---
+http.route({
+  path: "/revenuecat/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET;
+    const authorization = request.headers.get("authorization");
+
+    if (!webhookSecret || authorization !== webhookSecret) {
+      return new Response(JSON.stringify({ ok: false }), { status: 401 });
+    }
+
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ ok: false }), { status: 400 });
+    }
+
+    const event =
+      typeof payload === "object" &&
+      payload !== null &&
+      "event" in payload
+        ? (payload as { event: unknown }).event
+        : payload;
+
+    try {
+      const result = await ctx.runMutation(
+        internal.revenuecat.webhook.processEvent,
+        { event },
+      );
+      return new Response(JSON.stringify(result), {
+        status: result.ok ? 200 : 400,
+      });
+    } catch (error) {
+      console.error("[revenuecat.webhook] failed to process event", error);
+      return new Response(JSON.stringify({ ok: false }), { status: 400 });
+    }
+  }),
+});
+
 // --- AI chat stream (Vercel AI SDK protocol) ---
 http.route({ path: "/chat", method: "POST", handler: chatStreamHandler });
 http.route({ path: "/chat", method: "OPTIONS", handler: chatStreamHandler });

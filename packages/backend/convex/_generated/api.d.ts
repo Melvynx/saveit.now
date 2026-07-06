@@ -74,6 +74,7 @@ import type * as processing_types_tweet from "../processing/types/tweet.js";
 import type * as processing_types_youtube from "../processing/types/youtube.js";
 import type * as processing_workflow from "../processing/workflow.js";
 import type * as processing_youtube from "../processing/youtube.js";
+import type * as revenuecat_webhook from "../revenuecat/webhook.js";
 import type * as search_actions from "../search/actions.js";
 import type * as search_helpers from "../search/helpers.js";
 import type * as search_queries from "../search/queries.js";
@@ -165,6 +166,7 @@ declare const fullApi: ApiFromModules<{
   "processing/types/youtube": typeof processing_types_youtube;
   "processing/workflow": typeof processing_workflow;
   "processing/youtube": typeof processing_youtube;
+  "revenuecat/webhook": typeof revenuecat_webhook;
   "search/actions": typeof search_actions;
   "search/helpers": typeof search_helpers;
   "search/queries": typeof search_queries;

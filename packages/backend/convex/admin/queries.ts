@@ -254,16 +254,11 @@ export const getUserDetail = adminQuery({
     const subscription = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "active"),
-          q.eq(q.field("status"), "trialing"),
-        ),
-      )
       .first();
 
     const plan: "free" | "pro" =
-      subscription && isActiveSubscriptionStatus(subscription.status)
+      subscription &&
+      isActiveSubscriptionStatus(subscription.status, subscription.provider)
         ? "pro"
         : "free";
 

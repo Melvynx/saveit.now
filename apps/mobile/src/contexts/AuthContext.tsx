@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { authClient } from "../lib/auth-client";
+import { configurePurchases, resetPurchases } from "../lib/purchases";
 
 interface User {
   id: string;
@@ -16,6 +18,7 @@ interface AuthContextType {
   sendOTP: (email: string) => Promise<void>;
   verifyOTP: (email: string, otp: string) => Promise<void>;
   signInWithSocial: (provider: "google" | "github") => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   signOutWithNavigation: (navigate: () => void) => Promise<void>;
 }
@@ -72,6 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoading =
     session.isPending || (hasBetterAuthSession && !isConvexTokenReady);
 
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      void configurePurchases(user.id);
+    }
+  }, [isAuthenticated, user?.id]);
+
   const sendOTP = async (email: string) => {
     const result = await authClient.emailOtp.sendVerificationOtp({
       email,
@@ -102,6 +111,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+
+    if (!isAvailable) {
+      throw new Error("Sign in with Apple is not available on this device");
+    }
+
+    let credential: AppleAuthentication.AppleAuthenticationCredential;
+
+    try {
+      credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "ERR_REQUEST_CANCELED"
+      ) {
+        return;
+      }
+
+      throw error;
+    }
+
+    if (!credential.identityToken) {
+      throw new Error("Apple did not return an identity token");
+    }
+
+    const result = await authClient.signIn.social({
+      provider: "apple",
+      idToken: { token: credential.identityToken },
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  };
+
   const signOut = async () => {
     setIsSigningOut(true);
     try {
@@ -109,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result?.error) {
         throw new Error(result.error.message || "Sign out failed");
       }
+      await resetPurchases();
     } finally {
       setIsSigningOut(false);
     }
@@ -129,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendOTP,
         verifyOTP,
         signInWithSocial,
+        signInWithApple,
         signOut,
         signOutWithNavigation,
       }}

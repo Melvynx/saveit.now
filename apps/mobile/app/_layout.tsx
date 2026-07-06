@@ -146,6 +146,10 @@ function RootLayoutNav() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="paywall"
+          options={{ presentation: "modal", headerShown: false }}
+        />
         <Stack.Screen name="[...slug]" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>

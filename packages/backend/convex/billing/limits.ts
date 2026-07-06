@@ -48,7 +48,8 @@ export async function assertCanCreateBookmark(
 
   // 3. Derive plan.
   const plan =
-    subscription && isActiveSubscriptionStatus(subscription.status)
+    subscription &&
+    isActiveSubscriptionStatus(subscription.status, subscription.provider)
       ? "pro"
       : "free";
 
@@ -108,7 +109,8 @@ export async function assertCanRunProcessing(
     .first();
 
   const plan =
-    subscription && isActiveSubscriptionStatus(subscription.status)
+    subscription &&
+    isActiveSubscriptionStatus(subscription.status, subscription.provider)
       ? "pro"
       : "free";
 
@@ -177,7 +179,10 @@ export async function shouldSendLimitEmail(
     .first();
 
   // Only applies to free plan users.
-  if (subscription && isActiveSubscriptionStatus(subscription.status)) {
+  if (
+    subscription &&
+    isActiveSubscriptionStatus(subscription.status, subscription.provider)
+  ) {
     return false;
   }
 
