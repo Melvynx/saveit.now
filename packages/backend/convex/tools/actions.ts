@@ -1,7 +1,8 @@
 // httpActions MUST run in the default (V8) runtime — never "use node".
+import type { ActionCtx } from "../_generated/server";
 import { httpAction } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { z } from "zod";
-import { assertSafeHttpUrl } from "../utils/url";
 
 // ---------------------------------------------------------------------------
 // Shared constants / utilities
@@ -11,7 +12,6 @@ const TOOL_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 const MAX_HTML_BYTES = 1_000_000;
 const FETCH_TIMEOUT_MS = 8_000;
-const MAX_REDIRECTS = 5;
 
 function resolveUrl(
   baseUrl: URL,
@@ -27,31 +27,21 @@ function resolveUrl(
   }
 }
 
-async function fetchHtml(url: string, redirects = 0): Promise<string> {
-  const safeUrl = assertSafeHttpUrl(url);
-  const response = await fetch(safeUrl, {
-    headers: { "User-Agent": TOOL_USER_AGENT },
-    redirect: "manual",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+// SSRF-safe fetch runs in a Node internalAction (DNS resolution + per-hop
+// redirect revalidation); the default-runtime httpActions cannot resolve DNS.
+async function fetchHtml(ctx: ActionCtx, url: string): Promise<string> {
+  const result = await ctx.runAction(internal.tools.node_fetch.safeToolFetch, {
+    url,
+    method: "GET",
+    userAgent: TOOL_USER_AGENT,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    maxBytes: MAX_HTML_BYTES,
+    readBody: true,
   });
-  if (response.status >= 300 && response.status < 400) {
-    if (redirects >= MAX_REDIRECTS) throw new Error("Too many redirects");
-    const location = response.headers.get("location");
-    if (!location) throw new Error("Redirect missing location");
-    return fetchHtml(new URL(location, safeUrl).toString(), redirects + 1);
-  }
-  if (!response.ok) {
+  if (!result.ok) {
     throw new Error("Failed to fetch the webpage");
   }
-  const contentLength = Number(response.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_HTML_BYTES) {
-    throw new Error("Response is too large");
-  }
-  const text = await response.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_HTML_BYTES) {
-    throw new Error("Response is too large");
-  }
-  return text;
+  return result.body;
 }
 
 function toolErrorResponse(error: unknown): Response {
@@ -84,7 +74,7 @@ function corsHeaders(): Record<string, string> {
 // POST /api/tools/extract-content
 // Spec 12 §2.13
 // ---------------------------------------------------------------------------
-export const extractContent = httpAction(async (_ctx, request) => {
+export const extractContent = httpAction(async (ctx, request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -97,7 +87,7 @@ export const extractContent = httpAction(async (_ctx, request) => {
     const cheerio = await import("cheerio");
     const TurndownService = (await import("turndown")).default;
 
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(ctx, url);
     const baseUrl = new URL(url);
     const $ = cheerio.load(html);
 
@@ -200,7 +190,7 @@ export const extractContent = httpAction(async (_ctx, request) => {
 // POST /api/tools/extract-metadata
 // Spec 12 §2.14
 // ---------------------------------------------------------------------------
-export const extractMetadata = httpAction(async (_ctx, request) => {
+export const extractMetadata = httpAction(async (ctx, request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -209,7 +199,7 @@ export const extractMetadata = httpAction(async (_ctx, request) => {
     const { url } = z.object({ url: z.string().url() }).parse(body);
 
     const cheerio = await import("cheerio");
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(ctx, url);
     const baseUrl = new URL(url);
     const $ = cheerio.load(html);
 
@@ -405,20 +395,20 @@ function categorizeFaviconType(rel: string, href: string): string {
 }
 
 async function validateFavicon(
+  ctx: ActionCtx,
   url: string,
 ): Promise<{ isValid: boolean; contentType?: string; errorMessage?: string }> {
   try {
-    const safeUrl = assertSafeHttpUrl(url);
-    const resp = await fetch(safeUrl, {
+    const resp = await ctx.runAction(internal.tools.node_fetch.safeToolFetch, {
+      url,
       method: "HEAD",
-      headers: { "User-Agent": TOOL_USER_AGENT },
-      redirect: "manual",
-      signal: AbortSignal.timeout(5000),
+      userAgent: TOOL_USER_AGENT,
+      timeoutMs: 5000,
     });
     if (!resp.ok) {
       return { isValid: false, errorMessage: `HTTP ${resp.status}` };
     }
-    const ct = resp.headers.get("content-type") ?? "";
+    const ct = resp.contentType ?? "";
     if (!ct.startsWith("image/")) {
       return {
         isValid: false,
@@ -431,7 +421,7 @@ async function validateFavicon(
   }
 }
 
-export const extractFavicons = httpAction(async (_ctx, request) => {
+export const extractFavicons = httpAction(async (ctx, request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -440,7 +430,7 @@ export const extractFavicons = httpAction(async (_ctx, request) => {
     const { url } = z.object({ url: z.string().url() }).parse(body);
 
     const cheerio = await import("cheerio");
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(ctx, url);
     const baseUrl = new URL(url);
     const $ = cheerio.load(html);
 
@@ -515,7 +505,7 @@ export const extractFavicons = httpAction(async (_ctx, request) => {
     // Validate in parallel
     const results = await Promise.all(
       unique.map(async (c) => {
-        const validation = await validateFavicon(c.url);
+        const validation = await validateFavicon(ctx, c.url);
         return {
           ...c,
           isValid: validation.isValid,
@@ -572,7 +562,7 @@ export const extractFavicons = httpAction(async (_ctx, request) => {
 // POST /api/tools/og-images
 // Spec 12 §2.16
 // ---------------------------------------------------------------------------
-export const extractOgImages = httpAction(async (_ctx, request) => {
+export const extractOgImages = httpAction(async (ctx, request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -581,7 +571,7 @@ export const extractOgImages = httpAction(async (_ctx, request) => {
     const { url } = z.object({ url: z.string().url() }).parse(body);
 
     const cheerio = await import("cheerio");
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(ctx, url);
     const baseUrl = new URL(url);
     const $ = cheerio.load(html);
 

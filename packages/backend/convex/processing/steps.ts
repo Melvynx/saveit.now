@@ -23,6 +23,7 @@ import {
   processTweetBookmark,
   processYouTubeBookmark,
 } from "./handlers";
+import { safeFetch } from "../lib/safe_fetch";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
@@ -52,7 +53,7 @@ export const analyzeUrl = internalAction({
   returns: vRoute,
   handler: async (_ctx, { url }): Promise<Route> => {
     try {
-      const response = await fetch(url, {
+      const response = await safeFetch(url, {
         headers: { "User-Agent": USER_AGENT },
       });
       if (!response.ok) throw new Error("Non-OK response");
@@ -182,7 +183,9 @@ async function loadBookmark(
 }
 
 async function fetchHtml(url: string): Promise<string> {
-  const response = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  const response = await safeFetch(url, {
+    headers: { "User-Agent": USER_AGENT },
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch URL content (${response.status})`);
   }

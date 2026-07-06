@@ -16,6 +16,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import mime from "mime-types";
+import { safeFetch } from "../lib/safe_fetch";
 
 function getS3Client(): S3Client {
   return new S3Client({
@@ -83,7 +84,7 @@ export async function uploadFromURL(opts: {
 
   let response: Response;
   try {
-    response = await fetch(opts.url);
+    response = await safeFetch(opts.url);
   } catch (err) {
     console.error("[storage.uploadFromURL] fetch error", err);
     return null;

@@ -43,6 +43,7 @@ import {
 } from "./screenshot";
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
 import { withGeminiFallback } from "../lib/gemini_provider";
+import { safeFetch } from "../lib/safe_fetch";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -1112,7 +1113,7 @@ export async function processImageBookmark(
 ): Promise<HandlerResult> {
   const bookmarkId = bookmark._id;
 
-  const response = await fetch(bookmark.url);
+  const response = await safeFetch(bookmark.url);
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
@@ -1206,7 +1207,7 @@ export async function processPdfBookmark(
   const bookmarkId = bookmark._id;
 
   // Download PDF once — reuse for both upload and analysis
-  const response = await fetch(bookmark.url);
+  const response = await safeFetch(bookmark.url);
   if (!response.ok) {
     throw new Error(`Failed to download PDF: ${response.statusText}`);
   }

@@ -1,7 +1,5 @@
 "use node";
 
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 import {
   DeleteObjectCommand,
   PutObjectCommand,
@@ -13,7 +11,7 @@ import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { authAction } from "../functions";
 import { throwNotFound, throwValidationError } from "../utils/errors";
-import { assertSafeHttpUrl } from "../utils/url";
+import { assertSafeRemoteUrl } from "../lib/safe_fetch";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2097152 bytes
 
@@ -40,79 +38,6 @@ const ALLOWED_REMOTE_IMAGE_TYPES = new Set([
   "image/svg+xml",
   "image/apng",
 ]);
-
-function isPrivateIpv4Address(address: string): boolean {
-  const parts = address.split(".").map((part) => Number(part));
-  if (
-    parts.length !== 4 ||
-    parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
-  ) {
-    return true;
-  }
-
-  const [a, b] = parts as [number, number, number, number];
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 0) ||
-    (a === 192 && b === 168) ||
-    (a === 198 && (b === 18 || b === 19 || b === 51)) ||
-    (a === 203 && b === 0) ||
-    a >= 224
-  );
-}
-
-function isPrivateIpv6Address(address: string): boolean {
-  const normalized = address.toLowerCase().replace(/^\[|\]$/g, "");
-
-  return (
-    normalized === "::" ||
-    normalized === "::1" ||
-    normalized.startsWith("fc") ||
-    normalized.startsWith("fd") ||
-    normalized.startsWith("fe8") ||
-    normalized.startsWith("fe9") ||
-    normalized.startsWith("fea") ||
-    normalized.startsWith("feb") ||
-    normalized.startsWith("2001:db8") ||
-    (normalized.startsWith("::ffff:") &&
-      isPrivateIpv4Address(normalized.slice("::ffff:".length)))
-  );
-}
-
-function isPrivateIpAddress(address: string): boolean {
-  const family = isIP(address);
-  if (family === 4) return isPrivateIpv4Address(address);
-  if (family === 6) return isPrivateIpv6Address(address);
-  return true;
-}
-
-async function assertSafeRemoteImageUrl(url: string): Promise<string> {
-  const normalizedUrl = assertSafeHttpUrl(url);
-  const parsed = new URL(normalizedUrl);
-  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
-
-  if (isIP(hostname)) {
-    if (isPrivateIpAddress(hostname)) {
-      throw new Error("This URL resolves to a private address");
-    }
-    return normalizedUrl;
-  }
-
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
-  if (addresses.length === 0) {
-    throw new Error("This URL host could not be resolved");
-  }
-  if (addresses.some(({ address }) => isPrivateIpAddress(address))) {
-    throw new Error("This URL resolves to a private address");
-  }
-
-  return normalizedUrl;
-}
 
 function getS3Client(): S3Client {
   return new S3Client({
@@ -179,7 +104,7 @@ async function fetchSafeRemoteImage(url: string): Promise<Response | null> {
   let currentUrl: string;
 
   try {
-    currentUrl = await assertSafeRemoteImageUrl(url);
+    currentUrl = await assertSafeRemoteUrl(url);
   } catch (err) {
     console.error("[uploadFileFromURL] unsafe url", url, err);
     return null;
@@ -216,7 +141,7 @@ async function fetchSafeRemoteImage(url: string): Promise<Response | null> {
       }
 
       try {
-        currentUrl = await assertSafeRemoteImageUrl(
+        currentUrl = await assertSafeRemoteUrl(
           new URL(location, currentUrl).toString(),
         );
       } catch (err) {
