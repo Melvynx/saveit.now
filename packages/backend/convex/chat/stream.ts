@@ -133,9 +133,14 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
   // ---- Auth ----
   let userId: string | undefined;
   try {
-    const { auth } = await authComponent.getAuth(createAuth, ctx);
-    const session = await auth.api.getSession({ headers: request.headers });
-    userId = session?.user?.id;
+    const user = await authComponent.safeGetAuthUser(ctx);
+    userId = user?._id;
+
+    if (!userId) {
+      const { auth } = await authComponent.getAuth(createAuth, ctx);
+      const session = await auth.api.getSession({ headers: request.headers });
+      userId = session?.user?.id;
+    }
   } catch {
     return new Response("Unauthorized", {
       status: 401,
