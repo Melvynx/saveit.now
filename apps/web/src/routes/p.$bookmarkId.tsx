@@ -13,12 +13,17 @@ import { createServerFn } from "@tanstack/react-start";
 const getPublicBookmarkData = createServerFn({ method: "GET" })
   .validator((data: { bookmarkId: string }) => data)
   .handler(async ({ data }) => {
-    const [{ getUser }, { getPublicBookmark }, { getServerUrl }] =
-      await Promise.all([
-        import("@/lib/auth-session"),
-        import("@/lib/database/get-bookmark"),
-        import("@/lib/server-url"),
-      ]);
+    const [
+      { getUser },
+      { getPublicBookmark },
+      { buildRelatedBookmarksWhere },
+      { getServerUrl },
+    ] = await Promise.all([
+      import("@/lib/auth-session"),
+      import("@/lib/database/get-bookmark"),
+      import("@/lib/database/public-bookmarks"),
+      import("@/lib/server-url"),
+    ]);
     const bookmark = await getPublicBookmark(data.bookmarkId);
     const user = await getUser();
 
@@ -28,14 +33,11 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
 
     const tagIds = bookmark.tags.map((tag) => tag.tag.id);
     const { prisma } = await import("@workspace/database/client");
-    const where = {
-      id: { not: data.bookmarkId },
-      status: "READY" as const,
-      title: { not: null },
-      ...(tagIds.length > 0 && {
-        tags: { some: { tagId: { in: tagIds } } },
-      }),
-    };
+    const where = buildRelatedBookmarksWhere({
+      bookmarkId: data.bookmarkId,
+      userId: bookmark.userId,
+      tagIds,
+    });
     const relatedBookmarks = await prisma.bookmark.findMany({
       where,
       select: {
