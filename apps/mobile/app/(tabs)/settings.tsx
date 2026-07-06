@@ -126,7 +126,7 @@ export default function TabTwoScreen() {
   const isAppStorePro =
     Platform.OS === "ios" &&
     isPro &&
-    userPlan.subscription?.provider === "revenuecat";
+    userPlan.subscription?.provider === "appstore";
 
   const openUpgrade = async () => {
     hapticSelection();

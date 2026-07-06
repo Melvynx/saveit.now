@@ -41,7 +41,9 @@ export const upsertFromWebhook = internalMutation({
         periodStart: args.periodStart,
         periodEnd: args.periodEnd,
         cancelAtPeriodEnd: args.cancelAtPeriodEnd,
-        revenuecatProductId: undefined,
+        appstoreOriginalTransactionId: undefined,
+        appstoreProductId: undefined,
+        appstoreLastVerifiedAt: undefined,
         ...(args.stripeCustomerId !== undefined
           ? { stripeCustomerId: args.stripeCustomerId }
           : {}),
@@ -61,7 +63,9 @@ export const upsertFromWebhook = internalMutation({
         cancelAtPeriodEnd: args.cancelAtPeriodEnd,
         stripeCustomerId: args.stripeCustomerId,
         stripeSubscriptionId: args.stripeSubscriptionId,
-        revenuecatProductId: undefined,
+        appstoreOriginalTransactionId: undefined,
+        appstoreProductId: undefined,
+        appstoreLastVerifiedAt: undefined,
         createdAt: now,
         updatedAt: now,
       });
@@ -109,7 +113,9 @@ export const updateFromWebhook = internalMutation({
       periodStart: args.periodStart,
       periodEnd: args.periodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd,
-      revenuecatProductId: undefined,
+      appstoreOriginalTransactionId: undefined,
+      appstoreProductId: undefined,
+      appstoreLastVerifiedAt: undefined,
       updatedAt: Date.now(),
     });
 

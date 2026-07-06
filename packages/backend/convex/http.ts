@@ -26,6 +26,51 @@ import { unsubscribe } from "./auth/mutations";
 
 const http = httpRouter();
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function getString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function decodeBase64UrlJson(segment: string): Record<string, unknown> | null {
+  try {
+    const base64 = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return asRecord(JSON.parse(new TextDecoder().decode(bytes)));
+  } catch {
+    return null;
+  }
+}
+
+function decodeJwsPayload(jws: string): Record<string, unknown> | null {
+  const [, payload] = jws.split(".");
+  return payload ? decodeBase64UrlJson(payload) : null;
+}
+
+function extractOriginalTransactionIdFromNotification(signedPayload: string) {
+  const notification = decodeJwsPayload(signedPayload);
+  const data = asRecord(notification?.data);
+  const transaction = decodeJwsPayload(
+    getString(data?.signedTransactionInfo) ?? "",
+  );
+  const renewal = decodeJwsPayload(getString(data?.signedRenewalInfo) ?? "");
+
+  return (
+    getString(transaction?.originalTransactionId) ??
+    getString(renewal?.originalTransactionId) ??
+    getString(data?.originalTransactionId)
+  );
+}
+
 // --- Better Auth HTTP routes (/api/auth/*) on the .convex.site domain ---
 authComponent.registerRoutes(http, createAuth);
 
@@ -46,18 +91,11 @@ http.route({
   }),
 });
 
-// --- RevenueCat webhook (shared secret in Authorization header) ---
+// --- App Store Server Notifications v2 ---
 http.route({
-  path: "/revenuecat/webhook",
+  path: "/appstore/notifications",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET;
-    const authorization = request.headers.get("authorization");
-
-    if (!webhookSecret || authorization !== webhookSecret) {
-      return new Response(JSON.stringify({ ok: false }), { status: 401 });
-    }
-
     let payload: unknown;
     try {
       payload = await request.json();
@@ -65,24 +103,42 @@ http.route({
       return new Response(JSON.stringify({ ok: false }), { status: 400 });
     }
 
-    const event =
-      typeof payload === "object" &&
-      payload !== null &&
-      "event" in payload
-        ? (payload as { event: unknown }).event
-        : payload;
+    const signedPayload = getString(asRecord(payload)?.signedPayload);
+    if (!signedPayload) {
+      console.warn("[appstore.notifications] missing signedPayload");
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "missing_payload" }),
+        { status: 200 },
+      );
+    }
 
     try {
-      const result = await ctx.runMutation(
-        internal.revenuecat.webhook.processEvent,
-        { event },
+      const originalTransactionId =
+        extractOriginalTransactionIdFromNotification(signedPayload);
+
+      if (!originalTransactionId) {
+        console.warn(
+          "[appstore.notifications] could not extract originalTransactionId",
+        );
+        return new Response(
+          JSON.stringify({ ok: true, skipped: "missing_transaction" }),
+          { status: 200 },
+        );
+      }
+
+      await ctx.scheduler.runAfter(
+        0,
+        internal.appstore.actions.refreshFromNotification,
+        { originalTransactionId },
       );
-      return new Response(JSON.stringify(result), {
-        status: result.ok ? 200 : 400,
-      });
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
     } catch (error) {
-      console.error("[revenuecat.webhook] failed to process event", error);
-      return new Response(JSON.stringify({ ok: false }), { status: 400 });
+      console.error("[appstore.notifications] failed to schedule refresh", error);
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "schedule_failed" }),
+        { status: 200 },
+      );
     }
   }),
 });

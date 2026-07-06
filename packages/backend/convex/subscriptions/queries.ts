@@ -5,7 +5,11 @@
 
 import { components } from "../_generated/api";
 import { authQuery } from "../functions";
-import { getLimits, isActiveSubscriptionStatus, parseCustomLimits } from "../billing/plans";
+import {
+  getLimits,
+  isActiveSubscriptionStatus,
+  parseCustomLimits,
+} from "../billing/plans";
 import type { Id } from "../_generated/dataModel";
 
 /**
@@ -16,9 +20,9 @@ type SubscriptionDTO = {
   id: string;
   userId: string;
   plan: "free" | "pro";
-  provider: "stripe" | "revenuecat" | null;
+  provider: "stripe" | "appstore" | null;
   status: string | null;
-  revenuecatProductId: string | null;
+  appstoreProductId: string | null;
   periodStart: number | null;
   periodEnd: number | null;
   cancelAtPeriodEnd: boolean | null;
@@ -48,8 +52,8 @@ type UserLimits = {
   subscription: {
     id: string;
     status: string;
-    provider: "stripe" | "revenuecat" | null;
-    revenuecatProductId: string | null;
+    provider: "stripe" | "appstore" | null;
+    appstoreProductId: string | null;
     periodEnd: number | null;
   } | null;
 };
@@ -77,7 +81,7 @@ export const getMine = authQuery({
       plan: (sub.plan === "pro" ? "pro" : "free") as "free" | "pro",
       provider: sub.provider ?? null,
       status: sub.status ?? null,
-      revenuecatProductId: sub.revenuecatProductId ?? null,
+      appstoreProductId: sub.appstoreProductId ?? null,
       periodStart: sub.periodStart ?? null,
       periodEnd: sub.periodEnd ?? null,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? null,
@@ -126,7 +130,7 @@ export const getUserPlan = authQuery({
           id: sub._id as string,
           status: sub.status ?? "unknown",
           provider: sub.provider ?? null,
-          revenuecatProductId: sub.revenuecatProductId ?? null,
+          appstoreProductId: sub.appstoreProductId ?? null,
           periodEnd: sub.periodEnd ?? null,
         }
       : null;

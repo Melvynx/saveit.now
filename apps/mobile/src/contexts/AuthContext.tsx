@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { authClient } from "../lib/auth-client";
-import { configurePurchases, resetPurchases } from "../lib/purchases";
 
 interface User {
   id: string;
@@ -74,12 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = hasBetterAuthSession && isConvexTokenReady;
   const isLoading =
     session.isPending || (hasBetterAuthSession && !isConvexTokenReady);
-
-  useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      void configurePurchases(user.id);
-    }
-  }, [isAuthenticated, user?.id]);
 
   const sendOTP = async (email: string) => {
     const result = await authClient.emailOtp.sendVerificationOtp({
@@ -161,7 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result?.error) {
         throw new Error(result.error.message || "Sign out failed");
       }
-      await resetPurchases();
     } finally {
       setIsSigningOut(false);
     }

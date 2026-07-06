@@ -48,12 +48,12 @@ export type PlanLimits = {
 // isActiveSubscriptionStatus — returns true if status is "active" or "trialing" (= pro).
 export function isActiveSubscriptionStatus(
   status: string | null | undefined,
-  provider?: "stripe" | "revenuecat" | null,
+  provider?: "stripe" | "appstore" | null,
 ): boolean {
   return (
     status === "active" ||
     status === "trialing" ||
-    (provider === "revenuecat" && status === "past_due")
+    (provider === "appstore" && status === "past_due")
   );
 }
 

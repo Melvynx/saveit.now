@@ -13,8 +13,4 @@ export const mobileConfig = {
     process.env.EXPO_PUBLIC_CONVEX_SITE_URL,
     "https://charming-spider-722.convex.site",
   ),
-  revenueCatIosApiKey: getPublicEnv(
-    process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
-    "",
-  ),
 };

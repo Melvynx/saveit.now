@@ -173,11 +173,12 @@ export default defineSchema({
   subscriptions: defineTable({
     userId: v.string(), // referenceId == userId
     plan: v.string(), // "free" | "pro"
-    provider: v.optional(v.union(v.literal("stripe"), v.literal("revenuecat"))),
+    provider: v.optional(v.union(v.literal("stripe"), v.literal("appstore"))),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
-    revenuecatProductId: v.optional(v.string()),
-    revenuecatLastEventAt: v.optional(v.number()),
+    appstoreOriginalTransactionId: v.optional(v.string()),
+    appstoreProductId: v.optional(v.string()),
+    appstoreLastVerifiedAt: v.optional(v.number()),
     status: v.optional(v.string()),
     periodStart: v.optional(v.number()),
     periodEnd: v.optional(v.number()),
@@ -189,6 +190,9 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_stripe_subscription", ["stripeSubscriptionId"])
     .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_appstore_original_transaction", [
+      "appstoreOriginalTransactionId",
+    ])
     .index("by_status", ["status"]),
 
   // Denormalized per-user counters (Convex has no count operator) for limits.

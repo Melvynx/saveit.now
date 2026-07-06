@@ -1,13 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
-import Purchases, {
-  type CustomerInfo,
-  type PurchasesPackage,
-} from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { api } from "@convex/_generated/api";
@@ -16,53 +12,39 @@ import { Button } from "../src/components/ui/button";
 import { LoadingSpinner } from "../src/components/ui/loading";
 import { StatusScreen } from "../src/components/ui/status-screen";
 import { Text } from "../src/components/ui/text";
-import { isPurchasesAvailable, PRO_ENTITLEMENT_ID } from "../src/lib/purchases";
 import { hapticSuccess } from "../src/lib/haptics";
+import {
+  endIapConnection,
+  finishTransaction,
+  getProSubscriptions,
+  initIapConnection,
+  isIapAvailable,
+  isPurchaseCancelled,
+  purchase as purchaseSubscription,
+  restore as restoreSubscriptions,
+  type ProPurchase,
+  type ProSubscription,
+} from "../src/lib/purchases";
 import { useThemeColors } from "../src/lib/theme";
 import { cn } from "../src/lib/utils";
 
-const PRO_PRODUCT_IDS = new Set([
-  "now.saveit.saveitapp.pro.monthly",
-  "now.saveit.saveitapp.pro.yearly",
-]);
-
-function hasProEntitlement(customerInfo: CustomerInfo) {
-  return Boolean(customerInfo.entitlements.active[PRO_ENTITLEMENT_ID]);
-}
-
-function getPackageRank(pkg: PurchasesPackage) {
-  const productId = pkg.product.identifier;
-  if (productId.includes("yearly")) return 0;
-  if (productId.includes("monthly")) return 1;
-  return 2;
-}
-
-function isUserCancelled(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "userCancelled" in error &&
-    Boolean((error as { userCancelled?: unknown }).userCancelled)
-  );
-}
-
 type PlanOptionProps = {
-  pkg: PurchasesPackage;
+  plan: ProSubscription;
   selected: boolean;
   disabled: boolean;
   onPress: () => void;
 };
 
-function PlanOption({ pkg, selected, disabled, onPress }: PlanOptionProps) {
+function PlanOption({ plan, selected, disabled, onPress }: PlanOptionProps) {
   const colors = useThemeColors();
-  const productId = pkg.product.identifier;
+  const productId = plan.productId;
   const isYearly = productId.includes("yearly");
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${isYearly ? "Annual" : "Monthly"} Pro plan, ${
-        pkg.product.priceString
+        plan.priceString
       }`}
       disabled={disabled}
       onPress={onPress}
@@ -92,7 +74,7 @@ function PlanOption({ pkg, selected, disabled, onPress }: PlanOptionProps) {
         </View>
         <View className="items-end gap-2">
           <Text className="font-sans-bold text-[18px] text-foreground">
-            {pkg.product.priceString}
+            {plan.priceString}
           </Text>
           <Ionicons
             name={selected ? "checkmark-circle" : "ellipse-outline"}
@@ -109,8 +91,9 @@ export default function PaywallScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const userPlan = useQuery(api.subscriptions.queries.getUserPlan);
+  const syncFromClient = useAction(api.appstore.actions.syncFromClient);
   const isPro = userPlan?.plan === "pro";
-  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const [plans, setPlans] = useState<ProSubscription[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoadingOfferings, setIsLoadingOfferings] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -119,14 +102,14 @@ export default function PaywallScreen() {
   const [showActivationDelayNote, setShowActivationDelayNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedPackage = useMemo(
-    () => packages.find((pkg) => pkg.identifier === selectedId) ?? packages[0],
-    [packages, selectedId],
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => plan.productId === selectedId) ?? plans[0],
+    [plans, selectedId],
   );
 
   const loadOfferings = useCallback(async () => {
-    if (!isPurchasesAvailable()) {
-      setPackages([]);
+    if (!isIapAvailable()) {
+      setPlans([]);
       setSelectedId(null);
       setError("In-app purchases are not available on this device.");
       setIsLoadingOfferings(false);
@@ -137,20 +120,16 @@ export default function PaywallScreen() {
     setError(null);
 
     try {
-      const offerings = await Purchases.getOfferings();
-      const availablePackages = offerings.current?.availablePackages ?? [];
-      const proPackages = availablePackages
-        .filter((pkg) => PRO_PRODUCT_IDS.has(pkg.product.identifier))
-        .sort((a, b) => getPackageRank(a) - getPackageRank(b));
+      const proPlans = await getProSubscriptions();
 
-      if (proPackages.length === 0) {
+      if (proPlans.length === 0) {
         throw new Error("No Pro plans are available right now.");
       }
 
-      setPackages(proPackages);
-      setSelectedId((current) => current ?? proPackages[0]?.identifier ?? null);
+      setPlans(proPlans);
+      setSelectedId((current) => current ?? proPlans[0]?.productId ?? null);
     } catch (loadError) {
-      setPackages([]);
+      setPlans([]);
       setSelectedId(null);
       setError(
         loadError instanceof Error
@@ -160,6 +139,16 @@ export default function PaywallScreen() {
     } finally {
       setIsLoadingOfferings(false);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isIapAvailable()) return;
+
+    void initIapConnection();
+
+    return () => {
+      void endIapConnection();
+    };
   }, []);
 
   useEffect(() => {
@@ -188,23 +177,34 @@ export default function PaywallScreen() {
     setIsActivating(false);
   }, [isActivating, isPro]);
 
+  const syncAndFinishPurchase = useCallback(
+    async ({ originalTransactionId, purchase }: ProPurchase) => {
+      const syncResult = await syncFromClient({ originalTransactionId });
+      await finishTransaction(purchase);
+      return syncResult.plan === "pro";
+    },
+    [syncFromClient],
+  );
+
   const purchase = async () => {
-    if (!selectedPackage || isPurchasing || isRestoring || isActivating) return;
+    if (!selectedPlan || isPurchasing || isRestoring || isActivating) return;
 
     setIsPurchasing(true);
     setError(null);
     setShowActivationDelayNote(false);
 
     try {
-      const result = await Purchases.purchasePackage(selectedPackage);
-      if (hasProEntitlement(result.customerInfo)) {
+      const result = await purchaseSubscription(selectedPlan.productId);
+      const grantedPro = await syncAndFinishPurchase(result);
+
+      if (grantedPro) {
         setIsActivating(true);
         return;
       }
 
       setError("Purchase completed, but Pro is not active yet.");
     } catch (purchaseError) {
-      if (!isUserCancelled(purchaseError)) {
+      if (!isPurchaseCancelled(purchaseError)) {
         setError(
           purchaseError instanceof Error
             ? purchaseError.message
@@ -224,10 +224,35 @@ export default function PaywallScreen() {
     setShowActivationDelayNote(false);
 
     try {
-      const customerInfo = await Purchases.restorePurchases();
-      if (hasProEntitlement(customerInfo)) {
+      const restoredPurchases = await restoreSubscriptions();
+      const uniquePurchases = [
+        ...new Map(
+          restoredPurchases.map((restoredPurchase) => [
+            restoredPurchase.originalTransactionId,
+            restoredPurchase,
+          ]),
+        ).values(),
+      ];
+
+      let grantedPro = false;
+      let lastSyncError: unknown = null;
+
+      for (const restoredPurchase of uniquePurchases) {
+        try {
+          grantedPro =
+            (await syncAndFinishPurchase(restoredPurchase)) || grantedPro;
+        } catch (syncError) {
+          lastSyncError = syncError;
+        }
+      }
+
+      if (grantedPro) {
         setIsActivating(true);
         return;
+      }
+
+      if (lastSyncError) {
+        throw lastSyncError;
       }
 
       setError("No active Pro purchase was found for this Apple ID.");
@@ -338,14 +363,14 @@ export default function PaywallScreen() {
             <View className="items-center justify-center rounded-2xl border border-border bg-card py-10">
               <LoadingSpinner />
             </View>
-          ) : packages.length > 0 ? (
-            packages.map((pkg) => (
+          ) : plans.length > 0 ? (
+            plans.map((plan) => (
               <PlanOption
-                key={pkg.identifier}
-                pkg={pkg}
-                selected={pkg.identifier === selectedPackage?.identifier}
+                key={plan.productId}
+                plan={plan}
+                selected={plan.productId === selectedPlan?.productId}
                 disabled={isPurchasing || isRestoring}
-                onPress={() => setSelectedId(pkg.identifier)}
+                onPress={() => setSelectedId(plan.productId)}
               />
             ))
           ) : null}
@@ -360,10 +385,10 @@ export default function PaywallScreen() {
         ) : null}
 
         <View className="gap-3">
-          {packages.length > 0 ? (
+          {plans.length > 0 ? (
             <Button
               loading={isPurchasing}
-              disabled={!selectedPackage || isLoadingOfferings || isRestoring}
+              disabled={!selectedPlan || isLoadingOfferings || isRestoring}
               onPress={purchase}
               className="rounded-2xl"
             >
