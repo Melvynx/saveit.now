@@ -34,11 +34,6 @@ export const LinkWithQueryInner = ({
       <Link
         to="/app/agents"
         search={(previous) => ({ ...previous, b: bookmarkId }) as any}
-        mask={{
-          to: "/app/b/$bookmarkId",
-          params: { bookmarkId },
-          unmaskOnReload: true,
-        }}
         resetScroll={false}
         {...props}
       >

@@ -12,6 +12,7 @@ import { InterceptDialog } from "@/components/intercept-dialog";
 import { Loader } from "@workspace/ui/components/loader";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { BookOpen, ExternalLink } from "lucide-react";
+import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { ExternalLinkTracker } from "../external-link-tracker";
@@ -58,6 +59,14 @@ function BookmarkDetail({
   renderMode,
   onClose,
 }: BookmarkDetailProps) {
+  // Escape triggers both the content keydown handler and the dialog's own
+  // dismissal (onOpenChange) — guard so onClose runs once per open.
+  const closedRef = useRef(false);
+  const handleClose = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    onClose?.();
+  };
   const query = useBookmark(bookmarkId);
   const bookmark = query.data?.bookmark;
   const session = useSession();
@@ -85,8 +94,14 @@ function BookmarkDetail({
     }
 
     return (
-      <Dialog open={true} key="loading">
-        <DialogContent>
+      <Dialog
+        open={true}
+        key="loading"
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
+      >
+        <DialogContent onEscapeKeyDown={handleClose}>
           <DialogTitle className="sr-only">Loading bookmark</DialogTitle>
           <Loader />
         </DialogContent>
@@ -185,7 +200,7 @@ function BookmarkDetail({
   }
 
   return (
-    <InterceptDialog fallbackTo="/app">
+    <InterceptDialog fallbackTo="/app" onClose={handleClose}>
       <DialogContent
         disableClose
         className="flex flex-col gap-0 overflow-auto p-0"
@@ -193,7 +208,7 @@ function BookmarkDetail({
           maxWidth: "min(calc(100vw - 32px), 1000px)",
           maxHeight: "calc(100vh - 32px)",
         }}
-        onEscapeKeyDown={onClose}
+        onEscapeKeyDown={handleClose}
       >
         {content}
       </DialogContent>

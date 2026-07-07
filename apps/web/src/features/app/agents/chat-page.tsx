@@ -6,7 +6,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useChat } from "@ai-sdk/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
-import { useAction, useConvex, useMutation } from "convex/react";
+import { useAction, useConvex, useConvexAuth, useMutation } from "convex/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ArrowDownIcon,
@@ -138,18 +138,26 @@ export function ChatPage() {
         | ((previous: URLSearchParams) => URLSearchParams),
       options?: { replace?: boolean },
     ) => {
-      const nextParams =
-        typeof next === "function"
-          ? next(new URLSearchParams(searchParams.toString()))
-          : new URLSearchParams(next);
-
       void navigate({
         to: "/app/agents" as any,
-        search: Object.fromEntries(nextParams.entries()) as any,
+        // Functional updater: always derive from the router's live search
+        // state, never from a React-closure snapshot (a stale snapshot
+        // taken during hydration can drop params like `b`).
+        search: ((current: Record<string, unknown>) => {
+          const params = new URLSearchParams();
+          Object.entries(current ?? {}).forEach(([key, value]) => {
+            if (typeof value === "string") {
+              params.set(key, value);
+            }
+          });
+          const nextParams =
+            typeof next === "function" ? next(params) : new URLSearchParams(next);
+          return Object.fromEntries(nextParams.entries());
+        }) as any,
         replace: options?.replace,
       });
     },
-    [navigate, searchParams],
+    [navigate],
   );
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(
@@ -163,6 +171,7 @@ export function ChatPage() {
   const conversationCreationPromiseRef = useRef<Promise<string> | null>(null);
   const conversationVersionRef = useRef(0);
   const convex = useConvex();
+  const { isAuthenticated } = useConvexAuth();
   const [isRatingConversation, setIsRatingConversation] = useState(false);
 
   const bookmarkId = searchParams.get("b");
@@ -305,8 +314,11 @@ export function ChatPage() {
     },
   });
 
-  // Load conversation from URL on mount with the Convex client.
+  // Load conversation from URL once the Convex client is authenticated —
+  // querying before the JWT exchange completes throws UNAUTHORIZED and
+  // would wipe the search params below.
   useEffect(() => {
+    if (!isAuthenticated) return;
     const urlConversationId = searchParams.get("c");
     if (urlConversationId && isLoadingConversation) {
       convex
@@ -332,7 +344,7 @@ export function ChatPage() {
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
   const isGenerating = status === "submitted" || status === "streaming";
 

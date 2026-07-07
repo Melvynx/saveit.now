@@ -6,16 +6,23 @@ import type { PropsWithChildren } from "react";
 
 type InterceptDialogProps = PropsWithChildren<{
   fallbackTo?: string;
+  onClose?: () => void;
 }>;
 
 export const InterceptDialog = ({
   children,
   fallbackTo = "/app",
+  onClose,
 }: InterceptDialogProps) => {
   const router = useRouter();
   const location = useLocation();
 
   const closeDialog = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+
     if (location.maskedLocation) {
       router.history.back();
       return;
