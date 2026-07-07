@@ -420,7 +420,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
-				CURRENT_PROJECT_VERSION = 2026070402;
+				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -433,7 +433,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -459,7 +459,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2026070402;
+				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				INFOPLIST_FILE = SaveIt/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -467,7 +467,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -491,7 +491,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2026070402;
+				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -504,7 +504,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
 				PRODUCT_NAME = ShareExtension;
@@ -522,7 +522,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2026070402;
+				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShareExtension/ShareExtension-Info.plist";
@@ -531,7 +531,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.0.0;
+				MARKETING_VERSION = 3.1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
 				PRODUCT_NAME = ShareExtension;
