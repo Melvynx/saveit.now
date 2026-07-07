@@ -4,7 +4,7 @@ const getPublicEnv = (value: string | undefined, fallback: string) => {
 };
 
 export const mobileConfig = {
-  apiUrl: getPublicEnv(process.env.EXPO_PUBLIC_API_URL, "https://beta.saveit.now"),
+  apiUrl: getPublicEnv(process.env.EXPO_PUBLIC_API_URL, "https://saveit.now"),
   convexUrl: getPublicEnv(
     process.env.EXPO_PUBLIC_CONVEX_URL,
     "https://charming-spider-722.convex.cloud",

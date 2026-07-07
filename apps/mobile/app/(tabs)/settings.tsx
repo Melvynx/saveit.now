@@ -233,7 +233,7 @@ export default function TabTwoScreen() {
                 <View className="border-t border-border px-4 py-3">
                   <Text className="font-sans text-[13px] text-muted-foreground">
                     Subscriptions are managed on the web. Open
-                    beta.saveit.now/upgrade, sign in, and choose a plan — Pro
+                    saveit.now/upgrade, sign in, and choose a plan — Pro
                     then unlocks here automatically.
                   </Text>
                 </View>
