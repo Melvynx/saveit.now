@@ -4,9 +4,9 @@ import {
   AdminStatCard,
   AdminStatusBadge,
 } from "@/features/admin/admin-shared";
-import { getAuthLimits, parseCustomAuthLimits } from "@/lib/auth-limits";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
   CardContent,
@@ -16,90 +16,46 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Bookmark, MousePointerClick, UserCog, Users } from "lucide-react";
-
-const getAdminUserData = createServerFn({ method: "GET" })
-  .validator((data: { userId: string }) => data)
-  .handler(async ({ data }) => {
-    const [{ getUser }, { prisma }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@workspace/database/client"),
-    ]);
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    const [bookmarks, clickCount, userData, subscription] = await Promise.all([
-      prisma.bookmark.count({ where: { userId: data.userId } }),
-      prisma.bookmarkOpen.count({ where: { userId: data.userId } }),
-      prisma.user.findUnique({ where: { id: data.userId } }),
-      prisma.subscription.findFirst({
-        where: {
-          referenceId: data.userId,
-          status: { in: ["active", "trialing"] },
-        },
-      }),
-    ]);
-
-    if (!userData) {
-      return { access: "not-found" as const };
-    }
-
-    const baseLimits = getAuthLimits(subscription);
-    const customLimits = parseCustomAuthLimits(userData.metadata);
-    const effectiveLimits = getAuthLimits(subscription, userData.metadata);
-
-    return {
-      access: "granted" as const,
-      bookmarks,
-      clickCount,
-      userData,
-      baseLimits,
-      customLimits,
-      effectiveLimits,
-    };
-  });
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/users/$userId")({
-  loader: ({ params }) => getAdminUserData({ data: params }),
   component: AdminUserPage,
 });
 
 function AdminUserPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
-  if (data.access === "not-found") {
+  const session = useSession();
+  const { userId } = Route.useParams();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const userDetail = useAuthedQuery(
+    api.admin.queries.getUserDetail,
+    isAdmin ? { userId } : "skip",
+  );
+
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (userDetail === undefined) return null;
+  if (!userDetail) {
     return <p className="text-muted-foreground">User not found.</p>;
   }
 
-  const {
-    bookmarks,
-    clickCount,
-    userData,
-    baseLimits,
-    customLimits,
-    effectiveLimits,
-  } = data;
+  const { bookmarkCount, clickCount, baseLimits, customLimits, effectiveLimits } = userDetail;
   const isPremium = baseLimits.bookmarks > 20;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <AdminPageHeader
-        title={userData.name || userData.email}
-        description={userData.email}
+        title={userDetail.name || userDetail.email || userDetail.id}
+        description={userDetail.email ?? undefined}
         action={
-          <AdminStatusBadge value={userData.banned ? "banned" : "active"} />
+          <AdminStatusBadge value={userDetail.banned ? "banned" : "active"} />
         }
       />
       <section className="grid gap-4 md:grid-cols-3">
         <AdminStatCard
           title="Bookmarks"
-          value={bookmarks.toLocaleString()}
+          value={bookmarkCount.toLocaleString()}
           description="Saved links"
           icon={Bookmark}
         />
@@ -127,20 +83,22 @@ function AdminUserPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm md:grid-cols-2">
-          <UserDetail label="User ID" value={userData.id} />
-          <UserDetail label="Role" value={userData.role || "user"} />
+          <UserDetail label="User ID" value={userDetail.id} />
+          <UserDetail label="Role" value={userDetail.role || "user"} />
           <UserDetail
             label="Email verified"
-            value={userData.emailVerified ? "Yes" : "No"}
+            value={userDetail.emailVerified ? "Yes" : "No"}
           />
           <UserDetail
             label="Created"
-            value={new Date(userData.createdAt).toLocaleString()}
+            value={new Date(userDetail.createdAt).toLocaleString()}
           />
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Public link</span>
-            <Badge variant={userData.publicLinkEnabled ? "default" : "outline"}>
-              {userData.publicLinkEnabled ? "Enabled" : "Disabled"}
+            <Badge
+              variant={userDetail.publicLinkEnabled ? "default" : "outline"}
+            >
+              {userDetail.publicLinkEnabled ? "Enabled" : "Disabled"}
             </Badge>
           </div>
         </CardContent>
@@ -154,7 +112,7 @@ function AdminUserPage() {
         </CardHeader>
         <CardContent>
           <CustomLimitsForm
-            userId={userData.id}
+            userId={userDetail.id}
             baseLimits={baseLimits}
             effectiveLimits={effectiveLimits}
             customLimits={customLimits}

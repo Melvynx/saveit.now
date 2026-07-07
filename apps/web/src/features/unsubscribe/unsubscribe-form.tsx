@@ -1,32 +1,48 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
+import { getConvexSiteUrl } from "@/lib/convex-url";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
-import { useMutation } from "@tanstack/react-query";
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
-import { z } from "zod";
+
+const convexSiteUrl = getConvexSiteUrl();
 
 export function UnsubscribeForm({ userId }: { userId: string }) {
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
 
-  const unsubscribeMutation = useMutation({
-    mutationFn: async () =>
-      upfetch(`/api/unsubscribe/${userId}`, {
-        method: "POST",
-        body: {},
-        schema: z.object({
-          success: z.boolean(),
-          message: z.string(),
-        }),
-      }),
-    onSuccess: () => {
-      setIsUnsubscribed(true);
+  const unsubscribeTask = useAsyncTask(
+    async () => {
+      // Token + timestamp supplied via URL search params from the email link.
+      const params = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : "",
+      );
+      const token = params.get("token");
+      const timestamp = params.get("timestamp") ?? params.get("ts");
+
+      const qs = new URLSearchParams({ userId });
+      if (token) qs.set("token", token);
+      if (timestamp) qs.set("timestamp", timestamp);
+
+      const res = await fetch(
+        `${convexSiteUrl}/unsubscribe/${userId}?${qs.toString()}`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as any)?.error ?? "Failed to unsubscribe");
+      }
+      return res.json() as Promise<{ success: boolean; message: string }>;
     },
-  });
+    {
+      onSuccess: () => {
+        setIsUnsubscribed(true);
+      },
+    },
+  );
 
   if (isUnsubscribed) {
     return (
@@ -49,18 +65,16 @@ export function UnsubscribeForm({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       <LoadingButton
-        loading={unsubscribeMutation.isPending}
-        onClick={() => unsubscribeMutation.mutate()}
+        loading={unsubscribeTask.isPending}
+        onClick={() => void unsubscribeTask.run()}
         className="w-full bg-red-600 hover:bg-red-700 text-white"
       >
         Yes, Unsubscribe Me
       </LoadingButton>
 
-      {unsubscribeMutation.error && (
+      {unsubscribeTask.error instanceof Error && (
         <Alert variant="destructive">
-          <AlertDescription>
-            {unsubscribeMutation.error.message}
-          </AlertDescription>
+          <AlertDescription>{unsubscribeTask.error.message}</AlertDescription>
         </Alert>
       )}
 
@@ -72,4 +86,3 @@ export function UnsubscribeForm({ userId }: { userId: string }) {
     </div>
   );
 }
-

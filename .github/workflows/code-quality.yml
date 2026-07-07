@@ -33,7 +33,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 9
+          version: 10.4.1
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -46,8 +46,63 @@ jobs:
         env:
           CI: true
 
+      - name: Typecheck web
+        run: pnpm ts
+        working-directory: apps/web
+        env:
+          CI: true
+
+      - name: Lint web
+        run: pnpm lint
+        working-directory: apps/web
+        env:
+          CI: true
+
       - name: Run unit tests
         run: pnpm test:ci
         working-directory: apps/web
+        env:
+          CI: true
+
+      - name: Verify Convex generated code
+        run: |
+          tmp_dir="${RUNNER_TEMP:-/tmp}/convex-codegen-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+          mkdir -p "$tmp_dir"
+
+          had_env_local=0
+          had_gitignore=0
+          had_convex_dir=0
+          [ -e .env.local ] && had_env_local=1
+          [ -e .gitignore ] && had_gitignore=1
+          [ -e .convex ] && had_convex_dir=1
+
+          cleanup() {
+            if [ "$had_env_local" -eq 0 ] && [ -e .env.local ]; then
+              mv .env.local "$tmp_dir/.env.local"
+            fi
+            if [ "$had_gitignore" -eq 0 ] && [ -e .gitignore ]; then
+              mv .gitignore "$tmp_dir/.gitignore"
+            fi
+            if [ "$had_convex_dir" -eq 0 ] && [ -e .convex ]; then
+              mv .convex "$tmp_dir/.convex"
+            fi
+          }
+          trap cleanup EXIT
+
+          env -u CONVEX_DEPLOYMENT CONVEX_AGENT_MODE=anonymous pnpm exec convex dev --once --typecheck disable --tail-logs disable
+          git diff --exit-code -- convex/_generated
+        working-directory: packages/backend
+        env:
+          CI: true
+
+      - name: Typecheck backend
+        run: pnpm exec tsc --noEmit -p convex
+        working-directory: packages/backend
+        env:
+          CI: true
+
+      - name: Test backend
+        run: pnpm exec vitest run
+        working-directory: packages/backend
         env:
           CI: true

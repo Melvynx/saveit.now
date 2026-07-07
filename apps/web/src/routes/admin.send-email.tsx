@@ -1,7 +1,8 @@
 import { EmailComposer } from "@/features/admin/email-composer";
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
   CardContent,
@@ -10,38 +11,27 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Mail } from "lucide-react";
-
-const getSendEmailData = createServerFn({ method: "GET" }).handler(async () => {
-  const [{ getUser }, { getMarketingEligibleUsersCount }] = await Promise.all([
-    import("@/lib/auth-session"),
-    import("@/lib/database/marketing-users"),
-  ]);
-  const user = await getUser();
-  if (!user) {
-    return { access: "signed-out" as const };
-  }
-
-  if (user.role !== "admin") {
-    return { access: "forbidden" as const };
-  }
-
-  return {
-    access: "granted" as const,
-    eligibleUsersCount: await getMarketingEligibleUsersCount(),
-  };
-});
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/send-email")({
-  loader: () => getSendEmailData(),
   component: SendEmailPage,
 });
 
 function SendEmailPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
+  const session = useSession();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const stats = useAuthedQuery(
+    api.admin.queries.getMarketingStats,
+    isAdmin ? {} : "skip",
+  );
 
-  const { eligibleUsersCount } = data;
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (!stats) return null;
+
+  const { eligibleUsersCount } = stats;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">

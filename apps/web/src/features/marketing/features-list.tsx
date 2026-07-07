@@ -2,13 +2,13 @@ import { Typography } from "@workspace/ui/components/typography";
 
 export const FeaturesList = () => {
   return (
-    <div className="ml-auto flex flex-1 flex-col gap-6">
+    <div className="ml-auto flex w-full min-w-0 max-w-xl flex-1 flex-col gap-6">
       <Typography variant="h2" className="font-bold">
         Never lose an important link again.
       </Typography>
       <Typography variant="lead">
-        Save it now - find it in seconds, whether it’s an article, video, post, or
-        tool.
+        Save it now - find it in seconds, whether it’s an article, video, post,
+        or tool.
       </Typography>
       <ul className="flex flex-col gap-4">
         <li className="flex items-start gap-2">
@@ -18,7 +18,7 @@ export const FeaturesList = () => {
               Instant capture
             </Typography>
             <Typography variant="muted">
-              Paste any URL and it's safely stored - no friction.
+              Paste any URL and it&apos;s safely stored - no friction.
             </Typography>
           </div>
         </li>

@@ -1,28 +1,14 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
-import { Bookmark } from "@workspace/database";
+import { useMutation } from "convex/react";
 import { BookOpen } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
-
-interface BookmarksPage {
-  bookmarks: Bookmark[];
-  hasMore: boolean;
-}
-
-interface BookmarksQueryData {
-  pages: BookmarksPage[];
-  pageParams: string[];
-}
-
-interface BookmarkQueryData {
-  bookmark: Bookmark;
-}
+import type { Id } from "@convex/_generated/dataModel";
 
 interface ReadButtonProps {
   bookmarkId: string;
@@ -41,54 +27,28 @@ export const ReadButton = ({
   className = "",
   showTooltip = true,
 }: ReadButtonProps) => {
-  const queryClient = useQueryClient();
+  const setRead = useMutation(api.bookmarks.mutations.setRead);
+  const [isPending, setIsPending] = useState(false);
 
-  const toggleReadAction = useMutation({
-    mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { read: !read },
-      }),
-    onError: (error) => {
-      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-      queryClient.invalidateQueries({ queryKey: ["bookmark", bookmarkId] });
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update read state",
-      );
-    },
-  });
+  const toggleRead = () => {
+    setIsPending(true);
+    void setRead({
+        id: bookmarkId as Id<"bookmarks">,
+        read: !read,
+      })
+      .catch((error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to update read state",
+        );
+      })
+      .finally(() => setIsPending(false));
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    queryClient.setQueriesData({ queryKey: ["bookmarks"] }, (oldData: BookmarksQueryData | undefined) => {
-      if (!oldData?.pages) return oldData;
-
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page) => ({
-          ...page,
-          bookmarks: page.bookmarks.map((bookmark) =>
-            bookmark.id === bookmarkId
-              ? { ...bookmark, read: !read }
-              : bookmark,
-          ),
-        })),
-      };
-    });
-
-    queryClient.setQueryData(["bookmark", bookmarkId], (oldData: BookmarkQueryData | undefined) => {
-      if (!oldData?.bookmark) return oldData;
-      return {
-        ...oldData,
-        bookmark: {
-          ...oldData.bookmark,
-          read: !read,
-        },
-      };
-    });
-
-    toggleReadAction.mutate();
+    toggleRead();
   };
 
   const button = (
@@ -97,7 +57,7 @@ export const ReadButton = ({
       size={size}
       className={cn(size === "icon" && "size-8", className)}
       onClick={handleClick}
-      disabled={toggleReadAction.isPending}
+      disabled={isPending}
     >
       <BookOpen
         className={cn(

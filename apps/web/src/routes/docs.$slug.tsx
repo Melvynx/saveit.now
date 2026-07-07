@@ -4,8 +4,12 @@ import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
+import {
+  getAllDocs,
+  getDocBySlug,
+  getGroupedDocs,
+} from "@/lib/mdx/docs-manager";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -33,38 +37,33 @@ function extractToc(content: string): TocItem[] {
   return toc;
 }
 
-const getDocData = createServerFn({ method: "GET" })
-  .validator((data: { slug: string }) => data)
-  .handler(async ({ data }) => {
-    const { getAllDocs, getDocBySlug, getGroupedDocs } = await import(
-      "@/lib/mdx/docs-manager"
-    );
-    const [doc, allDocs, groupedDocs] = await Promise.all([
-      getDocBySlug(data.slug),
-      getAllDocs(),
-      getGroupedDocs(),
-    ]);
-    const currentIndex = doc
-      ? allDocs.findIndex((item) => item.slug === doc.slug)
-      : -1;
+async function getDocData(data: { slug: string }) {
+  const [doc, allDocs, groupedDocs] = await Promise.all([
+    getDocBySlug(data.slug),
+    getAllDocs(),
+    getGroupedDocs(),
+  ]);
+  const currentIndex = doc
+    ? allDocs.findIndex((item) => item.slug === doc.slug)
+    : -1;
 
-    return {
-      doc,
-      groupedDocs,
-      html: doc ? await marked.parse(doc.content) : "",
-      toc: doc ? extractToc(doc.content) : [],
-      neighbours: {
-        previous: currentIndex > 0 ? allDocs[currentIndex - 1] : null,
-        next:
-          currentIndex >= 0 && currentIndex < allDocs.length - 1
-            ? allDocs[currentIndex + 1]
-            : null,
-      },
-    };
-  });
+  return {
+    doc,
+    groupedDocs,
+    html: doc ? await marked.parse(doc.content) : "",
+    toc: doc ? extractToc(doc.content) : [],
+    neighbours: {
+      previous: currentIndex > 0 ? allDocs[currentIndex - 1] : null,
+      next:
+        currentIndex >= 0 && currentIndex < allDocs.length - 1
+          ? allDocs[currentIndex + 1]
+        : null,
+    },
+  };
+}
 
 export const Route = createFileRoute("/docs/$slug")({
-  loader: ({ params }) => getDocData({ data: params }),
+  loader: ({ params }) => getDocData(params),
   component: DocPage,
 });
 
@@ -89,20 +88,24 @@ function DocPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex min-w-0 flex-1">
         <DocsSidebar groupedDocs={groupedDocs} />
         <main
           className={
-            hasApiExamples ? "flex-1 xl:pr-[400px]" : toc.length > 0 ? "flex-1 xl:pr-64" : "flex-1"
+            hasApiExamples
+              ? "min-w-0 flex-1 xl:pr-[400px]"
+              : toc.length > 0
+                ? "min-w-0 flex-1 xl:pr-64"
+                : "min-w-0 flex-1"
           }
         >
-          <div className="mx-auto px-6 py-8">
-            <article className="mx-auto flex max-w-prose flex-col gap-6">
+          <div className="mx-auto w-full min-w-0 max-w-full px-4 py-8 sm:px-6">
+            <article className="mx-auto flex w-full min-w-0 max-w-prose flex-col gap-6">
               <div className="flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start justify-between gap-4">
                   <Typography
                     variant="h1"
-                    className="flex-1 text-4xl font-bold tracking-tight"
+                    className="min-w-0 flex-1 text-4xl font-bold tracking-tight"
                   >
                     {doc.frontmatter.title}
                   </Typography>
@@ -119,7 +122,7 @@ function DocPage() {
               </div>
 
               <div
-                className="typography"
+                className="typography min-w-0 max-w-full overflow-hidden [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:overflow-y-hidden [&_pre]:whitespace-pre [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
 

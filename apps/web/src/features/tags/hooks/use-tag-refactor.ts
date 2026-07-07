@@ -1,40 +1,33 @@
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { useMutation } from "convex/react";
 
-const RefactorInputSchema = z.object({
-  refactors: z.array(
-    z.object({
-      bestTag: z.string(),
-      refactorTagIds: z.array(z.string()),
-      createBestTag: z.boolean().optional(),
-    }),
-  ),
-});
-
-export type RefactorInput = z.infer<typeof RefactorInputSchema>;
+export type RefactorInput = {
+  refactors: Array<{
+    bestTag: string;
+    refactorTagIds: string[];
+    createBestTag?: boolean;
+  }>;
+};
 
 export function useTagRefactor() {
-  const queryClient = useQueryClient();
+  const doRefactor = useMutation(api.tags.mutations.refactor);
 
-  const mutation = useMutation({
-    mutationFn: async (input: RefactorInput) =>
-      upfetch("/api/tags/refactor", {
-        method: "POST",
-        body: RefactorInputSchema.parse(input),
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["tags-management"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags-infinite"] });
-      void queryClient.invalidateQueries({ queryKey: ["tags"] });
-    },
-  });
+  const task = useAsyncTask((input: RefactorInput) =>
+    doRefactor({
+      refactors: input.refactors.map((r) => ({
+        bestTag: r.bestTag,
+        refactorTagIds: r.refactorTagIds as Id<"tags">[],
+        createBestTag: r.createBestTag,
+      })),
+    }),
+  );
 
   return {
-    refactorTags: mutation.mutateAsync,
-    isRefactoring: mutation.isPending,
-    result: mutation.data,
-    reset: mutation.reset,
+    refactorTags: task.run,
+    isRefactoring: task.isPending,
+    result: task.data,
+    reset: () => {},
   };
 }
-

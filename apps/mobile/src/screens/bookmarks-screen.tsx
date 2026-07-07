@@ -1,31 +1,27 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  Share2,
-  Globe,
-  Bookmark as BookmarkIcon,
-  X,
-} from "@tamagui/lucide-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { api } from "@convex/_generated/api";
+import { useAction, useMutation, usePaginatedQuery } from "convex/react";
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useMemo } from "react";
-import { Alert, FlatList, RefreshControl } from "react-native";
-import { Button, Text, XStack, YStack } from "tamagui";
-import { BookmarkItem } from "../components/bookmark-item";
-import { TypeFilterBadges } from "../components/type-filter-badges";
-import { TagSuggestions } from "../components/tag-suggestions";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  apiClient,
-  BookmarksResponse,
-  type Bookmark,
-  type BookmarkType,
-} from "../lib/api-client";
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-interface BookmarksScreenProps {
-  searchQuery?: string;
-}
+import { BookmarkItem } from "../components/bookmark-item";
+import { TagSuggestions } from "../components/tag-suggestions";
+import { TypeFilterBadges } from "../components/type-filter-badges";
+import { LoadingSpinner } from "../components/ui/loading";
+import { Text } from "../components/ui/text";
+import { useAuth } from "../contexts/AuthContext";
+import type { BookmarkType } from "../lib/api-client";
+import { useThemeColors } from "../lib/theme";
 
 function parseHashtagQuery(query: string): {
   cleanQuery: string;
@@ -39,14 +35,30 @@ function parseHashtagQuery(query: string): {
   return { cleanQuery: query, hashtagSearch: null };
 }
 
-export default function BookmarksScreen({
-  searchQuery = "",
-}: BookmarksScreenProps) {
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+// Convex bookmark shape mapped to the legacy Bookmark interface expected by components.
+function toBookmarkShape(b: any) {
+  return {
+    ...b,
+    id: b._id as string,
+    createdAt:
+      typeof b.createdAt === "number"
+        ? new Date(b.createdAt).toISOString()
+        : b.createdAt,
+  };
+}
+
+export default function BookmarksScreen() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<BookmarkType[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+  const [searchResults, setSearchResults] = useState<any[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const [headerHeight, setHeaderHeight] = useState(insets.top + 170);
 
   const { cleanQuery, hashtagSearch } = useMemo(
     () => parseHashtagQuery(searchQuery),
@@ -63,6 +75,60 @@ export default function BookmarksScreen({
     return () => clearTimeout(timer);
   }, [cleanQuery]);
 
+  // Paginated list query (used when no search query).
+  const {
+    results: convexBookmarks,
+    loadMore,
+    status,
+  } = usePaginatedQuery(
+    api.bookmarks.queries.list,
+    isAuthenticated && !debouncedSearchQuery
+      ? {
+          filter:
+            selectedTypes.length > 0
+              ? { types: selectedTypes as any[] }
+              : undefined,
+        }
+      : "skip",
+    { initialNumItems: 20 },
+  );
+
+  // Search action (used when query present).
+  const searchAction = useAction(api.search.actions.search);
+
+  const runSearch = useCallback(() => {
+    setIsSearching(true);
+    searchAction({
+      query: debouncedSearchQuery || undefined,
+      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      types: selectedTypes.length > 0 ? (selectedTypes as any[]) : undefined,
+      limit: 20,
+    })
+      .then((res) => {
+        setSearchResults(res.bookmarks ?? []);
+      })
+      .catch((err) => {
+        console.error("Search error:", err);
+        setSearchResults([]);
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+  }, [debouncedSearchQuery, selectedTags, selectedTypes, searchAction]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (!debouncedSearchQuery && selectedTags.length === 0) {
+      setSearchResults(null);
+      return;
+    }
+
+    runSearch();
+  }, [debouncedSearchQuery, selectedTags, isAuthenticated, runSearch]);
+
+  const updateBookmarkMutation = useMutation(api.bookmarks.mutations.update);
+
   const handleToggleType = (type: BookmarkType) => {
     setSelectedTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
@@ -73,102 +139,62 @@ export default function BookmarksScreen({
     if (!selectedTags.includes(tagName)) {
       setSelectedTags((prev) => [...prev, tagName]);
     }
+    setSearchQuery((prev) => prev.replace(/#\S*$/, "").trim());
   };
 
   const handleRemoveTag = (tagName: string) => {
     setSelectedTags((prev) => prev.filter((t) => t !== tagName));
   };
 
-  const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useInfiniteQuery({
-    queryKey: ["bookmarks", debouncedSearchQuery, selectedTypes, selectedTags],
-    queryFn: async ({ pageParam }) => {
-      return await apiClient.getBookmarks({
-        query: debouncedSearchQuery || undefined,
-        cursor: pageParam,
-        limit: 20,
-        types: selectedTypes.length > 0 ? selectedTypes : undefined,
-        tags: selectedTags.length > 0 ? selectedTags : undefined,
-      });
-    },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
-  });
+  const rawBookmarks = searchResults ?? convexBookmarks ?? [];
+  const bookmarks = rawBookmarks.map(toBookmarkShape);
 
-  const updateBookmarkMutation = useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: string;
-      updates: Partial<Bookmark>;
-    }) => {
-      return await apiClient.updateBookmark(id, updates);
-    },
-    onSuccess: (updatedBookmark) => {
-      // Update the bookmark in all pages of the cache
-      queryClient.setQueryData(
-        ["bookmarks", debouncedSearchQuery],
-        (oldData: { pages: BookmarksResponse[] }) => {
-          if (!oldData) return oldData;
+  const isLoading =
+    (status === "LoadingFirstPage" && !debouncedSearchQuery) || isSearching;
+  const isFetchingNextPage = status === "LoadingMore";
+  const hasNextPage = status === "CanLoadMore";
 
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              bookmarks: page.bookmarks.map((bookmark: Bookmark) =>
-                bookmark.id === updatedBookmark.id ? updatedBookmark : bookmark,
-              ),
-            })),
-          };
-        },
-      );
-    },
-    onError: () => {
-      Alert.alert("Error", "Failed to update bookmark");
-    },
-  });
-
-  const bookmarks = data?.pages.flatMap((page) => page.bookmarks) ?? [];
-
-  const handleRefresh = async () => {
-    await refetch();
-  };
+  const handleRefresh = useCallback(() => {
+    // Convex queries are reactive — refreshing is automatic.
+    // For search results we re-trigger the search action.
+    if (debouncedSearchQuery || selectedTags.length > 0) {
+      runSearch();
+    }
+  }, [debouncedSearchQuery, selectedTags, runSearch]);
 
   const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    if (hasNextPage && !isFetchingNextPage && !searchResults) {
+      loadMore(20);
     }
   };
 
-  const handleBookmarkPress = (bookmark: Bookmark) => {
+  const handleBookmarkPress = (bookmark: any) => {
     router.push(`/bookmark/${bookmark.id}`);
   };
 
-  const handleToggleStar = async (bookmark: Bookmark) => {
-    updateBookmarkMutation.mutate({
-      id: bookmark.id,
-      updates: { starred: !bookmark.starred },
-    });
+  const handleToggleStar = async (bookmark: any) => {
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id ?? bookmark.id,
+        patch: { starred: !bookmark.starred },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
-  const handleToggleRead = async (bookmark: Bookmark) => {
-    updateBookmarkMutation.mutate({
-      id: bookmark.id,
-      updates: { read: !bookmark.read },
-    });
+  const handleToggleRead = async (bookmark: any) => {
+    try {
+      await updateBookmarkMutation({
+        id: bookmark._id ?? bookmark.id,
+        patch: { read: !bookmark.read },
+      });
+    } catch {
+      Alert.alert("Error", "Failed to update bookmark");
+    }
   };
 
-  const renderBookmark = ({ item }: { item: Bookmark }) => (
+  const renderBookmark = ({ item }: { item: any }) => (
     <BookmarkItem
       bookmark={item}
       onPress={() => handleBookmarkPress(item)}
@@ -177,159 +203,205 @@ export default function BookmarksScreen({
     />
   );
 
-  if (error) {
-    return (
-      <YStack
-        flex={1}
-        justifyContent="center"
-        alignItems="center"
-        backgroundColor="$background"
-        space="$4"
-      >
-        <Text color="$red10">Failed to load bookmarks</Text>
-        <Button onPress={() => refetch()} theme="blue">
-          Retry
-        </Button>
-      </YStack>
-    );
-  }
-
   return (
-    <YStack flex={1} paddingTop="$2">
-      <YStack gap="$2" paddingBottom="$2">
-        <TypeFilterBadges
-          selectedTypes={selectedTypes}
-          onToggleType={handleToggleType}
-        />
-        {selectedTags.length > 0 && (
-          <XStack gap="$2" paddingHorizontal="$4" flexWrap="wrap">
-            {selectedTags.map((tag) => (
-              <Button
-                key={tag}
-                size="$2"
-                paddingHorizontal="$3"
-                backgroundColor="$purple10"
-                borderRadius="$10"
-                pressStyle={{ opacity: 0.8 }}
-                onPress={() => handleRemoveTag(tag)}
-                iconAfter={<X size={12} color="white" />}
-              >
-                <Text fontSize="$2" fontWeight="500" color="white">
-                  #{tag}
-                </Text>
-              </Button>
-            ))}
-          </XStack>
-        )}
-        {showTagSuggestions && (
-          <TagSuggestions
-            searchText={hashtagSearch ?? ""}
-            selectedTags={selectedTags}
-            onSelectTag={handleSelectTag}
-          />
-        )}
-      </YStack>
+    <View className="flex-1 bg-background">
       {isLoading ? (
-        <YStack flex={1} justifyContent="center" alignItems="center">
-          <Text color="$gray10">Loading bookmarks...</Text>
-        </YStack>
+        <View className="flex-1 items-center justify-center">
+          <LoadingSpinner />
+        </View>
       ) : (
         <FlatList
           data={bookmarks}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id ?? item._id}
           renderItem={renderBookmark}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{
+            paddingTop: headerHeight + 4,
+            paddingHorizontal: 16,
+            paddingBottom: 85 + 24,
+            gap: 12,
+          }}
+          scrollIndicatorInsets={{ top: headerHeight, bottom: 85 }}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
+              refreshing={false}
               onRefresh={handleRefresh}
-              tintColor="#007AFF"
-              colors={["#007AFF"]}
+              progressViewOffset={headerHeight}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <YStack alignItems="center" padding="$4">
-                <Text color="$gray10">Loading more...</Text>
-              </YStack>
+              <View className="items-center py-4">
+                <LoadingSpinner size="small" />
+              </View>
             ) : null
           }
           ListEmptyComponent={
             debouncedSearchQuery ? (
-              <YStack alignItems="center" marginTop="$8" gap="$4">
-                <Text fontWeight="600" color="$gray10">
+              <View className="mt-16 items-center gap-2 px-6">
+                <Text
+                  variant="title"
+                  className="text-center text-[20px] leading-[26px]"
+                >
                   No bookmarks found
                 </Text>
-                <Text color="$gray8" textAlign="center">
+                <Text variant="subtitle" className="text-center">
                   Try a different search term
                 </Text>
-              </YStack>
+              </View>
             ) : (
-              <YStack alignItems="center" marginTop="$6" gap="$5" padding="$4">
-                <YStack
-                  backgroundColor="$backgroundHover"
-                  padding="$6"
-                  borderRadius="$6"
-                  alignItems="center"
-                  gap="$4"
-                  width="100%"
-                >
-                  <YStack
-                    backgroundColor="$primary"
-                    padding="$3"
-                    borderRadius="$4"
-                  >
-                    <BookmarkIcon size={32} color="white" />
-                  </YStack>
-                  <Text fontSize="$6" fontWeight="600" textAlign="center">
+              <View className="mt-6 gap-5">
+                <View className="items-center gap-4 rounded-2xl bg-secondary px-6 py-8">
+                  <View className="h-14 w-14 items-center justify-center rounded-2xl bg-primary">
+                    <Ionicons
+                      name="bookmark"
+                      size={26}
+                      color={colors.primaryForeground}
+                    />
+                  </View>
+                  <Text className="text-center font-sans-bold text-[20px] text-foreground">
                     Add your first bookmark
                   </Text>
-                  <Text color="$gray10" textAlign="center" maxWidth={280}>
+                  <Text className="max-w-[280px] text-center font-sans text-[14px] text-muted-foreground">
                     Share any link from your browser or apps to save it here
                   </Text>
-                </YStack>
+                </View>
 
-                <YStack gap="$3" width="100%">
-                  <Text
-                    fontSize="$3"
-                    fontWeight="600"
-                    color="$gray11"
-                    textAlign="center"
-                  >
-                    How to save bookmarks:
+                <View className="gap-2.5">
+                  <Text variant="section-label" className="mb-1 text-center">
+                    How to save bookmarks
                   </Text>
-                  <XStack gap="$3" alignItems="center">
-                    <YStack
-                      backgroundColor="$gray4"
-                      padding="$2"
-                      borderRadius="$3"
-                    >
-                      <Share2 size={18} color="$gray11" />
-                    </YStack>
-                    <Text color="$gray10" flex={1} fontSize="$3">
+                  <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-secondary">
+                      <Ionicons
+                        name="share-outline"
+                        size={18}
+                        color={colors.foreground}
+                      />
+                    </View>
+                    <Text className="flex-1 font-sans text-[13px] text-muted-foreground">
                       Tap the share button on any webpage or content
                     </Text>
-                  </XStack>
-                  <XStack gap="$3" alignItems="center">
-                    <YStack
-                      backgroundColor="$gray4"
-                      padding="$2"
-                      borderRadius="$3"
-                    >
-                      <Globe size={18} color="$gray11" />
-                    </YStack>
-                    <Text color="$gray10" flex={1} fontSize="$3">
+                  </View>
+                  <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-secondary">
+                      <Ionicons
+                        name="globe-outline"
+                        size={18}
+                        color={colors.foreground}
+                      />
+                    </View>
+                    <Text className="flex-1 font-sans text-[13px] text-muted-foreground">
                       Use our browser extension on desktop
                     </Text>
-                  </XStack>
-                </YStack>
-              </YStack>
+                  </View>
+                </View>
+              </View>
             )
           }
         />
       )}
-    </YStack>
+
+      {/* Floating glass header — list scrolls underneath */}
+      <View
+        className="absolute left-0 right-0 top-0 z-10"
+        onLayout={(e) =>
+          setHeaderHeight(Math.round(e.nativeEvent.layout.height))
+        }
+      >
+        <BlurView
+          intensity={50}
+          tint={colors.isDark ? "dark" : "light"}
+          style={{
+            paddingTop: insets.top + 8,
+            backgroundColor: colors.isDark
+              ? "rgba(10, 10, 10, 0.35)"
+              : "rgba(255, 255, 255, 0.35)",
+          }}
+        >
+          <View className="px-4 pb-3 pt-2">
+            <Text variant="title" className="mb-4">
+              Bookmarks
+            </Text>
+            <View className="flex-row items-center gap-2 rounded-xl bg-secondary/80 px-4">
+              <Ionicons
+                name="search"
+                size={18}
+                color={colors.mutedForeground}
+              />
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search bookmarks..."
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+                style={{
+                  minHeight: 44,
+                  flex: 1,
+                  color: colors.foreground,
+                  fontFamily: "DMSans_400Regular",
+                  fontSize: 15,
+                  lineHeight: 20,
+                  letterSpacing: 0,
+                }}
+              />
+              {searchQuery.length > 0 ? (
+                <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={colors.mutedForeground}
+                  />
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+
+          <View className="gap-2 pb-3">
+            <TypeFilterBadges
+              selectedTypes={selectedTypes}
+              onToggleType={handleToggleType}
+            />
+            {selectedTags.length > 0 && (
+              <View className="flex-row flex-wrap gap-2 px-4">
+                {selectedTags.map((tag) => (
+                  <Pressable
+                    key={tag}
+                    onPress={() => handleRemoveTag(tag)}
+                    className="flex-row items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 active:opacity-80"
+                  >
+                    <Text className="font-sans-semibold text-[13px] text-primary-foreground">
+                      #{tag}
+                    </Text>
+                    <Ionicons
+                      name="close"
+                      size={13}
+                      color={colors.primaryForeground}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            {showTagSuggestions && (
+              <TagSuggestions
+                searchText={hashtagSearch ?? ""}
+                selectedTags={selectedTags}
+                onSelectTag={handleSelectTag}
+              />
+            )}
+          </View>
+
+          <View className="h-px bg-border/50" />
+        </BlurView>
+      </View>
+    </View>
   );
 }

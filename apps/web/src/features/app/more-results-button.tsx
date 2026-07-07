@@ -1,5 +1,4 @@
 import { LoadingButton } from "@/features/form/loading-button";
-import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Card,
@@ -9,7 +8,6 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Plus } from "lucide-react";
-import { usePrefetchBookmarks } from "./use-bookmarks";
 
 export function MoreResultsButton() {
   const navigate = useNavigate();
@@ -21,28 +19,21 @@ export function MoreResultsButton() {
     String(searchParams.matchingDistance ?? "0.1"),
   );
   const query = searchParams.query;
-  const prefetch = usePrefetchBookmarks();
-
-  const mutation = useMutation({
-    mutationFn: async ({ n }: { n: number; prefetchOnly?: boolean }) => {
-      await prefetch(query ?? "", n);
-    },
-    onSuccess: (_, params) => {
-      if (params.prefetchOnly) return;
-      void navigate({
-        to: "/app",
-        search: (previous) =>
-          ({ ...previous, matchingDistance: params.n.toFixed(1) }) as any,
-      });
-    },
-  });
 
   if (!query || query.trim() === "") {
     return null;
   }
 
   const handleMoreResults = () => {
-    mutation.mutate({ n: currentMatchingDistance + 0.1 });
+    const nextMatchingDistance = currentMatchingDistance + 0.1;
+    void navigate({
+      to: "/app",
+      search: (previous) =>
+        ({
+          ...previous,
+          matchingDistance: nextMatchingDistance.toFixed(1),
+        }) as never,
+    });
   };
 
   return (
@@ -62,12 +53,6 @@ export function MoreResultsButton() {
           size="sm"
           className="w-full"
           onClick={handleMoreResults}
-          onMouseEnter={() =>
-            mutation.mutate({
-              n: currentMatchingDistance + 0.1,
-              prefetchOnly: true,
-            })
-          }
         >
           Increase matching distance
         </LoadingButton>

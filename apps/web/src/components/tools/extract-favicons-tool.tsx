@@ -2,8 +2,8 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
+import { callConvexTool } from "@/lib/tools/convex-tool-client";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -25,24 +25,15 @@ export function ExtractFaviconsTool() {
   const [url, setUrl] = useState("");
   const [downloadingAll, setDownloadingAll] = useState(false);
 
-  const mutation = useMutation({
-    mutationFn: async (urlToFetch: string) => {
-      return upfetch("/api/tools/extract-favicons", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        schema: extractFaviconsResponseSchema,
-        body: JSON.stringify({ url: urlToFetch }),
-      });
-    },
-  });
+  const mutation = useAsyncTask(async (urlToFetch: string) =>
+    callConvexTool("extract-favicons", urlToFetch, extractFaviconsResponseSchema),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    mutation.mutate(url.trim());
+    void mutation.run(url.trim());
   };
 
   const handleDownloadAll = async () => {
@@ -150,21 +141,21 @@ export function ExtractFaviconsTool() {
                     .map((favicon, index) => {
                       const isRecommended =
                         favicon.url ===
-                          mutation.data.metadata.standardFavicon?.url ||
+                          mutation.data!.metadata.standardFavicon?.url ||
                         favicon.url ===
-                          mutation.data.metadata.largestIcon?.url ||
+                          mutation.data!.metadata.largestIcon?.url ||
                         favicon.url ===
-                          mutation.data.metadata.appleTouchIcon?.url ||
+                          mutation.data!.metadata.appleTouchIcon?.url ||
                         favicon.url ===
-                          mutation.data.metadata.androidIcon?.url ||
-                        favicon.url === mutation.data.metadata.svgIcon?.url;
+                          mutation.data!.metadata.androidIcon?.url ||
+                        favicon.url === mutation.data!.metadata.svgIcon?.url;
 
                       return (
                         <FaviconCard
                           key={`${favicon.url}-${index}`}
                           favicon={favicon}
                           index={index}
-                          siteUrl={mutation.data.url}
+                          siteUrl={mutation.data!.url}
                           isRecommended={isRecommended}
                         />
                       );

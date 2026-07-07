@@ -3,14 +3,14 @@ import { Card } from "@workspace/ui/components/card";
 import { Image } from "lucide-react";
 import { useState } from "react";
 
-import { BookmarkViewType } from "@/lib/database/get-bookmark";
+import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import useMeasure from "react-use-measure";
 import { BookmarkSectionTitle } from "./bookmark-content-view";
 import { SafeTweet } from "./safe-tweet";
 import { ScreenshotUploader } from "./screenshot-uploader";
 
 interface BookmarkPreviewProps {
-  bookmark: BookmarkViewType;
+  bookmark: BookmarkDetailDTO;
   isPublic?: boolean;
 }
 

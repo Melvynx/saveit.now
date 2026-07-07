@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkStatus, BookmarkType } from "@workspace/database";
+import { BookmarkStatus, BookmarkType } from "@/lib/bookmark-types";
 import { CardContent } from "@workspace/ui/components/card";
 import { ReactNode } from "react";
 

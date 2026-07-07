@@ -1,6 +1,7 @@
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
   CardContent,
@@ -18,40 +19,25 @@ import {
 } from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
 import { MessageSquareIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-
-const getAdminConversationsData = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const [{ getUser }, { getConversationsWithLikes }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/conversations"),
-    ]);
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    return {
-      access: "granted" as const,
-      conversations: await getConversationsWithLikes(),
-    };
-  },
-);
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/conversations")({
-  loader: () => getAdminConversationsData(),
   component: AdminConversationsPage,
 });
 
 function AdminConversationsPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
+  const session = useSession();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const conversations = useAuthedQuery(
+    api.admin.queries.listConversations,
+    isAdmin ? {} : "skip",
+  );
 
-  const { conversations } = data;
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (!conversations) return null;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -71,7 +57,7 @@ function AdminConversationsPage() {
         </CardHeader>
         <CardContent>
           {conversations.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
+            <p className="text-muted-foreground py-8 text-center">
               No conversations with feedback yet
             </p>
           ) : (
@@ -90,7 +76,7 @@ function AdminConversationsPage() {
                     <TableCell>
                       <a
                         href={`/admin/conversations/${conversation.id}`}
-                        className="hover:underline font-medium"
+                        className="font-medium hover:underline"
                       >
                         {conversation.title || "Untitled"}
                       </a>

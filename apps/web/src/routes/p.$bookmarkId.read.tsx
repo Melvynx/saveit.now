@@ -1,34 +1,33 @@
 import { ArticleReader } from "@/features/public-bookmarks/article-reader";
-import { getMarkdownContent } from "@/lib/bookmark-content";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { useQuery } from "convex/react";
 
-const getReadArticleData = createServerFn({ method: "GET" })
-  .validator((data: { bookmarkId: string }) => data)
-  .handler(async ({ data }) => {
-    const [{ getUser }, { getPublicBookmark }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/get-bookmark"),
-    ]);
-    const bookmark = await getPublicBookmark(data.bookmarkId);
-    const user = await getUser();
-
-    return { bookmark, user };
-  });
+/** Extract article markdown from a bookmark's metadata (client-safe). */
+function getMarkdownContent(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const m = metadata as Record<string, unknown>;
+  const content = m.articleContent ?? m.markdown ?? m.content;
+  return typeof content === "string" && content.trim() ? content : null;
+}
 
 export const Route = createFileRoute("/p/$bookmarkId/read")({
-  loader: ({ params }) => getReadArticleData({ data: params }),
   component: ReadArticlePage,
 });
 
 function ReadArticlePage() {
-  const { bookmark, user } = Route.useLoaderData();
   const { bookmarkId } = Route.useParams();
+  const session = useSession();
+  const bookmark = useQuery(api.bookmarks.queries.getPublicByIdOrLegacyId, {
+    id: bookmarkId,
+  });
 
+  if (bookmark === undefined) return null;
   if (!bookmark || bookmark.type !== "ARTICLE") {
     return (
       <div className="container mx-auto max-w-4xl p-6">
@@ -46,7 +45,7 @@ function ReadArticlePage() {
       <div className="container mx-auto max-w-4xl p-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" size="sm" asChild>
-            <a href={`/p/${bookmarkId}`}>
+            <a href={`/p/${bookmark.id}`}>
               <ArrowLeft className="size-4 mr-2" />
               Back to Bookmark
             </a>
@@ -76,7 +75,7 @@ function ReadArticlePage() {
     <div className="container mx-auto max-w-4xl p-6">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" size="sm" asChild>
-          <a href={`/p/${bookmarkId}`}>
+          <a href={`/p/${bookmark.id}`}>
             <ArrowLeft className="size-4 mr-2" />
             Back to Bookmark
           </a>
@@ -103,7 +102,7 @@ function ReadArticlePage() {
         <ArticleReader content={markdownContent} />
       </div>
 
-      {!user && (
+      {!session.data?.user && (
         <Card className="p-6 text-center">
           <Typography variant="h3" className="mb-2">
             Discover More Articles

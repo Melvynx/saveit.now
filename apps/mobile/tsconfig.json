@@ -1,16 +1,32 @@
 {
-  "extends": ["expo/tsconfig.base", "@workspace/typescript-config/base.json"],
+  "extends": [
+    "expo/tsconfig.base",
+    "@workspace/typescript-config/base.json"
+  ],
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
+    // App (Metro bundler), not a library: use bundler resolution so the
+    // @convex/* alias into the Convex backend source resolves like Expo expects,
+    // and skip declaration emit (avoids serializing huge Better Auth types).
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@convex/*": [
+        "../../packages/backend/convex/*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ]
 }

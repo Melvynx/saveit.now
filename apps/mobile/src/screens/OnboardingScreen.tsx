@@ -1,138 +1,110 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { Bookmark, Globe, Search, Sparkles } from "@tamagui/lucide-icons";
-import { Image, useColorScheme } from "react-native";
-import { Button, Text, XStack, YStack } from "tamagui";
+import { Ionicons } from "@expo/vector-icons";
+import { Image, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Button } from "../components/ui/button";
+import { Text } from "../components/ui/text";
+import { useThemeColors } from "../lib/theme";
+import onboardingLogo from "../../assets/images/splash-icon.png";
 
 interface OnboardingScreenProps {
   onSignIn: () => void;
 }
 
-const features = [
+const features: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+}[] = [
   {
-    icon: Bookmark,
+    icon: "bookmark-outline",
     title: "Save Anything",
     description: "Articles, videos, tweets - save any link instantly",
-    color: "#f49f1e",
-    bgColor: "rgba(244, 159, 30, 0.2)",
   },
   {
-    icon: Sparkles,
+    icon: "sparkles-outline",
     title: "AI-Powered",
     description: "Auto-summarize and tag your bookmarks",
-    color: "#8b5cf6",
-    bgColor: "rgba(139, 92, 246, 0.2)",
   },
   {
-    icon: Search,
+    icon: "search-outline",
     title: "Find Fast",
     description: "Search across all your saved content",
-    color: "#06b6d4",
-    bgColor: "rgba(6, 182, 212, 0.2)",
   },
   {
-    icon: Globe,
+    icon: "globe-outline",
     title: "Access Anywhere",
     description: "Browser extension, mobile app, and web",
-    color: "#10b981",
-    bgColor: "rgba(16, 185, 129, 0.2)",
   },
 ];
 
 export default function OnboardingScreen({ onSignIn }: OnboardingScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
-    <LinearGradient
-      colors={
-        isDark
-          ? ["#1a1a2e", "#16213e", "#0f0f23"]
-          : ["#fef7ed", "#fff1e6", "#ffe8d6"]
-      }
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
+      className="flex-1 bg-background px-6"
+      style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16 }}
     >
-      <YStack flex={1} padding="$5" paddingTop="$10">
-        <YStack flex={1} alignItems="center" justifyContent="center" gap="$6">
-          <YStack alignItems="center" gap="$3">
-            <Image
-              source={{ uri: "https://saveit.now/images/logo.png" }}
-              style={{ width: 180, height: 72 }}
-              resizeMode="contain"
-            />
-            <Text
-              fontSize="$5"
-              color={isDark ? "#e0e0e0" : "#555555"}
-              textAlign="center"
-              maxWidth={280}
-            >
-              Your personal bookmark manager with AI superpowers
-            </Text>
-          </YStack>
-
-          <YStack gap="$3" width="100%" maxWidth={340}>
-            {features.map((feature, index) => (
-              <XStack
-                key={index}
-                gap="$3"
-                alignItems="center"
-                backgroundColor={
-                  isDark ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.95)"
-                }
-                padding="$3.5"
-                borderRadius="$4"
-                shadowColor={isDark ? "transparent" : "rgba(0,0,0,0.08)"}
-                shadowOffset={{ width: 0, height: 2 }}
-                shadowOpacity={1}
-                shadowRadius={8}
-                elevation={3}
-              >
-                <YStack
-                  backgroundColor={feature.bgColor}
-                  padding="$2.5"
-                  borderRadius="$3"
-                >
-                  <feature.icon size={24} color={feature.color} />
-                </YStack>
-                <YStack flex={1} gap="$1">
-                  <Text
-                    fontWeight="700"
-                    fontSize="$4"
-                    color={isDark ? "#ffffff" : "#1a1a1a"}
-                  >
-                    {feature.title}
-                  </Text>
-                  <Text fontSize="$3" color={isDark ? "#a0a0a0" : "#666666"}>
-                    {feature.description}
-                  </Text>
-                </YStack>
-              </XStack>
-            ))}
-          </YStack>
-        </YStack>
-
-        <YStack gap="$3" paddingBottom="$6">
-          <Button
-            size="$5"
-            backgroundColor="#f49f1e"
-            pressStyle={{ backgroundColor: "#e08f15", scale: 0.98 }}
-            animation="quick"
-            onPress={onSignIn}
-          >
-            <Text color="#000000" fontWeight="700" fontSize="$5">
-              Sign In with Email
-            </Text>
-          </Button>
+      <View className="flex-1 justify-center">
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(100)}
+          className="mb-10 items-center"
+        >
+          <Image
+            source={onboardingLogo}
+            className="mb-5 h-16 w-16 rounded-2xl"
+            resizeMode="contain"
+          />
           <Text
-            fontSize="$2"
-            color={isDark ? "#888888" : "#777777"}
-            textAlign="center"
+            variant="title"
+            className="mb-2 text-center text-[32px] leading-[38px]"
           >
-            {"No password needed - we'll send you a code"}
+            SaveIt.now
           </Text>
-        </YStack>
-      </YStack>
-    </LinearGradient>
+          <Text variant="subtitle" className="max-w-[280px] text-center">
+            Your personal bookmark manager with AI superpowers
+          </Text>
+        </Animated.View>
+
+        <View className="gap-3">
+          {features.map((feature, index) => (
+            <Animated.View
+              key={feature.title}
+              entering={FadeInDown.duration(400).delay(200 + index * 100)}
+              className="flex-row items-center gap-4 rounded-2xl bg-secondary px-5 py-3.5"
+            >
+              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-background">
+                <Ionicons
+                  name={feature.icon}
+                  size={22}
+                  color={colors.foreground}
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="font-sans-bold text-[15px] text-foreground">
+                  {feature.title}
+                </Text>
+                <Text className="font-sans text-[13px] text-muted-foreground">
+                  {feature.description}
+                </Text>
+              </View>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(650)}
+        className="gap-3"
+      >
+        <Button onPress={onSignIn}>Sign In with Email</Button>
+        <Text className="text-center font-sans text-[12px] text-muted-foreground">
+          {"No password needed - we'll send you a code"}
+        </Text>
+      </Animated.View>
+    </View>
   );
 }

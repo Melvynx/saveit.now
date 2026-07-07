@@ -2,7 +2,7 @@
 
 import { AnimateChangeInHeight } from "@/components/animate-change-in-height";
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
-import { TagType } from "@workspace/database";
+import { TagType } from "@/lib/bookmark-types";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Checkbox } from "@workspace/ui/components/checkbox";
@@ -85,12 +85,10 @@ export function TagSelector({
     
     // If found in fetched data, use that; otherwise create a minimal object
     return fetchedTag || {
+      _id: tagId,
       id: tagId,
       name: tagName,
       type: tagType as TagType,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: "",
     };
   });
 
@@ -104,16 +102,11 @@ export function TagSelector({
   );
 
   const handleTagSelect = (tagName: string) => {
-    console.log("handleTagSelect called with:", tagName);
-    console.log("Current selectedTags:", selectedTags);
-
     const isSelected = selectedTags.some((selectedTag) =>
       typeof selectedTag === "string"
         ? selectedTag === tagName
         : selectedTag.name === tagName,
     );
-
-    console.log("isSelected:", isSelected);
 
     const newTagNames = isSelected
       ? selectedTags
@@ -126,7 +119,6 @@ export function TagSelector({
           tagName,
         ];
 
-    console.log("newTagNames:", newTagNames);
     onTagsChange(newTagNames);
   };
 
@@ -238,7 +230,7 @@ export function TagSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild nativeButton={false}>
         <div
           className={cn(
             "border-input focus-within:ring-ring shadow-xs flex min-h-9 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-within:ring-1",

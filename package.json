@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/postinstall-codegen.mjs",
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:port": "bash scripts/dev.sh",
     "start-all": "bash scripts/start-all.sh",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "convex:dev": "pnpm --filter @workspace/backend dev",
     "convex:deploy": "pnpm --filter @workspace/backend deploy",
     "convex:dashboard": "pnpm --filter @workspace/backend dashboard",
-    "vercel-build": "turbo run db:generate && turbo run db:deploy && turbo run build:web",
+    "vercel-build": "node scripts/vercel-build.mjs",
     "dev:mobile": "turbo dev:mobile",
     "build:mobile": "turbo build:mobile",
     "build:mobile:dev": "turbo build:mobile:dev"
@@ -25,6 +27,9 @@
     "turbo": "^2.4.2",
     "typescript": "5.7.3"
   },
+  "optionalDependencies": {
+    "lightningcss-darwin-arm64": "1.32.0"
+  },
   "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": ">=20"
@@ -32,6 +37,7 @@
   "pnpm": {
     "overrides": {
       "@opentelemetry/instrumentation": "0.213.0",
+      "@saveit/mobile>@types/react": "19.1.17",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3"
     }

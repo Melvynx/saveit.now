@@ -1,42 +1,118 @@
-import { X } from "@tamagui/lucide-icons";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  useColorScheme,
+  ScrollView,
+  StyleSheet,
+  View,
+  type KeyboardEvent,
 } from "react-native";
-import { Button, H3, Input, Text, XStack, YStack } from "tamagui";
+import Animated, { FadeInDown } from "react-native-reanimated";
+
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Text } from "../components/ui/text";
+import { useThemeColors } from "../lib/theme";
 import { useAuth } from "../contexts/AuthContext";
+
+export type SignInStep = "email" | "otp";
 
 interface SignInScreenProps {
   onClose?: () => void;
+  onVerified?: () => void;
+  closeOnVerified?: boolean;
+  keyboardAvoidingEnabled?: boolean;
+  email: string;
+  onEmailChange: (email: string) => void;
+  otp: string;
+  onOtpChange: (otp: string) => void;
+  step: SignInStep;
+  onStepChange: (step: SignInStep) => void;
 }
 
-export default function SignInScreen({ onClose }: SignInScreenProps) {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"email" | "otp">("email");
+export default function SignInScreen({
+  onClose,
+  onVerified,
+  closeOnVerified = true,
+  keyboardAvoidingEnabled = true,
+  email,
+  onEmailChange,
+  otp,
+  onOtpChange,
+  step,
+  onStepChange,
+}: SignInScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { sendOTP, verifyOTP } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const [socialLoading, setSocialLoading] = useState<
+    "apple" | "google" | "github" | null
+  >(null);
+  const [observedKeyboardInset, setObservedKeyboardInset] = useState(0);
+  const { sendOTP, verifyOTP, signInWithSocial, signInWithApple } = useAuth();
+  const colors = useThemeColors();
+  const normalizedKeyboardBottomInset = Math.max(0, observedKeyboardInset);
+  const hasExplicitKeyboardInset = normalizedKeyboardBottomInset > 0;
+  const shouldUseIOSScrollInsets =
+    Platform.OS === "ios" &&
+    (keyboardAvoidingEnabled || hasExplicitKeyboardInset);
+  const shouldUseKeyboardAvoidingView =
+    keyboardAvoidingEnabled && Platform.OS !== "ios";
+
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    setSocialLoading(provider);
+    try {
+      await signInWithSocial(provider);
+      onVerified?.();
+      if (closeOnVerified) {
+        onClose?.();
+      }
+    } catch {
+      Alert.alert(
+        "Sign in failed",
+        `Could not sign in with ${
+          provider === "google" ? "Google" : "GitHub"
+        }. Please try again.`,
+      );
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setSocialLoading("apple");
+    try {
+      await signInWithApple();
+    } catch {
+      Alert.alert(
+        "Sign in failed",
+        "Could not sign in with Apple. Please try again.",
+      );
+    } finally {
+      setSocialLoading(null);
+    }
+  };
 
   const handleSendOTP = async () => {
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       Alert.alert("Error", "Please enter your email address");
       return;
     }
 
     setIsLoading(true);
     try {
-      await sendOTP(email.trim());
-      setStep("otp");
-    } catch (error) {
+      await sendOTP(normalizedEmail);
+      onEmailChange(normalizedEmail);
+      onOtpChange("");
+      onStepChange("otp");
+    } catch {
       Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to send OTP",
+        "Could not send code",
+        "Check the email address and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -51,12 +127,15 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
 
     setIsLoading(true);
     try {
-      await verifyOTP(email.trim(), otp.trim());
-      onClose?.();
-    } catch (error) {
+      await verifyOTP(email.trim().toLowerCase(), otp.trim());
+      onVerified?.();
+      if (closeOnVerified) {
+        onClose?.();
+      }
+    } catch {
       Alert.alert(
-        "Verification Failed",
-        error instanceof Error ? error.message : "Invalid code",
+        "Verification failed",
+        "The code is invalid or expired. Request a new code and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -64,157 +143,229 @@ export default function SignInScreen({ onClose }: SignInScreenProps) {
   };
 
   const handleBackToEmail = () => {
-    setStep("email");
-    setOtp("");
+    onStepChange("email");
+    onOtpChange("");
   };
+
+  useEffect(() => {
+    if (keyboardAvoidingEnabled) {
+      setObservedKeyboardInset(0);
+      return;
+    }
+
+    const updateFromMetrics = () => {
+      const metrics = Keyboard.metrics();
+      setObservedKeyboardInset(metrics?.height ? metrics.height + 16 : 0);
+    };
+    const handleKeyboardShow = (event: KeyboardEvent) => {
+      setObservedKeyboardInset(event.endCoordinates.height + 16);
+    };
+    const handleKeyboardHide = () => {
+      setObservedKeyboardInset(0);
+    };
+
+    updateFromMetrics();
+
+    const subscriptions =
+      Platform.OS === "ios"
+        ? [
+            Keyboard.addListener("keyboardWillShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardDidShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardWillHide", handleKeyboardHide),
+            Keyboard.addListener("keyboardDidHide", handleKeyboardHide),
+          ]
+        : [
+            Keyboard.addListener("keyboardDidShow", handleKeyboardShow),
+            Keyboard.addListener("keyboardDidHide", handleKeyboardHide),
+          ];
+
+    return () => {
+      subscriptions.forEach((subscription) => subscription.remove());
+    };
+  }, [keyboardAvoidingEnabled]);
 
   return (
     <KeyboardAvoidingView
+      enabled={shouldUseKeyboardAvoidingView}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+      style={styles.keyboardAvoidingView}
     >
-      <YStack
-        flex={1}
-        backgroundColor={isDark ? "#1a1a1a" : "#ffffff"}
-        borderTopLeftRadius={24}
-        borderTopRightRadius={24}
-        padding="$5"
-        paddingTop="$3"
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={[
+          styles.contentContainer,
+          hasExplicitKeyboardInset
+            ? {
+                flexGrow: 0,
+                paddingBottom: 32 + normalizedKeyboardBottomInset,
+              }
+            : null,
+        ]}
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={
+          shouldUseIOSScrollInsets && !hasExplicitKeyboardInset
+        }
+        showsVerticalScrollIndicator={false}
       >
-        <XStack
-          justifyContent="space-between"
-          alignItems="center"
-          marginBottom="$4"
-        >
-          <YStack width={40} />
-          <YStack
-            width={40}
-            height={5}
-            backgroundColor={isDark ? "#444" : "#ddd"}
-            borderRadius={3}
-          />
+        <View className="mb-5 flex-row items-center justify-between">
+          <View className="w-10" />
+          <View className="h-[5px] w-10 rounded-full bg-border" />
           {onClose ? (
             <Pressable onPress={onClose} hitSlop={20}>
-              <YStack
-                width={40}
-                height={40}
-                alignItems="center"
-                justifyContent="center"
-                borderRadius={20}
-                backgroundColor={isDark ? "#333" : "#f0f0f0"}
-              >
-                <X size={20} color={isDark ? "#fff" : "#333"} />
-              </YStack>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                <Ionicons name="close" size={20} color={colors.foreground} />
+              </View>
             </Pressable>
           ) : (
-            <YStack width={40} />
+            <View className="w-10" />
           )}
-        </XStack>
+        </View>
 
-        <YStack flex={1} justifyContent="flex-start" gap="$5" paddingTop="$2">
-          {step === "otp" ? (
-            <>
-              <YStack gap="$2">
-                <H3 color={isDark ? "#ffffff" : "#1a1a1a"}>Check your email</H3>
-                <Text color={isDark ? "#a0a0a0" : "#666666"}>
-                  {"We sent a 6-digit code to "}
-                  <Text fontWeight="600" color={isDark ? "#ffffff" : "#1a1a1a"}>
-                    {email}
-                  </Text>
+        {step === "otp" ? (
+          <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
+            <View className="gap-2">
+              <Text variant="title" className="text-[26px] leading-[32px]">
+                Check your email
+              </Text>
+              <Text variant="subtitle">
+                {"We sent a 6-digit code to "}
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  {email}
                 </Text>
-              </YStack>
+              </Text>
+            </View>
 
-              <YStack gap="$4">
-                <Input
-                  placeholder="000000"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                  textAlign="center"
-                  fontSize="$8"
-                  letterSpacing={12}
-                  size="$6"
-                  autoFocus
-                  backgroundColor={isDark ? "#2a2a2a" : "#f5f5f5"}
-                  borderColor={isDark ? "#444" : "#e0e0e0"}
-                  color={isDark ? "#ffffff" : "#1a1a1a"}
-                />
+            <View className="gap-3">
+              <Input
+                placeholder="000000"
+                value={otp}
+                onChangeText={onOtpChange}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoComplete="one-time-code"
+                autoFocus
+                variant="filled"
+                className="h-[56px] rounded-full text-center font-sans-bold text-[24px] tracking-[8px]"
+              />
 
-                <Button
-                  size="$5"
-                  backgroundColor="#f49f1e"
-                  pressStyle={{ backgroundColor: "#e08f15", scale: 0.98 }}
-                  animation="quick"
-                  onPress={handleVerifyOTP}
-                  disabled={isLoading || otp.length < 6}
-                  opacity={isLoading || otp.length < 6 ? 0.6 : 1}
-                >
-                  <Text color="#000000" fontWeight="700" fontSize="$5">
-                    {isLoading ? "Verifying..." : "Verify Code"}
-                  </Text>
-                </Button>
+              <Button
+                onPress={handleVerifyOTP}
+                disabled={otp.length < 6}
+                loading={isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify Code"}
+              </Button>
 
-                <Button
-                  size="$4"
-                  backgroundColor="transparent"
-                  borderWidth={1}
-                  borderColor={isDark ? "#444" : "#ddd"}
-                  pressStyle={{ backgroundColor: isDark ? "#333" : "#f5f5f5" }}
-                  onPress={handleBackToEmail}
-                >
-                  <Text color={isDark ? "#ffffff" : "#333"} fontWeight="600">
-                    Use different email
-                  </Text>
-                </Button>
-              </YStack>
-            </>
-          ) : (
-            <>
-              <YStack gap="$2">
-                <H3 color={isDark ? "#ffffff" : "#1a1a1a"}>
-                  Sign in to SaveIt
-                </H3>
-                <Text color={isDark ? "#a0a0a0" : "#666666"}>
-                  {"Enter your email and we'll send you a verification code"}
+              <Button variant="ghost" onPress={handleBackToEmail}>
+                <Text className="font-sans-semibold text-[15px] text-muted-foreground">
+                  Use different email
                 </Text>
-              </YStack>
+              </Button>
+            </View>
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
+            <View className="gap-2">
+              <Text variant="title" className="text-[26px] leading-[32px]">
+                Sign in to SaveIt
+              </Text>
+              <Text variant="subtitle">
+                {"Enter your email and we'll send you a verification code"}
+              </Text>
+            </View>
 
-              <YStack gap="$4">
-                <Input
-                  placeholder="you@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  size="$5"
-                  autoFocus
-                  backgroundColor={isDark ? "#2a2a2a" : "#f5f5f5"}
-                  borderColor={isDark ? "#444" : "#e0e0e0"}
-                  color={isDark ? "#ffffff" : "#1a1a1a"}
-                />
+            <View className="gap-3">
+              <Input
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={onEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                autoFocus
+                variant="filled"
+                inputSize="pill"
+              />
 
+              <Button
+                onPress={handleSendOTP}
+                disabled={!email.trim() || socialLoading !== null}
+                loading={isLoading}
+              >
+                {isLoading ? "Sending..." : "Continue"}
+              </Button>
+
+              <View className="my-1 flex-row items-center gap-3">
+                <View className="h-px flex-1 bg-border" />
+                <Text variant="caption" className="text-muted-foreground">
+                  or
+                </Text>
+                <View className="h-px flex-1 bg-border" />
+              </View>
+
+              {Platform.OS === "ios" ? (
                 <Button
-                  size="$5"
-                  backgroundColor="#f49f1e"
-                  pressStyle={{ backgroundColor: "#e08f15", scale: 0.98 }}
-                  animation="quick"
-                  onPress={handleSendOTP}
-                  disabled={isLoading || !email.trim()}
-                  opacity={isLoading || !email.trim() ? 0.6 : 1}
+                  onPress={handleAppleSignIn}
+                  loading={socialLoading === "apple"}
+                  disabled={isLoading || socialLoading !== null}
+                  className="bg-black"
                 >
-                  <Text color="#000000" fontWeight="700" fontSize="$5">
-                    {isLoading ? "Sending..." : "Continue"}
+                  <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
+                  <Text className="font-sans-semibold text-[15px] text-white">
+                    Continue with Apple
                   </Text>
                 </Button>
-              </YStack>
-            </>
-          )}
-        </YStack>
-      </YStack>
+              ) : null}
+
+              <Button
+                variant="outline"
+                onPress={() => handleSocialSignIn("google")}
+                loading={socialLoading === "google"}
+                disabled={isLoading || socialLoading !== null}
+              >
+                <Ionicons
+                  name="logo-google"
+                  size={18}
+                  color={colors.foreground}
+                />
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  Continue with Google
+                </Text>
+              </Button>
+
+              <Button
+                variant="outline"
+                onPress={() => handleSocialSignIn("github")}
+                loading={socialLoading === "github"}
+                disabled={isLoading || socialLoading !== null}
+              >
+                <Ionicons
+                  name="logo-github"
+                  size={18}
+                  color={colors.foreground}
+                />
+                <Text className="font-sans-semibold text-[15px] text-foreground">
+                  Continue with GitHub
+                </Text>
+              </Button>
+            </View>
+          </Animated.View>
+        )}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+});

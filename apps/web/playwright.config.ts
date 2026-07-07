@@ -16,8 +16,6 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: process.env.CI ? "list" : "list",
-  globalSetup: "./e2e/global-setup.ts",
-  globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: SERVER_URL,
     trace: "on-first-retry",

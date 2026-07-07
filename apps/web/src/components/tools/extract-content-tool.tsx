@@ -3,8 +3,8 @@
 import { CopyableField } from "@/components/tools/copyable-field";
 import { LoadingButton } from "@/features/form/loading-button";
 import { downloadFile, generateFilenameFromURL } from "@/lib/tools";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
+import { callConvexTool } from "@/lib/tools/convex-tool-client";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -37,24 +37,15 @@ import { extractContentResponseSchema } from "@/lib/tools/schemas/extract-conten
 export function ExtractContentTool() {
   const [url, setUrl] = useState("");
 
-  const mutation = useMutation({
-    mutationFn: async (urlToFetch: string) => {
-      return upfetch("/api/tools/extract-content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        schema: extractContentResponseSchema,
-        body: JSON.stringify({ url: urlToFetch }),
-      });
-    },
-  });
+  const mutation = useAsyncTask(async (urlToFetch: string) =>
+    callConvexTool("extract-content", urlToFetch, extractContentResponseSchema),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
-    mutation.mutate(url.trim());
+    void mutation.run(url.trim());
   };
 
   const downloadTextFile = () => {
@@ -298,7 +289,7 @@ export function ExtractContentTool() {
                       size="sm"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          mutation.data.content.markdown,
+                          mutation.data!.content.markdown,
                         )
                       }
                       className="absolute top-2 right-2 z-10"
@@ -318,7 +309,7 @@ export function ExtractContentTool() {
                       size="sm"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          mutation.data.content.plainText,
+                          mutation.data!.content.plainText,
                         )
                       }
                       className="absolute top-2 right-2 z-10"

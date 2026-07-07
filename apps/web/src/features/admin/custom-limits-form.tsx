@@ -2,9 +2,10 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import type { AuthLimits, CustomAuthLimits } from "@/lib/auth-limits";
+import { api } from "@convex/_generated/api";
+import { useMutation } from "convex/react";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -47,10 +48,14 @@ const limitFields = [
   description: string;
 }[];
 
-const parseOptionalLimit = (formData: FormData, key: keyof AuthLimits) => {
+const parseOptionalLimit = (
+  formData: FormData,
+  key: keyof AuthLimits,
+): number | null => {
   const rawValue = formData.get(key);
   if (typeof rawValue !== "string" || rawValue.trim() === "") return null;
-  return Number(rawValue);
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) ? parsed : null;
 };
 
 export const CustomLimitsForm = ({
@@ -59,54 +64,41 @@ export const CustomLimitsForm = ({
   effectiveLimits,
   customLimits,
 }: CustomLimitsFormProps) => {
-  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+
+  const setCustomLimits = useMutation(api.admin.mutations.setCustomLimits);
 
   return (
     <form
       className="space-y-4"
-      onSubmit={async (event) => {
+      onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
 
         setIsSaving(true);
-        try {
-          const response = await fetch(`/api/admin/users/${userId}/custom-limits`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              bookmarks: parseOptionalLimit(formData, "bookmarks"),
-              monthlyBookmarkRuns: parseOptionalLimit(
-                formData,
-                "monthlyBookmarkRuns",
-              ),
-              monthlyChatQueries: parseOptionalLimit(
-                formData,
-                "monthlyChatQueries",
-              ),
-              canExport: parseOptionalLimit(formData, "canExport"),
-              apiAccess: parseOptionalLimit(formData, "apiAccess"),
-            }),
-          });
-
-          if (!response.ok) {
-            const data = (await response.json().catch(() => null)) as {
-              error?: string;
-            } | null;
-            throw new Error(data?.error ?? "Failed to update custom limits");
-          }
-
-          toast.success("Custom limits updated");
-          void router.invalidate();
-        } catch (error) {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : "Failed to update custom limits",
-          );
-        } finally {
-          setIsSaving(false);
-        }
+        void setCustomLimits({
+          userId,
+          customLimits: {
+            bookmarks: parseOptionalLimit(formData, "bookmarks"),
+            monthlyBookmarkRuns: parseOptionalLimit(
+              formData,
+              "monthlyBookmarkRuns",
+            ),
+            monthlyChatQueries: parseOptionalLimit(
+              formData,
+              "monthlyChatQueries",
+            ),
+            canExport: parseOptionalLimit(formData, "canExport"),
+            apiAccess: parseOptionalLimit(formData, "apiAccess"),
+          },
+        })
+          .then(() => toast.success("Custom limits updated"))
+          .catch((error: Error) => {
+            toast.error(
+              error.message ? error.message : "Failed to update custom limits",
+            );
+          })
+          .finally(() => setIsSaving(false));
       }}
     >
       <div className="grid gap-4 md:grid-cols-2">

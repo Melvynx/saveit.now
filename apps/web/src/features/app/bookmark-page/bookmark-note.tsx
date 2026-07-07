@@ -1,13 +1,15 @@
 "use client";
 
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
+import { api } from "@convex/_generated/api";
+import { useMutation } from "convex/react";
 import { Card } from "@workspace/ui/components/card";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Typography } from "@workspace/ui/components/typography";
 import { NotebookPen } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import type { Id } from "@convex/_generated/dataModel";
 
 export type BookmarkNoteProps = {
   note: string | null | undefined;
@@ -15,27 +17,29 @@ export type BookmarkNoteProps = {
 };
 
 export const BookmarkNote = ({ note, bookmarkId }: BookmarkNoteProps) => {
-  const updateNoteAction = useMutation({
-    mutationFn: (note: string) =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { note },
-      }),
-    onSuccess: () => {},
-    onError: () => {
-      toast.error("Failed to save note");
-    },
-  });
-  const onUpdate = useDebounceFn((note: string) =>
-    updateNoteAction.mutate(note),
-  );
+  const updateBookmark = useMutation(api.bookmarks.mutations.update);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const updateNote = (noteValue: string) => {
+    setIsSaving(true);
+    void updateBookmark({
+        id: bookmarkId as Id<"bookmarks">,
+        patch: { note: noteValue },
+      })
+      .catch(() => {
+        toast.error("Failed to save note");
+      })
+      .finally(() => setIsSaving(false));
+  };
+
+  const onUpdate = useDebounceFn((noteValue: string) => updateNote(noteValue));
 
   return (
     <Card className="p-4">
       <div className="flex items-center gap-2">
         <NotebookPen className="text-primary size-4" />
         <Typography variant="muted">Personal Notes</Typography>
-        {updateNoteAction.isPending && (
+        {isSaving && (
           <Typography variant="muted" className="text-xs">
             Saving...
           </Typography>

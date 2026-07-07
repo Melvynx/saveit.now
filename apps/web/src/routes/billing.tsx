@@ -1,60 +1,68 @@
+import { api } from "@convex/_generated/api";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-
-const getBillingPortalUrl = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const [
-      { getRequiredUserOrRedirect },
-      { getServerUrl },
-      { stripeClient },
-      { prisma },
-    ] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/server-url"),
-      import("@/lib/stripe"),
-      import("@workspace/database/client"),
-    ]);
-    const user = await getRequiredUserOrRedirect();
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { stripeCustomerId: true },
-    });
-
-    if (!dbUser?.stripeCustomerId) {
-      return { error: true, url: null };
-    }
-
-    const stripe = await stripeClient.billingPortal.sessions.create({
-      customer: dbUser.stripeCustomerId,
-      return_url: `${getServerUrl()}/app`,
-    });
-
-    return { error: false, url: stripe.url };
-  },
-);
+import { createFileRoute } from "@tanstack/react-router";
+import { useAction, useConvexAuth } from "convex/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/billing")({
-  loader: async () => {
-    const data = await getBillingPortalUrl();
-    if (data.url) throw redirect({ href: data.url });
-    return data;
-  },
   component: BillingPage,
 });
 
 function BillingPage() {
+  const createBillingPortal = useAction(api.stripe.actions.createBillingPortal);
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+
+    let cancelled = false;
+
+    async function redirectToPortal() {
+      try {
+        const data = await createBillingPortal({});
+        if (cancelled) return;
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setError(err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to open billing portal",
+        );
+      }
+    }
+
+    void redirectToPortal();
+    return () => {
+      cancelled = true;
+    };
+  }, [createBillingPortal, isAuthenticated, isLoading]);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Billing portal unavailable</AlertTitle>
+        <AlertDescription>
+          {error instanceof Error
+            ? error.message
+            : "No billing account found. Please contact support."}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <Alert variant="destructive">
-      <AlertTitle>No stripe customer id</AlertTitle>
-      <AlertDescription>
-        Please contact support to get your stripe customer id
-      </AlertDescription>
-    </Alert>
+    <div className="flex items-center justify-center min-h-32">
+      <div className="text-muted-foreground text-sm">
+        Redirecting to billing portal...
+      </div>
+    </div>
   );
 }

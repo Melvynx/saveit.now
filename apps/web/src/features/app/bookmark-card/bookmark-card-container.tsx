@@ -2,7 +2,7 @@
 
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { BookmarkStatus } from "@workspace/database";
+import { BookmarkStatus } from "@/lib/bookmark-types";
 import { Card } from "@workspace/ui/components/card";
 import {
   ContextMenu,
@@ -47,7 +47,7 @@ export const BookmarkCardContainer = ({
   const { copyToClipboard, isCopied } = useCopyToClipboard(5000);
   const deleteBookmark = useDeleteBookmark();
   const { action: deleteBookmarkAction, isConfirm } = useConfirm(
-    () => deleteBookmark.mutate(bookmark.id),
+    () => deleteBookmark.execute(bookmark.id),
     5000,
   );
 

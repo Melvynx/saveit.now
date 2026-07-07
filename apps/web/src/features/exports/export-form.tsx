@@ -1,6 +1,6 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -10,16 +10,11 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { cn } from "@workspace/ui/lib/utils";
+import { useMutation } from "convex/react";
 import { Download, FileText, Package } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const ExportResponseSchema = z.object({
-  csvContent: z.string(),
-  totalBookmarks: z.number(),
-});
 
 type ExportFormProps = {
   className?: string;
@@ -28,19 +23,16 @@ type ExportFormProps = {
 export function ExportForm({ className }: ExportFormProps) {
   const [isExporting, setIsExporting] = useState(false);
   const posthog = usePostHog();
+  const exportCsv = useMutation(api.bookmarks.mutations.exportCsv);
 
   const handleExport = async () => {
     setIsExporting(true);
     posthog.capture("export_bookmarks");
 
     try {
-      const data = await upfetch("/api/exports", {
-        method: "POST",
-        body: {},
-        schema: ExportResponseSchema,
-      });
+      const csvContent = await exportCsv({});
 
-      const blob = new Blob([data.csvContent], { type: "text/csv" });
+      const blob = new Blob([csvContent as string], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -50,7 +42,7 @@ export function ExportForm({ className }: ExportFormProps) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(`Successfully exported ${data.totalBookmarks} bookmarks`);
+      toast.success("Successfully exported bookmarks");
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -115,4 +107,3 @@ export function ExportForm({ className }: ExportFormProps) {
     </div>
   );
 }
-

@@ -1,7 +1,11 @@
-import fs from "fs";
 import matter from "gray-matter";
-import path from "path";
 import { z } from "zod";
+
+const docFiles = import.meta.glob("../../../content/docs/*.mdx", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
 
 const DocFrontmatterSchema = z.object({
   title: z.string(),
@@ -49,41 +53,6 @@ export interface Doc {
   };
 }
 
-function getDocsDirectory(): string {
-  // Try multiple possible locations for the docs directory
-  const possiblePaths: string[] = [
-    // Production: relative to app directory
-    path.resolve(process.cwd(), "content/docs"),
-    // Development: from monorepo root
-    (() => {
-      let dir = path.resolve(process.cwd());
-      while (dir !== path.parse(dir).root) {
-        const workspaceFile = path.join(dir, "pnpm-workspace.yaml");
-        if (fs.existsSync(workspaceFile)) {
-          return path.join(dir, "content", "docs");
-        }
-        dir = path.dirname(dir);
-      }
-      return null;
-    })(),
-    // Fallback: relative paths
-    path.resolve(process.cwd(), "../../content/docs"),
-    path.resolve(process.cwd(), "../../../content/docs"),
-  ].filter((path): path is string => path !== null);
-
-  // Return the first path that exists
-  for (const docPath of possiblePaths) {
-    if (fs.existsSync(docPath)) {
-      return docPath;
-    }
-  }
-
-  // If no path exists, use the first one (will create directory if needed)
-  return possiblePaths[0] || path.resolve(process.cwd(), "content/docs");
-}
-
-const docsDirectory = getDocsDirectory();
-
 function getReadingTime(content: string) {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.ceil(words / 225));
@@ -99,8 +68,14 @@ function getReadingTime(content: string) {
 export async function getDocBySlug(slug: string): Promise<Doc | null> {
   try {
     const realSlug = slug.replace(/\.mdx$/, "");
-    const fullPath = path.join(docsDirectory, `${realSlug}.mdx`);
-    const fileContents = fs.readFileSync(fullPath, "utf8");
+    const filePath = Object.keys(docFiles).find((path) =>
+      path.endsWith(`/${realSlug}.mdx`),
+    );
+    const fileContents = filePath ? docFiles[filePath] : null;
+
+    if (!fileContents) {
+      return null;
+    }
 
     const { data, content } = matter(fileContents);
     const frontmatter = DocFrontmatterSchema.parse(data);
@@ -126,20 +101,11 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
 
 export async function getAllDocs(): Promise<Doc[]> {
   try {
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(docsDirectory)) {
-      fs.mkdirSync(docsDirectory, { recursive: true });
-      return [];
-    }
-
-    const files = fs.readdirSync(docsDirectory);
     const docs = await Promise.all(
-      files
-        .filter((file) => file.endsWith(".mdx"))
-        .map(async (file) => {
-          const slug = file.replace(/\.mdx$/, "");
-          return getDocBySlug(slug);
-        }),
+      Object.keys(docFiles).map(async (file) => {
+        const slug = file.split("/").pop()?.replace(/\.mdx$/, "") ?? "";
+        return getDocBySlug(slug);
+      }),
     );
 
     return docs

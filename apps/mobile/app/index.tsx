@@ -1,31 +1,44 @@
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { useCallback, useState, useEffect } from "react";
-import { useShareIntent } from "expo-share-intent";
-import { View, ActivityIndicator, Modal, useColorScheme } from "react-native";
-import { Text, YStack } from "tamagui";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useShareIntentContext } from "expo-share-intent";
+import { useCallback, useState } from "react";
+import { Modal, View, useWindowDimensions } from "react-native";
+
+import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
 import OnboardingScreen from "../src/screens/OnboardingScreen";
-import SignInScreen from "../src/screens/SignInScreen";
+import SignInScreen, { type SignInStep } from "../src/screens/SignInScreen";
 
 export default function IndexPage() {
   const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
   const params = useLocalSearchParams();
-  const { hasShareIntent } = useShareIntent();
-  const { user, isLoading, isSigningOut } = useAuth();
+  const { hasShareIntent, isReady: isShareIntentReady } =
+    useShareIntentContext();
+  const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInOtp, setSignInOtp] = useState("");
+  const [signInStep, setSignInStep] = useState<SignInStep>("email");
+
+  const signInSheetHeight = windowHeight * 0.7;
+
+  const closeSignIn = useCallback(() => {
+    setShowSignIn(false);
+    setSignInEmail("");
+    setSignInOtp("");
+    setSignInStep("email");
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      if (isLoading || !user || isNavigating || isSigningOut) return;
+      if (isLoading || isNavigating || !isShareIntentReady) return;
 
       const handleNavigation = () => {
         if (hasShareIntent || params.dataUrl) {
           setIsNavigating(true);
           router.replace("/share-handler");
-        } else {
+        } else if (user) {
           setIsNavigating(true);
           setShowSignIn(false);
           router.replace("/(tabs)");
@@ -36,20 +49,14 @@ export default function IndexPage() {
       return () => clearTimeout(timer);
     }, [
       hasShareIntent,
-      params.dataUrl,
       isNavigating,
       isLoading,
-      user,
+      isShareIntentReady,
+      params.dataUrl,
       router,
-      isSigningOut,
+      user,
     ]),
   );
-
-  useEffect(() => {
-    if (!user) {
-      setIsNavigating(false);
-    }
-  }, [user]);
 
   // Show onboarding/sign-in when user is not authenticated
   if (!user && !isLoading) {
@@ -60,24 +67,25 @@ export default function IndexPage() {
           visible={showSignIn}
           animationType="slide"
           transparent
-          onRequestClose={() => setShowSignIn(false)}
+          onRequestClose={closeSignIn}
         >
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "flex-end",
-              backgroundColor: "rgba(0,0,0,0.5)",
-            }}
-          >
+          <View className="flex-1 justify-end bg-black/50">
             <View
+              className="overflow-hidden rounded-t-[28px] bg-background"
               style={{
-                height: "70%",
-                backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
+                height: signInSheetHeight,
               }}
             >
-              <SignInScreen onClose={() => setShowSignIn(false)} />
+              <SignInScreen
+                onClose={closeSignIn}
+                keyboardAvoidingEnabled={false}
+                email={signInEmail}
+                onEmailChange={setSignInEmail}
+                otp={signInOtp}
+                onOtpChange={setSignInOtp}
+                step={signInStep}
+                onStepChange={setSignInStep}
+              />
             </View>
           </View>
         </Modal>
@@ -85,21 +93,5 @@ export default function IndexPage() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <YStack flex={1} alignItems="center" justifyContent="center" padding="$4">
-        <ActivityIndicator size="large" />
-        <Text fontSize="$6" marginTop="$4">
-          Loading...
-        </Text>
-      </YStack>
-    );
-  }
-
-  // Authenticated user navigating to tabs - show spinner
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <ActivityIndicator size="large" />
-    </View>
-  );
+  return <LoadingScreen />;
 }

@@ -1,59 +1,58 @@
-import { sendEmail } from "@/lib/mail/send-email";
-import { userRoute } from "@/lib/safe-route";
+import {
+  legacyErrorResponse,
+  legacyJson,
+  legacyOptions,
+  requireLegacySession,
+} from "@/lib/legacy-api";
+import { fetchAuthAction } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-
-const bugReportSchema = z.object({
-  description: z
-    .string()
-    .min(10, "Bug description must be at least 10 characters"),
-  deviceInfo: z.string().optional(),
-  appVersion: z.string().optional(),
-});
-
-const POST = userRoute
-  .body(bugReportSchema)
-  .handler(async (_, { body, ctx }) => {
-    try {
-      const emailContent = `
-        <h2>Bug Report from Mobile App</h2>
-        <p><strong>User:</strong> ${ctx.user.email}</p>
-        <p><strong>User ID:</strong> ${ctx.user.id}</p>
-        <p><strong>Description:</strong></p>
-        <p>${body.description.replace(/\n/g, "<br>")}</p>
-        ${body.deviceInfo ? `<p><strong>Device Info:</strong> ${body.deviceInfo}</p>` : ""}
-        ${body.appVersion ? `<p><strong>App Version:</strong> ${body.appVersion}</p>` : ""}
-        <p><strong>Reported at:</strong> ${new Date().toISOString()}</p>
-      `;
-
-      const result = await sendEmail({
-        to: "help@saveit.now",
-        subject: `Bug Report from ${ctx.user.email}`,
-        html: emailContent,
-        replyTo: ctx.user.email,
-      });
-
-      if (result.error) {
-        console.error("Failed to send bug report email:", result.error);
-        return Response.json(
-          { error: "Failed to send bug report" },
-          { status: 500 },
-        );
-      }
-
-      return {
-        success: true,
-        message: "Bug report sent successfully",
-      };
-    } catch (error) {
-      console.error("Bug report submission error:", error);
-      return Response.json(
-        { error: "Failed to submit bug report" },
-        { status: 500 },
-      );
-    }
-  });
 
 export const Route = createFileRoute("/api/bug-report")({
-  server: { handlers: { POST } },
+  server: {
+    handlers: {
+      POST: async ({ request }: { request: Request }) => {
+        const user = await requireLegacySession(request);
+        if (user instanceof Response) return user;
+
+        try {
+          const body = (await request.json()) as {
+            description?: unknown;
+            deviceInfo?: unknown;
+            appVersion?: unknown;
+          };
+
+          if (
+            typeof body.description !== "string" ||
+            body.description.length < 10
+          ) {
+            return legacyJson(
+              { error: "Bug description must be at least 10 characters" },
+              { request, status: 400 },
+            );
+          }
+
+          await fetchAuthAction(api.users.actions.sendBugReport, {
+            description: body.description,
+            deviceInfo:
+              typeof body.deviceInfo === "string" ? body.deviceInfo : undefined,
+            appVersion:
+              typeof body.appVersion === "string" ? body.appVersion : undefined,
+          });
+
+          return legacyJson(
+            {
+              success: true,
+              message: "Bug report sent successfully",
+            },
+            { request },
+          );
+        } catch (error) {
+          return legacyErrorResponse(error, request);
+        }
+      },
+      OPTIONS: async ({ request }: { request: Request }) =>
+        legacyOptions(request),
+    },
+  },
 });

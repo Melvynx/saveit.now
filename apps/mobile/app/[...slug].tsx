@@ -1,41 +1,31 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useShareIntentContext } from "expo-share-intent";
 import { View, ActivityIndicator } from "react-native";
-import { useAuth } from "../src/contexts/AuthContext";
 
 export default function CatchAllPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { hasShareIntent } = useShareIntentContext();
-  const { refreshPlanWithRetry } = useAuth();
-
-  console.log("🔥 CatchAll - All params:", params);
-  console.log("🔥 CatchAll - hasShareIntent:", hasShareIntent);
-  console.log("🔥 CatchAll - Slug array:", params.slug);
-  console.log("🔥 CatchAll - Raw URL data:", JSON.stringify(params));
+  const { hasShareIntent, isReady } = useShareIntentContext();
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    const slugString = params.slug?.toString() || "";
+    if (hasNavigated.current) return;
 
-    if (slugString.includes("upgrade/success")) {
-      console.log("🔥 CatchAll - Detected upgrade success, refreshing plan");
-      refreshPlanWithRetry("pro").then(() => {
-        router.replace("/(tabs)/settings");
-      });
-      return;
-    }
+    const slug = params.slug;
+    const slugString = Array.isArray(slug)
+      ? slug.join("/")
+      : slug?.toString() || "";
+    const hasShareDeepLink = hasShareIntent || slugString.includes("dataUrl");
 
-    if (hasShareIntent || slugString.includes("dataUrl")) {
-      console.log(
-        "🔥 CatchAll - Detected share data, redirecting to share-handler",
-      );
+    if (hasShareDeepLink) {
+      hasNavigated.current = true;
       router.replace("/share-handler");
-    } else {
-      console.log("🔥 CatchAll - No share data, redirecting to tabs");
+    } else if (isReady) {
+      hasNavigated.current = true;
       router.replace("/(tabs)");
     }
-  }, [hasShareIntent, params, refreshPlanWithRetry, router]);
+  }, [hasShareIntent, isReady, params.slug, router]);
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

@@ -16,13 +16,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm dev` - Start TanStack Start dev server
 - `pnpm lint` - Run web linting
 - `pnpm ts` - Run TypeScript formatting
-- `pnpm better-auth:generate` - Generate Better Auth schema
 
-### Database (packages/database)
+### Backend (packages/backend)
 
-- `pnpm db:generate` - Generate Prisma client
-- `pnpm db:migrate` - Run database migrations in development
-- `pnpm db:deploy` - Deploy migrations to production
+- `pnpm dev` - Start Convex development server
+- `pnpm deploy` - Deploy Convex functions and schema
 
 ### Browser Extensions
 
@@ -41,16 +39,16 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 ### Shared Packages
 
-- **packages/database** - Prisma database client and types
+- **packages/backend** - Convex backend functions, schema, and auth
 - **packages/ui** - Shared UI components using shadcn/ui
 - **packages/eslint-config** - Shared ESLint configuration
 - **packages/typescript-config** - Shared TypeScript configuration
 
 ### Web Application Architecture
 
-**Authentication**: Uses Better Auth with Prisma adapter, supporting GitHub/Google OAuth, magic links, and email OTP. Includes Stripe integration for subscriptions.
+**Authentication**: Uses Better Auth with Convex, supporting GitHub/Google OAuth, magic links, and email OTP. Includes Stripe integration for subscriptions.
 
-**Database**: PostgreSQL with Prisma ORM. Schema generation and migrations managed through packages/database.
+**Backend**: Convex stores application data and runs server functions. Schema and functions live in packages/backend.
 
 **Background Jobs**: Inngest for processing bookmarks, sending emails, and handling webhooks.
 
@@ -71,6 +69,7 @@ The application requires extensive environment variables (35+ variables) for var
 ## Deployment and Logs
 
 - To get the latest deployment logs, use `flyctl logs` command for the specific app
+- For Convex preview/prod env debugging, load `CONVEX_DEPLOY_KEY` from the ignored root `.env`; never echo the key, paste it into docs, or commit it.
 - Vercel CLI deployment commands:
   - `vercel` - Deploy the current project
   - `vercel --prod` - Deploy to production
@@ -80,6 +79,10 @@ The application requires extensive environment variables (35+ variables) for var
 ## Workflow
 
 - Always run `pnpm ts` AND `pnpm lint` in the folder `app/web` to verify typescript working after a task
+
+## Verification Browser
+
+- [.agents/rules/verification-browser.md](.agents/rules/verification-browser.md) - Browser verification must use the `dev-browser` skill with email OTP; read the OTP code from the Convex Better Auth `verification` table and check processing evidence in Convex data/logs.
 
 ## Commands usage
 

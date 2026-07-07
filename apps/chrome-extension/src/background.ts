@@ -1,11 +1,92 @@
 // This background script can handle authentication events and communication
 // between the extension and the SaveIt Now website
 import { getSession, saveBookmark, uploadScreenshot } from "./auth-client";
+import { config } from "./config";
 
 // Menu contextuel IDs
 const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
 const CONTEXT_MENU_SAVE_LINK = "saveit-save-link";
 const CONTEXT_MENU_SAVE_IMAGE = "saveit-save-image";
+const SAVEABLE_PAGE_PROTOCOLS = new Set(["http:", "https:"]);
+
+type SaveMessage = {
+  action: "saveBookmark";
+  type: "page" | "link" | "image";
+  url?: string;
+};
+
+type TabSaveTarget = {
+  tabId: number;
+  url: string;
+};
+
+function isSaveablePageUrl(url: string | undefined): url is string {
+  if (!url) return false;
+
+  try {
+    return SAVEABLE_PAGE_PROTOCOLS.has(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function openSaveItApp() {
+  chrome.tabs.create({ url: new URL("/app", config.BASE_URL).toString() });
+}
+
+function getTabSaveTarget(tab: chrome.tabs.Tab): TabSaveTarget | null {
+  if (typeof tab.id !== "number" || !isSaveablePageUrl(tab.url)) return null;
+
+  return {
+    tabId: tab.id,
+    url: tab.url,
+  };
+}
+
+function sendMessageToTab(tabId: number, message: SaveMessage): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      chrome.tabs.sendMessage(tabId, message, () => {
+        resolve(!chrome.runtime.lastError);
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      resolve(false);
+    }
+  });
+}
+
+function waitForContentScriptRegistration() {
+  return new Promise((resolve) => setTimeout(resolve, 100));
+}
+
+async function sendSaveMessageToTab(
+  tabId: number,
+  message: SaveMessage,
+): Promise<boolean> {
+  if (await sendMessageToTab(tabId, message)) return true;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+    await chrome.scripting.insertCSS({
+      target: { tabId },
+      files: ["content.css"],
+    });
+    await waitForContentScriptRegistration();
+  } catch (err) {
+    console.error("Failed to inject content script:", err);
+    return false;
+  }
+
+  const delivered = await sendMessageToTab(tabId, message);
+  if (!delivered) {
+    console.error("Failed to send message after content script injection");
+  }
+  return delivered;
+}
 
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
@@ -27,33 +108,12 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Gérer les clics sur les menus contextuels
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (!tab?.id) return;
+  if (typeof tab?.id !== "number") return;
 
-  const sendMessageWithInjection = (message: any) => {
-    chrome.tabs.sendMessage(tab.id!, message, (response) => {
-      if (chrome.runtime.lastError) {
-        // Content script not loaded, inject it
-        chrome.scripting
-          .executeScript({
-            target: { tabId: tab.id! },
-            files: ["content.js"],
-          })
-          .then(() => {
-            // Also inject CSS
-            chrome.scripting.insertCSS({
-              target: { tabId: tab.id! },
-              files: ["content.css"],
-            });
-            // Retry sending message after injection
-            setTimeout(() => {
-              chrome.tabs.sendMessage(tab.id!, message);
-            }, 100);
-          })
-          .catch((err) => {
-            console.error("Failed to inject content script:", err);
-          });
-      }
-    });
+  const tabId = tab.id;
+
+  const sendMessageWithInjection = (message: SaveMessage) => {
+    void sendSaveMessageToTab(tabId, message);
   };
 
   switch (info.menuItemId) {
@@ -211,47 +271,20 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // Écouter le clic sur l'icône de l'extension dans la barre d'outils
 chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab.id) return;
+  const target = getTabSaveTarget(tab);
 
-  try {
-    // Envoyer un message au content script pour afficher l'UI
-    chrome.tabs.sendMessage(
-      tab.id,
-      {
-        action: "saveBookmark",
-        type: "page",
-        url: tab.url,
-      },
-      () => {
-        if (chrome.runtime.lastError) {
-          // Le content script n'est probablement pas chargé, on l'injecte manuellement
-          chrome.scripting
-            .executeScript({
-              target: { tabId: tab.id! },
-              files: ["content.js"],
-            })
-            .then(() => {
-              // Also inject CSS
-              chrome.scripting.insertCSS({
-                target: { tabId: tab.id! },
-                files: ["content.css"],
-              });
-              // Réessayer d'envoyer le message après injection
-              setTimeout(() => {
-                chrome.tabs.sendMessage(tab.id!, {
-                  action: "saveBookmark",
-                  type: "page",
-                  url: tab.url,
-                });
-              }, 100);
-            })
-            .catch((err) => {
-              console.error("Failed to inject content script:", err);
-            });
-        }
-      },
-    );
-  } catch (error) {
-    console.error("Error sending message:", error);
+  if (!target) {
+    openSaveItApp();
+    return;
+  }
+
+  const message: SaveMessage = {
+    action: "saveBookmark",
+    type: "page",
+    url: target.url,
+  };
+
+  if (!(await sendSaveMessageToTab(target.tabId, message))) {
+    openSaveItApp();
   }
 });

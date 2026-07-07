@@ -8,10 +8,48 @@
     "dev:once": "convex dev --once",
     "codegen": "convex codegen",
     "deploy": "convex deploy",
-    "dashboard": "convex dashboard"
+    "dashboard": "convex dashboard",
+    "test": "vitest"
   },
   "dependencies": {
-    "convex": "^1.40.0"
+    "@ai-sdk/google": "^3.0.52",
+    "@aws-sdk/client-s3": "^3.1014.0",
+    "@better-auth/api-key": "1.6.10",
+    "@better-auth/expo": "1.6.10",
+    "@convex-dev/better-auth": "^0.12.2",
+    "@convex-dev/resend": "^0.2.3",
+    "@convex-dev/workflow": "^0.4.4",
+    "@convex-dev/workpool": "^0.4.7",
+    "@danielxceron/youtube-transcript": "^1.2.6",
+    "@react-email/components": "^0.1.1",
+    "@react-email/render": "^1.4.0",
+    "@react-email/tailwind": "^1.2.2",
+    "ai": "^6.0.134",
+    "better-auth": "1.6.10",
+    "cheerio": "^1.2.0",
+    "convex": "^1.40.0",
+    "convex-helpers": "^0.1.116",
+    "image-size": "^2.0.2",
+    "mime-types": "^3.0.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-tweet": "^3.3.0",
+    "stripe": "17.7.0",
+    "turndown": "^7.2.2",
+    "ulid": "^3.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.19.37",
+    "@types/pg": "^8.11.0",
+    "@types/react": "^19.2.14",
+    "@types/turndown": "^5.0.6",
+    "convex-test": "^0.0.38",
+    "pg": "^8.13.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "exports": {
     "./api": {

@@ -32,8 +32,6 @@ jobs:
     # Common environment variables for all steps
     env:
       # Core
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/saveit_test"
-      DATABASE_URL_UNPOOLED: "postgresql://postgres:postgres@localhost:5432/saveit_test"
       BETTER_AUTH_SECRET: "test-secret-key-for-ci-testing-only-not-production"
       NODE_ENV: "production"
       # AWS S3 / Cloudflare R2
@@ -67,6 +65,8 @@ jobs:
       # Convex
       VITE_CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
       CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
+      VITE_CONVEX_SITE_URL: "https://tough-chameleon-916.convex.site"
+      CONVEX_SITE_URL: "https://tough-chameleon-916.convex.site"
       # OAuth
       GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
       GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
@@ -74,34 +74,12 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # External APIs
       APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
-      # Redis
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      # Inngest
-      INNGEST_EVENT_KEY: "test"
-      INNGEST_SIGNING_KEY: "test-signing-key"
-      INNGEST_DEV: "1"
       # Playwright specific
       PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
       HEADLESS: "true"
       CI: "true"
       PORT: 3000
       PLAYWRIGHT_CHROMIUM_CHANNEL: "chrome"
-
-    services:
-      postgres:
-        image: pgvector/pgvector:pg15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: saveit_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - name: Checkout
@@ -110,7 +88,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 9
+          version: 10.4.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -118,29 +96,8 @@ jobs:
           node-version: lts/*
           cache: "pnpm"
 
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/apps/web/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
-
       - name: Install dependencies
         run: pnpm install --prod=false
-
-      - name: Install Prisma CLI globally
-        run: npm install -g prisma
-
-      - name: Generate Prisma client
-        run: pnpm prisma generate
-        working-directory: packages/database
-
-      - name: Run database migrations
-        run: pnpm prisma migrate dev --skip-generate
-        working-directory: packages/database
 
       - name: Build web application
         run: pnpm build
@@ -149,13 +106,6 @@ jobs:
       - name: Verify Chrome browser
         run: google-chrome --version
         working-directory: apps/web
-
-      - name: Start Inngest dev server
-        run: |
-          # Start Inngest dev server with production URL for this branch, redirect logs to file
-          mkdir -p logs
-          INNGEST_DEV=1 INNGEST_SIGNING_KEY=test-signing-key pnpm dlx inngest-cli@latest dev --no-discovery -u http://localhost:3000/api/inngest > logs/inngest.log 2>&1 &
-          echo "Inngest dev server started with production endpoint, logs saved to logs/inngest.log"
 
       - name: Start application
         run: |
@@ -187,7 +137,7 @@ jobs:
           path: apps/web/test-results/
           retention-days: 30
 
-      - name: Upload server and Inngest logs
+      - name: Upload server logs
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

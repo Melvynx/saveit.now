@@ -25,7 +25,11 @@ export const Route = createRootRoute({
       },
       { title: "SaveIt.now - AI Bookmark Manager" },
     ],
-    links: [{ rel: "icon", href: "/favicon.ico" }],
+    links: [
+      { rel: "icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-icon.png" },
+    ],
   }),
   component: RootComponent,
 });

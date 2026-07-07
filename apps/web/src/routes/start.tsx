@@ -3,9 +3,9 @@ import { ImportForm } from "@/features/imports/import-form";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
 import { useSession } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { api } from "@convex/_generated/api";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -15,10 +15,9 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
+import { useMutation } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/start")({
   component: StartPage,
@@ -27,36 +26,36 @@ export const Route = createFileRoute("/start")({
 function StartPage() {
   const session = useSession();
   const navigate = useNavigate();
-  const finishMutation = useMutation({
-    mutationFn: async (params: "extension" | "app") => {
-      await upfetch("/api/start", {
-        method: "POST",
-        body: {},
-        schema: z.object({ success: z.boolean() }),
-      });
+  const setOnboarding = useMutation(api.users.mutations.setOnboarding);
+
+  const finishTask = useAsyncTask(
+    async (params: "extension" | "app") => {
+      await setOnboarding({});
       return params;
     },
-    onSuccess: (params) => {
-      void session.refetch();
-      setTimeout(() => {
-        if (params === "extension") {
-          void navigate({ to: APP_LINKS.extensions });
-        } else {
-          void navigate({ to: APP_LINKS.app });
-        }
-      }, 500);
-      toast.success("Onboarding finished");
+    {
+      onSuccess: (params) => {
+        void session.refetch();
+        setTimeout(() => {
+          if (params === "extension") {
+            void navigate({ to: APP_LINKS.extensions });
+          } else {
+            void navigate({ to: APP_LINKS.app });
+          }
+        }, 500);
+        toast.success("Onboarding finished");
+      },
+      onError: () => {
+        toast.error("Failed to finish onboarding");
+      },
     },
-    onError: () => {
-      toast.error("Failed to finish onboarding");
-    },
-  });
+  );
 
   const handleImportSuccess = (data: {
     createdBookmarks: number;
     totalUrls: number;
   }) => {
-    finishMutation.mutate("app");
+    void finishTask.run("app");
     toast.success(
       `Great! You've imported ${data.createdBookmarks} bookmarks. Let's explore your dashboard!`,
     );
@@ -91,7 +90,7 @@ function StartPage() {
             <Button
               asChild
               variant="outline"
-              onClick={() => finishMutation.mutate("app")}
+              onClick={() => void finishTask.run("app")}
             >
               <a href={APP_LINKS.app}>
                 Start with Empty Dashboard
@@ -101,7 +100,7 @@ function StartPage() {
             <Button
               asChild
               variant="outline"
-              onClick={() => finishMutation.mutate("extension")}
+              onClick={() => void finishTask.run("extension")}
             >
               <a href={APP_LINKS.extensions}>
                 Install Browser Extension
@@ -128,4 +127,3 @@ function StartPage() {
     </AccountShell>
   );
 }
-

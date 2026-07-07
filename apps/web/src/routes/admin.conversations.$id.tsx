@@ -1,6 +1,7 @@
 import { AdminPageHeader } from "@/features/admin/admin-shared";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -12,48 +13,29 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { ArrowLeftIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { Streamdown } from "streamdown";
-
-const getAdminConversationData = createServerFn({
-  method: "GET",
-  strict: false,
-})
-  .validator((data: { id: string }) => data)
-  .handler(async ({ data }) => {
-    const [{ getUser }, { getConversationAdmin }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/conversations"),
-    ]);
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    const conversation = await getConversationAdmin(data.id);
-    if (!conversation) {
-      return { access: "not-found" as const };
-    }
-
-    return { access: "granted" as const, conversation };
-  });
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/admin/conversations/$id")({
-  loader: ({ params }) => getAdminConversationData({ data: params }),
   component: AdminConversationDetailPage,
 });
 
 function AdminConversationDetailPage() {
-  const data = Route.useLoaderData();
-  if (data.access === "signed-out") return <Navigate to="/signin" />;
-  if (data.access === "forbidden") return null;
-  if (data.access === "not-found") {
+  const session = useSession();
+  const { id } = Route.useParams();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const conversation = useAuthedQuery(
+    api.admin.queries.getConversation,
+    isAdmin ? { conversationId: id } : "skip",
+  );
+
+  if (session.isPending) return null;
+  if (!session.data?.user) return <Navigate to="/signin" />;
+  if (!isAdmin) return null;
+  if (conversation === undefined) return null;
+  if (!conversation) {
     return <p className="text-muted-foreground">Conversation not found.</p>;
   }
-
-  const { conversation } = data;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -101,7 +83,7 @@ function AdminConversationDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {conversation.messages.map((message) => {
+          {conversation.messages.map((message: any) => {
             const isUser = message.role === "user";
             const textPart = message.parts?.find(
               (part: { type: string }) => part.type === "text",
@@ -122,7 +104,7 @@ function AdminConversationDetailPage() {
                       : "bg-muted border",
                   )}
                 >
-                  <div className="text-xs font-medium mb-1 opacity-70">
+                  <div className="mb-1 text-xs font-medium opacity-70">
                     {isUser ? "User" : "Assistant"}
                   </div>
                   <div

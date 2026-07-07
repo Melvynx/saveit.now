@@ -46,14 +46,16 @@ function Card1() {
   return (
     <CardWrapper
       id="card-1"
-      className="bg-gradient-to-b from-[#0f2035] via-[#132a42] to-[#141414]"
+      className="bg-gradient-to-b from-[#2b1708] via-[#3a1f0c] to-[#141414]"
     >
-      <div className="flex h-full flex-col items-center justify-center px-20">        <img
+      <div className="flex h-full flex-col items-center justify-center px-20">
+        {" "}
+        <img
           src="/images/logo.png"
           alt="SaveIt.now"
           className="mb-8 h-8 opacity-90"
         />
-        <span className="mb-6 rounded-full border border-[#1f6feb]/30 bg-[#1f6feb]/10 px-6 py-2 text-[22px] font-medium text-[#93c5fd]">
+        <span className="mb-6 rounded-full border border-[#ea6a12]/30 bg-[#ea6a12]/10 px-6 py-2 text-[22px] font-medium text-[#fed7aa]">
           First Agentic Bookmarking Tool
         </span>
         <h1 className="font-elegant text-center text-[120px] leading-[0.95] tracking-tight text-white">
@@ -61,7 +63,7 @@ function Card1() {
           <br />
           <em>just ask.</em>
         </h1>
-        <p className="mt-8 text-center text-[28px] leading-relaxed text-[#8eafc8]">
+        <p className="mt-8 text-center text-[28px] leading-relaxed text-[#d6a176]">
           Let OpenClaw and Claude Code save and search for you.
         </p>
       </div>
@@ -74,7 +76,9 @@ function Card2() {
   return (
     <CardWrapper id="card-2">
       <div className="flex h-full">
-        <div className="flex w-[48%] flex-col justify-center pl-16 pr-8">          <img
+        <div className="flex w-[48%] flex-col justify-center pl-16 pr-8">
+          {" "}
+          <img
             src="/images/logo.png"
             alt="SaveIt.now"
             className="mb-8 h-7 w-fit opacity-90"
@@ -84,12 +88,14 @@ function Card2() {
             <br />
             <em>everywhere.</em>
           </h2>
-          <p className="mt-6 text-[26px] leading-snug text-[#8eafc8]">
+          <p className="mt-6 text-[26px] leading-snug text-[#d6a176]">
             Any AI agent can find your bookmarks through Telegram.
           </p>
         </div>
         <div className="flex w-[52%] items-center justify-center bg-gradient-to-br from-[#0f2035] to-[#141414]">
-          <div className="overflow-hidden rounded-3xl border border-white/[0.08] shadow-2xl shadow-black/60">            <img
+          <div className="overflow-hidden rounded-3xl border border-white/[0.08] shadow-2xl shadow-black/60">
+            {" "}
+            <img
               src="https://codelynx.mlvcdn.com/uploads/2026-03-27/CleanShot 2026-03-27 at 11.57.10@2x.png"
               alt="Telegram Bot"
               className="h-[650px] w-auto object-contain"
@@ -105,7 +111,9 @@ function Card2() {
 function Card3() {
   return (
     <CardWrapper id="card-3">
-      <div className="flex h-full flex-col items-center justify-center px-20">        <img
+      <div className="flex h-full flex-col items-center justify-center px-20">
+        {" "}
+        <img
           src="/images/logo.png"
           alt="SaveIt.now"
           className="mb-8 h-8 opacity-90"
@@ -115,7 +123,7 @@ function Card3() {
           <br />
           <em>captured.</em>
         </h2>
-        <p className="mt-8 max-w-[800px] text-center text-[30px] leading-snug text-[#8eafc8]">
+        <p className="mt-8 max-w-[800px] text-center text-[30px] leading-snug text-[#d6a176]">
           Screenshots, content, metadata - everything is scraped, embedded, and
           searchable.
         </p>
@@ -128,7 +136,7 @@ function Card3() {
               >
                 {item}
               </span>
-            )
+            ),
           )}
         </div>
       </div>
@@ -143,7 +151,9 @@ function Card4() {
       id="card-4"
       className="bg-gradient-to-b from-[#141414] to-[#0f2035]"
     >
-      <div className="flex h-full flex-col items-center justify-center px-20">        <img
+      <div className="flex h-full flex-col items-center justify-center px-20">
+        {" "}
+        <img
           src="/images/logo.png"
           alt="SaveIt.now"
           className="mb-8 h-8 opacity-90"
@@ -156,7 +166,7 @@ function Card4() {
           <br />
           <em>handled.</em>
         </h2>
-        <p className="mt-8 max-w-[850px] text-center text-[28px] leading-snug text-[#8eafc8]">
+        <p className="mt-8 max-w-[850px] text-center text-[28px] leading-snug text-[#d6a176]">
           Gemini 2.5 Flash searches, analyzes, creates CSV exports, and answers
           complex questions about your data.
         </p>
@@ -170,7 +180,9 @@ function Card5() {
   return (
     <CardWrapper id="card-5">
       <div className="flex h-full">
-        <div className="flex w-[40%] flex-col justify-center pl-16 pr-6">          <img
+        <div className="flex w-[40%] flex-col justify-center pl-16 pr-6">
+          {" "}
+          <img
             src="/images/logo.png"
             alt="SaveIt.now"
             className="mb-8 h-7 w-fit opacity-90"
@@ -180,19 +192,23 @@ function Card5() {
             <br />
             <em>anywhere.</em>
           </h2>
-          <p className="mt-6 text-[26px] leading-snug text-[#8eafc8]">
+          <p className="mt-6 text-[26px] leading-snug text-[#d6a176]">
             Chrome, Firefox, and iOS.
           </p>
         </div>
         <div className="flex w-[60%] items-end justify-center overflow-hidden bg-gradient-to-br from-[#0f2035]/50 to-[#141414] pt-10">
           <div className="flex items-end gap-5">
-            <div className="overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.08] shadow-2xl shadow-black/60">              <img
+            <div className="overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.08] shadow-2xl shadow-black/60">
+              {" "}
+              <img
                 src="/images/ios/ios-app-1.png"
                 alt="iOS App"
                 className="h-[580px] w-auto object-cover object-top"
               />
             </div>
-            <div className="overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.08] shadow-2xl shadow-black/60">              <img
+            <div className="overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.08] shadow-2xl shadow-black/60">
+              {" "}
+              <img
                 src="/images/ios/ios-app-2.png"
                 alt="iOS App Search"
                 className="h-[520px] w-auto object-cover object-top"
@@ -253,7 +269,7 @@ function ProductHuntCardsPage() {
     <div className="landing-page min-h-screen">
       <div className="relative overflow-hidden">
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0f2035] via-[#132a42] to-[#141414]"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#2b1708] via-[#3a1f0c] to-[#141414]"
           style={{ height: 400 }}
         />
         <div className="relative z-10 mx-auto max-w-7xl px-6 pb-4 pt-16">
@@ -262,61 +278,61 @@ function ProductHuntCardsPage() {
               <h1 className="font-elegant text-4xl tracking-tight text-white">
                 ProductHunt <em>Launch Cards</em>
               </h1>
-              <p className="mt-2 text-[#8eafc8]">
+              <p className="mt-2 text-[#d6a176]">
                 Click any card to download as PNG (2x resolution)
               </p>
             </div>
-          <button
-            onClick={downloadAll}
-            className="flex items-center gap-2 rounded-full bg-[#1f6feb] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1f6feb]/80"
-          >
-            <DownloadIcon className="size-4" />
-            Download All
-          </button>
-        </div>
+            <button
+              onClick={downloadAll}
+              className="flex items-center gap-2 rounded-full bg-[#ea6a12] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#ea6a12]/80"
+            >
+              <DownloadIcon className="size-4" />
+              Download All
+            </button>
+          </div>
 
-        <div ref={containerRef} className="flex flex-col gap-12">
-          {CARDS.map((card, i) => (
-            <div key={card.id} className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[#666]">
-                  {String(i + 1).padStart(2, "0")} - {card.label}
-                </span>
-                <button
-                  onClick={() => downloadCard(card.id)}
-                  disabled={downloading === card.id}
-                  className="flex items-center gap-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-1.5 text-sm text-[#fafafa] transition-colors hover:bg-[#2a2a2a]"
-                >
-                  {downloading === card.id ? (
-                    <Loader2Icon className="size-3.5 animate-spin" />
-                  ) : (
-                    <DownloadIcon className="size-3.5" />
-                  )}
-                  Download PNG
-                </button>
-              </div>
-              <div
-                className="overflow-hidden rounded-lg border border-[#2a2a2a]"
-                style={{
-                  maxWidth: "100%",
-                  height: CARD_HEIGHT * 0.75,
-                  width: CARD_WIDTH * 0.75,
-                }}
-              >
+          <div ref={containerRef} className="flex flex-col gap-12">
+            {CARDS.map((card, i) => (
+              <div key={card.id} className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[#666]">
+                    {String(i + 1).padStart(2, "0")} - {card.label}
+                  </span>
+                  <button
+                    onClick={() => downloadCard(card.id)}
+                    disabled={downloading === card.id}
+                    className="flex items-center gap-2 rounded-full border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-1.5 text-sm text-[#fafafa] transition-colors hover:bg-[#2a2a2a]"
+                  >
+                    {downloading === card.id ? (
+                      <Loader2Icon className="size-3.5 animate-spin" />
+                    ) : (
+                      <DownloadIcon className="size-3.5" />
+                    )}
+                    Download PNG
+                  </button>
+                </div>
                 <div
+                  className="overflow-hidden rounded-lg border border-[#2a2a2a]"
                   style={{
-                    transform: "scale(0.75)",
-                    transformOrigin: "top left",
-                    width: CARD_WIDTH,
-                    height: CARD_HEIGHT,
+                    maxWidth: "100%",
+                    height: CARD_HEIGHT * 0.75,
+                    width: CARD_WIDTH * 0.75,
                   }}
                 >
-                  <card.component />
+                  <div
+                    style={{
+                      transform: "scale(0.75)",
+                      transformOrigin: "top left",
+                      width: CARD_WIDTH,
+                      height: CARD_HEIGHT,
+                    }}
+                  >
+                    <card.component />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

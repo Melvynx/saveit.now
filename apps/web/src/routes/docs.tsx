@@ -8,8 +8,8 @@ import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
 import { Footer } from "@/features/page/footer";
 import { Header } from "@/features/page/header";
+import { getDocBySlug, getGroupedDocs } from "@/lib/mdx/docs-manager";
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Typography } from "@workspace/ui/components/typography";
 
 function extractToc(content: string): TocItem[] {
@@ -34,10 +34,7 @@ function extractToc(content: string): TocItem[] {
   return toc;
 }
 
-const getDocsIndexData = createServerFn({ method: "GET" }).handler(async () => {
-  const { getDocBySlug, getGroupedDocs } = await import(
-    "@/lib/mdx/docs-manager"
-  );
+async function getDocsIndexData() {
   const [doc, groupedDocs] = await Promise.all([
     getDocBySlug("index"),
     getGroupedDocs(),
@@ -48,7 +45,7 @@ const getDocsIndexData = createServerFn({ method: "GET" }).handler(async () => {
     groupedDocs,
     toc: doc ? extractToc(doc.content) : [],
   };
-});
+}
 
 export const Route = createFileRoute("/docs")({
   loader: () => getDocsIndexData(),

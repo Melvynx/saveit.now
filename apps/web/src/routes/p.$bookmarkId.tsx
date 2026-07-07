@@ -3,58 +3,48 @@ import {
   BookmarkSectionTitle,
 } from "@/features/bookmarks/bookmark-content-view";
 import { RelatedBookmarks } from "@/features/public-bookmarks/related-bookmarks";
+import { useSession } from "@/lib/auth-client";
+import { getServerUrl } from "@/lib/server-url";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { Gem } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { useQuery } from "convex/react";
+import { Gem } from "lucide-react";
+import { useMemo } from "react";
 
-const getPublicBookmarkData = createServerFn({ method: "GET" })
-  .validator((data: { bookmarkId: string }) => data)
-  .handler(async ({ data }) => {
-    const [{ getUser }, { getPublicBookmark }, { getServerUrl }] =
-      await Promise.all([
-        import("@/lib/auth-session"),
-        import("@/lib/database/get-bookmark"),
-        import("@/lib/server-url"),
-      ]);
-    const bookmark = await getPublicBookmark(data.bookmarkId);
-    const user = await getUser();
+function getDomain(url: string) {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
+}
 
-    if (!bookmark) {
-      return { bookmark: null, relatedBookmarks: [], user, jsonLd: null };
-    }
+export const Route = createFileRoute("/p/$bookmarkId")({
+  component: PublicBookmarkPage,
+});
 
-    const tagIds = bookmark.tags.map((tag) => tag.tag.id);
-    const { prisma } = await import("@workspace/database/client");
-    const where = {
-      id: { not: data.bookmarkId },
-      status: "READY" as const,
-      title: { not: null },
-      ...(tagIds.length > 0 && {
-        tags: { some: { tagId: { in: tagIds } } },
-      }),
-    };
-    const relatedBookmarks = await prisma.bookmark.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        url: true,
-        ogImageUrl: true,
-        faviconUrl: true,
-        summary: true,
-        ogDescription: true,
-        type: true,
-        tags: {
-          select: { tag: { select: { name: true } } },
-          take: 3,
-        },
-      },
-      take: 6,
-      orderBy: { createdAt: "desc" },
-    });
+function PublicBookmarkPage() {
+  const { bookmarkId } = Route.useParams();
+  const session = useSession();
+  const bookmark = useQuery(api.bookmarks.queries.getPublicByIdOrLegacyId, {
+    id: bookmarkId,
+  });
+  const tagIds =
+    bookmark?.tags?.map((t: { tag: { id: string } }) => t.tag.id) ?? [];
+  const relatedBookmarks = useQuery(
+    api.bookmarks.queries.getRelated,
+    bookmark
+      ? { id: bookmark.id as Id<"bookmarks">, tagIds, take: 6 }
+      : "skip",
+  );
+
+  const jsonLd = useMemo(() => {
+    if (!bookmark) return null;
+
     const domain = getDomain(bookmark.url);
     const baseUrl = getServerUrl();
     const title = bookmark.title || "Untitled Bookmark";
@@ -62,13 +52,13 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
       bookmark.summary ||
       bookmark.ogDescription ||
       `Saved bookmark from ${domain}`;
-    const jsonLd = {
+
+    return {
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: title,
       description: description.slice(0, 200),
-      url: `${baseUrl}/p/${data.bookmarkId}`,
-      dateModified: bookmark.updatedAt.toISOString(),
+      url: `${baseUrl}/p/${bookmark.id}`,
       isPartOf: {
         "@type": "WebSite",
         name: "SaveIt.now",
@@ -83,12 +73,7 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
       breadcrumb: {
         "@type": "BreadcrumbList",
         itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: baseUrl,
-          },
+          { "@type": "ListItem", position: 1, name: "Home", item: baseUrl },
           {
             "@type": "ListItem",
             position: 2,
@@ -99,34 +84,19 @@ const getPublicBookmarkData = createServerFn({ method: "GET" })
             "@type": "ListItem",
             position: 3,
             name: title,
-            item: `${baseUrl}/p/${data.bookmarkId}`,
+            item: `${baseUrl}/p/${bookmark.id}`,
           },
         ],
       },
     };
+  }, [bookmark]);
 
-    return { bookmark, relatedBookmarks, user, jsonLd };
-  });
-
-function getDomain(url: string) {
-  try {
-    return new URL(url).hostname.replace("www.", "");
-  } catch {
-    return url;
-  }
-}
-
-export const Route = createFileRoute("/p/$bookmarkId")({
-  loader: ({ params }) => getPublicBookmarkData({ data: params }),
-  component: PublicBookmarkPage,
-});
-
-function PublicBookmarkPage() {
-  const { bookmark, relatedBookmarks, user, jsonLd } = Route.useLoaderData();
-
+  if (bookmark === undefined) return null;
   if (!bookmark) {
     return <div>Bookmark not found</div>;
   }
+
+  const relatedBookmarkList = relatedBookmarks ?? [];
 
   return (
     <article className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
@@ -139,11 +109,11 @@ function PublicBookmarkPage() {
 
       <BookmarkContentView bookmark={bookmark} isPublic={true} />
 
-      {relatedBookmarks.length > 0 && (
-        <RelatedBookmarks bookmarks={relatedBookmarks} />
+      {relatedBookmarkList.length > 0 && (
+        <RelatedBookmarks bookmarks={relatedBookmarkList} />
       )}
 
-      {user ? null : (
+      {session.data?.user ? null : (
         <Card className="flex flex-col gap-2 p-4">
           <BookmarkSectionTitle icon={Gem} text="Get the full experience" />
           <Typography variant="muted">

@@ -11,12 +11,15 @@ expo-env.d.ts
 
 # Native
 .kotlin/
+credentials/
+credentials.json
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+!ios/profiles/saveit-share-extension-appstore.mobileprovision
 
 # Metro
 .metro-health-check*

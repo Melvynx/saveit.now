@@ -1,8 +1,9 @@
-import { CheckCircle } from "@tamagui/lucide-icons";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Button, Text, YStack } from "tamagui";
 
+import { Button } from "../src/components/ui/button";
+import { StatusScreen } from "../src/components/ui/status-screen";
+import { Text } from "../src/components/ui/text";
 import { useAuth } from "../src/contexts/AuthContext";
 
 export default function GoodbyeScreen() {
@@ -27,42 +28,23 @@ export default function GoodbyeScreen() {
   };
 
   return (
-    <YStack
-      flex={1}
-      alignItems="center"
-      justifyContent="center"
-      padding="$4"
-      gap="$4"
-      backgroundColor="$background"
-    >
-      <CheckCircle size={80} color="$green10" />
-      
-      <YStack alignItems="center" gap="$2">
-        <Text fontSize="$8" fontWeight="bold" color="$color" textAlign="center">
-          Account Deleted
-        </Text>
-        <Text fontSize="$5" color="$gray10" textAlign="center" lineHeight="$5">
-          Your account has been successfully deleted.
-        </Text>
-      </YStack>
-
-      <Text fontSize="$4" color="$gray10" textAlign="center" lineHeight="$5" maxWidth={300}>
-        Thank you for using SaveIt.now. We&apos;re sorry to see you go.
-        All your data has been permanently removed.
-      </Text>
-
-      <Button
-        onPress={goToHome}
-        size="$4"
-        backgroundColor="$blue10"
-        color="white"
-        fontWeight="bold"
-        marginTop="$4"
-      >
-        <Text color="white" fontSize="$4" fontWeight="bold">
-          Continue
-        </Text>
-      </Button>
-    </YStack>
+    <StatusScreen
+      icon="checkmark-circle"
+      iconColor="#10B981"
+      badgeClassName="bg-secondary"
+      title="Account Deleted"
+      message="Your account has been successfully deleted."
+      footer={
+        <>
+          <Text className="max-w-[300px] text-center font-sans text-[14px] leading-[21px] text-muted-foreground">
+            Thank you for using SaveIt.now. We&apos;re sorry to see you go. All
+            your data has been permanently removed.
+          </Text>
+          <Button onPress={goToHome} className="mt-2 self-stretch">
+            Continue
+          </Button>
+        </>
+      }
+    />
   );
 }

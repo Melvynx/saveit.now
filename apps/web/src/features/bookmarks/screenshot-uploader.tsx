@@ -1,13 +1,11 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
-import { useRefreshBookmark } from "@/features/app/bookmark-page/use-bookmark";
-import { useRefreshBookmarks } from "@/features/app/use-bookmarks";
-import { useRef } from "react";
+import { api } from "@convex/_generated/api";
+import { useAction } from "convex/react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { upfetch } from "src/lib/up-fetch";
-import { z } from "zod";
+import type { Id } from "@convex/_generated/dataModel";
 
 interface ScreenshotUploaderProps {
   bookmarkId: string;
@@ -25,60 +23,39 @@ const allowedTypes = [
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-async function uploadScreenshot({
-  bookmarkId,
-  file,
-}: {
-  bookmarkId: string;
-  file: File;
-}) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  // upfetch is just fetch, but you can swap it for fetch if you want
-  const response = await upfetch(
-    `/api/bookmarks/${bookmarkId}/upload-screenshot`,
-    {
-      method: "POST",
-      body: formData,
-      schema: z.object({
-        previewUrl: z.string(),
-        success: z.boolean(),
-      }),
-    },
-  );
-
-  return response;
-}
-
 export const ScreenshotUploader = ({
   bookmarkId,
   onUploadSuccess,
   className = "",
 }: ScreenshotUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const refreshBookmarks = useRefreshBookmarks();
-  const refreshBookmark = useRefreshBookmark(bookmarkId);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadBookmarkScreenshot = useAction(
+    api.files.actions.uploadBookmarkScreenshot,
+  );
 
-  const mutation = useMutation({
-    mutationFn: async (file: File) => {
-      return uploadScreenshot({ bookmarkId, file });
-    },
-    onSuccess: (data) => {
+  const uploadFile = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const data = await uploadBookmarkScreenshot({
+        bookmarkId: bookmarkId as Id<"bookmarks">,
+        fileData: buffer,
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      });
       toast.success("Screenshot updated successfully!");
       onUploadSuccess(data.previewUrl);
-      refreshBookmarks();
-      refreshBookmark();
-    },
-    onError: (error: unknown) => {
+    } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
-    },
-    onSettled: () => {
+    } finally {
+      setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    },
-  });
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -94,7 +71,7 @@ export const ScreenshotUploader = ({
       return;
     }
 
-    mutation.mutate(file);
+    void uploadFile(file);
   };
 
   const openFilePicker = () => {
@@ -105,8 +82,8 @@ export const ScreenshotUploader = ({
     <div
       className={`absolute top-4 right-4 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${className}`}
     >
-      <Button onClick={openFilePicker} disabled={mutation.isPending} size="sm">
-        {mutation.isPending ? "Uploading..." : "Update Preview"}
+      <Button onClick={openFilePicker} disabled={isUploading} size="sm">
+        {isUploading ? "Uploading..." : "Update Preview"}
       </Button>
       <input
         ref={fileInputRef}

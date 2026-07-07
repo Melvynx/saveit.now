@@ -1,10 +1,10 @@
 "use client";
 
 import { AdminStatusBadge } from "@/features/admin/admin-shared";
+import type { AdminUserListItem } from "@/features/admin/types";
 import { authClient } from "@/lib/auth-client";
-import type { UserWithStats } from "@/lib/database/admin-users";
 import { unwrapSafePromise } from "@/lib/promises";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -27,20 +27,19 @@ import {
 import { toast } from "sonner";
 
 type UserRowProps = {
-  user: UserWithStats;
+  user: AdminUserListItem;
 };
 
 export const UserRow = ({ user }: UserRowProps) => {
   const router = useRouter();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const refreshAdminData = () => {
     void router.invalidate();
   };
 
-  const banUserMutation = useMutation({
-    mutationFn: async ({
+  const banUserTask = useAsyncTask(
+    async ({
       userId,
       reason,
     }: {
@@ -54,45 +53,56 @@ export const UserRow = ({ user }: UserRowProps) => {
         }),
       );
     },
-    onSuccess: () => {
-      toast.success("User banned successfully");
-      refreshAdminData();
+    {
+      onSuccess: () => {
+        toast.success("User banned successfully");
+        refreshAdminData();
+      },
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Failed to ban user: ${error.message}`);
+        }
+      },
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to ban user: ${error.message}`);
-    },
-  });
+  );
 
-  const unbanUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
+  const unbanUserTask = useAsyncTask(
+    async (userId: string) => {
       return unwrapSafePromise(authClient.admin.unbanUser({ userId }));
     },
-    onSuccess: () => {
-      toast.success("User unbanned successfully");
-      refreshAdminData();
+    {
+      onSuccess: () => {
+        toast.success("User unbanned successfully");
+        refreshAdminData();
+      },
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Failed to unban user: ${error.message}`);
+        }
+      },
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to unban user: ${error.message}`);
-    },
-  });
+  );
 
-  const impersonateMutation = useMutation({
-    mutationFn: async (userId: string) => {
+  const impersonateTask = useAsyncTask(
+    async (userId: string) => {
       return unwrapSafePromise(authClient.admin.impersonateUser({ userId }));
     },
-    onSuccess: () => {
-      toast.success("Impersonation started");
-      queryClient.invalidateQueries();
-      void router.invalidate();
-      void navigate({ to: "/app" });
+    {
+      onSuccess: () => {
+        toast.success("Impersonation started");
+        void router.invalidate();
+        void navigate({ to: "/app" });
+      },
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Failed to impersonate user: ${error.message}`);
+        }
+      },
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to impersonate user: ${error.message}`);
-    },
-  });
+  );
 
-  const setRoleMutation = useMutation({
-    mutationFn: async ({
+  const setRoleTask = useAsyncTask(
+    async ({
       userId,
       role,
     }: {
@@ -101,14 +111,18 @@ export const UserRow = ({ user }: UserRowProps) => {
     }) => {
       return unwrapSafePromise(authClient.admin.setRole({ userId, role }));
     },
-    onSuccess: () => {
-      toast.success("User role updated successfully");
-      refreshAdminData();
+    {
+      onSuccess: () => {
+        toast.success("User role updated successfully");
+        refreshAdminData();
+      },
+      onError: (error) => {
+        if (error instanceof Error) {
+          toast.error(`Failed to update user role: ${error.message}`);
+        }
+      },
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update user role: ${error.message}`);
-    },
-  });
+  );
 
   const isPremium = user.subscriptions.some((subscription) =>
     ["active", "trialing"].includes(subscription.status ?? ""),
@@ -194,7 +208,7 @@ export const UserRow = ({ user }: UserRowProps) => {
             </DropdownMenuItem>
             {!user.banned ? (
               <DropdownMenuItem
-                onClick={() => impersonateMutation.mutate(user.id)}
+                onClick={() => void impersonateTask.run(user.id)}
               >
                 <UserCog className="size-4" />
                 Impersonate
@@ -203,7 +217,7 @@ export const UserRow = ({ user }: UserRowProps) => {
             <DropdownMenuSeparator />
             {user.banned ? (
               <DropdownMenuItem
-                onClick={() => unbanUserMutation.mutate(user.id)}
+                onClick={() => void unbanUserTask.run(user.id)}
               >
                 <UserCheck className="size-4" />
                 Unban
@@ -211,7 +225,7 @@ export const UserRow = ({ user }: UserRowProps) => {
             ) : (
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => banUserMutation.mutate({ userId: user.id })}
+                onClick={() => void banUserTask.run({ userId: user.id })}
               >
                 <Ban className="size-4" />
                 Ban
@@ -220,7 +234,7 @@ export const UserRow = ({ user }: UserRowProps) => {
             {user.role !== "admin" ? (
               <DropdownMenuItem
                 onClick={() =>
-                  setRoleMutation.mutate({
+                  void setRoleTask.run({
                     userId: user.id,
                     role: "admin",
                   })

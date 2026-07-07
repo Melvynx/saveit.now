@@ -2,7 +2,6 @@
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
@@ -78,9 +77,7 @@ const ApiKeySuccessDialog = ({
   );
 };
 
-export function CreateApiKeyForm() {
-  const router = useRouter();
-
+export function CreateApiKeyForm({ onCreated }: { onCreated?: () => void }) {
   const showApiKeyDialog = (apiKey: string, name: string) => {
     const dialogId = dialogManager.add({
       children: (
@@ -118,7 +115,7 @@ export function CreateApiKeyForm() {
             if (apiKey?.key) {
               showApiKeyDialog(apiKey.key, keyName);
               toast.success("API key created");
-              void router.invalidate();
+              onCreated?.();
             }
           }
         },

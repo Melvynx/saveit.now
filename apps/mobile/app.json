@@ -2,26 +2,23 @@
   "expo": {
     "name": "SaveIt",
     "slug": "saveit-mobile",
-    "version": "2.0.0",
+    "version": "3.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "saveit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "buildNumber": "2026070602",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FFFDF8"
       },
       "edgeToEdgeEnabled": true,
       "package": "now.saveit.saveitapp"
@@ -33,6 +30,20 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFDF8",
+          "ios": {
+            "imageWidth": 184
+          },
+          "android": {
+            "imageWidth": 246
+          }
+        }
+      ],
       [
         "expo-share-intent",
         {
@@ -49,7 +60,12 @@
             "video/*"
           ]
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "expo-font",
+      "expo-iap",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -60,11 +76,6 @@
       },
       "eas": {
         "projectId": "d09eb4d5-85f0-4a4a-9b9e-5ca5cc19d4fa"
-      }
-    },
-    "env": {
-      "production": {
-        "EXPO_PUBLIC_API_URL": "https://saveit.now"
       }
     }
   }

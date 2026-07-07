@@ -1,73 +1,49 @@
-import { requireUser } from "@/lib/safe-route";
-import { prisma } from "@workspace/database/client";
+import {
+  legacyErrorResponse,
+  legacyJson,
+  legacyOptions,
+  normalizeTagsResponse,
+  parseLimit,
+  requireLegacySession,
+} from "@/lib/legacy-api";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { api } from "@convex/_generated/api";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-
-const tagSchema = z.object({
-  name: z.string(),
-});
 
 export const Route = createFileRoute("/api/tags")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const user = await requireUser(request);
+      GET: async ({ request }: { request: Request }) => {
+        const user = await requireLegacySession(request);
         if (user instanceof Response) return user;
 
-        const { searchParams } = new URL(request.url);
-        const query = searchParams.get("q");
-        const cursor = searchParams.get("cursor");
-        const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
+        const url = new URL(request.url);
+        const limit = parseLimit(request, url.searchParams.get("limit"), 10, 50);
+        if (limit instanceof Response) return limit;
 
-        const tags = await prisma.tag.findMany({
-          where: {
-            userId: user.id,
-            ...(query && {
-              name: {
-                contains: query,
-                mode: "insensitive",
-              },
-            }),
-            ...(cursor && {
-              id: {
-                gt: cursor,
-              },
-            }),
-          },
-          orderBy: { id: "asc" },
-          take: limit + 1,
-        });
+        try {
+          const query = url.searchParams.get("q")?.trim();
+          const cursor = url.searchParams.get("cursor") ?? null;
+          const result = query
+            ? await fetchAuthQuery(api.tags.queries.legacySearch, {
+                query,
+                cursor,
+                limit,
+              })
+            : await fetchAuthQuery(api.tags.queries.list, {
+                paginationOpts: {
+                  numItems: limit,
+                  cursor,
+                },
+              });
 
-        const hasNextPage = tags.length > limit;
-        const results = hasNextPage ? tags.slice(0, limit) : tags;
-        const nextCursor = hasNextPage ? results[results.length - 1]?.id : null;
-
-        return Response.json({
-          tags: results,
-          nextCursor,
-          hasNextPage,
-        });
+          return legacyJson(normalizeTagsResponse(result), { request });
+        } catch (error) {
+          return legacyErrorResponse(error, request);
+        }
       },
-      POST: async ({ request }) => {
-        const user = await requireUser(request);
-        if (user instanceof Response) return user;
-
-        const body = tagSchema.parse(await request.json());
-        const tag = await prisma.tag.create({
-          data: {
-            name: body.name,
-            userId: user.id,
-            type: "USER",
-          },
-          select: {
-            id: true,
-            name: true,
-            type: true,
-          },
-        });
-
-        return Response.json({ success: true, tag });
-      },
+      OPTIONS: async ({ request }: { request: Request }) =>
+        legacyOptions(request),
     },
   },
 });

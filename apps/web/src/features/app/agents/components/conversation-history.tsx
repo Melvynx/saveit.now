@@ -1,6 +1,7 @@
 "use client";
 
-import { upfetch } from "@/lib/up-fetch";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
 import {
   Popover,
@@ -9,28 +10,23 @@ import {
 } from "@workspace/ui/components/popover";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "convex/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { HistoryIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 dayjs.extend(relativeTime);
 
-const conversationsSchema = z.object({
-  conversations: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string().nullable(),
-      updatedAt: z.coerce.date(),
-      createdAt: z.coerce.date(),
-    }),
-  ),
-});
-
-type ConversationItem = z.infer<typeof conversationsSchema>["conversations"][0];
+type ConversationItem = {
+  _id: string;
+  title: string | null;
+  updatedAt: number;
+  createdAt: number;
+  likes: number;
+};
 
 type ConversationHistoryProps = {
   currentConversationId: string | null;
@@ -42,26 +38,16 @@ export function ConversationHistory({
   onSelect,
 }: ConversationHistoryProps) {
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: () =>
-      upfetch("/api/chat/conversations", { schema: conversationsSchema }),
-    enabled: open,
-  });
+  // Convex reactive query — only active when the popover is open
+  const data = useAuthedQuery(
+    api.chat.queries.listConversations,
+    open ? {} : "skip",
+  );
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      upfetch(`/api/chat/conversations/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success("Conversation deleted");
-    },
-    onError: () => {
-      toast.error("Failed to delete conversation");
-    },
-  });
+  // Convex mutation for deleting a conversation
+  const deleteConversation = useMutation(api.chat.mutations.deleteConversation);
 
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -70,7 +56,11 @@ export function ConversationHistory({
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    deleteMutation.mutate(id);
+    setIsDeleting(true);
+    void deleteConversation({ conversationId: id as Id<"chatConversations"> })
+      .then(() => toast.success("Conversation deleted"))
+      .catch(() => toast.error("Failed to delete conversation"))
+      .finally(() => setIsDeleting(false));
   };
 
   const groupConversations = (conversations: ConversationItem[]) => {
@@ -98,7 +88,8 @@ export function ConversationHistory({
     return groups.filter((g) => g.items.length > 0);
   };
 
-  const groups = data ? groupConversations(data.conversations) : [];
+  const conversations = data ?? [];
+  const groups = groupConversations(conversations);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -113,7 +104,7 @@ export function ConversationHistory({
           <h3 className="text-sm font-medium">Conversation History</h3>
         </div>
         <ScrollArea className="h-[300px]">
-          {isLoading ? (
+          {data === undefined ? (
             <div className="flex items-center justify-center py-8">
               <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
@@ -130,11 +121,11 @@ export function ConversationHistory({
                   </div>
                   {group.items.map((conv) => (
                     <button
-                      key={conv.id}
-                      onClick={() => handleSelect(conv.id)}
+                      key={conv._id}
+                      onClick={() => handleSelect(conv._id)}
                       className={cn(
                         "group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/50",
-                        currentConversationId === conv.id && "bg-muted",
+                        currentConversationId === conv._id && "bg-muted",
                       )}
                     >
                       <div className="min-w-0 flex-1">
@@ -149,8 +140,8 @@ export function ConversationHistory({
                         size="icon"
                         variant="ghost"
                         className="size-6 opacity-0 group-hover:opacity-100"
-                        onClick={(e) => handleDelete(e, conv.id)}
-                        disabled={deleteMutation.isPending}
+                        onClick={(e) => handleDelete(e, conv._id)}
+                        disabled={isDeleting}
                       >
                         <TrashIcon className="size-3" />
                       </Button>

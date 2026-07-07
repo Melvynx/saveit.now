@@ -3,9 +3,11 @@
 import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
+import { useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { api } from "@convex/_generated/api";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Alert,
   AlertDescription,
@@ -30,53 +32,69 @@ import {
   Infinity as InfinityIcon,
   Phone,
 } from "lucide-react";
+import { useAction } from "convex/react";
 import { usePostHog } from "posthog-js/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const CheckoutResponseSchema = z.object({ url: z.string() });
 
 export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
+  const session = useSession();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
   );
   const error = searchParams.get("error");
   const plan = useUserPlan();
   const posthog = usePostHog();
+  const createCheckout = useAction(api.stripe.actions.createCheckout);
 
-  const mutation = useMutation({
-    mutationFn: async () => {
+  // Upgrading requires an authenticated Convex session (createCheckout is an
+  // authAction). Send logged-out visitors through sign-in and bring them back
+  // to /upgrade afterwards via the redirectUrl param.
+  useEffect(() => {
+    if (!session.isPending && !session.data?.user) {
+      void navigate({ to: "/signin", search: { redirectUrl: "/upgrade" } });
+    }
+  }, [navigate, session.data?.user, session.isPending]);
+
+  const checkoutTask = useAsyncTask(
+    async () => {
       posthog.capture("upgrade_subscription", {
         plan: monthly ? "monthly" : "yearly",
       });
 
-      const result = await upfetch("/api/upgrade", {
-        method: "POST",
-        body: {
-          plan: "pro",
-          successUrl: "/upgrade/success",
-          cancelUrl: "/upgrade?error=true",
-          annual: !monthly,
-        },
-        schema: CheckoutResponseSchema,
+      const result = await createCheckout({
+        plan: "pro",
+        successUrl: "/upgrade/success",
+        cancelUrl: "/upgrade?error=true",
+        annual: !monthly,
       });
 
       window.location.href = result.url;
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to upgrade");
+    {
+      onError: (error) => {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to upgrade",
+        );
+      },
     },
-  });
+  );
+
+  // Logged-out visitors are being redirected by the effect above; render
+  // nothing to avoid flashing the pricing card before navigation completes.
+  if (!session.isPending && !session.data?.user) {
+    return null;
+  }
 
   return (
-    <MaxWidthContainer className="flex flex-row gap-12 w-full my-8 lg:my-12">
+    <MaxWidthContainer className="my-8 flex w-full min-w-0 flex-col gap-12 lg:my-12 lg:flex-row">
       <FeaturesList />
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
         {error ? (
-          <Alert variant="destructive" className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
+          <Alert variant="destructive" className="flex min-w-0 flex-col gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <AlertTriangle className="size-4" />
               <AlertTitle>Error</AlertTitle>
             </div>
@@ -89,15 +107,18 @@ export function UpgradePage() {
         <Tabs
           value={monthly ? "monthly" : "yearly"}
           onValueChange={(value) => setMonthly(value === "monthly")}
+          className="w-full sm:w-auto"
         >
-          <TabsList>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <div className="relative">
-              <TabsTrigger value="yearly" className="relative">
+          <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-fit">
+            <TabsTrigger value="monthly" className="w-full">
+              Monthly
+            </TabsTrigger>
+            <div className="relative min-w-0">
+              <TabsTrigger value="yearly" className="w-full pr-10 sm:pr-1.5">
                 Yearly
               </TabsTrigger>
               <Badge
-                className="absolute -top-4 -right-5 text-xs bg-card"
+                className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 bg-card text-[10px] sm:-right-5 sm:-top-4 sm:translate-y-0 sm:text-xs"
                 variant="outline"
               >
                 -49%
@@ -105,7 +126,7 @@ export function UpgradePage() {
             </div>
           </TabsList>
         </Tabs>
-        <Card className="w-full h-fit">
+        <Card className="h-fit w-full min-w-0">
           <CardHeader>
             <CardTitle>
               SaveIt<span className="text-primary font-bold">.pro</span>
@@ -115,7 +136,7 @@ export function UpgradePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-baseline gap-0.5">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-0.5">
               <Typography className="text-2xl font-bold">
                 ${monthly ? "9" : "5"}
               </Typography>
@@ -134,7 +155,7 @@ export function UpgradePage() {
             <Typography variant="muted">
               Simple and transparent pricing. No hidden fees.
             </Typography>
-            <ul className="flex flex-col gap-2 flex-2 text-muted-foreground text-sm">
+            <ul className="flex flex-2 min-w-0 flex-col gap-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <InfinityIcon className="text-primary size-4" />
                 <span>Unlimited bookmarks</span>
@@ -154,8 +175,8 @@ export function UpgradePage() {
             </ul>
             {plan.name === "free" ? (
               <LoadingButton
-                loading={mutation.isPending}
-                onClick={() => mutation.mutate()}
+                loading={checkoutTask.isPending}
+                onClick={() => void checkoutTask.run()}
                 className="w-full"
               >
                 Upgrade
@@ -172,8 +193,43 @@ export function UpgradePage() {
             )}
           </CardFooter>
         </Card>
+        <div className="min-w-0 rounded-lg border bg-card p-4">
+          <Typography variant="large" className="font-medium">
+            How to upgrade
+          </Typography>
+          <Typography variant="muted" className="mt-1">
+            SaveIt.pro is managed from the web. Subscriptions are not sold
+            inside the mobile apps — to go premium, upgrade here on saveit.now.
+          </Typography>
+          <ol className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">1.</span>
+              <span>
+                Sign in to your SaveIt.now account (you&apos;ll be brought back
+                to this page automatically).
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">2.</span>
+              <span>Pick a monthly or yearly plan above.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">3.</span>
+              <span>
+                Click <span className="text-foreground">Upgrade</span> to
+                complete a secure checkout with Stripe.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">4.</span>
+              <span>
+                Pro unlocks everywhere instantly — including the mobile app and
+                browser extensions.
+              </span>
+            </li>
+          </ol>
+        </div>
       </div>
     </MaxWidthContainer>
   );
 }
-

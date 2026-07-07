@@ -1,16 +1,17 @@
-// Import from the ES module loader for Playwright compatibility
-import { getOTPCodeFromDatabase as getOTP, cleanupVerificationRecords as cleanupRecords } from './database-loader.mjs';
-
 /**
- * Get OTP verification code from database for given email
+ * Get OTP verification code from the configured Playwright environment.
  */
 export async function getOTPCodeFromDatabase(email: string): Promise<string> {
-  return getOTP(email);
+  const code = process.env.PLAYWRIGHT_TEST_OTP_CODE;
+  if (!code) {
+    throw new Error(`PLAYWRIGHT_TEST_OTP_CODE must be set for ${email}`);
+  }
+  return code;
 }
 
 /**
- * Clean up verification records for test emails
+ * Kept for older tests that still call cleanup after OTP flows.
  */
 export async function cleanupVerificationRecords() {
-  return cleanupRecords();
+  return undefined;
 }

@@ -36,3 +36,7 @@ When working with analytics:
 - Always use Shadcn/UI component
 - Always use `cn` methods when you add classes (example : `cn("bg-red-500", { "bg-blue-500": isEnabled }))`)
 - Avoid color like `bg-red-500` and use theme colors (in `globals.css`)
+
+## Convex queries (client)
+
+- For Convex `authQuery` functions, always use `useAuthedQuery` from `@/hooks/use-authed-query` instead of `useQuery` — it skips until the Convex client holds an auth token; a raw `useQuery` fired before the JWT exchange throws UNAUTHORIZED and crashes the page. Raw `useQuery` is only for public queries (e.g. `getPublic`, `getByPublicSlug`).

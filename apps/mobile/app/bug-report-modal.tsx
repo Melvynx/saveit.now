@@ -1,61 +1,62 @@
-import { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { 
-  Platform, 
+import { api } from "@convex/_generated/api";
+import Constants from "expo-constants";
+import { useAction } from "convex/react";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
   Alert,
   KeyboardAvoidingView,
-  ScrollView 
-} from 'react-native';
-import { router } from 'expo-router';
-import { Bug, X } from '@tamagui/lucide-icons';
-import { 
-  Button, 
-  Card, 
-  Text, 
-  TextArea, 
-  XStack, 
-  YStack 
-} from 'tamagui';
-import Constants from 'expo-constants';
+  Platform,
+  ScrollView,
+  View,
+} from "react-native";
 
-import { useAuth } from '../src/contexts/AuthContext';
-import { apiClient } from '../src/lib/api-client';
+import { Button } from "../src/components/ui/button";
+import { IconButton } from "../src/components/ui/icon-button";
+import { Input } from "../src/components/ui/input";
+import { StatusScreen } from "../src/components/ui/status-screen";
+import { Text } from "../src/components/ui/text";
+import { useAuth } from "../src/contexts/AuthContext";
 
 export default function BugReportModal() {
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const sendBugReport = useAction(api.users.actions.sendBugReport);
 
   const handleSubmitBugReport = async () => {
     if (!description.trim() || description.trim().length < 10) {
-      Alert.alert('Error', 'Please provide a detailed description (at least 10 characters)');
+      Alert.alert(
+        "Error",
+        "Please provide a detailed description (at least 10 characters)",
+      );
       return;
     }
 
     if (!user) {
-      Alert.alert('Error', 'Please sign in to submit a bug report');
+      Alert.alert("Error", "Please sign in to submit a bug report");
       return;
     }
 
     setIsLoading(true);
     try {
       const deviceInfo = `${Platform.OS} ${Platform.Version}`;
-      const appVersion = Constants.expoConfig?.version || 'Unknown';
+      const appVersion = Constants.expoConfig?.version || "Unknown";
 
-      await apiClient.submitBugReport({
+      await sendBugReport({
         description: description.trim(),
         deviceInfo,
         appVersion,
       });
-      
+
       Alert.alert(
-        'Bug Report Sent', 
-        'Thank you for your feedback! We\'ve received your bug report and will investigate it.',
-        [{ text: 'OK', onPress: () => router.back() }]
+        "Bug Report Sent",
+        "Thank you for your feedback! We've received your bug report and will investigate it.",
+        [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (error) {
-      console.error('Error submitting bug report:', error);
-      Alert.alert('Error', 'Failed to submit bug report. Please try again.');
+      console.error("Error submitting bug report:", error);
+      Alert.alert("Error", "Failed to submit bug report. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -67,139 +68,95 @@ export default function BugReportModal() {
 
   if (!user) {
     return (
-      <YStack flex={1} padding="$4" justifyContent="center" alignItems="center" gap="$4">
-        <Bug size={48} color="$gray10" />
-        <Text fontSize="$6" fontWeight="bold" textAlign="center">
-          Sign In Required
-        </Text>
-        <Text fontSize="$4" color="$gray10" textAlign="center">
-          Please sign in to submit a bug report
-        </Text>
-        <Button onPress={handleCancel} theme="gray">
-          <X size={16} />
-          Close
-        </Button>
-        <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-      </YStack>
+      <StatusScreen
+        icon="bug-outline"
+        title="Sign In Required"
+        message="Please sign in to submit a bug report"
+        footer={
+          <Button onPress={handleCancel} variant="secondary" className="self-stretch">
+            Close
+          </Button>
+        }
+      />
     );
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <YStack flex={1} padding="$4" backgroundColor="$background">
-        <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-        
-        <XStack justifyContent="space-between" alignItems="center" marginBottom="$6" marginTop="$4">
-          <YStack gap="$2">
-            <Text fontSize="$8" fontWeight="bold" color="$color">
+      <View className="flex-1 bg-background px-4 pt-4">
+        <View className="mb-6 flex-row items-center justify-between">
+          <View>
+            <Text variant="title" className="text-[24px] leading-[30px]">
               Report Bug
             </Text>
-            <Text fontSize="$4" color="$gray10">
-              Help us improve the app
-            </Text>
-          </YStack>
-          <Button
-            onPress={handleCancel}
-            size="$3"
-            variant="outlined"
-            backgroundColor="transparent"
-            disabled={isLoading}
-          >
-            <X size={20} />
-          </Button>
-        </XStack>
+            <Text variant="subtitle">Help us improve the app</Text>
+          </View>
+          <IconButton icon="close" onPress={handleCancel} disabled={isLoading} />
+        </View>
 
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <YStack gap="$4">
-            <Card
-              padding="$4"
-              backgroundColor="$backgroundTransparent"
-              borderWidth={1}
-              borderColor="$borderColor"
-            >
-              <XStack alignItems="center" gap="$3">
-                <Bug size={20} color="$gray10" />
-                <YStack flex={1} gap="$1">
-                  <Text fontSize="$3" color="$gray10">
-                    Reporting as:
-                  </Text>
-                  <Text fontSize="$4" fontWeight="500" color="$color">
-                    {user.email}
-                  </Text>
-                </YStack>
-              </XStack>
-            </Card>
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <View className="gap-6">
+            <View className="rounded-2xl bg-secondary px-5 py-4">
+              <Text className="font-sans text-[13px] text-muted-foreground">
+                Reporting as
+              </Text>
+              <Text className="font-sans-medium text-[17px] text-foreground">
+                {user.email}
+              </Text>
+            </View>
 
-            <YStack gap="$3">
-              <Text fontSize="$5" fontWeight="600" color="$color">
-                What's the issue?
-              </Text>
-              <Text fontSize="$3" color="$gray10">
-                Please describe the bug in detail. Include steps to reproduce if possible.
-              </Text>
-              
-              <TextArea
+            <View className="gap-3">
+              <View className="gap-1">
+                <Text variant="label">{"What's the issue?"}</Text>
+                <Text variant="body-sm" className="text-muted-foreground">
+                  Please describe the bug in detail. Include steps to reproduce
+                  if possible.
+                </Text>
+              </View>
+
+              <Input
                 placeholder="Describe the bug you encountered..."
                 value={description}
                 onChangeText={setDescription}
-                minHeight={120}
-                maxHeight={200}
+                multiline
                 numberOfLines={6}
-                backgroundColor="$backgroundTransparent"
-                borderColor="$borderColor"
-                borderWidth={1}
-                padding="$3"
-                fontSize="$4"
-                color="$color"
-                placeholderTextColor="$gray10"
                 textAlignVertical="top"
+                variant="filled"
+                className="min-h-[120px]"
               />
-              
-              <Text fontSize="$2" color="$gray10" textAlign="right">
+
+              <Text className="text-right font-sans text-[12px] text-muted-foreground">
                 {description.length} characters (minimum 10)
               </Text>
-            </YStack>
+            </View>
 
-            <Card
-              padding="$4"
-              backgroundColor="$backgroundTransparent"
-              borderWidth={1}
-              borderColor="$borderColor"
-            >
-              <YStack gap="$2">
-                <Text fontSize="$4" fontWeight="500" color="$color">
-                  Device Information
-                </Text>
-                <Text fontSize="$3" color="$gray10">
-                  Platform: {Platform.OS} {Platform.Version}
-                </Text>
-                <Text fontSize="$3" color="$gray10">
-                  App Version: {Constants.expoConfig?.version || 'Unknown'}
-                </Text>
-              </YStack>
-            </Card>
-          </YStack>
+            <View className="gap-1 rounded-2xl border border-border bg-card px-5 py-4">
+              <Text className="font-sans-semibold text-[14px] text-foreground">
+                Device Information
+              </Text>
+              <Text className="font-sans text-[13px] text-muted-foreground">
+                Platform: {Platform.OS} {Platform.Version}
+              </Text>
+              <Text className="font-sans text-[13px] text-muted-foreground">
+                App Version: {Constants.expoConfig?.version || "Unknown"}
+              </Text>
+            </View>
+          </View>
         </ScrollView>
 
-        <YStack marginTop="$4" gap="$3">
+        <View className="pb-4 pt-4">
           <Button
             onPress={handleSubmitBugReport}
-            disabled={isLoading || description.trim().length < 10}
-            backgroundColor="$red10"
-            color="white"
-            size="$4"
-            fontWeight="bold"
+            disabled={description.trim().length < 10}
+            loading={isLoading}
           >
-            <Bug size={20} />
-            <Text color="white" fontSize="$4" fontWeight="bold">
-              {isLoading ? 'Sending...' : 'Submit Bug Report'}
-            </Text>
+            {isLoading ? "Sending..." : "Submit Bug Report"}
           </Button>
-        </YStack>
-      </YStack>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }

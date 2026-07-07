@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { ScrollView } from "react-native";
-import { XStack, YStack, Text, Button, Spinner } from "tamagui";
-import { apiClient, Tag } from "../lib/api-client";
+import { api } from "@convex/_generated/api";
+import { useQuery } from "convex/react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+
+import { LoadingSpinner } from "./ui/loading";
+import { useAuth } from "../contexts/AuthContext";
 
 interface TagSuggestionsProps {
   searchText: string;
@@ -14,30 +16,37 @@ export function TagSuggestions({
   selectedTags,
   onSelectTag,
 }: TagSuggestionsProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["tags", searchText],
-    queryFn: () => apiClient.getTags({ q: searchText, limit: 20 }),
-    enabled: true,
-  });
+  const { isAuthenticated } = useAuth();
 
+  const result = useQuery(
+    api.tags.queries.list,
+    isAuthenticated
+      ? {
+          paginationOpts: { numItems: 20, cursor: null },
+          query: searchText || undefined,
+        }
+      : "skip",
+  );
+
+  const isLoading = result === undefined;
   const filteredTags =
-    data?.tags.filter((tag) => !selectedTags.includes(tag.name)) ?? [];
+    result?.page.filter((tag: any) => !selectedTags.includes(tag.name)) ?? [];
 
   if (isLoading) {
     return (
-      <YStack padding="$2" alignItems="center">
-        <Spinner size="small" />
-      </YStack>
+      <View className="items-center p-2">
+        <LoadingSpinner size="small" />
+      </View>
     );
   }
 
   if (filteredTags.length === 0) {
     return (
-      <YStack padding="$3" alignItems="center">
-        <Text color="$gray10" fontSize="$2">
+      <View className="items-center p-3">
+        <Text className="font-sans text-[13px] text-muted-foreground">
           No tags found
         </Text>
-      </YStack>
+      </View>
     );
   }
 
@@ -48,23 +57,19 @@ export function TagSuggestions({
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={{ paddingHorizontal: 16 }}
     >
-      <XStack gap="$2" paddingVertical="$2">
-        {filteredTags.map((tag: Tag) => (
-          <Button
-            key={tag.id}
-            size="$2"
-            paddingHorizontal="$3"
-            backgroundColor="$purple4"
-            borderRadius="$10"
-            pressStyle={{ opacity: 0.8 }}
+      <View className="flex-row gap-2 py-2">
+        {filteredTags.map((tag: any) => (
+          <Pressable
+            key={tag._id}
             onPress={() => onSelectTag(tag.name)}
+            className="rounded-full border border-border bg-card px-3.5 py-1.5 active:opacity-70"
           >
-            <Text fontSize="$2" fontWeight="500" color="$purple11">
+            <Text className="font-sans-semibold text-[13px] text-foreground">
               #{tag.name}
             </Text>
-          </Button>
+          </Pressable>
         ))}
-      </XStack>
+      </View>
     </ScrollView>
   );
 }

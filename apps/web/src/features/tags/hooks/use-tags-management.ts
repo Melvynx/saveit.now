@@ -1,46 +1,35 @@
-import { upfetch } from "@/lib/up-fetch";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { z } from "zod";
+import { api } from "@convex/_generated/api";
+import { usePaginatedQuery } from "convex/react";
 
-const TagSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.enum(["USER", "IA"]),
-  _count: z.object({
-    bookmarks: z.number(),
-  }),
-});
-
-const TagsPageResponseSchema = z.object({
-  tags: z.array(TagSchema),
-  nextCursor: z.string().nullable(),
-  hasNextPage: z.boolean(),
-});
-
-export type TagWithCount = z.infer<typeof TagSchema>;
+export type TagWithCount = {
+  _id: string;
+  id: string;
+  name: string;
+  type: "USER" | "IA";
+  _count: { bookmarks: number };
+};
 
 export function useTagsManagement(searchQuery?: string) {
-  return useInfiniteQuery({
-    queryKey: ["tags-management", searchQuery],
-    queryFn: async ({
-      pageParam,
-    }): Promise<z.infer<typeof TagsPageResponseSchema>> => {
-      const searchParams = new URLSearchParams();
-      if (searchQuery) {
-        searchParams.append("q", searchQuery);
-      }
-      if (pageParam) {
-        searchParams.append("cursor", pageParam);
-      }
-      searchParams.append("limit", "20");
+  const { results, status, loadMore, isLoading } = usePaginatedQuery(
+    api.tags.queries.listManagement,
+    { query: searchQuery || undefined },
+    { initialNumItems: 20 },
+  );
 
-      const url = `/api/tags/management${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-      return upfetch(url, {
-        schema: TagsPageResponseSchema,
-      });
+  const pages: Array<{ tags: TagWithCount[]; nextCursor: string | null; hasNextPage: boolean }> = [
+    {
+      tags: (results as TagWithCount[]) ?? [],
+      nextCursor: null,
+      hasNextPage: status === "CanLoadMore",
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: undefined as string | undefined,
-  });
-}
+  ];
 
+  return {
+    data: { pages },
+    fetchNextPage: () => loadMore(20),
+    hasNextPage: status === "CanLoadMore",
+    isFetchingNextPage: status === "LoadingMore",
+    isLoading: isLoading,
+    error: null as Error | null,
+  };
+}

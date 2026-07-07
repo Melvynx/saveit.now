@@ -4,8 +4,8 @@ import { Input } from "@workspace/ui/components/input";
 import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@convex/_generated/api";
+import { useMutation } from "convex/react";
 import { Typography } from "@workspace/ui/components/typography";
 import {
   BookmarkCardContainer,
@@ -17,6 +17,8 @@ import {
 } from "./bookmark-card-base";
 import { DeleteButtonAction } from "./bookmark-card-pending";
 import type { BookmarkCardData } from "./bookmark.types";
+import type { Id } from "@convex/_generated/dataModel";
+import { useState } from "react";
 
 interface BookmarkCardErrorProps {
   bookmark: BookmarkCardData;
@@ -29,29 +31,24 @@ const ReBookmarkButton = ({
   bookmarkId: string;
   children?: React.ReactNode;
 }) => {
-  const queryClient = useQueryClient();
-  const action = useMutation({
-    mutationFn: () =>
-      upfetch(`/api/bookmarks/${bookmarkId}`, {
-        method: "PATCH",
-        body: { status: "PENDING" },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          Array.isArray(query.queryKey) && query.queryKey[0] === "bookmarks",
-      });
-    },
-  });
+  const reprocess = useMutation(api.bookmarks.mutations.reprocess);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleReprocess = () => {
+    setIsPending(true);
+    void reprocess({ id: bookmarkId as Id<"bookmarks"> }).finally(() =>
+      setIsPending(false),
+    );
+  };
 
   return (
     <LoadingButton
       data-testid="rebookmark-button"
-      loading={action.isPending}
+      loading={isPending}
       size={children ? "sm" : "icon"}
       variant="outline"
       className={children ? "" : "size-8"}
-      onClick={() => action.mutate()}
+      onClick={handleReprocess}
     >
       {children ?? <RefreshCcw className="text-muted-foreground size-4" />}
     </LoadingButton>
@@ -59,7 +56,9 @@ const ReBookmarkButton = ({
 };
 
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
-  const metadata = bookmark.metadata as { error: string };
+  const metadata = bookmark.metadata as { error?: string } | null | undefined;
+  const errorMessage =
+    bookmark.processingError ?? metadata?.error ?? "Processing failed";
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>
@@ -90,7 +89,7 @@ export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
 
       <BookmarkCardContent bookmark={bookmark} href={null}>
         <BookmarkCardTitle>Error Details</BookmarkCardTitle>
-        <BookmarkCardDescription>{metadata.error}</BookmarkCardDescription>
+        <BookmarkCardDescription>{errorMessage}</BookmarkCardDescription>
       </BookmarkCardContent>
     </BookmarkCardContainer>
   );

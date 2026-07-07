@@ -125,8 +125,18 @@ class ShareViewController: UIViewController {
             NSLog(
               "[DEBUG] NSExtensionJavaScriptPreprocessingResultsKey \(String(describing: results))"
             )
+            guard let baseURI = results["baseURI"] as? String,
+              let meta = results["meta"] as? String
+            else {
+              NSLog(
+                "[ERROR] Cannot load preprocessing output !\(String(describing: results))"
+              )
+              self.dismissWithError(
+                message: "Cannot load preprocessing output \(String(describing: results))")
+              return
+            }
             self.sharedWebUrl.append(
-              WebUrl(url: results["baseURI"] as! String, meta: results["meta"] as! String))
+              WebUrl(url: baseURI, meta: meta))
             // If this is the last item, save sharedText in userDefaults and redirect to host app
             if index == (content.attachments?.count)! - 1 {
               let userDefaults = UserDefaults(suiteName: self.hostAppGroupIdentifier)
@@ -162,9 +172,16 @@ class ShareViewController: UIViewController {
             url = self.saveScreenshot(imageData)
           }
 
+          guard let url = url else {
+            NSLog("[ERROR] Cannot resolve image URL !\(String(describing: content))")
+            self.dismissWithError(
+              message: "Cannot resolve image URL \(String(describing: content))")
+            return
+          }
+
           var pixelWidth: Int? = nil
           var pixelHeight: Int? = nil
-          if let imageSource = CGImageSourceCreateWithURL(url! as CFURL, nil) {
+          if let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) {
             if let imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil)
               as Dictionary?
             {
@@ -185,16 +202,16 @@ class ShareViewController: UIViewController {
           }
 
           // Always copy
-          let fileName = self.getFileName(from: url!, type: .image)
-          let fileExtension = self.getExtension(from: url!, type: .image)
-          let fileSize = self.getFileSize(from: url!)
-          let mimeType = url!.mimeType(ext: fileExtension)
+          let fileName = self.getFileName(from: url, type: .image)
+          let fileExtension = self.getExtension(from: url, type: .image)
+          let fileSize = self.getFileSize(from: url)
+          let mimeType = url.mimeType(ext: fileExtension)
           let newName = "\(UUID().uuidString).\(fileExtension)"
           let newPath = FileManager.default
             .containerURL(
               forSecurityApplicationGroupIdentifier: self.hostAppGroupIdentifier)!
             .appendingPathComponent(newName)
-          let copied = self.copyFile(at: url!, to: newPath)
+          let copied = self.copyFile(at: url, to: newPath)
           if copied {
             self.sharedMedia.append(
               SharedMediaFile(
@@ -259,6 +276,8 @@ class ShareViewController: UIViewController {
               let sharedFile = self.getSharedMediaFile(
                 forVideo: newPath, fileName: fileName, fileSize: fileSize, mimeType: mimeType)
             else {
+              self.dismissWithError(
+                message: "Cannot prepare video content \(String(describing: content))")
               return
             }
             self.sharedMedia.append(sharedFile)

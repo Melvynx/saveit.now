@@ -16,7 +16,7 @@ import {
 } from "@workspace/ui/components/table";
 import type { ReactNode } from "react";
 
-type ApiKey = {
+export type ApiKey = {
   id: string;
   name: string | null;
   start?: string | null;
@@ -31,9 +31,11 @@ type ApiKey = {
 export function ApiKeyList({
   apiKeys,
   action,
+  onChanged,
 }: {
   apiKeys: ApiKey[];
   action?: ReactNode;
+  onChanged?: () => void;
 }) {
   return (
     <Card>
@@ -67,7 +69,11 @@ export function ApiKeyList({
             </TableHeader>
             <TableBody>
               {apiKeys.map((apiKey) => (
-                <ApiKeyRow key={apiKey.id} apiKey={apiKey} />
+                <ApiKeyRow
+                  key={apiKey.id}
+                  apiKey={apiKey}
+                  onChanged={onChanged}
+                />
               ))}
             </TableBody>
           </Table>

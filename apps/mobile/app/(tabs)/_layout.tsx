@@ -1,50 +1,71 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Tabs } from "expo-router";
-import React from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import {
+  Icon,
+  Label,
+  NativeTabs,
+  VectorIcon,
+  type VectorIconProps,
+} from "expo-router/unstable-native-tabs";
+import { useEffect } from "react";
 
-import { useClientOnlyValue } from "../../components/useClientOnlyValue";
-import { useColorScheme } from "../../components/useColorScheme";
-import Colors from "../../constants/Colors";
+import { LoadingScreen } from "../../src/components/ui/loading";
+import { useAuth } from "../../src/contexts/AuthContext";
+import { useThemeColors } from "../../src/lib/theme";
 
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+type IoniconName = keyof typeof Ionicons.glyphMap;
+const nativeTabIonicons: VectorIconProps<IoniconName>["family"] = Ionicons;
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const headerShown = useClientOnlyValue(false, true);
+  const { isAuthenticated, isLoading } = useAuth();
+  const colors = useThemeColors();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown,
+    <NativeTabs
+      tintColor={colors.foreground}
+      labelStyle={{
+        fontSize: 11,
+        fontFamily: "DMSans_600SemiBold",
+        fontWeight: "600",
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Bookmarks",
-          tabBarIcon: ({ color }: { color: string }) => (
-            <TabBarIcon name="bookmark" color={color} />
-          ),
-          headerSearchBarOptions: {
-            placeholder: "Search bookmarks...",
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color }: { color: string }) => (
-            <TabBarIcon name="gear" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="index">
+        <Label>Bookmarks</Label>
+        <Icon
+          src={{
+            default: (
+              <VectorIcon family={nativeTabIonicons} name="bookmark-outline" />
+            ),
+            selected: <VectorIcon family={nativeTabIonicons} name="bookmark" />,
+          }}
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        <Icon
+          src={{
+            default: (
+              <VectorIcon family={nativeTabIonicons} name="settings-outline" />
+            ),
+            selected: <VectorIcon family={nativeTabIonicons} name="settings" />,
+          }}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

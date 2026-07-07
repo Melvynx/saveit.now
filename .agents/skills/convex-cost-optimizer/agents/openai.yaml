@@ -1,0 +1,10 @@
+interface:
+  display_name: "Convex Cost Optimizer"
+  short_description: "Reduce Convex read bandwidth and full-table scans."
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  brand_color: "#16A34A"
+  default_prompt: "Use $convex-cost-optimizer to find and fix high-bandwidth Convex queries from dashboard or code signals."
+
+policy:
+  allow_implicit_invocation: true

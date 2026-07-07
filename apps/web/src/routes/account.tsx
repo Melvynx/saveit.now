@@ -3,7 +3,7 @@ import { AccountShell } from "@/features/account/account-shell";
 import { AvatarSection } from "@/features/auth/avatar-section";
 import { EmailChangeForm } from "@/features/auth/email-change-form";
 import { LoadingButton } from "@/features/form/loading-button";
-import { upfetch } from "@/lib/up-fetch";
+import { authClient, useSession } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -16,38 +16,34 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import {
   createFileRoute,
+  Navigate,
   Outlet,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const getAccountData = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRequiredUserOrRedirect } = await import("@/lib/auth-session");
-  const user = await getRequiredUserOrRedirect();
-
-  return {
-    user,
-  };
-});
 
 export const Route = createFileRoute("/account")({
-  loader: () => getAccountData(),
   component: AccountPage,
 });
 
 function AccountPage() {
-  const { user } = Route.useLoaderData();
+  const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
   const isAccountIndex = location.pathname === "/account";
   const isPublicLinkHash =
     location.pathname === "/account" &&
     (location.hash === "#public-link" || location.hash === "public-link");
+
+  const liveUser = session.data?.user;
+  const displayUser = liveUser && {
+    id: liveUser.id,
+    name: liveUser.name ?? "",
+    email: liveUser.email,
+    image: liveUser.image ?? null,
+  };
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -57,13 +53,16 @@ function AccountPage() {
     }
   }, [navigate]);
 
+  if (session.isPending) return null;
+  if (!displayUser) return <Navigate to="/signin" />;
+
   return (
-    <AccountShell user={user}>
+    <AccountShell user={displayUser}>
       {isPublicLinkHash ? null : isAccountIndex ? (
         <div className="flex flex-col gap-4">
-          <AvatarSection user={user} />
-          <NameForm defaultName={user.name ?? ""} />
-          <EmailChangeForm currentEmail={user.email || ""} />
+          <AvatarSection user={displayUser} />
+          <NameForm defaultName={displayUser.name ?? ""} />
+          <EmailChangeForm currentEmail={displayUser.email || ""} />
           <Card>
             <CardHeader>
               <CardTitle>Delete account</CardTitle>
@@ -83,24 +82,33 @@ function AccountPage() {
 }
 
 function NameForm({ defaultName }: { defaultName: string }) {
-  const mutation = useMutation({
-    mutationFn: async (formData: FormData) => {
+  const session = useSession();
+  const [isPending, setIsPending] = useState(false);
+
+  async function updateName(formData: FormData) {
+    setIsPending(true);
+    try {
       const name = formData.get("name");
-      await upfetch("/api/user/profile", {
-        method: "PATCH",
-        body: { name: String(name ?? "") },
-        schema: z.object({ success: z.boolean() }),
+      const { error } = await authClient.updateUser({
+        name: String(name ?? ""),
       });
-    },
-    onSuccess: () => toast.success("Name updated"),
-    onError: () => toast.error("Failed to update name"),
-  });
+      if (error) {
+        throw new Error(error.message ?? "Failed to update name");
+      }
+      toast.success("Name updated");
+      void session.refetch();
+    } catch {
+      toast.error("Failed to update name");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        mutation.mutate(new FormData(event.currentTarget));
+        void updateName(new FormData(event.currentTarget));
       }}
     >
       <Card>
@@ -122,8 +130,8 @@ function NameForm({ defaultName }: { defaultName: string }) {
         </CardContent>
         <CardFooter className="flex justify-end border-t">
           <LoadingButton
-            loading={mutation.isPending}
-            disabled={mutation.isPending}
+            loading={isPending}
+            disabled={isPending}
             size="sm"
             variant="outline"
           >

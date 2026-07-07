@@ -1,13 +1,14 @@
 import { createAuthClient } from "better-auth/client";
 import { config } from "./config";
 
+// BASE_URL: app origin (https://saveit.now). The session cookie lives on this
+// origin; /api/auth/* and /api/bookmarks* are proxied server-side to Convex.
 const BASE_URL = config.BASE_URL;
 
-// Configuration spécifique pour les CORS et cookies
 export const authClient = createAuthClient({
   baseURL: BASE_URL,
   fetchOptions: {
-    credentials: "include", // Pour envoyer les cookies
+    credentials: "include", // Send session cookies cross-origin
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
@@ -27,11 +28,6 @@ export interface Session {
 export async function getSession(): Promise<Session | null> {
   try {
     console.log("Fetching session from", BASE_URL);
-    console.log("Auth client config:", {
-      baseURL: BASE_URL,
-      mode: "cors",
-      credentials: "include"
-    });
     const { data, error } = await authClient.getSession();
 
     if (error) {
@@ -79,7 +75,7 @@ export async function saveBookmark(
 
     console.log("Saving bookmark with data:", requestBody);
 
-    // Envoyer la requête pour sauvegarder le bookmark
+    // POST to the app origin; proxied server-side to the Convex handler.
     const response = await fetch(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers: {
@@ -153,6 +149,7 @@ export async function uploadScreenshot(
     const formData = new FormData();
     formData.append("file", screenshotBlob, "screenshot.png");
 
+    // Upload to the app origin; proxied server-side to the Convex handler.
     const uploadUrl = `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`;
 
     const response = await fetch(uploadUrl, {

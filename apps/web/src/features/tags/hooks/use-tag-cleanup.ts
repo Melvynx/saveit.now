@@ -1,38 +1,36 @@
-import { upfetch } from "@/lib/up-fetch";
-import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
+import { api } from "@convex/_generated/api";
+import { useAsyncTask } from "@/lib/use-async-task";
+import { useAction } from "convex/react";
 
-const TagCleanupSuggestionSchema = z.object({
-  bestTag: z.string(),
-  bestTagExists: z.boolean(),
-  bestTagId: z.string().optional(),
-  bestTagBookmarkCount: z.number(),
-  refactorTags: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      bookmarkCount: z.number(),
-    }),
-  ),
-  totalBookmarks: z.number(),
-});
+export type TagCleanupSuggestion = {
+  bestTag: string;
+  bestTagExists: boolean;
+  bestTagId?: string;
+  bestTagBookmarkCount: number;
+  refactorTags: Array<{
+    id: string;
+    name: string;
+    bookmarkCount: number;
+  }>;
+  totalBookmarks: number;
+};
 
-const TagCleanupResponseSchema = z.object({
-  suggestions: z.array(TagCleanupSuggestionSchema),
-  totalTags: z.number(),
-});
-
-export type TagCleanupSuggestion = z.infer<typeof TagCleanupSuggestionSchema>;
-export type TagCleanupResponse = z.infer<typeof TagCleanupResponseSchema>;
+export type TagCleanupResponse = {
+  suggestions: TagCleanupSuggestion[];
+  totalTags: number;
+};
 
 export function useTagCleanup() {
-  return useMutation({
-    mutationFn: async (): Promise<TagCleanupResponse> =>
-      upfetch("/api/tags/cleanup", {
-        method: "POST",
-        schema: TagCleanupResponseSchema,
-      }),
-    mutationKey: ["tag-cleanup"],
-  });
-}
+  const runSuggestCleanup = useAction(api.tags.actions.suggestCleanup);
 
+  const task = useAsyncTask(
+    (): Promise<TagCleanupResponse> =>
+      runSuggestCleanup({}) as Promise<TagCleanupResponse>,
+  );
+
+  return {
+    ...task,
+    mutate: task.run,
+    mutateAsync: task.run,
+  };
+}

@@ -1,13 +1,14 @@
 import { createAuthClient } from "better-auth/client";
 import { config } from "./config";
 
+// BASE_URL: app origin (https://saveit.now). The session cookie lives on this
+// origin; /api/auth/* and /api/bookmarks* are proxied server-side to Convex.
 const BASE_URL = config.BASE_URL;
 
-// Configuration spécifique pour les CORS et cookies
 export const authClient = createAuthClient({
   baseURL: BASE_URL,
   fetchOptions: {
-    credentials: "include", // Pour envoyer les cookies
+    credentials: "include", // Send session cookies cross-origin
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
@@ -71,7 +72,7 @@ export async function saveBookmark(
       };
     }
 
-    // Envoyer la requête pour sauvegarder le bookmark
+    // POST to the app origin; proxied server-side to the Convex handler.
     const response = await fetch(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers: {

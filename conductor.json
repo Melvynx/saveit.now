@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "./scripts/setup.sh",
-    "archive": "./scripts/archive.sh"
+    "setup": "./scripts/worktree-setup.sh",
+    "archive": "./scripts/worktree-cleanup.sh"
   }
 }

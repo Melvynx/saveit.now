@@ -1,34 +1,21 @@
 import { PublicBookmarksPage } from "@/features/public-bookmarks/public-bookmarks-page";
+import { api } from "@convex/_generated/api";
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-
-const getPublicUserData = createServerFn({ method: "GET" })
-  .validator((data: { slug: string }) => data)
-  .handler(async ({ data }) => {
-    const { prisma } = await import("@workspace/database/client");
-    const user = await prisma.user.findUnique({
-      where: {
-        publicLinkSlug: data.slug,
-        publicLinkEnabled: true,
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    return { user };
-  });
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/u/$slug")({
-  loader: ({ params }) => getPublicUserData({ data: params }),
   component: PublicPage,
 });
 
 function PublicPage() {
-  const { user } = Route.useLoaderData();
   const { slug } = Route.useParams();
+  const result = useQuery(api.bookmarks.queries.getByPublicSlug, {
+    slug,
+    paginationOpts: { numItems: 1, cursor: null },
+  });
+  const user = result?.user ? { name: result.user.name } : null;
 
+  if (result === undefined) return null;
   if (!user) {
     return <div>Not found</div>;
   }

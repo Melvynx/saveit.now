@@ -3,8 +3,7 @@
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { authClient } from "@/lib/auth-client";
-import { upfetch } from "@/lib/up-fetch";
-import { useRouter } from "@tanstack/react-router";
+import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -13,10 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { TableCell, TableRow } from "@workspace/ui/components/table";
+import { useMutation } from "convex/react";
 import { Check, Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 interface ApiKeyRowProps {
   apiKey: {
@@ -30,14 +29,15 @@ interface ApiKeyRowProps {
     expiresAt?: Date | string | null;
     lastRequest?: Date | string | null;
   };
+  onChanged?: () => void;
 }
 
-export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
+export function ApiKeyRow({ apiKey, onChanged }: ApiKeyRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const router = useRouter();
   const displayKey = getDisplayKey(apiKey);
   const { isCopied, copyToClipboard } = useCopyToClipboard(2000);
+  const renameKey = useMutation(api.apiKeys.mutations.renameKey);
 
   const handleRename = () => {
     dialogManager.add({
@@ -59,14 +59,10 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
 
           setIsRenaming(true);
           try {
-            await upfetch(`/api/account/keys/${apiKey.id}`, {
-              method: "PATCH",
-              body: { name },
-              schema: z.object({ success: z.boolean() }),
-            });
+            await renameKey({ keyId: apiKey.id, name });
 
             toast.success("API key renamed");
-            void router.invalidate();
+            onChanged?.();
           } finally {
             setIsRenaming(false);
           }
@@ -94,7 +90,7 @@ export function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
             }
 
             toast.success("API key deleted");
-            void router.invalidate();
+            onChanged?.();
           } finally {
             setIsDeleting(false);
           }

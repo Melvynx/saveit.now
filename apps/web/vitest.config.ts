@@ -31,7 +31,6 @@ export default defineConfig({
       "@/features": path.resolve(__dirname, "./src/features"),
       "@/hooks": path.resolve(__dirname, "./src/hooks"),
       "@test": path.resolve(__dirname, "./test"),
-      "@workspace/database": path.resolve(__dirname, "../../packages/database/src"),
       "@workspace/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
   },

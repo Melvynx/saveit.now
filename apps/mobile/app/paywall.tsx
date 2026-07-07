@@ -1,0 +1,441 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useAction, useQuery } from "convex/react";
+import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { api } from "@convex/_generated/api";
+import { BlurHeaderScreen } from "../src/components/ui/blur-header-screen";
+import { Button } from "../src/components/ui/button";
+import { LoadingSpinner } from "../src/components/ui/loading";
+import { StatusScreen } from "../src/components/ui/status-screen";
+import { Text } from "../src/components/ui/text";
+import { hapticSuccess } from "../src/lib/haptics";
+import {
+  finishTransaction,
+  getProSubscriptions,
+  initIapConnection,
+  isIapAvailable,
+  isPurchaseCancelled,
+  purchase as purchaseSubscription,
+  restore as restoreSubscriptions,
+  type ProPurchase,
+  type ProSubscription,
+} from "../src/lib/purchases";
+import { useThemeColors } from "../src/lib/theme";
+import { cn } from "../src/lib/utils";
+
+type PlanOptionProps = {
+  plan: ProSubscription;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+};
+
+function PlanOption({ plan, selected, disabled, onPress }: PlanOptionProps) {
+  const colors = useThemeColors();
+  const productId = plan.productId;
+  const isYearly = productId.includes("yearly");
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${isYearly ? "Annual" : "Monthly"} Pro plan, ${
+        plan.priceString
+      }`}
+      disabled={disabled}
+      onPress={onPress}
+      className={cn(
+        "rounded-2xl border bg-card p-4 active:opacity-80",
+        selected ? "border-primary" : "border-border",
+        disabled && "opacity-60",
+      )}
+    >
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="flex-1 gap-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="font-sans-bold text-[18px] text-foreground">
+              {isYearly ? "Annual" : "Monthly"}
+            </Text>
+            {isYearly ? (
+              <View className="rounded-full bg-primary/10 px-2 py-1">
+                <Text className="font-sans-semibold text-[12px] text-primary">
+                  2 months free
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <Text className="font-sans text-[13px] text-muted-foreground">
+            Unlimited saves, exports, chat, and API access
+          </Text>
+        </View>
+        <View className="items-end gap-2">
+          <Text className="font-sans-bold text-[18px] text-foreground">
+            {plan.priceString}
+          </Text>
+          <Ionicons
+            name={selected ? "checkmark-circle" : "ellipse-outline"}
+            size={22}
+            color={selected ? colors.primary : colors.mutedForeground}
+          />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+export default function PaywallScreen() {
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const userPlan = useQuery(api.subscriptions.queries.getUserPlan);
+  const syncFromClient = useAction(api.appstore.actions.syncFromClient);
+  const isPro = userPlan?.plan === "pro";
+  const [plans, setPlans] = useState<ProSubscription[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isLoadingOfferings, setIsLoadingOfferings] = useState(true);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
+  const [showActivationDelayNote, setShowActivationDelayNote] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => plan.productId === selectedId) ?? plans[0],
+    [plans, selectedId],
+  );
+
+  const loadOfferings = useCallback(async () => {
+    if (!isIapAvailable()) {
+      setPlans([]);
+      setSelectedId(null);
+      setError("In-app purchases are not available on this device.");
+      setIsLoadingOfferings(false);
+      return;
+    }
+
+    setIsLoadingOfferings(true);
+    setError(null);
+
+    try {
+      const proPlans = await getProSubscriptions();
+
+      if (proPlans.length === 0) {
+        throw new Error("No Pro plans are available right now.");
+      }
+
+      setPlans(proPlans);
+      setSelectedId((current) => current ?? proPlans[0]?.productId ?? null);
+    } catch (loadError) {
+      setPlans([]);
+      setSelectedId(null);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Could not load Pro plans.",
+      );
+    } finally {
+      setIsLoadingOfferings(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isIapAvailable()) return;
+
+    void initIapConnection();
+  }, []);
+
+  useEffect(() => {
+    if (!isPro) {
+      void loadOfferings();
+    }
+  }, [isPro, loadOfferings]);
+
+  useEffect(() => {
+    if (!isActivating || isPro) {
+      setShowActivationDelayNote(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setShowActivationDelayNote(true);
+    }, 20000);
+
+    return () => clearTimeout(timeout);
+  }, [isActivating, isPro]);
+
+  useEffect(() => {
+    if (!isActivating || !isPro) return;
+
+    hapticSuccess();
+    setIsActivating(false);
+  }, [isActivating, isPro]);
+
+  const syncAndFinishPurchase = useCallback(
+    async ({ originalTransactionId, purchase }: ProPurchase) => {
+      const syncResult = await syncFromClient({ originalTransactionId });
+      await finishTransaction(purchase);
+      return syncResult.plan === "pro";
+    },
+    [syncFromClient],
+  );
+
+  const purchase = async () => {
+    if (!selectedPlan || isPurchasing || isRestoring || isActivating) return;
+
+    setIsPurchasing(true);
+    setError(null);
+    setShowActivationDelayNote(false);
+
+    try {
+      const result = await purchaseSubscription(selectedPlan.productId);
+      const grantedPro = await syncAndFinishPurchase(result);
+
+      if (grantedPro) {
+        setIsActivating(true);
+        return;
+      }
+
+      setError("Purchase completed, but Pro is not active yet.");
+    } catch (purchaseError) {
+      if (!isPurchaseCancelled(purchaseError)) {
+        setError(
+          purchaseError instanceof Error
+            ? purchaseError.message
+            : "Could not complete purchase.",
+        );
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  const restore = async () => {
+    if (isPurchasing || isRestoring || isActivating) return;
+
+    setIsRestoring(true);
+    setError(null);
+    setShowActivationDelayNote(false);
+
+    try {
+      const restoredPurchases = await restoreSubscriptions();
+      const uniquePurchases = [
+        ...new Map(
+          restoredPurchases.map((restoredPurchase) => [
+            restoredPurchase.originalTransactionId,
+            restoredPurchase,
+          ]),
+        ).values(),
+      ];
+
+      let grantedPro = false;
+      let lastSyncError: unknown = null;
+
+      for (const restoredPurchase of uniquePurchases) {
+        try {
+          grantedPro =
+            (await syncAndFinishPurchase(restoredPurchase)) || grantedPro;
+        } catch (syncError) {
+          lastSyncError = syncError;
+        }
+      }
+
+      if (grantedPro) {
+        setIsActivating(true);
+        return;
+      }
+
+      if (lastSyncError) {
+        throw lastSyncError;
+      }
+
+      setError("No active Pro purchase was found for this Apple ID.");
+    } catch (restoreError) {
+      setError(
+        restoreError instanceof Error
+          ? restoreError.message
+          : "Could not restore purchases.",
+      );
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const openLegalLink = async (path: "terms" | "privacy") => {
+    await WebBrowser.openBrowserAsync(`https://saveit.now/${path}`);
+  };
+
+  if (isPro) {
+    return (
+      <StatusScreen
+        icon="sparkles"
+        title="You're on Pro"
+        message="SaveIt Pro is active on this account."
+        badgeClassName="bg-primary"
+        footer={
+          <Button
+            variant="secondary"
+            onPress={() => router.back()}
+            className="mt-2"
+          >
+            Done
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (isActivating) {
+    return (
+      <StatusScreen
+        spinner
+        title="Activating your subscription"
+        message="SaveIt Pro will unlock here as soon as your account updates."
+        badgeClassName="bg-primary"
+        footer={
+          <Button
+            variant="secondary"
+            onPress={() => router.back()}
+            className="mt-2"
+          >
+            Done
+          </Button>
+        }
+      >
+        {showActivationDelayNote ? (
+          <View className="rounded-2xl border border-border bg-card px-4 py-3">
+            <Text className="max-w-[300px] text-center font-sans text-[13px] leading-[19px] text-muted-foreground">
+              This can take a minute. Your purchase is confirmed by the App
+              Store. If Pro doesn't unlock shortly, restart the app or contact
+              help@saveit.now.
+            </Text>
+          </View>
+        ) : null}
+      </StatusScreen>
+    );
+  }
+
+  return (
+    <BlurHeaderScreen
+      title="SaveIt Pro"
+      contentTopOffset={8}
+      headerTopPadding={24}
+      trailing={
+        <Button
+          variant="secondary"
+          size="icon"
+          accessibilityLabel="Close paywall"
+          onPress={() => router.back()}
+        >
+          <Ionicons name="close" size={18} color={colors.foreground} />
+        </Button>
+      }
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingBottom: insets.bottom + 32,
+      }}
+    >
+      <View className="gap-6">
+        <View className="gap-3 rounded-2xl border border-border bg-card p-5">
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+            <Ionicons name="sparkles" size={22} color={colors.primary} />
+          </View>
+          <View className="gap-2">
+            <Text className="font-sans-bold text-[24px] leading-[30px] text-foreground">
+              Unlock your full library
+            </Text>
+            <Text className="font-sans text-[15px] leading-[22px] text-muted-foreground">
+              Save without limits, export your data, ask more AI questions, and
+              use API access from one Pro plan.
+            </Text>
+          </View>
+        </View>
+
+        <View className="gap-3">
+          <Text variant="section-label">Choose a plan</Text>
+          {isLoadingOfferings ? (
+            <View className="items-center justify-center rounded-2xl border border-border bg-card py-10">
+              <LoadingSpinner />
+            </View>
+          ) : plans.length > 0 ? (
+            plans.map((plan) => (
+              <PlanOption
+                key={plan.productId}
+                plan={plan}
+                selected={plan.productId === selectedPlan?.productId}
+                disabled={isPurchasing || isRestoring}
+                onPress={() => setSelectedId(plan.productId)}
+              />
+            ))
+          ) : null}
+        </View>
+
+        {error ? (
+          <View className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3">
+            <Text className="font-sans text-[13px] text-destructive">
+              {error}
+            </Text>
+          </View>
+        ) : null}
+
+        <View className="gap-3">
+          {plans.length > 0 ? (
+            <Button
+              loading={isPurchasing}
+              disabled={!selectedPlan || isLoadingOfferings || isRestoring}
+              onPress={purchase}
+              className="rounded-2xl"
+            >
+              Continue
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              loading={isLoadingOfferings}
+              disabled={isLoadingOfferings}
+              onPress={loadOfferings}
+              className="rounded-2xl"
+            >
+              Retry
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            loading={isRestoring}
+            disabled={isPurchasing || isLoadingOfferings}
+            onPress={restore}
+          >
+            Restore Purchases
+          </Button>
+        </View>
+
+        <View className="flex-row flex-wrap items-center justify-center gap-2 pb-2">
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Terms"
+            onPress={() => openLegalLink("terms")}
+            className="px-2 py-1 active:opacity-70"
+          >
+            <Text className="font-sans-semibold text-[13px] text-primary">
+              Terms
+            </Text>
+          </Pressable>
+          <Text className="font-sans text-[13px] text-muted-foreground">
+            and
+          </Text>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Privacy"
+            onPress={() => openLegalLink("privacy")}
+            className="px-2 py-1 active:opacity-70"
+          >
+            <Text className="font-sans-semibold text-[13px] text-primary">
+              Privacy
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </BlurHeaderScreen>
+  );
+}

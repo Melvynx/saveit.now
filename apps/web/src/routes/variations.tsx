@@ -1,60 +1,43 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { VariationsClient } from "@/features/variations/variations-client";
-import { createServerFn } from "@tanstack/react-start";
-
-const getVariationsData = createServerFn({ method: "GET" }).handler(async () => {
-    const [{ getUser }, { prisma }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@workspace/database/client"),
-    ]);
-    const user = await getUser();
-    if (!user) throw redirect({ to: "/signin" });
-
-    const bookmarks = await prisma.bookmark.findMany({
-      where: {
-        userId: user.id,
-        type: "PAGE",
-        status: "READY",
-      },
-      select: {
-        id: true,
-        url: true,
-        title: true,
-        summary: true,
-        ogImageUrl: true,
-        preview: true,
-        faviconUrl: true,
-        ogDescription: true,
-        starred: true,
-        read: true,
-        createdAt: true,
-        note: true,
-        imageDescription: true,
-        tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                type: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 24,
-    });
-
-    return { bookmarks };
-  });
+import { api } from "@convex/_generated/api";
+import type { VariationBookmark } from "@/features/variations/types";
+import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const Route = createFileRoute("/variations")({
-  loader: () => getVariationsData(),
   component: VariationsPage,
 });
 
 function VariationsPage() {
-  const { bookmarks } = Route.useLoaderData();
+  const bookmarksData = useAuthedQuery(
+    api.bookmarks.queries.list,
+    {
+      paginationOpts: { numItems: 50, cursor: null },
+      filter: { types: ["PAGE"] },
+    },
+  );
+
+  const bookmarks: VariationBookmark[] = (
+    (bookmarksData?.page ?? []) as BookmarkDetailDTO[]
+  ).map((b) => ({
+    id: b.id,
+    url: b.url,
+    title: b.title,
+    summary: b.summary,
+    ogImageUrl: b.ogImageUrl,
+    preview: b.preview,
+    faviconUrl: b.faviconUrl,
+    ogDescription: b.ogDescription,
+    starred: b.starred,
+    read: b.read,
+    createdAt: new Date(b.createdAt),
+    tags: b.tags.map((t) => ({
+      tag: { id: t.tag.id, name: t.tag.name, type: t.tag.type },
+    })),
+    note: b.note,
+    imageDescription: null,
+  }));
+
   return <VariationsClient bookmarks={bookmarks} />;
 }

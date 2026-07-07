@@ -1,44 +1,75 @@
-import { stripeClient } from "@/lib/stripe";
-import { userRoute } from "@/lib/safe-route";
+import {
+  legacyErrorResponse,
+  legacyJson,
+  legacyOptions,
+  requireLegacySession,
+} from "@/lib/legacy-api";
+import { fetchAuthAction } from "@/lib/auth-server";
+import { makeFunctionReference, type FunctionReference } from "convex/server";
 import { createFileRoute } from "@tanstack/react-router";
-import { prisma } from "@workspace/database/client";
-import { z } from "zod";
 
-const POST = userRoute
-  .body(
-    z.object({
-      annual: z.boolean().optional().default(false),
-      successUrl: z.string(),
-      cancelUrl: z.string(),
-    }),
-  )
-  .handler(async (_, { body, ctx }) => {
-    const priceId = body.annual
-      ? process.env.STRIPE_PRO_YEARLY_PRICE_ID!
-      : process.env.STRIPE_PRO_MONTHLY_PRICE_ID!;
+type MobileCheckoutAction = FunctionReference<
+  "action",
+  "public",
+  {
+    annual?: boolean;
+    successUrl: string;
+    cancelUrl: string;
+  },
+  {
+    checkoutUrl: string;
+  }
+>;
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: ctx.user.id },
-      select: { stripeCustomerId: true },
-    });
-
-    const session = await stripeClient.checkout.sessions.create({
-      customer: dbUser?.stripeCustomerId ?? undefined,
-      customer_email: dbUser?.stripeCustomerId ? undefined : ctx.user.email,
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: body.successUrl,
-      cancel_url: body.cancelUrl,
-      allow_promotion_codes: true,
-      metadata: { userId: ctx.user.id, plan: "pro" },
-      subscription_data: {
-        metadata: { userId: ctx.user.id, plan: "pro" },
-      },
-    });
-
-    return { checkoutUrl: session.url };
-  });
+const mobileCheckout = makeFunctionReference<
+  "action",
+  {
+    annual?: boolean;
+    successUrl: string;
+    cancelUrl: string;
+  },
+  {
+    checkoutUrl: string;
+  }
+>("api/mobile:createCheckout") as MobileCheckoutAction;
 
 export const Route = createFileRoute("/api/mobile/checkout")({
-  server: { handlers: { POST } },
+  server: {
+    handlers: {
+      POST: async ({ request }: { request: Request }) => {
+        const user = await requireLegacySession(request);
+        if (user instanceof Response) return user;
+
+        try {
+          const body = (await request.json()) as {
+            annual?: unknown;
+            successUrl?: unknown;
+            cancelUrl?: unknown;
+          };
+
+          if (
+            typeof body.successUrl !== "string" ||
+            typeof body.cancelUrl !== "string"
+          ) {
+            return legacyJson(
+              { error: "Invalid checkout request" },
+              { request, status: 400 },
+            );
+          }
+
+          const result = await fetchAuthAction(mobileCheckout, {
+            annual: body.annual === true,
+            successUrl: body.successUrl,
+            cancelUrl: body.cancelUrl,
+          });
+
+          return legacyJson(result, { request });
+        } catch (error) {
+          return legacyErrorResponse(error, request);
+        }
+      },
+      OPTIONS: async ({ request }: { request: Request }) =>
+        legacyOptions(request),
+    },
+  },
 });

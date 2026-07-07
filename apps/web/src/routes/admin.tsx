@@ -1,14 +1,17 @@
 import { AdminShell } from "@/features/admin/admin-shell";
 import { AdminPageHeader, AdminStatCard } from "@/features/admin/admin-shared";
+import { SearchRepairPanel } from "@/features/admin/search-repair-panel";
 import { parseAdminSearchParams } from "@/features/admin/search-params";
+import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
 import {
   createFileRoute,
   Navigate,
   Outlet,
   useLocation,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Button } from "@workspace/ui/components/button";
+import { useAuthedQuery } from "@/hooks/use-authed-query";
 import {
   Card,
   CardContent,
@@ -27,44 +30,28 @@ import {
   Users,
 } from "lucide-react";
 
-const getAdminData = createServerFn({ method: "GET" })
-  .validator((data: ReturnType<typeof parseAdminSearchParams>) => data)
-  .handler(async () => {
-    const [{ getUser }, { getAdminOverview }] = await Promise.all([
-      import("@/lib/auth-session"),
-      import("@/lib/database/admin-users"),
-    ]);
-    const user = await getUser();
-    if (!user) {
-      return { access: "signed-out" as const };
-    }
-
-    if (user.role !== "admin") {
-      return { access: "forbidden" as const };
-    }
-
-    return {
-      access: "granted" as const,
-      overview: await getAdminOverview(),
-    };
-  });
-
 export const Route = createFileRoute("/admin")({
   validateSearch: parseAdminSearchParams,
-  loaderDeps: ({ search }) => ({ search }),
-  loader: ({ deps }) => getAdminData({ data: deps.search }),
   component: AdminPage,
 });
 
 function AdminPage() {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const data = Route.useLoaderData();
+  const session = useSession();
+  const role = (session.data?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+  const overview = useAuthedQuery(
+    api.admin.queries.getOverview,
+    isAdmin && pathname === "/admin" ? {} : "skip",
+  );
 
-  if (data.access === "signed-out") {
+  if (session.isPending) return null;
+
+  if (!session.data?.user) {
     return <Navigate to="/signin" />;
   }
 
-  if (data.access === "forbidden") {
+  if (!isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="max-w-sm text-center">
@@ -77,8 +64,6 @@ function AdminPage() {
     );
   }
 
-  const { overview } = data;
-
   if (pathname !== "/admin") {
     return (
       <AdminShell pathname={pathname}>
@@ -86,6 +71,8 @@ function AdminPage() {
       </AdminShell>
     );
   }
+
+  if (!overview) return null;
 
   return (
     <AdminShell pathname={pathname}>
@@ -158,6 +145,8 @@ function AdminPage() {
             icon={Mail}
           />
         </section>
+
+        <SearchRepairPanel />
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>

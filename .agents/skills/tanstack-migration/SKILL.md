@@ -48,7 +48,7 @@ rg --files apps/web/src/routes
 - Convert `notFound()` to a rendered not-found state or a thrown router not-found when the local pattern exists.
 - Convert `redirect()` to TanStack redirect helpers in loaders or client navigation in components.
 - Convert `NextRequest` and `NextResponse` to standard `Request` and `Response.json`.
-- Import Prisma from `@workspace/database/client`, never from browser-safe package entrypoints.
+- Server-only data access should use Convex functions or server helpers; do not introduce browser-only modules into server routes.
 
 ## Verification
 

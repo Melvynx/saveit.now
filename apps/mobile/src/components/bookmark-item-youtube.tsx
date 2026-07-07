@@ -1,12 +1,40 @@
-import { Check, Circle, Star } from "@tamagui/lucide-icons";
-import { useWindowDimensions } from "react-native";
-import YoutubePlayer from "react-native-youtube-iframe";
-import { Button, Card, XStack, YStack } from "tamagui";
+import { type ComponentType } from "react";
+import { Image, Text, useWindowDimensions, View } from "react-native";
+
 import { type Bookmark } from "../lib/api-client";
+import { CardActionButton } from "./bookmark-item";
+
+type YoutubePlayerProps = {
+  height: number;
+  videoId: string;
+  webViewProps?: Record<string, unknown>;
+};
+
+let resolvedYoutubePlayer:
+  | ComponentType<YoutubePlayerProps>
+  | null
+  | undefined;
+
+function getYoutubePlayer() {
+  if (resolvedYoutubePlayer !== undefined) {
+    return resolvedYoutubePlayer;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const youtubeIframe = require("react-native-youtube-iframe") as {
+      default?: ComponentType<YoutubePlayerProps>;
+    };
+    resolvedYoutubePlayer = youtubeIframe.default ?? null;
+  } catch {
+    resolvedYoutubePlayer = null;
+  }
+
+  return resolvedYoutubePlayer;
+}
 
 interface BookmarkItemYoutubeProps {
   bookmark: Bookmark;
-  onPress?: () => void;
   onToggleStar: () => void;
   onToggleRead: () => void;
 }
@@ -18,71 +46,76 @@ export function BookmarkItemYoutube({
 }: BookmarkItemYoutubeProps) {
   const { width } = useWindowDimensions();
   const youtubeId = bookmark.metadata?.youtubeId;
-  const playerWidth = width - 32;
+  const YoutubePlayer = getYoutubePlayer();
+  const playerWidth = width - 48;
   const playerHeight = Math.round(playerWidth * (9 / 16));
 
   if (!youtubeId) {
     return null;
   }
 
-  return (
-    <Card
-      elevate
-      size="$4"
-      bordered
-      marginBottom="$3"
-      overflow="hidden"
-      padding="$0"
-    >
-      <YStack overflow="hidden" borderRadius="$4">
-        <YoutubePlayer
-          height={playerHeight}
-          videoId={youtubeId}
-          webViewProps={{
-            scrollEnabled: false,
-            showsVerticalScrollIndicator: false,
-            showsHorizontalScrollIndicator: false,
-            overScrollMode: "never",
-            bounces: false,
-            style: { overflow: "hidden" },
+  if (!YoutubePlayer) {
+    return (
+      <View className="overflow-hidden rounded-2xl border border-border bg-card">
+        <Image
+          source={{
+            uri:
+              bookmark.preview ||
+              `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
           }}
+          style={{ height: playerHeight, width: "100%" }}
+          resizeMode="cover"
         />
-      </YStack>
-      <XStack position="absolute" top="$2" right="$2" gap="$1" opacity={0.9}>
-        <Button
-          size="$2"
-          circular
-          backgroundColor="$background"
-          borderColor="$borderColor"
-          onPress={(e) => {
-            e.stopPropagation();
-            onToggleStar();
-          }}
-        >
-          <Star
-            size={14}
-            color={bookmark.starred ? "$yellow10" : "$gray10"}
-            fill={bookmark.starred ? "$yellow10" : "transparent"}
+        <View className="absolute right-2 top-2 flex-row gap-1.5">
+          <CardActionButton
+            icon={bookmark.starred ? "star" : "star-outline"}
+            color={bookmark.starred ? "#F59E0B" : undefined}
+            onPress={onToggleStar}
           />
-        </Button>
+          <CardActionButton
+            icon={bookmark.read ? "checkmark-circle" : "ellipse-outline"}
+            color={bookmark.read ? "#10B981" : undefined}
+            onPress={onToggleRead}
+          />
+        </View>
+        <View className="px-4 py-3.5">
+          <Text
+            numberOfLines={2}
+            className="font-sans-semibold text-[15px] text-foreground"
+          >
+            {bookmark.title}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
-        <Button
-          size="$2"
-          circular
-          backgroundColor="$background"
-          borderColor="$borderColor"
-          onPress={(e) => {
-            e.stopPropagation();
-            onToggleRead();
-          }}
-        >
-          {bookmark.read ? (
-            <Check size={14} color="$green10" />
-          ) : (
-            <Circle size={14} color="$gray10" />
-          )}
-        </Button>
-      </XStack>
-    </Card>
+  return (
+    <View className="overflow-hidden rounded-2xl border border-border bg-card">
+      <YoutubePlayer
+        height={playerHeight}
+        videoId={youtubeId}
+        webViewProps={{
+          scrollEnabled: false,
+          showsVerticalScrollIndicator: false,
+          showsHorizontalScrollIndicator: false,
+          overScrollMode: "never",
+          bounces: false,
+          style: { overflow: "hidden" },
+        }}
+      />
+      <View className="absolute right-2 top-2 flex-row gap-1.5">
+        <CardActionButton
+          icon={bookmark.starred ? "star" : "star-outline"}
+          color={bookmark.starred ? "#F59E0B" : undefined}
+          onPress={onToggleStar}
+        />
+        <CardActionButton
+          icon={bookmark.read ? "checkmark-circle" : "ellipse-outline"}
+          color={bookmark.read ? "#10B981" : undefined}
+          onPress={onToggleRead}
+        />
+      </View>
+    </View>
   );
 }

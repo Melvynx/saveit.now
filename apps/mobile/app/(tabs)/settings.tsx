@@ -1,316 +1,300 @@
-import {
-  Book,
-  Bug,
-  Check,
-  Crown,
-  HelpCircle,
-  LogOut,
-  Moon,
-  Sun,
-  Trash2,
-  User,
-} from "@tamagui/lucide-icons";
-import { useMutation } from "@tanstack/react-query";
-import * as WebBrowser from "expo-web-browser";
+import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "convex/react";
 import { router } from "expo-router";
-import { Alert, ScrollView } from "react-native";
-import { Button, Card, Separator, Text, XStack, YStack } from "tamagui";
+import * as WebBrowser from "expo-web-browser";
+import { type ReactNode } from "react";
+import { Linking, Platform, Pressable, Switch, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { UpgradeButton } from "../../src/components/upgrade-button";
+import { api } from "@convex/_generated/api";
+import { BlurHeaderScreen } from "../../src/components/ui/blur-header-screen";
+import { Text } from "../../src/components/ui/text";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { authClient } from "../../src/lib/auth-client";
-import { useAppTheme } from "../_layout";
+import { mobileConfig } from "../../src/lib/config";
+import { hapticSelection } from "../../src/lib/haptics";
+import { useAppTheme, useThemeColors } from "../../src/lib/theme";
+
+type SettingsRowProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description?: string;
+  trailing?: ReactNode;
+  destructive?: boolean;
+  disabled?: boolean;
+  isFirst?: boolean;
+  onPress?: () => void;
+};
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <View className="gap-3">
+      <Text variant="section-label">{title}</Text>
+      <View className="overflow-hidden rounded-2xl border border-border bg-card">
+        {children}
+      </View>
+    </View>
+  );
+}
+
+const getWebUrl = (path: string) => {
+  const baseUrl = mobileConfig.apiUrl.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+};
+
+function SettingsRow({
+  icon,
+  title,
+  description,
+  trailing,
+  destructive = false,
+  disabled = false,
+  isFirst = false,
+  onPress,
+}: SettingsRowProps) {
+  const colors = useThemeColors();
+  const content = (
+    <View
+      className={[
+        "flex-row items-center gap-3 px-4 py-3.5",
+        isFirst ? "" : "border-t border-border",
+      ].join(" ")}
+    >
+      <View
+        className={[
+          "h-9 w-9 items-center justify-center rounded-xl",
+          destructive ? "bg-destructive/10" : "bg-secondary",
+        ].join(" ")}
+      >
+        <Ionicons
+          name={icon}
+          size={17}
+          color={destructive ? colors.destructive : colors.foreground}
+        />
+      </View>
+      <View className="flex-1 gap-0.5">
+        <Text
+          className={[
+            "font-sans-medium text-[16px]",
+            destructive ? "text-destructive" : "text-foreground",
+          ].join(" ")}
+        >
+          {title}
+        </Text>
+        {description ? (
+          <Text className="font-sans text-[13px] text-muted-foreground">
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      {trailing ? (
+        trailing
+      ) : onPress ? (
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={colors.mutedForeground}
+          style={{ opacity: 0.7 }}
+        />
+      ) : null}
+    </View>
+  );
+
+  if (!onPress) return content;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={description ? `${title}, ${description}` : title}
+      onPress={onPress}
+      disabled={disabled}
+      className={disabled ? "opacity-50" : "active:opacity-70"}
+    >
+      {content}
+    </Pressable>
+  );
+}
 
 export default function TabTwoScreen() {
-  const { user, plan, signOutWithNavigation } = useAuth();
+  const { user } = useAuth();
   const { currentTheme, toggleTheme } = useAppTheme();
+  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const userPlan = useQuery(api.subscriptions.queries.getUserPlan);
+  const isPro = userPlan?.plan === "pro";
+  const isAppStorePro =
+    Platform.OS === "ios" &&
+    isPro &&
+    userPlan.subscription?.provider === "appstore";
 
-  const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
-      const result = await authClient.deleteUser({
-        callbackURL: "/goodbye",
-      });
-      if (result.data) {
-        return result.data;
+  const openUpgrade = async () => {
+    hapticSelection();
+
+    if (Platform.OS === "ios") {
+      router.push("/paywall");
+      return;
+    }
+
+    const upgradeUrl = getWebUrl("/upgrade");
+
+    try {
+      const result = await authClient.oneTimeToken.generate();
+      const token = result.data?.token;
+
+      if (token) {
+        const loginUrl = new URL("/auth/mobile-login", mobileConfig.apiUrl);
+        loginUrl.searchParams.set("token", token);
+        loginUrl.searchParams.set("redirect", "/upgrade");
+        await WebBrowser.openBrowserAsync(loginUrl.toString());
+        return;
       }
-      throw new Error(result.error?.message || "Something went wrong");
-    },
-    onSuccess: () => {
-      Alert.alert(
-        "Delete Account",
-        "We've sent you an email with a confirmation link. Click on the link in your email to permanently delete your account. You will be signed out now.",
-        [
-          {
-            text: "OK",
-            onPress: async () => {
-              try {
-                // await signOut();
-              } catch {
-                Alert.alert("Error", "Failed to sign out");
-              }
-            },
-          },
-        ],
-      );
-    },
-    onError: (error: Error) => {
-      console.error("Failed to delete account:", error);
-      Alert.alert("Error", `Failed to delete account: ${error.message}`);
-    },
-  });
+    } catch {
+      // Fall back to the plain web upgrade page if token generation fails.
+    }
+
+    await WebBrowser.openBrowserAsync(upgradeUrl);
+  };
+
+  const openAppleSubscriptionManagement = async () => {
+    hapticSelection();
+    await Linking.openURL("https://apps.apple.com/account/subscriptions");
+  };
 
   const openDocumentation = async () => {
-    await WebBrowser.openBrowserAsync("https://saveit.now/docs");
+    await WebBrowser.openBrowserAsync(getWebUrl("/docs"));
   };
 
   const openHelp = async () => {
-    await WebBrowser.openBrowserAsync("https://saveit.now/help");
+    await WebBrowser.openBrowserAsync(getWebUrl("/help"));
   };
 
   const openBugReport = () => {
     router.push("/bug-report-modal");
   };
 
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOutWithNavigation(() => {
-              router.replace("/");
-            });
-          } catch (error) {
-            console.error("Sign out failed:", error);
-            Alert.alert("Error", "Failed to sign out. Please try again.");
-          }
-        },
-      },
-    ]);
+  const toggleAppTheme = () => {
+    hapticSelection();
+    toggleTheme();
   };
 
   if (!user) {
     return (
-      <YStack
-        flex={1}
-        alignItems="center"
-        justifyContent="center"
-        padding="$4"
-        gap="$4"
-      >
-        <Text fontSize="$8" fontWeight="bold" color="$color">
-          Settings
-        </Text>
-        <Text fontSize="$4" textAlign="center" color="$gray10">
-          Please sign in to access settings.
-        </Text>
-      </YStack>
+      <BlurHeaderScreen title="Settings">
+        <View className="items-center justify-center gap-2 px-4 py-24">
+          <Text className="text-center font-sans-bold text-[20px] text-foreground">
+            Sign in required
+          </Text>
+          <Text variant="subtitle" className="max-w-[260px] text-center">
+            Please sign in to access settings.
+          </Text>
+        </View>
+      </BlurHeaderScreen>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-      <YStack gap="$4">
-        <YStack alignItems="center" gap="$4" marginTop="$8">
-          <Text fontSize="$8" fontWeight="bold" color="$color">
-            Settings
-          </Text>
-          <Separator width="80%" />
-        </YStack>
-
-        <Card
-          padding="$4"
-          gap="$3"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$borderColor"
-        >
-          <XStack alignItems="center" gap="$3">
-            <User size={24} color="$gray10" />
-            <YStack flex={1} gap="$1">
-              <Text fontSize="$3" color="$gray10">
-                Signed in as:
-              </Text>
-              <Text fontSize="$5" fontWeight="500" color="$color">
-                {user.email}
-              </Text>
-            </YStack>
-          </XStack>
-        </Card>
-
-        <Card
-          padding="$4"
-          gap="$3"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor={plan.name === "pro" ? "$green8" : "$borderColor"}
-        >
-          <XStack alignItems="center" gap="$3">
-            <Crown
-              size={24}
-              color={plan.name === "pro" ? "$green10" : "$gray10"}
-            />
-            <YStack flex={1} gap="$1">
-              <Text fontSize="$3" color="$gray10">
-                Current Plan
-              </Text>
-              <XStack alignItems="center" gap="$2">
-                <Text fontSize="$5" fontWeight="500" color="$color">
-                  {plan.name === "pro" ? "SaveIt.pro" : "Free"}
-                </Text>
-                {plan.name === "pro" && <Check size={16} color="$green10" />}
-              </XStack>
-            </YStack>
-          </XStack>
-          {plan.name === "free" && (
-            <YStack gap="$2" marginTop="$2">
-              <Text fontSize="$2" color="$gray10">
-                {plan.limits.bookmarks} bookmarks limit
-              </Text>
-              <UpgradeButton />
-            </YStack>
-          )}
-          {plan.name === "pro" && (
-            <Text fontSize="$2" color="$green10" marginTop="$2">
-              Unlimited bookmarks
-            </Text>
-          )}
-        </Card>
-
-        <Card
-          padding="$4"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$borderColor"
-        >
-          <XStack alignItems="center" justifyContent="space-between">
-            <XStack alignItems="center" gap="$3">
-              {currentTheme === "dark" ? (
-                <Moon size={24} color="$gray10" />
-              ) : (
-                <Sun size={24} color="$gray10" />
+    <BlurHeaderScreen
+      title="Settings"
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingBottom: insets.bottom + 112,
+      }}
+    >
+      <View className="gap-5">
+        <Section title="SaveIt Pro">
+          {isPro ? (
+            <>
+              <SettingsRow
+                isFirst
+                icon="sparkles"
+                title="SaveIt Pro"
+                description="Active"
+              />
+              {isAppStorePro ? (
+                <SettingsRow
+                  icon="card-outline"
+                  title="Manage subscription"
+                  description="Open App Store subscription settings"
+                  onPress={openAppleSubscriptionManagement}
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <SettingsRow
+                isFirst
+                icon="sparkles-outline"
+                title="Upgrade to Pro"
+                description="Go premium on saveit.now — unlimited bookmarks & more"
+                onPress={openUpgrade}
+              />
+              {Platform.OS === "ios" ? null : (
+                <View className="border-t border-border px-4 py-3">
+                  <Text className="font-sans text-[13px] text-muted-foreground">
+                    Subscriptions are managed on the web. Open
+                    beta.saveit.now/upgrade, sign in, and choose a plan — Pro
+                    then unlocks here automatically.
+                  </Text>
+                </View>
               )}
-              <YStack gap="$1">
-                <Text fontSize="$4" fontWeight="500" color="$color">
-                  Theme
-                </Text>
-                <Text fontSize="$3" color="$gray10">
-                  {currentTheme === "dark" ? "Dark mode" : "Light mode"}
-                </Text>
-              </YStack>
-            </XStack>
-            <Button
-              onPress={toggleTheme}
-              size="$3"
-              variant="outlined"
-              backgroundColor="transparent"
-            >
-              {currentTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
-          </XStack>
-        </Card>
+            </>
+          )}
+        </Section>
 
-        <YStack gap="$3">
-          <Button
+        <Section title="Account">
+          <SettingsRow
+            isFirst
+            icon="person-circle-outline"
+            title="Account"
+            description={user.email ?? "Email, name, and account controls"}
+            onPress={() => router.push("/account")}
+          />
+        </Section>
+
+        <Section title="Appearance">
+          <SettingsRow
+            isFirst
+            icon={currentTheme === "dark" ? "moon-outline" : "sunny-outline"}
+            title="Theme"
+            description={currentTheme === "dark" ? "Dark mode" : "Light mode"}
+            trailing={
+              <Switch
+                value={currentTheme === "dark"}
+                onValueChange={toggleAppTheme}
+                trackColor={{
+                  false: colors.secondary,
+                  true: colors.primary,
+                }}
+                thumbColor={colors.card}
+                ios_backgroundColor={colors.secondary}
+              />
+            }
+          />
+        </Section>
+
+        <Section title="Support">
+          <SettingsRow
+            isFirst
+            icon="book-outline"
+            title="Documentation"
+            description="Guides and API reference"
             onPress={openDocumentation}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <Book size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Documentation
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
+          />
+          <SettingsRow
+            icon="help-circle-outline"
+            title="Help"
+            description="Get support"
             onPress={openHelp}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <HelpCircle size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Help
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
+          />
+          <SettingsRow
+            icon="bug-outline"
+            title="Report Bug"
+            description="Tell us what went wrong"
             onPress={openBugReport}
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$borderColor"
-            justifyContent="flex-start"
-          >
-            <XStack alignItems="center" gap="$3">
-              <Bug size={20} color="$gray10" />
-              <Text fontSize="$4" color="$color">
-                Report Bug
-              </Text>
-            </XStack>
-          </Button>
-
-          <Button
-            size="$4"
-            backgroundColor="$backgroundTransparent"
-            borderWidth={1}
-            borderColor="$red8"
-            justifyContent="flex-start"
-            onPress={() => {
-              Alert.alert(
-                "Delete Account",
-                "Are you sure you want to delete your account? This action cannot be undone.\n\nWe will send you an email with a confirmation link that you must click to permanently delete your account.",
-                [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                    text: "Send Email",
-                    style: "destructive",
-                    onPress: () => deleteAccountMutation.mutate(),
-                  },
-                ],
-              );
-            }}
-            opacity={deleteAccountMutation.isPending ? 0.5 : 1}
-            disabled={deleteAccountMutation.isPending}
-          >
-            <XStack alignItems="center" gap="$3">
-              <Trash2 size={20} color="$red10" />
-              <Text fontSize="$4" color="$red10">
-                {deleteAccountMutation.isPending
-                  ? "Deleting..."
-                  : "Delete Account"}
-              </Text>
-            </XStack>
-          </Button>
-        </YStack>
-
-        <Button
-          onPress={handleSignOut}
-          size="$4"
-          backgroundColor="$backgroundTransparent"
-          borderWidth={1}
-          borderColor="$red8"
-          justifyContent="flex-start"
-        >
-          <XStack alignItems="center" gap="$3">
-            <LogOut size={20} color="$red10" />
-            <Text fontSize="$4" color="$red10">
-              Sign Out
-            </Text>
-          </XStack>
-        </Button>
-      </YStack>
-    </ScrollView>
+          />
+        </Section>
+      </View>
+    </BlurHeaderScreen>
   );
 }

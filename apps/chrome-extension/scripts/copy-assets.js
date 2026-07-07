@@ -45,7 +45,7 @@ async function compileTypeScript() {
     // Check if --dev flag is passed
     const isDev = process.argv.includes('--dev');
     const baseUrl = isDev ? 'http://localhost:3000' : 'https://saveit.now';
-    
+
     console.log(`Building for ${isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
     console.log(`Base URL: ${baseUrl}`);
 

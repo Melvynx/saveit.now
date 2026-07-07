@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { authClient } from "./auth-client";
-import { getServerUrl } from "./server-url";
-
-const API_BASE_URL = getServerUrl();
+/**
+ * Type declarations shared by mobile UI components.
+ *
+ * The cookie-based REST ApiClient class has been removed. All data fetching now
+ * goes through Convex hooks (convex/react). These types remain because the
+ * BookmarkItem / TypeFilterBadges components depend on them at the type level.
+ */
 
 export type BookmarkType =
   | "VIDEO"
@@ -24,27 +26,6 @@ export const BOOKMARK_TYPES: BookmarkType[] = [
   "PDF",
   "PRODUCT",
 ];
-
-export interface UserLimits {
-  bookmarks: number;
-  monthlyBookmarkRuns: number;
-  canExport: number;
-  apiAccess: number;
-}
-
-export interface UserPlanResponse {
-  plan: "free" | "pro";
-  limits: UserLimits;
-  subscription: {
-    id: string;
-    status: string;
-    periodEnd: string;
-  } | null;
-}
-
-export interface CheckoutResponse {
-  checkoutUrl: string;
-}
 
 interface TweetUser {
   name: string;
@@ -70,7 +51,7 @@ interface BookmarkMetadata {
   brand?: string;
 }
 
-interface Bookmark {
+export interface Bookmark {
   id: string;
   url: string;
   title?: string;
@@ -82,6 +63,7 @@ interface Bookmark {
   type?: BookmarkType;
   faviconUrl?: string;
   status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
+  processingStep?: number;
   metadata?: BookmarkMetadata;
   tags: Array<{
     tag: {
@@ -92,272 +74,20 @@ interface Bookmark {
   }>;
 }
 
-interface BookmarksResponse {
+export interface BookmarksResponse {
   bookmarks: Bookmark[];
   hasMore: boolean;
   nextCursor?: string;
 }
 
-interface Tag {
+export interface Tag {
   id: string;
   name: string;
   type: string;
 }
 
-interface TagsResponse {
+export interface TagsResponse {
   tags: Tag[];
   hasNextPage: boolean;
   nextCursor: string | null;
 }
-
-class ApiClient {
-  private async getAuthHeaders(): Promise<HeadersInit> {
-    try {
-      const cookies = authClient.getCookie();
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-
-      if (cookies) {
-        headers.Cookie = cookies;
-      }
-
-      return headers;
-    } catch (error) {
-      console.error("Error getting auth headers", error);
-      return {
-        "Content-Type": "application/json",
-      };
-    }
-  }
-
-  async getBookmarks(params?: {
-    query?: string;
-    cursor?: string;
-    limit?: number;
-    types?: string[];
-    tags?: string[];
-  }): Promise<BookmarksResponse> {
-    const headers = await this.getAuthHeaders();
-    const searchParams = new URLSearchParams();
-
-    if (params?.query) searchParams.set("query", params.query);
-    if (params?.cursor) searchParams.set("cursor", params.cursor);
-    if (params?.limit) searchParams.set("limit", params.limit.toString());
-    if (params?.types?.length)
-      searchParams.set("types", params.types.join(","));
-    if (params?.tags?.length) searchParams.set("tags", params.tags.join(","));
-
-    const url = `${API_BASE_URL}/api/bookmarks?${searchParams.toString()}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bookmarks: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async getTags(params?: {
-    q?: string;
-    cursor?: string;
-    limit?: number;
-  }): Promise<TagsResponse> {
-    const headers = await this.getAuthHeaders();
-    const searchParams = new URLSearchParams();
-
-    if (params?.q) searchParams.set("q", params.q);
-    if (params?.cursor) searchParams.set("cursor", params.cursor);
-    if (params?.limit) searchParams.set("limit", params.limit.toString());
-
-    const url = `${API_BASE_URL}/api/tags?${searchParams.toString()}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tags: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async getBookmark(id: string): Promise<Bookmark> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bookmark: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.bookmark;
-  }
-
-  async createBookmark(data: {
-    url: string;
-    metadata?: Record<string, any>;
-    imageFile?: { uri: string; name: string; type: string };
-  }): Promise<Bookmark> {
-    let headers: HeadersInit;
-    let body: string | FormData;
-
-    if (data.imageFile) {
-      headers = await this.getAuthHeadersWithoutContentType();
-      const formData = new FormData();
-      formData.append("url", data.url);
-      if (data.metadata) {
-        formData.append("metadata", JSON.stringify(data.metadata));
-      }
-      formData.append("image", {
-        uri: data.imageFile.uri,
-        name: data.imageFile.name,
-        type: data.imageFile.type,
-      } as any);
-      body = formData;
-    } else {
-      headers = await this.getAuthHeaders();
-      body = JSON.stringify(data);
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/bookmarks`, {
-      method: "POST",
-      headers,
-      credentials: "include",
-      body,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create bookmark: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.bookmark;
-  }
-
-  private async getAuthHeadersWithoutContentType(): Promise<HeadersInit> {
-    try {
-      const cookies = authClient.getCookie();
-      const headers: HeadersInit = {};
-
-      if (cookies) {
-        headers.Cookie = cookies;
-      }
-
-      return headers;
-    } catch (error) {
-      console.error("Error getting auth headers", error);
-      return {};
-    }
-  }
-
-  async updateBookmark(
-    id: string,
-    data: {
-      starred?: boolean;
-      read?: boolean;
-    },
-  ): Promise<Bookmark> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
-      method: "PATCH",
-      headers,
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update bookmark: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.bookmark;
-  }
-
-  async deleteBookmark(id: string): Promise<void> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
-      method: "DELETE",
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete bookmark: ${response.statusText}`);
-    }
-  }
-
-  async submitBugReport(data: {
-    description: string;
-    deviceInfo?: string;
-    appVersion?: string;
-  }): Promise<void> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/bug-report`, {
-      method: "POST",
-      headers,
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to submit bug report: ${response.statusText}`);
-    }
-  }
-
-  async getUserLimits(): Promise<UserPlanResponse> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/user/limits`, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get user limits: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async getCheckoutUrl(params: {
-    annual?: boolean;
-    successUrl: string;
-    cancelUrl: string;
-  }): Promise<CheckoutResponse> {
-    const headers = await this.getAuthHeaders();
-
-    const response = await fetch(`${API_BASE_URL}/api/mobile/checkout`, {
-      method: "POST",
-      headers,
-      credentials: "include",
-      body: JSON.stringify(params),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get checkout URL: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-}
-
-export const apiClient = new ApiClient();
-export type { Bookmark, BookmarksResponse, Tag, TagsResponse };
