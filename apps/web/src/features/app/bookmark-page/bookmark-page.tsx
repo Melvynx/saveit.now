@@ -1,11 +1,6 @@
 import { BookmarkContentView } from "@/features/bookmarks/bookmark-content-view";
+import { useSession } from "@/lib/auth-client";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
-
-function hasMarkdownContent(metadata: unknown): boolean {
-  if (!metadata || typeof metadata !== "object") return false;
-  const m = metadata as Record<string, unknown>;
-  return typeof m.markdown === "string" && m.markdown.length > 0;
-}
 import { Button } from "@workspace/ui/components/button";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
 import {
@@ -30,6 +25,12 @@ import { DeleteButton } from "./delete-button";
 import { ReadButton } from "./read-button";
 import { StarButton } from "./star-button";
 import { useBookmark } from "./use-bookmark";
+
+function hasMarkdownContent(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") return false;
+  const m = metadata as Record<string, unknown>;
+  return typeof m.markdown === "string" && m.markdown.length > 0;
+}
 
 type BookmarkDialogProps = {
   bookmarkId: string;
@@ -59,6 +60,9 @@ function BookmarkDetail({
 }: BookmarkDetailProps) {
   const query = useBookmark(bookmarkId);
   const bookmark = query.data?.bookmark;
+  const session = useSession();
+  const isAdmin =
+    (session.data?.user as { role?: string } | undefined)?.role === "admin";
 
   useHotkeys("c", () => {
     if (!bookmark) return;
@@ -121,11 +125,23 @@ function BookmarkDetail({
           />
           {bookmark.type === "ARTICLE" && (
             <>
-              <ReadButton bookmarkId={bookmark.id} read={bookmark.read || false} />
+              <ReadButton
+                bookmarkId={bookmark.id}
+                read={bookmark.read || false}
+              />
               {hasMarkdownContent(bookmark.metadata) && (
                 <InlineTooltip title="Read Article">
-                  <Button size="icon" variant="outline" className="size-8" asChild>
-                    <a href={`/p/${bookmark.id}/read`} target="_blank" rel="noreferrer">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="size-8"
+                    asChild
+                  >
+                    <a
+                      href={`/p/${bookmark.id}/read`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <BookOpen className="text-muted-foreground size-4" />
                     </a>
                   </Button>
@@ -138,7 +154,10 @@ function BookmarkDetail({
         </ButtonGroup>
       </header>
       <div className="px-6 py-4">
-        <BookmarkContentView bookmark={bookmark as unknown as BookmarkDetailDTO} />
+        <BookmarkContentView
+          bookmark={bookmark as unknown as BookmarkDetailDTO}
+          showEmbeddedText={isAdmin}
+        />
       </div>
       <footer className="flex items-center gap-2 border-t-2 p-6">
         <div className="flex-1"></div>

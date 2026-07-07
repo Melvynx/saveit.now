@@ -2,7 +2,13 @@
 
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
-import { LucideIcon, ShoppingBag, Sparkle, TagIcon } from "lucide-react";
+import {
+  FileText,
+  LucideIcon,
+  ShoppingBag,
+  Sparkle,
+  TagIcon,
+} from "lucide-react";
 
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import { BookmarkTagSelector } from "@/features/app/bookmark-card/bookmark-tag-selector";
@@ -15,14 +21,17 @@ import { TranscriptViewer } from "./transcript-viewer";
 export const BookmarkContentView = ({
   bookmark,
   isPublic = false,
+  showEmbeddedText = false,
 }: {
   bookmark: BookmarkDetailDTO;
   isPublic?: boolean;
+  showEmbeddedText?: boolean;
 }) => {
   // Extract transcript data from metadata
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metadata = bookmark.metadata as Record<string, any> | null;
   const transcript = metadata?.transcript as string | undefined;
+  const embeddedText = getEmbeddedText(bookmark);
   return (
     <main className="flex flex-col gap-4">
       <Card className="p-0 min-h-24 overflow-hidden flex flex-row items-center">
@@ -95,6 +104,15 @@ export const BookmarkContentView = ({
         </div>
       </Card>
 
+      {showEmbeddedText && embeddedText && (
+        <Card className="p-4">
+          <BookmarkSectionTitle icon={FileText} text="Embedded text" />
+          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm leading-relaxed text-foreground">
+            {embeddedText}
+          </pre>
+        </Card>
+      )}
+
       {/* YouTube Transcript Section */}
       {bookmark.type === "YOUTUBE" && transcript && (
         <TranscriptViewer transcript={transcript} />
@@ -145,14 +163,18 @@ export const BookmarkContentView = ({
                 {bookmark.tags.length === 0 ? (
                   <Typography variant="muted">No tags</Typography>
                 ) : (
-                  bookmark.tags.map((tag: { tag: { id: string; name: string; type: string } }) => (
-                    <span
-                      key={tag.tag.id}
-                      className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium"
-                    >
-                      {tag.tag.name}
-                    </span>
-                  ))
+                  bookmark.tags.map(
+                    (tag: {
+                      tag: { id: string; name: string; type: string };
+                    }) => (
+                      <span
+                        key={tag.tag.id}
+                        className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium"
+                      >
+                        {tag.tag.name}
+                      </span>
+                    ),
+                  )
                 )}
               </div>
             )}
@@ -165,6 +187,13 @@ export const BookmarkContentView = ({
     </main>
   );
 };
+
+function getEmbeddedText(bookmark: BookmarkDetailDTO): string | null {
+  const title = bookmark.title?.trim() || "";
+  const body = bookmark.vectorSummary?.trim() || bookmark.summary?.trim() || "";
+
+  return [title, body].filter(Boolean).join("\n") || null;
+}
 
 export const BookmarkSectionTitle = (props: {
   icon: LucideIcon;
