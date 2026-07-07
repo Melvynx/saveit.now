@@ -72,9 +72,10 @@ export const MessageItem = memo(function MessageItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [copied, setCopied] = useState(false);
+  const parts = message.parts ?? [];
 
   const getTextContent = () => {
-    const textPart = message.parts.find((p) => p.type === "text");
+    const textPart = parts.find((p) => p.type === "text");
     return textPart?.type === "text" ? textPart.text : "";
   };
 
@@ -145,7 +146,7 @@ export const MessageItem = memo(function MessageItem({
     );
   }
 
-  const hasContent = message.parts.some(
+  const hasContent = parts.some(
     (p) =>
       p.type === "text" ||
       p.type === "reasoning" ||
@@ -155,7 +156,7 @@ export const MessageItem = memo(function MessageItem({
 
   return (
     <div className="group flex w-full flex-col gap-3">
-      {message.parts.map((part, index) => {
+      {parts.map((part, index) => {
         if (part.type === "text") {
           return (
             <div

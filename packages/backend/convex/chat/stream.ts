@@ -640,27 +640,40 @@ You can filter by:
       tools,
       stopWhen: stepCountIs(20),
       providerOptions: thinkingConfig.providerOptions,
-      onFinish: async ({ response }) => {
-        // Persist messages if a conversationId was provided.
-        if (conversationId) {
-          try {
-            await ctx.runMutation(internal.chat.mutations.addMessages, {
-              conversationId: conversationId as never,
-              userId,
-              messages: response.messages,
-            });
-          } catch (err) {
-            console.warn("[chat.stream] addMessages failed", err);
-          }
-        }
-      },
     }),
   );
 
+  const originalMessages = messages as UIMessage[];
   const streamResponse = result.toUIMessageStreamResponse({
-    originalMessages: messages as UIMessage[],
+    originalMessages,
     generateMessageId: createIdGenerator({ prefix: "msg", size: 16 }),
     sendReasoning: enableThinking,
+    onFinish: async ({ messages: uiMessages, responseMessage }) => {
+      // Persist the new user message plus the completed assistant UIMessage.
+      if (!conversationId) return;
+
+      const lastOriginalMessage = originalMessages.at(-1);
+      const messagesToPersist = [
+        ...(lastOriginalMessage?.role === "user"
+          ? [
+              uiMessages.find(
+                (message) => message.id === lastOriginalMessage.id,
+              ) ?? lastOriginalMessage,
+            ]
+          : []),
+        responseMessage,
+      ];
+
+      try {
+        await ctx.runMutation(internal.chat.mutations.addMessages, {
+          conversationId: conversationId as never,
+          userId,
+          messages: messagesToPersist,
+        });
+      } catch (err) {
+        console.warn("[chat.stream] addMessages failed", err);
+      }
+    },
   });
 
   // Add CORS headers to the streaming response.

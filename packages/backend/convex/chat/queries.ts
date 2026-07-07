@@ -3,6 +3,90 @@ import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
 import { authQuery } from "../functions";
 import { startOfMonth } from "./usage";
+import type { Doc } from "../_generated/dataModel";
+import type { UIMessage } from "ai";
+
+type ChatMessageRow = Doc<"chatMessages">;
+type ChatRole = UIMessage["role"];
+type TextPart = Extract<UIMessage["parts"][number], { type: "text" }>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isChatRole(value: unknown): value is ChatRole {
+  return value === "user" || value === "assistant" || value === "system";
+}
+
+function getMessageRole(content: unknown, fallback: ChatRole): ChatRole {
+  if (isRecord(content) && isChatRole(content.role)) {
+    return content.role;
+  }
+  return fallback;
+}
+
+function textPartsFromModelContent(content: unknown): TextPart[] {
+  if (!Array.isArray(content)) {
+    return [];
+  }
+
+  return content.flatMap((part): TextPart[] => {
+    if (
+      isRecord(part) &&
+      part.type === "text" &&
+      typeof part.text === "string"
+    ) {
+      return [{ type: "text", text: part.text }];
+    }
+
+    return [];
+  });
+}
+
+function normalizeChatMessage(row: ChatMessageRow): UIMessage | null {
+  const { content } = row;
+  const role = getMessageRole(content, row.role);
+
+  if (isRecord(content) && Array.isArray(content.parts)) {
+    return {
+      ...content,
+      id: typeof content.id === "string" ? content.id : row._id,
+      role,
+      parts: content.parts,
+    } as UIMessage;
+  }
+
+  if (typeof content === "string") {
+    return {
+      id: row._id,
+      role,
+      parts: [{ type: "text", text: content }],
+    };
+  }
+
+  if (isRecord(content) && typeof content.content === "string") {
+    return {
+      id: typeof content.id === "string" ? content.id : row._id,
+      role,
+      parts: [{ type: "text", text: content.content }],
+    };
+  }
+
+  const modelContent = isRecord(content) ? content.content : content;
+  const parts = textPartsFromModelContent(modelContent);
+  if (parts.length === 0) {
+    return null;
+  }
+
+  return {
+    id:
+      isRecord(content) && typeof content.id === "string"
+        ? content.id
+        : row._id,
+    role,
+    parts,
+  };
+}
 
 /**
  * List the authenticated user's conversations, ordered by updatedAt desc,
@@ -52,8 +136,10 @@ export const getConversation = authQuery({
       .order("asc")
       .collect();
 
-    // Each row's `content` is the full AI SDK UIMessage object.
-    const messages = messageRows.map((row) => row.content);
+    const messages = messageRows.flatMap((row) => {
+      const message = normalizeChatMessage(row);
+      return message ? [message] : [];
+    });
 
     return {
       _id: conversation._id,
