@@ -48,7 +48,10 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6749254685"
+        "ascAppId": "6749254685",
+        "ascApiKeyPath": "/Users/melvynx/Developer/app-store/AuthKey_4XJUWZ9RXH.p8",
+        "ascApiKeyId": "4XJUWZ9RXH",
+        "ascApiKeyIssuerId": "35b197bd-07e0-4ed0-b727-5bc617f8a8da"
       }
     }
   }
