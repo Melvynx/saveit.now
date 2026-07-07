@@ -27,6 +27,26 @@ export const LinkWithQueryInner = ({
   const bookmarkMatch =
     typeof to === "string" ? to.match(/^\/app\/b\/(.+)$/) : null;
 
+  if (isAgentsPage && bookmarkMatch?.[1]) {
+    const bookmarkId = bookmarkMatch[1];
+
+    return (
+      <Link
+        to="/app/agents"
+        search={(previous) => ({ ...previous, b: bookmarkId }) as any}
+        mask={{
+          to: "/app/b/$bookmarkId",
+          params: { bookmarkId },
+          unmaskOnReload: true,
+        }}
+        resetScroll={false}
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  }
+
   if (bookmarkMatch?.[1]) {
     const bookmarkId = bookmarkMatch[1];
 
@@ -42,17 +62,6 @@ export const LinkWithQueryInner = ({
         resetScroll={false}
         {...props}
       >
-        {children}
-      </Link>
-    );
-  }
-
-  if (isAgentsPage && bookmarkMatch?.[1]) {
-    const bookmarkId = bookmarkMatch[1];
-    const newParams = new URLSearchParams(routerSearchParams as any);
-    newParams.set("b", bookmarkId);
-    return (
-      <Link to={`/app/agents?${newParams.toString()}` as any} {...props}>
         {children}
       </Link>
     );
