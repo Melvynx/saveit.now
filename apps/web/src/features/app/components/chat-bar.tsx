@@ -1,19 +1,28 @@
 "use client";
 
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { CornerDownLeft } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export function ChatBar() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const router = useRouter();
+  const hasPreloadedAgentsRef = useRef(false);
+
+  const preloadAgentsRoute = useCallback(() => {
+    if (hasPreloadedAgentsRef.current) return;
+    hasPreloadedAgentsRef.current = true;
+    void router.preloadRoute({ to: "/app/agents" }).catch(() => {
+      hasPreloadedAgentsRef.current = false;
+    });
+  }, [router]);
 
   const handleSubmit = () => {
     if (!query.trim()) return;
-    const encodedQuery = encodeURIComponent(query.trim());
-    void navigate({ to: `/app/agents?q=${encodedQuery}` as any });
+    void navigate({ to: "/app/agents", search: { q: query.trim() } });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -36,7 +45,12 @@ export function ChatBar() {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onFocus={preloadAgentsRoute}
+          onMouseEnter={preloadAgentsRoute}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (e.target.value.trim()) preloadAgentsRoute();
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Ask AI about your bookmarks..."
           className={cn(

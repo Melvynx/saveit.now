@@ -17,13 +17,18 @@ import {
   ThumbsDownIcon,
   ThumbsUpIcon,
 } from "lucide-react";
-import { memo, useState } from "react";
+import { lazy, memo, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
-import { BookmarkCard } from "../../bookmark-card";
 import type { BookmarkCardData } from "../../bookmark-card/bookmark.types";
 
 type BookmarkData = BookmarkCardData;
+
+const BookmarkCard = lazy(() =>
+  import("../../bookmark-card").then((module) => ({
+    default: module.BookmarkCard,
+  })),
+);
 
 function BookmarkGridDisplay({ bookmarks }: { bookmarks: BookmarkData[] }) {
   if (bookmarks.length === 0) {
@@ -44,7 +49,12 @@ function BookmarkGridDisplay({ bookmarks }: { bookmarks: BookmarkData[] }) {
     >
       <div className="flex flex-wrap justify-center gap-3 [&>*]:w-full [&>*]:sm:w-72 [&>*]:lg:w-80">
         {bookmarks.map((b) => (
-          <BookmarkCard key={b.id} bookmark={b} />
+          <Suspense
+            key={b.id}
+            fallback={<div className="bg-muted h-40 rounded-xl border" />}
+          >
+            <BookmarkCard bookmark={b} />
+          </Suspense>
         ))}
       </div>
     </div>

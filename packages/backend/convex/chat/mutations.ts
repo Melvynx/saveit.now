@@ -1,11 +1,17 @@
 import { ConvexError } from "convex/values";
 import { v } from "convex/values";
-import { components } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { authMutation } from "../functions";
 import { throwNotFound } from "../utils/errors";
 import { startOfMonth } from "./usage";
 import type { Id } from "../_generated/dataModel";
+
+function getFallbackConversationTitle(firstMessage: string) {
+  const normalized = firstMessage.replace(/\s+/g, " ").trim();
+  if (!normalized) return "New conversation";
+  return normalized.slice(0, 60);
+}
 
 /**
  * ATOMIC check-and-increment for chat quota.
@@ -161,6 +167,60 @@ export const insertConversation = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+  },
+});
+
+/**
+ * Create a conversation immediately with a cheap fallback title, then schedule
+ * the slower AI title generation outside the first-message send path.
+ */
+export const createConversation = authMutation({
+  args: {
+    firstMessage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = ctx.user.id;
+    const now = Date.now();
+    const title = getFallbackConversationTitle(args.firstMessage);
+    const conversationId = await ctx.db.insert("chatConversations", {
+      userId,
+      title,
+      likes: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.chat.actions.generateConversationTitle,
+      {
+        conversationId,
+        userId,
+        firstMessage: args.firstMessage,
+      },
+    );
+
+    return { id: conversationId, title };
+  },
+});
+
+/**
+ * Update a generated title after ownership has been verified by userId.
+ */
+export const updateGeneratedConversationTitle = internalMutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.userId !== args.userId) {
+      return null;
+    }
+
+    await ctx.db.patch(args.conversationId, { title: args.title });
+    return null;
   },
 });
 

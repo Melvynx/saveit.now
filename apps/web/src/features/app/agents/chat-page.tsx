@@ -6,7 +6,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useChat } from "@ai-sdk/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
-import { useAction, useConvex, useConvexAuth, useMutation } from "convex/react";
+import { useConvex, useConvexAuth, useMutation } from "convex/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   ArrowDownIcon,
@@ -16,18 +16,30 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { toast } from "sonner";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { cn } from "@workspace/ui/lib/utils";
-import { BookmarkDialog } from "../bookmark-page/bookmark-page";
 import { ChatHeader } from "./components/chat-header";
 import { MessageItem } from "./components/message-item";
 import { getConvexSiteUrl } from "@/lib/convex-url";
 
 const CONVEX_SITE_URL = getConvexSiteUrl();
+const BookmarkDialog = lazy(() =>
+  import("../bookmark-page/bookmark-page").then((module) => ({
+    default: module.BookmarkDialog,
+  })),
+);
 
 const SUGGESTIONS = [
   "Search my bookmarks",
@@ -206,10 +218,7 @@ export function ChatPage() {
   // Convex reactive query for chat usage
   const usage = useAuthedQuery(api.chat.queries.getChatUsage, {});
 
-  // Convex action for creating a conversation with AI-generated title
-  const createConversation = useAction(
-    api.chat.actions.createConversationWithTitle,
-  );
+  const createConversation = useMutation(api.chat.mutations.createConversation);
 
   const ensureConversationForFirstMessage = useCallback(
     async (firstMessage: string) => {
@@ -391,8 +400,8 @@ export function ChatPage() {
     const queryParam = searchParams.get("q");
     if (queryParam && !hasAutoSubmittedRef.current && !isLoadingConversation) {
       hasAutoSubmittedRef.current = true;
-      setSearchParams({}, { replace: true });
       handleSuggestionClick(decodeURIComponent(queryParam));
+      setSearchParams({}, { replace: true });
     }
   }, [
     searchParams,
@@ -603,7 +612,12 @@ export function ChatPage() {
       )}
 
       {bookmarkId && (
-        <BookmarkDialog bookmarkId={bookmarkId} onClose={handleCloseBookmark} />
+        <Suspense fallback={null}>
+          <BookmarkDialog
+            bookmarkId={bookmarkId}
+            onClose={handleCloseBookmark}
+          />
+        </Suspense>
       )}
     </div>
   );
