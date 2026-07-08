@@ -1,4 +1,4 @@
-import { HeaderUser } from "../page/header-user";
+import { LandingAppButton } from "./landing-app-button";
 
 export const LandingHeader = () => {
   return (
@@ -24,7 +24,12 @@ export const LandingHeader = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <HeaderUser />
+          <LandingAppButton
+            className="font-inter"
+            showAlwaysOpenPrompt
+            signedOutChildren="Sign In"
+            variant="outline"
+          />
         </div>
       </div>
     </header>
