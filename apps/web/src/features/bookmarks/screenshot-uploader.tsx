@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 import { api } from "@convex/_generated/api";
 import { useAction } from "convex/react";
 import { useRef, useState } from "react";
@@ -80,7 +81,10 @@ export const ScreenshotUploader = ({
 
   return (
     <div
-      className={`absolute top-4 right-4 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${className}`}
+      className={cn(
+        "absolute top-4 right-4 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100",
+        className,
+      )}
     >
       <Button onClick={openFilePicker} disabled={isUploading} size="sm">
         {isUploading ? "Uploading..." : "Update Preview"}
