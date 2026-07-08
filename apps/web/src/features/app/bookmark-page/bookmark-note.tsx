@@ -14,9 +14,14 @@ import type { Id } from "@convex/_generated/dataModel";
 export type BookmarkNoteProps = {
   note: string | null | undefined;
   bookmarkId: string;
+  variant?: "card" | "plain";
 };
 
-export const BookmarkNote = ({ note, bookmarkId }: BookmarkNoteProps) => {
+export const BookmarkNote = ({
+  note,
+  bookmarkId,
+  variant = "card",
+}: BookmarkNoteProps) => {
   const updateBookmark = useMutation(api.bookmarks.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -33,6 +38,32 @@ export const BookmarkNote = ({ note, bookmarkId }: BookmarkNoteProps) => {
   };
 
   const onUpdate = useDebounceFn((noteValue: string) => updateNote(noteValue));
+
+  if (variant === "plain") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <Typography
+            variant="muted"
+            className="text-[11px] font-medium tracking-wider uppercase"
+          >
+            Note
+          </Typography>
+          {isSaving && (
+            <Typography variant="muted" className="text-xs">
+              Saving...
+            </Typography>
+          )}
+        </div>
+        <Textarea
+          onChange={(e) => onUpdate(e.target.value)}
+          defaultValue={note ?? ""}
+          placeholder="Add your personal notes about this bookmark..."
+          className="min-h-20 resize-none"
+        />
+      </div>
+    );
+  }
 
   return (
     <Card className="p-4">
