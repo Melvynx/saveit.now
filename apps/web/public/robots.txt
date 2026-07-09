@@ -1,0 +1,35 @@
+User-agent: *
+Allow: /
+
+Disallow: /account$
+Disallow: /account/
+Disallow: /admin$
+Disallow: /admin/
+Disallow: /api$
+Disallow: /api/
+Disallow: /app$
+Disallow: /app/
+Disallow: /auth$
+Disallow: /auth/
+Disallow: /billing$
+Disallow: /billing/
+Disallow: /exports$
+Disallow: /exports/
+Disallow: /goodbye$
+Disallow: /goodbye/
+Disallow: /imports$
+Disallow: /imports/
+Disallow: /signin$
+Disallow: /signin/
+Disallow: /start$
+Disallow: /start/
+Disallow: /tags$
+Disallow: /tags/
+Disallow: /unsubscribe$
+Disallow: /unsubscribe/
+Disallow: /upgrade$
+Disallow: /upgrade/
+Disallow: /verify$
+Disallow: /verify/
+
+Sitemap: https://saveit.now/sitemap.xml
