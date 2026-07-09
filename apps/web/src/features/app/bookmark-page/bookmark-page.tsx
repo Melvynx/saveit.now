@@ -6,6 +6,7 @@ import { useSession } from "@/lib/auth-client";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   Dialog,
   DialogContent,
@@ -289,9 +290,17 @@ function BookmarkDetail({
         />
 
         {embeddedText && (
-          <div className="flex flex-col gap-1.5">
-            <SectionLabel>Embedded text</SectionLabel>
-            <pre className="bg-muted text-foreground max-h-72 overflow-auto rounded-md p-3 text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="flex flex-col gap-2 rounded-md border border-dashed border-yellow-500/50 bg-yellow-500/5 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <SectionLabel>Embedded text</SectionLabel>
+              <Badge
+                variant="outline"
+                className="border-yellow-500/40 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300"
+              >
+                Admin
+              </Badge>
+            </div>
+            <pre className="text-foreground max-h-72 overflow-auto rounded-md border border-yellow-500/20 bg-background/70 p-3 text-sm leading-relaxed whitespace-pre-wrap">
               {embeddedText}
             </pre>
           </div>
