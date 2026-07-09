@@ -9,9 +9,16 @@ import { JSDOM } from "jsdom";
 
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicRoot = path.join(webRoot, "public");
-const buildOutputRoot = path.join(webRoot, ".vercel", "output");
 const canonicalOrigin = "https://saveit.now";
 const verifyBuildOutput = process.argv.includes("--build-output");
+const isVercelBuild = process.env.NITRO_PRESET === "vercel";
+const buildOutputRoot = isVercelBuild
+  ? path.join(webRoot, ".vercel", "output")
+  : path.join(webRoot, ".output");
+const staticOutputRoot = path.join(
+  buildOutputRoot,
+  isVercelBuild ? "static" : "public",
+);
 
 const staticRoutes = [
   {
@@ -196,21 +203,23 @@ async function verifyStaticPayloads() {
   assert(appAds.trim(), "app-ads.txt must not be empty");
 }
 
-async function verifyVercelBuildOutput() {
-  const staticRoot = path.join(buildOutputRoot, "static");
-
+async function verifyBuiltOutput() {
   for (const { file } of staticRoutes) {
     const [source, output] = await Promise.all([
       readFile(path.join(publicRoot, file)),
-      readFile(path.join(staticRoot, file)),
+      readFile(path.join(staticOutputRoot, file)),
     ]);
     assert(
       source.equals(output),
-      `${file} must be copied byte-for-byte to Vercel static output`,
+      `${file} must be copied byte-for-byte to Nitro static output`,
     );
   }
 
-  await readFile(path.join(staticRoot, "apple-icon.png"));
+  await readFile(path.join(staticOutputRoot, "apple-icon.png"));
+
+  if (!isVercelBuild) {
+    return;
+  }
 
   const config = JSON.parse(
     await readFile(path.join(buildOutputRoot, "config.json"), "utf8"),
@@ -278,11 +287,11 @@ await verifySitemaps();
 await verifyStaticPayloads();
 
 if (verifyBuildOutput) {
-  await verifyVercelBuildOutput();
+  await verifyBuiltOutput();
 }
 
 console.log(
   verifyBuildOutput
-    ? "Crawler routes verified in source and Vercel static output."
+    ? `Crawler routes verified in source and ${isVercelBuild ? "Vercel" : "Nitro node-server"} static output.`
     : "Crawler route source files verified.",
 );
