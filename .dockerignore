@@ -1,0 +1,13 @@
+.git
+.vercel
+.turbo
+node_modules
+**/node_modules
+**/.output
+**/dist
+playwright-report
+test-results
+coverage
+.env
+.env.*
+!.env.example
