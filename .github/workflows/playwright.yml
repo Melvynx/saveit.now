@@ -59,9 +59,6 @@ jobs:
       # AI Services
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
-      # Analytics
-      NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
-      NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
       # Convex
       VITE_CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
       CONVEX_URL: "https://tough-chameleon-916.convex.cloud"
