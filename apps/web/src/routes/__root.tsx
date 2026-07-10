@@ -8,6 +8,9 @@ import {
 } from "@tanstack/react-router";
 import { cn } from "@workspace/ui/lib/utils";
 
+const UMAMI_SCRIPT_URL = "https://analytics.melvynx.dev/script.js";
+const UMAMI_WEBSITE_ID = "c077f623-0462-459b-a3fe-9ba279dabc82";
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -39,6 +42,13 @@ function RootComponent() {
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          defer
+          src={UMAMI_SCRIPT_URL}
+          data-website-id={UMAMI_WEBSITE_ID}
+          data-domains="saveit.now"
+          data-do-not-track="true"
+        />
       </head>
       <body className={cn("relative h-full antialiased")}>
         <div className="isolate min-h-full">
