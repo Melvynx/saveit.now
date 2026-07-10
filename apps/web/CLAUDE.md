@@ -6,14 +6,14 @@
 - `src/features/` - Feature-specific components and logic
 - `src/hooks/` - Custom React hooks
 
-## PostHog Integration Guidelines
+## Umami Analytics Guidelines
 
 When working with analytics:
 
-- Use enums/const objects for feature flag names (UPPERCASE_WITH_UNDERSCORE)
-- Minimize feature flag usage across multiple locations
-- Gate flag-dependent code with validation
-- Maintain consistent naming conventions for events and properties
+- Define event names in `src/lib/analytics.ts`.
+- Track aggregate product actions without user IDs, bookmark IDs, URLs, email addresses, or other personal data.
+- Track successful outcomes where possible instead of button-click attempts.
+- Keep automatic page views in the root Umami script; do not add manual page-view effects.
 
 ## Development Workflow
 

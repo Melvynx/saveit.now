@@ -4,7 +4,7 @@ import { marked } from "marked";
 
 const privacyContent = `# Terms of Service & Privacy Policy
 
-_Last updated: 2025-06-03_
+_Last updated: 2026-07-10_
 
 ---
 
@@ -55,13 +55,13 @@ We do **not** sell your data to third parties.
 
 ### 3. Third-party services
 
-We use the following services:
+We use the following infrastructure and services:
 
 - **Stripe** for payment
-- **Vercel** for hosting
-- **Posthog** for product analytics
+- **Dokploy** on our VPS for hosting
+- **Self-hosted Umami** for anonymous website traffic analytics
 
-These services may receive limited user data strictly to provide their functionality.
+Umami analytics data remains on infrastructure controlled by SaveIt.now. Other services may receive limited user data strictly to provide their functionality.
 
 ### 4. Data Deletion
 

@@ -189,7 +189,7 @@ function BookmarkDetail({
             >
               {bookmark.title || bookmark.url}
             </Typography>
-            <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+            <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
               <Typography
                 variant="muted"
                 className="line-clamp-1 cursor-pointer text-xs break-all hover:underline"
@@ -211,7 +211,7 @@ function BookmarkDetail({
 
         <div className="flex items-center gap-2">
           <InlineTooltip title="Open (O)">
-            <ExternalLinkTracker bookmarkId={bookmark.id} url={bookmark.url}>
+            <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
               <Button
                 variant="default"
                 className="flex-1"

@@ -1,5 +1,6 @@
 "use client";
 
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -12,7 +13,6 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { Download, FileText, Package } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -22,15 +22,17 @@ type ExportFormProps = {
 
 export function ExportForm({ className }: ExportFormProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const posthog = usePostHog();
   const exportCsv = useMutation(api.bookmarks.mutations.exportCsv);
 
   const handleExport = async () => {
     setIsExporting(true);
-    posthog.capture("export_bookmarks");
 
     try {
       const csvContent = await exportCsv({});
+
+      trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARKS_EXPORTED, {
+        format: "csv",
+      });
 
       const blob = new Blob([csvContent as string], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);

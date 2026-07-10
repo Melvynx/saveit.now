@@ -1,5 +1,6 @@
 "use client";
 
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -21,7 +22,6 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { Typography } from "@workspace/ui/components/typography";
 import { cn } from "@workspace/ui/lib/utils";
 import { CheckCircle2, FileText, Link, Upload } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,8 +52,6 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [urlPreview, setUrlPreview] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const posthog = usePostHog();
-
   const form = useForm<ImportFormValues>({
     defaultValues: {
       text: "",
@@ -85,20 +83,23 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
     }
 
     const urls = extractUrlsFromText(validation.data.text);
-    posthog.capture("import_bookmarks", {
-      total_urls: urls.length,
-    });
 
     setIsImporting(true);
     try {
       await importBulk({ text: validation.data.text });
+
+      trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARKS_IMPORTED, {
+        bookmark_count: urls.length,
+      });
 
       const importResult: ImportResult = {
         createdBookmarks: urls.length,
         totalUrls: urls.length,
       };
 
-      toast.success(`Imported ${urls.length} bookmark${urls.length !== 1 ? "s" : ""}`);
+      toast.success(
+        `Imported ${urls.length} bookmark${urls.length !== 1 ? "s" : ""}`,
+      );
 
       form.reset();
       onSuccess?.(importResult);
@@ -222,7 +223,9 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={"Paste any text containing URLs here, or drag and drop text files...\n\nSupported formats:\n- Plain text with URLs\n- Bookmark export files\n- HTML files\n- JSON files"}
+                        placeholder={
+                          "Paste any text containing URLs here, or drag and drop text files...\n\nSupported formats:\n- Plain text with URLs\n- Bookmark export files\n- HTML files\n- JSON files"
+                        }
                         className="min-h-[120px] max-h-[300px] resize-y"
                         {...field}
                       />

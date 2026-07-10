@@ -82,5 +82,3 @@ sync_missing_env_value R2_URL
 # Cloudflare Browser Rendering (screenshots / PDF)
 sync_missing_env_value CLOUDFLARE_API_TOKEN
 sync_missing_env_value CLOUDFLARE_ACCOUNT_ID
-# Analytics (optional, server-side)
-sync_missing_env_value POSTHOG_API_KEY

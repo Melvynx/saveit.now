@@ -4,6 +4,7 @@ import { LoadingButton } from "@/features/form/loading-button";
 import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
 import { useSession } from "@/lib/auth-client";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
@@ -33,7 +34,6 @@ import {
   Phone,
 } from "lucide-react";
 import { useAction } from "convex/react";
-import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,7 +46,6 @@ export function UpgradePage() {
   );
   const error = searchParams.get("error");
   const plan = useUserPlan();
-  const posthog = usePostHog();
   const createCheckout = useAction(api.stripe.actions.createCheckout);
 
   // Upgrading requires an authenticated Convex session (createCheckout is an
@@ -60,15 +59,15 @@ export function UpgradePage() {
 
   const checkoutTask = useAsyncTask(
     async () => {
-      posthog.capture("upgrade_subscription", {
-        plan: monthly ? "monthly" : "yearly",
-      });
-
       const result = await createCheckout({
         plan: "pro",
         successUrl: "/upgrade/success",
         cancelUrl: "/upgrade?error=true",
         annual: !monthly,
+      });
+
+      trackAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_CHECKOUT_STARTED, {
+        billing_interval: monthly ? "monthly" : "yearly",
       });
 
       window.location.href = result.url;

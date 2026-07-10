@@ -53,8 +53,8 @@ export const BookmarkContentView = ({
 
                 {bookmark.url.startsWith("http") && (
                   <ExternalLinkTracker
-                    bookmarkId={bookmark.id}
                     url={bookmark.url}
+                    surface="bookmark_detail"
                   >
                     <Typography
                       variant="muted"
@@ -68,8 +68,8 @@ export const BookmarkContentView = ({
             ) : (
               <>
                 <ExternalLinkTracker
-                  bookmarkId={bookmark.id}
                   url={bookmark.url}
+                  surface="bookmark_detail"
                 >
                   <Typography
                     variant="large"

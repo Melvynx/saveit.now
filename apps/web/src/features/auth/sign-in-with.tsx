@@ -2,11 +2,11 @@
 
 import { SvglImg } from "@/components/svgl-auto-dark-mode-image";
 import { authClient, useSession } from "@/lib/auth-client";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
-import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { LoadingButton } from "../form/loading-button";
 
@@ -30,12 +30,11 @@ export const SignInWith = (props: {
   variant?: "default" | "monochrome";
   callbackURL?: string;
 }) => {
-  const posthog = usePostHog();
   const session = useSession();
   const isMonochrome = props.variant === "monochrome";
   const signInTask = useAsyncTask(
     async () => {
-      posthog.capture("sign_in_with_social", {
+      trackAnalyticsEvent(ANALYTICS_EVENTS.AUTH_SOCIAL_SIGN_IN_STARTED, {
         provider: props.type,
       });
       return unwrapSafePromise(

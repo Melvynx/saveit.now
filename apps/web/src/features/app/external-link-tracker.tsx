@@ -1,31 +1,28 @@
 "use client";
 
-import { usePostHog } from "posthog-js/react";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 
 interface ExternalLinkTrackerProps {
-  bookmarkId: string;
   url: string;
+  surface: "bookmark_card" | "bookmark_detail";
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
 export const ExternalLinkTracker = ({
-  bookmarkId,
   url,
+  surface,
   children,
   onClick,
   className,
 }: ExternalLinkTrackerProps) => {
-  const posthog = usePostHog();
-
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.(e);
 
-    posthog.capture("bookmark+external_open", {
-      bookmark_id: bookmarkId,
-      url,
+    trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_OPENED, {
+      surface,
     });
 
     // Open in new tab
