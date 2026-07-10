@@ -89,6 +89,7 @@ export const BookmarkCardContainer = ({
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem
+                closeOnClick={isConfirm}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
