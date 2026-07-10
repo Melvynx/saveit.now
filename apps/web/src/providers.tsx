@@ -1,6 +1,5 @@
 import { DialogManagerRenderer } from "@/features/dialog-manager/dialog-manager-renderer";
 import { ThemeProvider } from "@/features/dark-mode/theme-provider";
-import { PostHogProvider } from "@/features/posthog/pohsthog-provider";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useUserPlan } from "@/lib/auth/user-plan";
 import { getConvexUrl } from "@/lib/convex-url";
@@ -17,25 +16,23 @@ const convexClient = new ConvexReactClient(getConvexUrl());
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <PostHogProvider>
-      {/* ConvexBetterAuthProvider supplies the Convex client + exchanges the
-          Better Auth session for a Convex token. Keep it OUTSIDE the query provider. */}
-      <ConvexBetterAuthProvider client={convexClient} authClient={authClient}>
-        <ThemeProvider defaultTheme="system">
-          <NuqsAdapter>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-              <DialogManagerRenderer />
-              <UserPlanSync />
-              <ClientOnly>
-                <ChatSnippet />
-              </ClientOnly>
-            </TooltipProvider>
-          </NuqsAdapter>
-        </ThemeProvider>
-      </ConvexBetterAuthProvider>
-    </PostHogProvider>
+    /* ConvexBetterAuthProvider supplies the Convex client + exchanges the
+       Better Auth session for a Convex token. Keep it OUTSIDE the query provider. */
+    <ConvexBetterAuthProvider client={convexClient} authClient={authClient}>
+      <ThemeProvider defaultTheme="system">
+        <NuqsAdapter>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+            <DialogManagerRenderer />
+            <UserPlanSync />
+            <ClientOnly>
+              <ChatSnippet />
+            </ClientOnly>
+          </TooltipProvider>
+        </NuqsAdapter>
+      </ThemeProvider>
+    </ConvexBetterAuthProvider>
   );
 };
 

@@ -28,7 +28,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 - **Payments**: Stripe integration for subscriptions
 - **File Storage**: AWS S3 for screenshots and media
 - **Email**: Resend for transactional emails
-- **Analytics**: PostHog
+- **Analytics**: Self-hosted Umami
 - **AI Features**: OpenAI and Google Gemini integration
 
 ## Development

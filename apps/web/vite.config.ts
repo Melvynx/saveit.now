@@ -56,7 +56,12 @@ export default defineConfig({
     strictPort: true,
   },
   resolve: {
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+    ],
     alias: {
       "@workspace/ui/globals.css": path.resolve(
         workspaceRoot,
@@ -104,6 +109,6 @@ export default defineConfig({
     }),
   ],
   ssr: {
-    noExternal: ["better-auth", "posthog-js"],
+    noExternal: ["better-auth"],
   },
 });

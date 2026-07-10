@@ -1,11 +1,11 @@
 "use client";
 
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { Button } from "@workspace/ui/components/button";
 import type { ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { usePostHog } from "posthog-js/react";
 import { StarButton } from "../bookmark-page/star-button";
 import { ReadButton } from "../bookmark-page/read-button";
 import { ExternalLinkTracker } from "../external-link-tracker";
@@ -34,8 +34,8 @@ export const BookmarkCardActions = ({
       className={`absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 ${className}`}
     >
       <ExternalLinkTracker
-        bookmarkId={bookmarkId}
         url={url}
+        surface="bookmark_card"
         onClick={(e) => e.stopPropagation()}
       >
         <Button
@@ -74,12 +74,8 @@ export const BookmarkCardActions = ({
   );
 };
 
-const CopyLinkButton = ({
-  url,
-  ...props
-}: { url: string } & ButtonProps) => {
+const CopyLinkButton = ({ url, ...props }: { url: string } & ButtonProps) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard(5000);
-  const posthog = usePostHog();
 
   return (
     <Button
@@ -89,8 +85,8 @@ const CopyLinkButton = ({
       data-testid="copy-link-button"
       onClick={(event) => {
         event.stopPropagation();
-        posthog.capture("bookmark+copy_link", {
-          url,
+        trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_COPIED, {
+          surface: "bookmark_card",
         });
         copyToClipboard(url);
       }}

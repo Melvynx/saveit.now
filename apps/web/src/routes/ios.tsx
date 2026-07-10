@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PosthogLink } from "@/components/posthog-link";
-import { ANALYTICS } from "@/lib/analytics";
+import { AnalyticsLink } from "@/components/analytics-link";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { Footer } from "@/features/page/footer";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
@@ -102,18 +102,19 @@ function IOSPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="gap-2">
-              <PosthogLink
+              <AnalyticsLink
                 href={APP_LINKS.ios}
-                event={ANALYTICS.IOS_DOWNLOAD}
+                event={ANALYTICS_EVENTS.IOS_DOWNLOAD_CLICKED}
+                properties={{ surface: "ios_hero" }}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <Download className="size-4" />
                 Download on App Store
-              </PosthogLink>
+              </AnalyticsLink>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <PosthogLink href="/start">Try Web Version</PosthogLink>
+              <AnalyticsLink href="/start">Try Web Version</AnalyticsLink>
             </Button>
           </div>
 
@@ -253,26 +254,29 @@ function IOSPage() {
               variant="lead"
               className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground"
             >
-              Join thousands of users who have revolutionized how they save and organize content on iOS. Download SaveIt.now today and experience seamless content management on your iPhone and iPad.
+              Join thousands of users who have revolutionized how they save and
+              organize content on iOS. Download SaveIt.now today and experience
+              seamless content management on your iPhone and iPad.
             </Typography>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button asChild size="lg">
-                <PosthogLink
+                <AnalyticsLink
                   href={APP_LINKS.ios}
-                  event={ANALYTICS.IOS_DOWNLOAD}
+                  event={ANALYTICS_EVENTS.IOS_DOWNLOAD_CLICKED}
+                  properties={{ surface: "ios_footer_cta" }}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Download SaveIt.now for iOS
-                </PosthogLink>
+                </AnalyticsLink>
               </Button>
-              <PosthogLink
+              <AnalyticsLink
                 href="/start"
                 className="text-sm font-semibold text-foreground hover:text-foreground/80"
               >
                 Try Web Version
                 <span aria-hidden="true">→</span>
-              </PosthogLink>
+              </AnalyticsLink>
             </div>
             <svg
               viewBox="0 0 1024 1024"

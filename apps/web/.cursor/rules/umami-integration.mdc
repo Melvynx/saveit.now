@@ -1,0 +1,21 @@
+---
+description: apply when interacting with Umami or analytics tasks
+globs:
+alwaysApply: true
+---
+
+# Event definitions
+
+Define event names centrally in `src/lib/analytics.ts` and use `trackAnalyticsEvent` instead of calling `window.umami` directly.
+
+# Data minimization
+
+Do not send user IDs, bookmark IDs, URLs, email addresses, names, or other personal data to analytics. Prefer aggregate product context such as action surface, provider, billing interval, export format, and item count.
+
+# Event timing
+
+Track successful outcomes where possible. Events that intentionally represent the start of an external flow must use a `_started` or `_clicked` suffix.
+
+# Page views
+
+Umami automatically tracks page loads and client-side navigation. Do not add manual page-view tracking.

@@ -1,5 +1,5 @@
-import { PosthogLink } from "@/components/posthog-link";
-import { ANALYTICS } from "@/lib/analytics";
+import { AnalyticsLink } from "@/components/analytics-link";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Typography } from "@workspace/ui/components/typography";
@@ -80,15 +80,16 @@ export const BookmarkCardInput = () => {
               className="size-6"
             />
           </Link>
-          <PosthogLink
+          <AnalyticsLink
             href={APP_LINKS.ios}
-            event={ANALYTICS.IOS_DOWNLOAD}
+            event={ANALYTICS_EVENTS.IOS_DOWNLOAD_CLICKED}
+            properties={{ surface: "bookmark_input" }}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-md hover:bg-accent/50 transition-colors p-1.5"
           >
             <img src="https://svgl.app/library/apple.svg" className="size-6" />
-          </PosthogLink>
+          </AnalyticsLink>
         </div>
       </CardFooter>
     </Card>

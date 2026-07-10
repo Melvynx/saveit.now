@@ -2,13 +2,13 @@
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
 import { LoadingButton } from "@/features/form/loading-button";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 import { ButtonProps } from "@workspace/ui/components/button";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Trash } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import type { Id } from "@convex/_generated/dataModel";
 import { useState } from "react";
@@ -17,7 +17,6 @@ export type DeleteButtonProps = { bookmarkId: string } & ButtonProps;
 
 export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
   const action = useDeleteBookmark();
-  const posthog = usePostHog();
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
 
@@ -28,8 +27,8 @@ export const DeleteButton = ({ bookmarkId, ...props }: DeleteButtonProps) => {
       action: {
         label: "Delete",
         onClick: () => {
-          posthog.capture("bookmark+delete", {
-            bookmark_id: bookmarkId,
+          trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_DELETED, {
+            surface: "bookmark_detail",
           });
           action.execute(bookmarkId);
           void navigate({ to: "/app", search });

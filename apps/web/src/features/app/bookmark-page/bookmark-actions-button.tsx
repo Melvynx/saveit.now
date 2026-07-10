@@ -2,13 +2,13 @@
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useRouter } from "@tanstack/react-router";
 import { Button, ButtonProps } from "@workspace/ui/components/button";
 import { Check, Copy, RefreshCcw, Share, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { usePostHog } from "posthog-js/react";
 import React, { useState } from "react";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -33,7 +33,6 @@ export const ShareButton = ({
   ...props
 }: { bookmarkId: string } & ButtonProps) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard(5000);
-  const posthog = usePostHog();
   const url = `${window.location.origin}/p/${bookmarkId}`;
 
   return (
@@ -43,8 +42,8 @@ export const ShareButton = ({
       className="size-8"
       data-testid="share-button"
       onClick={() => {
-        posthog.capture("bookmark+share", {
-          bookmarkId,
+        trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_SHARED, {
+          surface: "bookmark_detail",
         });
         copyToClipboard(url);
       }}
@@ -82,7 +81,6 @@ export const CopyLinkButton = ({
   ...props
 }: { url: string } & ButtonProps) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard(5000);
-  const posthog = usePostHog();
 
   return (
     <Button
@@ -91,8 +89,8 @@ export const CopyLinkButton = ({
       className="size-8"
       data-testid="copy-link-button"
       onClick={() => {
-        posthog.capture("bookmark+copy_link", {
-          url,
+        trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_COPIED, {
+          surface: "bookmark_detail",
         });
         copyToClipboard(url);
       }}
@@ -133,13 +131,12 @@ export const ReBookmarkButton = ({
   children?: React.ReactNode;
 }) => {
   const router = useRouter();
-  const posthog = usePostHog();
   const reprocess = useMutation(api.bookmarks.mutations.reprocess);
   const [isPending, setIsPending] = useState(false);
 
   const handleReprocess = () => {
-    posthog.capture("bookmark+rebookmark", {
-      bookmark_id: bookmarkId,
+    trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_REPROCESSED, {
+      surface: "bookmark_detail",
     });
     setIsPending(true);
     void reprocess({ id: bookmarkId as Id<"bookmarks"> })

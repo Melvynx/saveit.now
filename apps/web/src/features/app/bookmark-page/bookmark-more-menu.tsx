@@ -1,6 +1,7 @@
 "use client";
 
 import { dialogManager } from "@/features/dialog-manager/dialog-manager-store";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
@@ -14,7 +15,6 @@ import {
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { BookOpen, MoreHorizontal, RefreshCcw, Trash } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useDeleteBookmark } from "./delete-button";
 
@@ -27,7 +27,6 @@ export const BookmarkMoreMenu = ({
   bookmarkId,
   readUrl,
 }: BookmarkMoreMenuProps) => {
-  const posthog = usePostHog();
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
   const deleteAction = useDeleteBookmark();
@@ -40,8 +39,8 @@ export const BookmarkMoreMenu = ({
       action: {
         label: "Delete",
         onClick: () => {
-          posthog.capture("bookmark+delete", {
-            bookmark_id: bookmarkId,
+          trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_DELETED, {
+            surface: "bookmark_detail_menu",
           });
           deleteAction.execute(bookmarkId);
           void navigate({ to: "/app", search });
@@ -51,8 +50,8 @@ export const BookmarkMoreMenu = ({
   };
 
   const handleReprocess = () => {
-    posthog.capture("bookmark+rebookmark", {
-      bookmark_id: bookmarkId,
+    trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_REPROCESSED, {
+      surface: "bookmark_detail_menu",
     });
     void reprocess({ id: bookmarkId as Id<"bookmarks"> });
   };

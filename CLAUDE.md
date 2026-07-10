@@ -58,7 +58,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 - Stripe for payments and subscriptions
 - Resend for transactional emails
-- PostHog for analytics
+- Self-hosted Umami for analytics
 - OpenAI and Google Gemini for AI features
 - Better Auth for authentication
 

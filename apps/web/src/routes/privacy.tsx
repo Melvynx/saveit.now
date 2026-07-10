@@ -59,7 +59,6 @@ We use the following infrastructure and services:
 
 - **Stripe** for payment
 - **Dokploy** on our VPS for hosting
-- **PostHog** for product analytics
 - **Self-hosted Umami** for anonymous website traffic analytics
 
 Umami analytics data remains on infrastructure controlled by SaveIt.now. Other services may receive limited user data strictly to provide their functionality.

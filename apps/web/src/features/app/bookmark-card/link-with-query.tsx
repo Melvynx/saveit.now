@@ -4,7 +4,6 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { PostHogErrorBoundary } from "posthog-js/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 
 type LinkWithQueryProps = Omit<
@@ -70,11 +69,7 @@ export const LinkWithQueryInner = ({
 };
 
 export const LinkWithQuery = (props: LinkWithQueryProps) => {
-  return (
-    <PostHogErrorBoundary fallback={<>{props.children}</>}>
-      <LinkWithQueryInner {...props} />
-    </PostHogErrorBoundary>
-  );
+  return <LinkWithQueryInner {...props} />;
 };
 
 export const useNavigateWithQuery = () => {

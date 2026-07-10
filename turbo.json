@@ -11,8 +11,6 @@
       "env": [
         "VITE_CONVEX_URL",
         "VITE_CONVEX_SITE_URL",
-        "VITE_POSTHOG_HOST",
-        "VITE_POSTHOG_KEY",
         "VITE_STRIPE_PUBLISHABLE_KEY",
         "VITE_ENABLE_VIRTUALIZATION",
         "CONVEX_DEPLOYMENT",
@@ -66,8 +64,6 @@
       "env": [
         "VITE_CONVEX_URL",
         "VITE_CONVEX_SITE_URL",
-        "VITE_POSTHOG_HOST",
-        "VITE_POSTHOG_KEY",
         "VITE_STRIPE_PUBLISHABLE_KEY",
         "VITE_ENABLE_VIRTUALIZATION",
         "CONVEX_DEPLOYMENT",
