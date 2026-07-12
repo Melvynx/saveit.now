@@ -47,7 +47,6 @@ function RootComponent() {
           src={UMAMI_SCRIPT_URL}
           data-website-id={UMAMI_WEBSITE_ID}
           data-domains="saveit.now"
-          data-do-not-track="true"
           data-exclude-search="true"
           data-performance="true"
         />
