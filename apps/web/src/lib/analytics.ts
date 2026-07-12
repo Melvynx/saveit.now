@@ -1,6 +1,7 @@
 export const ANALYTICS_EVENTS = {
   AUTH_SOCIAL_SIGN_IN_STARTED: "auth_social_sign_in_started",
   BOOKMARK_COPIED: "bookmark_link_copied",
+  BOOKMARK_CREATED: "bookmark_created",
   BOOKMARK_DELETED: "bookmark_deleted",
   BOOKMARK_OPENED: "bookmark_opened",
   BOOKMARK_REPROCESSED: "bookmark_reprocessed",
@@ -8,6 +9,8 @@ export const ANALYTICS_EVENTS = {
   BOOKMARKS_EXPORTED: "bookmarks_exported",
   BOOKMARKS_IMPORTED: "bookmarks_imported",
   IOS_DOWNLOAD_CLICKED: "ios_download_clicked",
+  ONBOARDING_COMPLETED: "onboarding_completed",
+  SUBSCRIPTION_ACTIVATED: "subscription_activated",
   UPGRADE_CHECKOUT_STARTED: "upgrade_checkout_started",
 } as const;
 
