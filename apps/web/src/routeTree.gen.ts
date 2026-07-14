@@ -68,6 +68,7 @@ import { Route as ApiWebhooksStripeRouteImport } from "./routes/api.webhooks.str
 import { Route as ApiV1SplatRouteImport } from "./routes/api.v1.$";
 import { Route as ApiUserLimitsRouteImport } from "./routes/api.user.limits";
 import { Route as ApiMobileCheckoutRouteImport } from "./routes/api.mobile.checkout";
+import { Route as ApiInsightsSplatRouteImport } from "./routes/api.insights.$";
 import { Route as ApiBookmarksBookmarkIdRouteImport } from "./routes/api.bookmarks.$bookmarkId";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api.auth.$";
 import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users.$userId";
@@ -369,6 +370,11 @@ const ApiMobileCheckoutRoute = ApiMobileCheckoutRouteImport.update({
   path: "/api/mobile/checkout",
   getParentRoute: () => rootRouteImport,
 } as any);
+const ApiInsightsSplatRoute = ApiInsightsSplatRouteImport.update({
+  id: "/api/insights/$",
+  path: "/api/insights/$",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ApiBookmarksBookmarkIdRoute = ApiBookmarksBookmarkIdRouteImport.update({
   id: "/$bookmarkId",
   path: "/$bookmarkId",
@@ -454,6 +460,7 @@ export interface FileRoutesByFullPath {
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
+  "/api/insights/$": typeof ApiInsightsSplatRoute;
   "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
   "/api/user/limits": typeof ApiUserLimitsRoute;
   "/api/v1/$": typeof ApiV1SplatRoute;
@@ -520,6 +527,7 @@ export interface FileRoutesByTo {
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
+  "/api/insights/$": typeof ApiInsightsSplatRoute;
   "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
   "/api/user/limits": typeof ApiUserLimitsRoute;
   "/api/v1/$": typeof ApiV1SplatRoute;
@@ -587,6 +595,7 @@ export interface FileRoutesById {
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
+  "/api/insights/$": typeof ApiInsightsSplatRoute;
   "/api/mobile/checkout": typeof ApiMobileCheckoutRoute;
   "/api/user/limits": typeof ApiUserLimitsRoute;
   "/api/v1/$": typeof ApiV1SplatRoute;
@@ -655,6 +664,7 @@ export interface FileRouteTypes {
     | "/admin/users/$userId"
     | "/api/auth/$"
     | "/api/bookmarks/$bookmarkId"
+    | "/api/insights/$"
     | "/api/mobile/checkout"
     | "/api/user/limits"
     | "/api/v1/$"
@@ -721,6 +731,7 @@ export interface FileRouteTypes {
     | "/admin/users/$userId"
     | "/api/auth/$"
     | "/api/bookmarks/$bookmarkId"
+    | "/api/insights/$"
     | "/api/mobile/checkout"
     | "/api/user/limits"
     | "/api/v1/$"
@@ -787,6 +798,7 @@ export interface FileRouteTypes {
     | "/admin/users/$userId"
     | "/api/auth/$"
     | "/api/bookmarks/$bookmarkId"
+    | "/api/insights/$"
     | "/api/mobile/checkout"
     | "/api/user/limits"
     | "/api/v1/$"
@@ -835,6 +847,7 @@ export interface RootRouteChildren {
   USlugRoute: typeof USlugRoute;
   UnsubscribeUserIdRoute: typeof UnsubscribeUserIdRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiInsightsSplatRoute: typeof ApiInsightsSplatRoute;
   ApiMobileCheckoutRoute: typeof ApiMobileCheckoutRoute;
   ApiUserLimitsRoute: typeof ApiUserLimitsRoute;
   ApiV1SplatRoute: typeof ApiV1SplatRoute;
@@ -1256,6 +1269,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiMobileCheckoutRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/api/insights/$": {
+      id: "/api/insights/$";
+      path: "/api/insights/$";
+      fullPath: "/api/insights/$";
+      preLoaderRoute: typeof ApiInsightsSplatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/api/bookmarks/$bookmarkId": {
       id: "/api/bookmarks/$bookmarkId";
       path: "/$bookmarkId";
@@ -1497,6 +1517,7 @@ const rootRouteChildren: RootRouteChildren = {
   USlugRoute: USlugRoute,
   UnsubscribeUserIdRoute: UnsubscribeUserIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInsightsSplatRoute: ApiInsightsSplatRoute,
   ApiMobileCheckoutRoute: ApiMobileCheckoutRoute,
   ApiUserLimitsRoute: ApiUserLimitsRoute,
   ApiV1SplatRoute: ApiV1SplatRoute,
