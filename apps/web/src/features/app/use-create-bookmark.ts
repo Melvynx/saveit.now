@@ -1,4 +1,5 @@
 import { APP_LINKS } from "@/lib/app-links";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { BookmarkErrorType } from "@/lib/errors";
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
@@ -17,6 +18,7 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
     setError(null);
     void createBookmark(input)
       .then(() => {
+        trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_CREATED);
         props.onSuccess?.();
       })
       .catch((error) => {

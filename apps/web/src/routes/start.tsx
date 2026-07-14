@@ -2,6 +2,7 @@ import { AccountShell } from "@/features/account/account-shell";
 import { ImportForm } from "@/features/imports/import-form";
 import { MaxWidthContainer } from "@/features/page/page";
 import { APP_LINKS } from "@/lib/app-links";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { useSession } from "@/lib/auth-client";
 import { useAsyncTask } from "@/lib/use-async-task";
 import { api } from "@convex/_generated/api";
@@ -29,15 +30,21 @@ function StartPage() {
   const setOnboarding = useMutation(api.users.mutations.setOnboarding);
 
   const finishTask = useAsyncTask(
-    async (params: "extension" | "app") => {
+    async (params: {
+      destination: "extension" | "app";
+      path: "empty" | "import";
+    }) => {
       await setOnboarding({});
       return params;
     },
     {
       onSuccess: (params) => {
+        trackAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, {
+          path: params.path,
+        });
         void session.refetch();
         setTimeout(() => {
-          if (params === "extension") {
+          if (params.destination === "extension") {
             void navigate({ to: APP_LINKS.extensions });
           } else {
             void navigate({ to: APP_LINKS.app });
@@ -55,7 +62,7 @@ function StartPage() {
     createdBookmarks: number;
     totalUrls: number;
   }) => {
-    void finishTask.run("app");
+    void finishTask.run({ destination: "app", path: "import" });
     toast.success(
       `Great! You've imported ${data.createdBookmarks} bookmarks. Let's explore your dashboard!`,
     );
@@ -90,7 +97,9 @@ function StartPage() {
             <Button
               asChild
               variant="outline"
-              onClick={() => void finishTask.run("app")}
+              onClick={() =>
+                void finishTask.run({ destination: "app", path: "empty" })
+              }
             >
               <a href={APP_LINKS.app}>
                 Start with Empty Dashboard
@@ -100,7 +109,12 @@ function StartPage() {
             <Button
               asChild
               variant="outline"
-              onClick={() => void finishTask.run("extension")}
+              onClick={() =>
+                void finishTask.run({
+                  destination: "extension",
+                  path: "empty",
+                })
+              }
             >
               <a href={APP_LINKS.extensions}>
                 Install Browser Extension

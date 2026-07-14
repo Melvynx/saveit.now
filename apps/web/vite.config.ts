@@ -11,6 +11,9 @@ const crawlerCacheControl =
   "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800";
 
 const crawlerRouteRules = {
+  "/stats/**": {
+    proxy: "https://analytics.melvynx.dev/**",
+  },
   "/robots.txt": {
     headers: {
       "cache-control": crawlerCacheControl,

@@ -48,6 +48,8 @@ function RootComponent() {
           data-website-id={UMAMI_WEBSITE_ID}
           data-domains="saveit.now"
           data-host-url="/api/insights"
+          data-exclude-search="true"
+          data-performance="true"
         />
       </head>
       <body className={cn("relative h-full antialiased")}>

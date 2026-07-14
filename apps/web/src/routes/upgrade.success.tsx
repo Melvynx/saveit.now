@@ -1,6 +1,7 @@
 import { AccountShell } from "@/features/account/account-shell";
 import { MaxWidthContainer } from "@/features/page/page";
 import ConfettiBurst from "@/features/upgrade/confetti";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { buttonVariants } from "@workspace/ui/components/button";
 import {
   Card,
@@ -11,12 +12,17 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/upgrade/success")({
   component: UpgradeSuccessPage,
 });
 
 function UpgradeSuccessPage() {
+  useEffect(() => {
+    trackAnalyticsEvent(ANALYTICS_EVENTS.SUBSCRIPTION_ACTIVATED);
+  }, []);
+
   return (
     <AccountShell>
       <MaxWidthContainer className="my-8">
@@ -75,4 +81,3 @@ function UpgradeSuccessPage() {
     </AccountShell>
   );
 }
-
