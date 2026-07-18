@@ -226,15 +226,15 @@ export default function TabTwoScreen() {
                 isFirst
                 icon="sparkles-outline"
                 title="Upgrade to Pro"
-                description="Go premium on saveit.now — unlimited bookmarks & more"
+                description="Up to 50,000 bookmarks, more AI usage, exports & API access"
                 onPress={openUpgrade}
               />
               {Platform.OS === "ios" ? null : (
                 <View className="border-t border-border px-4 py-3">
                   <Text className="font-sans text-[13px] text-muted-foreground">
                     Subscriptions are managed on the web. Open
-                    saveit.now/upgrade, sign in, and choose a plan — Pro
-                    then unlocks here automatically.
+                    saveit.now/upgrade, sign in, and choose a plan — Pro then
+                    unlocks here automatically.
                   </Text>
                 </View>
               )}

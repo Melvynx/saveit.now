@@ -37,7 +37,8 @@ const benefits: Benefit[] = [
   {
     id: "universal-understanding",
     title: "Universal Understanding",
-    description: "PDFs, videos, tweets, articles - all searchable in one place.",
+    description:
+      "PDFs, videos, tweets, articles - all searchable in one place.",
     icon: <BrainCircuitIcon className="size-4" />,
   },
   {
@@ -64,8 +65,8 @@ export function WhySaveIt() {
         your bookmarks - <em>nothing you don't.</em>
       </h2>
       <p className="mt-4 max-w-xl text-base text-[#888]">
-        Other bookmark tools charge monthly and send your data to the cloud.
-        SaveIt costs $5/mo - and it's yours forever.
+        Start free, then upgrade to Pro for $5/month billed annually when you
+        need more capacity, exports, and API access.
       </p>
 
       <div className="relative mt-12 overflow-hidden rounded-xl border border-[#2a2a2a]">
@@ -102,10 +103,10 @@ export function WhySaveIt() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[13px] text-[#fafafa]">Semantic search</p>
-                    <p className="text-[11px] text-[#555]">
-                      Search by meaning
+                    <p className="text-[13px] text-[#fafafa]">
+                      Semantic search
                     </p>
+                    <p className="text-[11px] text-[#555]">Search by meaning</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-[#28c840]" />

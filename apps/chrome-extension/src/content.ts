@@ -1,552 +1,500 @@
-// Content script - s'exécute dans le contexte de la page web
-
-// Import type uniquement, plus d'import de fonctions
-import type { Session } from "./auth-client";
-import { uploadScreenshot } from "./auth-client";
+import { normalizePreviewDataUrl } from "./preview";
+import {
+  type CaptureResult,
+  isRetryableUploadError,
+  type OpenSaveItPath,
+  parseTabSaveMessage,
+  type RuntimeRequest,
+  type RuntimeRequestType,
+  type RuntimeResponseForRequest,
+  type SaveBookmarkResult,
+  type SaveType,
+  type SessionResult,
+  type TabSaveMessage,
+  type UploadResult,
+} from "./protocol";
+import { createSaverUI, SAVER_STATE, type SaverUI } from "./saver-ui";
+import {
+  isSameDocumentUrl,
+  shouldCaptureClientPreview,
+  shouldUsePageContext,
+} from "./url-policy";
 import {
   extractYouTubeTranscript,
   isYouTubeVideoPage,
   waitForYouTubePlayer,
 } from "./youtube-transcript";
-import { config } from "./config";
 
-const BASE_URL = config.BASE_URL;
+type PreviewRetry = {
+  bookmarkId: string;
+  expectedPageUrl: string;
+  screenshotDataUrl?: string;
+};
 
-// URL detection utilities for screenshot exclusion
-function isTwitterXUrl(url: string): boolean {
-  return url.includes("twitter.com") || url.startsWith("https://x.com/");
-}
+const RUNTIME_TIMEOUTS: Record<RuntimeRequestType, number> = {
+  GET_SESSION: 12_000,
+  SAVE_BOOKMARK: 32_000,
+  CAPTURE_SCREENSHOT: 12_000,
+  UPLOAD_SCREENSHOT: 32_000,
+  OPEN_SAVEIT: 5_000,
+};
 
-function isImageUrl(url: string): boolean {
-  // Check for common image file extensions
-  const imageExtensions =
-    /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)(\?|$)/i;
-  if (imageExtensions.test(url)) {
-    return true;
-  }
-
-  // Check for common image hosting domains
-  const imageHosts = [
-    "pbs.twimg.com",
-    "imgur.com",
-    "i.imgur.com",
-    "media.giphy.com",
-    "images.unsplash.com",
-    "cdn.pixabay.com",
-  ];
-
-  try {
-    const urlObj = new URL(url);
-    return imageHosts.some((host) => urlObj.hostname.includes(host));
-  } catch {
-    return false;
-  }
-}
-
-function isImageSaveContext(): boolean {
-  // Check if we're saving via "Save this image" context menu
-  return currentSaveType === SaveType.IMAGE;
-}
-
-function shouldSkipScreenshot(): boolean {
-  return (
-    isYouTubeVideoPage() ||
-    isTwitterXUrl(currentUrl) ||
-    isImageUrl(currentUrl) ||
-    isImageSaveContext()
-  );
-}
-
-// Types de contenu à sauvegarder
-enum SaveType {
-  PAGE = "page",
-  LINK = "link",
-  IMAGE = "image",
-}
-
-// États de l'UI
-enum SaverState {
-  HIDDEN = "hidden",
-  LOADING = "loading",
-  CAPTURING_SCREENSHOT = "capturing-screenshot",
-  SUCCESS = "success",
-  ERROR = "error",
-  AUTH_REQUIRED = "auth-required",
-  MAX_BOOKMARKS = "max-bookmarks",
-  BOOKMARK_EXISTS = "bookmark-exists",
-}
-
-let currentState: SaverState = SaverState.HIDDEN;
-let currentSaveType: SaveType = SaveType.PAGE;
-let currentUrl: string = "";
-
-// Fonctions de communication avec le background script
-async function getSessionFromBackground(): Promise<Session | null> {
+function sendRuntimeMessage<T extends RuntimeRequest>(
+  message: T,
+): Promise<RuntimeResponseForRequest<T> | null> {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "GET_SESSION" }, (response) => {
-      console.log("Content: Session response from background", response);
-      resolve(response?.session || null);
-    });
-  });
-}
-
-async function saveBookmarkViaBackground(
-  url: string,
-  itemType: SaveType = SaveType.PAGE,
-  transcript?: string,
-  metadata?: any,
-): Promise<{
-  success: boolean;
-  error?: string;
-  errorType?: string;
-  itemType?: SaveType;
-  bookmarkId?: string;
-}> {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
-      {
-        type: "SAVE_BOOKMARK",
-        url,
-        itemType,
-        transcript,
-        metadata,
-      },
-      (response) => {
-        console.log("Content: Save response from background", response);
-        resolve(
-          response || {
-            success: false,
-            error: "No response from background",
-            itemType,
-          },
-        );
-      },
+    let settled = false;
+    const finish = (response: RuntimeResponseForRequest<T> | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve(response);
+    };
+    const timeoutId = window.setTimeout(
+      () => finish(null),
+      RUNTIME_TIMEOUTS[message.type],
     );
-  });
-}
 
-// Fonction pour obtenir un texte descriptif basé sur le type de sauvegarde
-function getSaveTypeText(saveType: SaveType): string {
-  switch (saveType) {
-    case SaveType.PAGE:
-      return "page";
-    case SaveType.LINK:
-      return "link";
-    case SaveType.IMAGE:
-      return "image";
-    default:
-      return "item";
-  }
-}
-
-// Créer l'élément UI
-function createSaverUI() {
-  const container = document.createElement("div");
-  container.id = "saveit-now-container";
-  container.className = "saveit-container hidden";
-
-  container.innerHTML = `
-    <div class="saveit-card">
-      <div id="saveit-loading" class="saveit-state">
-        <svg class="saveit-loader" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle-icon lucide-loader-circle"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <div id="saveit-loading-message" class="saveit-message">Saving...</div>
-      </div>
-      
-      <div id="saveit-capturing-screenshot" class="saveit-state">
-        <svg class="saveit-loader" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle-icon lucide-loader-circle"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <div class="saveit-message">Capturing screenshot...</div>
-      </div>
-      
-      <div id="saveit-success" class="saveit-state">
-        <svg class="saveit-checkmark" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
-        <div id="saveit-success-message" class="saveit-message">Page saved!</div>
-      </div>
-      
-      <div id="saveit-error" class="saveit-state">
-        <svg class="saveit-error" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-alert-icon lucide-circle-alert"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-        <div class="saveit-message" id="saveit-error-message">An error occurred</div>
-      </div>
-      
-      <div id="saveit-auth" class="saveit-state saveit-auth-required">
-        <div class="saveit-message">Please login to save bookmarks</div>
-        <a href="${BASE_URL}/signin" target="_blank" class="saveit-button">Login</a>
-      </div>
-
-      <div id="saveit-max-bookmarks" class="saveit-state saveit-auth-required">
-        <div class="saveit-message">Bookmark limit reached. Upgrade to save more!</div>
-        <a href="${BASE_URL}/upgrade" target="_blank" class="saveit-button">Upgrade</a>
-      </div>
-
-      <div id="saveit-bookmark-exists" class="saveit-state">
-        <svg class="saveit-error" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-        <div class="saveit-message">This bookmark already exists in your collection</div>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(container);
-
-  // Auto-hide après succès (but not during loading)
-  document.addEventListener("click", (e) => {
-    if (
-      container &&
-      !container.contains(e.target as Node) &&
-      currentState !== SaverState.HIDDEN &&
-      currentState !== SaverState.LOADING
-    ) {
-      setState(SaverState.HIDDEN);
-    }
-  });
-
-  return container;
-}
-
-// Changer l'état de l'UI
-function setState(state: SaverState) {
-  currentState = state;
-
-  const container = document.getElementById("saveit-now-container");
-  if (!container) return;
-
-  // Masquer tous les états
-  const states = container.querySelectorAll(".saveit-state");
-  states.forEach((stateEl) => {
-    (stateEl as HTMLElement).style.display = "none";
-  });
-
-  // Afficher l'état requis
-  switch (state) {
-    case SaverState.HIDDEN:
-      container.classList.add("hidden");
-      break;
-    case SaverState.LOADING:
-      container.classList.remove("hidden");
-      const loadingEl = document.getElementById("saveit-loading");
-      if (loadingEl) loadingEl.style.display = "flex";
-
-      // Mettre à jour le message de chargement en fonction du type
-      const loadingMsg = document.getElementById("saveit-loading-message");
-      if (loadingMsg) {
-        loadingMsg.textContent = `Saving ${getSaveTypeText(currentSaveType)}...`;
-      }
-      break;
-    case SaverState.CAPTURING_SCREENSHOT:
-      container.classList.remove("hidden");
-      const capturingEl = document.getElementById(
-        "saveit-capturing-screenshot",
-      );
-      if (capturingEl) capturingEl.style.display = "flex";
-      break;
-    case SaverState.SUCCESS:
-      container.classList.remove("hidden");
-      const successEl = document.getElementById("saveit-success");
-      if (successEl) successEl.style.display = "flex";
-
-      // Mettre à jour le message de succès en fonction du type
-      const successMsg = document.getElementById("saveit-success-message");
-      if (successMsg) {
-        successMsg.textContent = `${getSaveTypeText(currentSaveType).charAt(0).toUpperCase() + getSaveTypeText(currentSaveType).slice(1)} saved!`;
-      }
-
-      // Auto-hide after 2.4 seconds (2000ms * 1.2)
-      setTimeout(() => {
-        setState(SaverState.HIDDEN);
-      }, 2400);
-      break;
-    case SaverState.ERROR:
-      container.classList.remove("hidden");
-      const errorEl = document.getElementById("saveit-error");
-      if (errorEl) errorEl.style.display = "flex";
-
-      // Auto-hide after 4.8 seconds (4000ms * 1.2)
-      setTimeout(() => {
-        setState(SaverState.HIDDEN);
-      }, 4800);
-      break;
-    case SaverState.AUTH_REQUIRED:
-      container.classList.remove("hidden");
-      const authEl = document.getElementById("saveit-auth");
-      if (authEl) authEl.style.display = "flex";
-      break;
-    case SaverState.MAX_BOOKMARKS:
-      container.classList.remove("hidden");
-      const maxBookmarksEl = document.getElementById("saveit-max-bookmarks");
-      if (maxBookmarksEl) maxBookmarksEl.style.display = "flex";
-      break;
-    case SaverState.BOOKMARK_EXISTS:
-      container.classList.remove("hidden");
-      const bookmarkExistsEl = document.getElementById(
-        "saveit-bookmark-exists",
-      );
-      if (bookmarkExistsEl) bookmarkExistsEl.style.display = "flex";
-      // Auto-hide after 3.6 seconds (3000ms * 1.2)
-      setTimeout(() => {
-        setState(SaverState.HIDDEN);
-      }, 3600);
-      break;
-  }
-}
-
-// Définir le message d'erreur
-function setErrorMessage(message: string) {
-  const errorMessageEl = document.getElementById("saveit-error-message");
-  if (errorMessageEl) {
-    errorMessageEl.textContent = message;
-  }
-}
-
-// Définir le message de chargement
-function setLoadingMessage(message: string) {
-  const loadingMessageEl = document.getElementById("saveit-loading-message");
-  if (loadingMessageEl) {
-    loadingMessageEl.textContent = message;
-  }
-}
-
-// Upload screenshot via background script
-async function uploadScreenshotViaBackground(
-  bookmarkId: string,
-  screenshotBlob: Blob,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Convert blob to data URL for serialization
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(screenshotBlob);
-    });
-
-    return new Promise((resolve) => {
+    try {
       chrome.runtime.sendMessage(
-        {
-          type: "UPLOAD_SCREENSHOT",
-          bookmarkId,
-          screenshotDataUrl: dataUrl,
-        },
-        (response) => {
+        message,
+        (response: RuntimeResponseForRequest<T> | undefined) => {
           if (chrome.runtime.lastError) {
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
+            finish(null);
             return;
           }
-
-          resolve(
-            response || {
-              success: false,
-              error: "No response from background script",
-            },
-          );
+          finish(response ?? null);
         },
       );
-    });
-  } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to upload screenshot",
-    };
-  }
+    } catch {
+      finish(null);
+    }
+  });
 }
 
-// Capturer une capture d'écran de la page actuelle
-async function captureScreenshot(): Promise<Blob | null> {
-  try {
-    // Demander au background script de capturer la capture d'écran
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: "CAPTURE_SCREENSHOT" }, (response) => {
-        if (chrome.runtime.lastError) {
-          resolve(null);
-          return;
-        }
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
 
-        if (response && response.success && response.screenshotDataUrl) {
-          // Convertir le data URL en Blob
-          fetch(response.screenshotDataUrl)
-            .then((res) => res.blob())
-            .then((blob) => resolve(blob))
-            .catch(() => resolve(null));
-        } else {
-          resolve(null);
+class SaveController {
+  private operationInFlight = false;
+  private readonly pendingTargets: TabSaveMessage[] = [];
+  private previewRetry: PreviewRetry | null = null;
+  private currentTarget: TabSaveMessage = {
+    action: "saveBookmark",
+    type: "page",
+    url: window.location.href,
+  };
+
+  constructor(private readonly ui: SaverUI) {}
+
+  requestSave(target: TabSaveMessage): "duplicate" | "queued" | "received" {
+    if (this.operationInFlight) {
+      if (
+        this.isSameTarget(target, this.currentTarget) ||
+        this.pendingTargets.some((queuedTarget) =>
+          this.isSameTarget(target, queuedTarget),
+        )
+      ) {
+        return "duplicate";
+      }
+      this.pendingTargets.push(target);
+      return "queued";
+    }
+
+    this.startSave(target);
+    return "received";
+  }
+
+  private startSave(target: TabSaveMessage): void {
+    this.runExclusive(async () => {
+      this.currentTarget = target;
+      this.previewRetry = null;
+      await this.saveContent(target);
+    });
+  }
+
+  private isSameTarget(left: TabSaveMessage, right: TabSaveMessage): boolean {
+    return left.type === right.type && left.url === right.url;
+  }
+
+  retry(): void {
+    this.runExclusive(async () => {
+      const retry = this.previewRetry;
+      if (retry) {
+        const previewUploaded = await this.createOrUploadPreview(retry);
+        if (previewUploaded) {
+          this.ui.render({
+            state: SAVER_STATE.SUCCESS,
+            saveType: this.currentTarget.type,
+            message: "The bookmark and its preview are now in your collection.",
+          });
         }
+        return;
+      }
+
+      await this.saveContent(this.currentTarget);
+    });
+  }
+
+  openSaveIt(path: OpenSaveItPath): void {
+    void sendRuntimeMessage({ type: "OPEN_SAVEIT", path });
+  }
+
+  private runExclusive(operation: () => Promise<void>): void {
+    if (this.operationInFlight) return;
+    this.operationInFlight = true;
+    void operation()
+      .catch(() => {
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: this.currentTarget.type,
+          message: "An unexpected error interrupted the save.",
+          allowRetry: true,
+        });
+      })
+      .finally(() => {
+        this.operationInFlight = false;
+        const nextTarget = this.pendingTargets.shift();
+        if (nextTarget) this.startSave(nextTarget);
       });
-    });
-  } catch (error) {
-    return null;
   }
-}
 
-// Sauvegarder le bookmark
-async function saveContent(url: string, type: SaveType = SaveType.PAGE) {
-  try {
-    // Mettre à jour les variables globales
-    currentSaveType = type;
-    currentUrl = url;
+  private async getSession(): Promise<SessionResult> {
+    return (
+      (await sendRuntimeMessage({ type: "GET_SESSION" })) ?? {
+        session: null,
+        error: "The extension could not reach SaveIt.",
+        errorType: "NETWORK_ERROR",
+      }
+    );
+  }
 
-    setState(SaverState.LOADING);
+  private async saveBookmark(
+    url: string,
+    transcript?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<SaveBookmarkResult> {
+    return (
+      (await sendRuntimeMessage({
+        type: "SAVE_BOOKMARK",
+        url,
+        transcript,
+        metadata,
+      })) ?? {
+        success: false,
+        error: "The extension could not reach SaveIt.",
+        errorType: "NETWORK_ERROR",
+      }
+    );
+  }
 
-    // Vérifier l'authentification via le background
-    const session = await getSessionFromBackground();
+  private async captureScreenshot(
+    expectedPageUrl: string,
+  ): Promise<CaptureResult> {
+    return (
+      (await sendRuntimeMessage({
+        type: "CAPTURE_SCREENSHOT",
+        expectedPageUrl,
+      })) ?? {
+        success: false,
+        error: "The extension could not ask Chrome for a preview.",
+        errorType: "CAPTURE_FAILED",
+      }
+    );
+  }
 
-    if (!session) {
-      setState(SaverState.AUTH_REQUIRED);
+  private async uploadScreenshot(
+    bookmarkId: string,
+    screenshotDataUrl: string,
+  ): Promise<UploadResult> {
+    return (
+      (await sendRuntimeMessage({
+        type: "UPLOAD_SCREENSHOT",
+        bookmarkId,
+        screenshotDataUrl,
+      })) ?? {
+        success: false,
+        error: "The extension could not upload the preview.",
+        errorType: "NETWORK_ERROR",
+      }
+    );
+  }
+
+  private showSaveFailure(
+    result: Extract<SaveBookmarkResult, { success: false }>,
+  ) {
+    switch (result.errorType) {
+      case "AUTH_REQUIRED":
+        this.ui.render({
+          state: SAVER_STATE.AUTH_REQUIRED,
+          saveType: this.currentTarget.type,
+        });
+        return;
+      case "BOOKMARK_ALREADY_EXISTS":
+        this.ui.render({
+          state: SAVER_STATE.BOOKMARK_EXISTS,
+          saveType: this.currentTarget.type,
+        });
+        return;
+      case "MAX_BOOKMARKS":
+        this.ui.render({
+          state: SAVER_STATE.MAX_BOOKMARKS,
+          saveType: this.currentTarget.type,
+        });
+        return;
+      case "NETWORK_ERROR":
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: this.currentTarget.type,
+          message:
+            "SaveIt is unreachable. Check your connection and try again.",
+          allowRetry: true,
+        });
+        return;
+      case "RATE_LIMITED":
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: this.currentTarget.type,
+          message: "SaveIt is receiving too many requests. Try again shortly.",
+          allowRetry: true,
+        });
+        return;
+      case "SERVER_ERROR":
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: this.currentTarget.type,
+          message: "SaveIt could not finish this request. Please try again.",
+          allowRetry: true,
+        });
+        return;
+      case "UNKNOWN":
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: this.currentTarget.type,
+          message: result.error,
+          allowRetry: true,
+        });
+    }
+  }
+
+  private showPreviewFailure(
+    result: Extract<UploadResult, { success: false }>,
+    retry: PreviewRetry | null,
+  ): void {
+    this.previewRetry = retry;
+
+    if (result.errorType === "AUTH_REQUIRED") {
+      this.ui.render({
+        state: SAVER_STATE.SCREENSHOT_ERROR,
+        saveType: this.currentTarget.type,
+        message: "Your bookmark is safe. Sign in again to add its preview.",
+        allowRetry: false,
+        link: { label: "Sign in", path: "/signin", variant: "primary" },
+      });
       return;
     }
 
-    let transcript: string | undefined;
-    let metadata: any | undefined;
+    const deterministicMessages: Partial<
+      Record<typeof result.errorType, string>
+    > = {
+      FILE_TOO_LARGE:
+        "Your bookmark is safe, but Chrome could not reduce its preview below 2 MB.",
+      INVALID_FILE:
+        "Your bookmark is safe, but Chrome returned an invalid preview image.",
+      NOT_FOUND:
+        "Your bookmark is safe, but it is no longer available for a preview upload.",
+    };
+    this.ui.render({
+      state: SAVER_STATE.SCREENSHOT_ERROR,
+      saveType: this.currentTarget.type,
+      message: deterministicMessages[result.errorType] ?? result.error,
+      allowRetry: retry !== null,
+    });
+  }
 
-    // Extract transcript for YouTube videos
-    if (isYouTubeVideoPage()) {
-      console.log(
-        "YouTube video detected, attempting transcript extraction...",
+  private async createOrUploadPreview(retry: PreviewRetry): Promise<boolean> {
+    let screenshotDataUrl = retry.screenshotDataUrl;
+    if (!screenshotDataUrl) {
+      this.ui.render({
+        state: SAVER_STATE.CAPTURING_SCREENSHOT,
+        saveType: this.currentTarget.type,
+      });
+      await wait(180);
+      await this.ui.hideForCapture();
+
+      if (!isSameDocumentUrl(window.location.href, retry.expectedPageUrl)) {
+        this.previewRetry = retry;
+        this.ui.render({
+          state: SAVER_STATE.SCREENSHOT_ERROR,
+          saveType: this.currentTarget.type,
+          message:
+            "The page changed before Chrome could capture it. Return to the saved page to retry.",
+          allowRetry: true,
+        });
+        return false;
+      }
+
+      const capture = await this.captureScreenshot(retry.expectedPageUrl);
+      if (!capture.success) {
+        this.previewRetry = {
+          bookmarkId: retry.bookmarkId,
+          expectedPageUrl: retry.expectedPageUrl,
+        };
+        this.ui.render({
+          state: SAVER_STATE.SCREENSHOT_ERROR,
+          saveType: this.currentTarget.type,
+          message: capture.error,
+          allowRetry: true,
+        });
+        return false;
+      }
+
+      const normalized = await normalizePreviewDataUrl(
+        capture.screenshotDataUrl,
       );
-
-      try {
-        // Show loading message for YouTube player wait
-        setLoadingMessage("Waiting for YouTube player...");
-
-        // Wait for YouTube player to be ready
-        const playerReady = await waitForYouTubePlayer(5000);
-
-        if (playerReady) {
-          // Show loading message for transcript extraction
-          setLoadingMessage("Extracting YouTube transcript...");
-
-          const transcriptResult = await extractYouTubeTranscript(url);
-
-          if (transcriptResult) {
-            transcript = transcriptResult.transcript;
-            metadata = {
-              youtubeTranscript: {
-                source: transcriptResult.source,
-                videoId: transcriptResult.videoId,
-                extractedAt: transcriptResult.extractedAt,
-              },
-            };
-            console.log(
-              "Successfully extracted YouTube transcript from:",
-              transcriptResult.source,
-            );
-          } else {
-            console.log("No transcript found for YouTube video");
-          }
-        } else {
-          console.warn(
-            "YouTube player not ready, skipping transcript extraction",
-          );
-        }
-      } catch (error) {
-        console.error("Error extracting YouTube transcript:", error);
-        // Continue with bookmark saving even if transcript extraction fails
+      if (!normalized.success) {
+        this.previewRetry = null;
+        this.ui.render({
+          state: SAVER_STATE.SCREENSHOT_ERROR,
+          saveType: this.currentTarget.type,
+          message: normalized.error,
+          allowRetry: false,
+        });
+        return false;
       }
+      screenshotDataUrl = normalized.dataUrl;
     }
 
-    // Show final saving message
-    setLoadingMessage(`Saving ${getSaveTypeText(currentSaveType)}...`);
-
-    // Sauvegarder l'élément via le background
-    const result = await saveBookmarkViaBackground(
-      url,
-      type,
-      transcript,
-      metadata,
+    this.ui.render({
+      state: SAVER_STATE.LOADING,
+      saveType: this.currentTarget.type,
+      title: "Uploading your preview",
+      message: "Finishing the visual preview for this bookmark…",
+    });
+    const upload = await this.uploadScreenshot(
+      retry.bookmarkId,
+      screenshotDataUrl,
     );
-
-    if (result.success) {
-      // Étape 2: Capturer et envoyer la capture d'écran (sauf pour YouTube, Twitter/X.com, et images)
-      if (result.bookmarkId && !shouldSkipScreenshot()) {
-        try {
-          // Hide extension UI before capturing screenshot to avoid it appearing in the image
-          setState(SaverState.HIDDEN);
-
-          // Wait a bit to ensure UI is hidden before capturing
-          await new Promise((resolve) => setTimeout(resolve, 150));
-
-          const screenshot = await captureScreenshot();
-
-          if (screenshot) {
-            // Show standard loading state during upload
-            setState(SaverState.LOADING);
-            setLoadingMessage("Uploading screenshot...");
-
-            await uploadScreenshotViaBackground(result.bookmarkId, screenshot);
+    if (!upload.success) {
+      const nextRetry = isRetryableUploadError(upload.errorType)
+        ? {
+            bookmarkId: retry.bookmarkId,
+            expectedPageUrl: retry.expectedPageUrl,
+            screenshotDataUrl,
           }
-        } catch (error) {
-          // Continue to success even if screenshot process fails
+        : null;
+      this.showPreviewFailure(upload, nextRetry);
+      return false;
+    }
+
+    this.previewRetry = null;
+    return true;
+  }
+
+  private async saveContent(target: TabSaveMessage): Promise<void> {
+    this.ui.render({
+      state: SAVER_STATE.LOADING,
+      saveType: target.type,
+    });
+
+    const session = await this.getSession();
+    if (!session.session) {
+      if (session.errorType === "NETWORK_ERROR") {
+        this.ui.render({
+          state: SAVER_STATE.ERROR,
+          saveType: target.type,
+          message: session.error,
+          allowRetry: true,
+        });
+      } else {
+        this.ui.render({
+          state: SAVER_STATE.AUTH_REQUIRED,
+          saveType: target.type,
+        });
+      }
+      return;
+    }
+
+    const sourcePageUrl = window.location.href;
+    const canUsePageContext = shouldUsePageContext(
+      target.type,
+      target.url,
+      sourcePageUrl,
+    );
+    let transcript: string | undefined;
+    let metadata: Record<string, unknown> | undefined;
+
+    if (canUsePageContext && isYouTubeVideoPage()) {
+      this.ui.setMessage("Waiting for the YouTube player…");
+      const playerReady = await waitForYouTubePlayer(5_000);
+      if (playerReady) {
+        this.ui.setMessage("Looking for the video transcript…");
+        const transcriptResult = await extractYouTubeTranscript(target.url);
+        if (transcriptResult) {
+          transcript = transcriptResult.transcript;
+          metadata = {
+            youtubeTranscript: {
+              source: transcriptResult.source,
+              videoId: transcriptResult.videoId,
+              extractedAt: transcriptResult.extractedAt,
+            },
+          };
         }
       }
-
-      setState(SaverState.SUCCESS);
-    } else {
-      // Gérer les différents types d'erreurs basé sur errorType
-      const errorType = result.errorType;
-      const errorMessage = result.error || "Error saving bookmark";
-
-      switch (errorType) {
-        case "BOOKMARK_ALREADY_EXISTS":
-          setState(SaverState.BOOKMARK_EXISTS);
-          break;
-        case "MAX_BOOKMARKS":
-          setState(SaverState.MAX_BOOKMARKS);
-          break;
-        case "AUTH_REQUIRED":
-          setState(SaverState.AUTH_REQUIRED);
-          break;
-        case "NETWORK_ERROR":
-          setErrorMessage("Network error. Please check your connection.");
-          setState(SaverState.ERROR);
-          break;
-        default:
-          // Fallback to message-based detection for backward compatibility
-          if (errorMessage.includes("maximum number of bookmarks")) {
-            setState(SaverState.MAX_BOOKMARKS);
-          } else if (errorMessage.includes("already exists")) {
-            setState(SaverState.BOOKMARK_EXISTS);
-          } else if (errorMessage.includes("logged in")) {
-            setState(SaverState.AUTH_REQUIRED);
-          } else {
-            setErrorMessage(errorMessage);
-            setState(SaverState.ERROR);
-          }
-          break;
-      }
     }
-  } catch (error) {
-    console.error("Error saving content:", error);
-    setErrorMessage("An unexpected error occurred");
-    setState(SaverState.ERROR);
+
+    this.ui.setMessage(`Adding this ${target.type} to your collection…`);
+    const result = await this.saveBookmark(target.url, transcript, metadata);
+    if (!result.success) {
+      this.showSaveFailure(result);
+      return;
+    }
+
+    if (
+      shouldCaptureClientPreview(target.type, target.url, sourcePageUrl) &&
+      !(await this.createOrUploadPreview({
+        bookmarkId: result.bookmarkId,
+        expectedPageUrl: sourcePageUrl,
+      }))
+    ) {
+      return;
+    }
+
+    this.ui.render({
+      state: SAVER_STATE.SUCCESS,
+      saveType: target.type,
+    });
   }
 }
 
-// Écouter les messages du background script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // S'assurer que l'UI est créée
-  if (document.getElementById("saveit-now-container") === null) {
-    createSaverUI();
-  }
+type SaveItContentGlobal = typeof globalThis & {
+  __saveItContentInitialized?: boolean;
+};
 
-  if (message.action === "saveBookmark" || message.action === "showSaveUI") {
-    // Obtenir le type et l'URL à partir du message ou utiliser les valeurs par défaut
-    const type = message.type ? (message.type as SaveType) : SaveType.PAGE;
-    const url = message.url || window.location.href;
+function initializeContentScript(): void {
+  let controller: SaveController | null = null;
+  const ui = createSaverUI({
+    onDismiss: () => undefined,
+    onRetry: () => controller?.retry(),
+    onOpenPath: (path) => controller?.openSaveIt(path),
+  });
+  controller = new SaveController(ui);
 
-    saveContent(url, type);
-    sendResponse({ status: "received" });
-  }
-});
+  chrome.runtime.onMessage.addListener(
+    (rawMessage: unknown, _sender, sendResponse) => {
+      const message = parseTabSaveMessage(rawMessage, window.location.href);
+      if (!message) return false;
 
-// Initialiser l'UI au chargement
-document.addEventListener("DOMContentLoaded", () => {
-  createSaverUI();
-});
+      const status = controller?.requestSave(message) ?? "queued";
+      sendResponse({ status });
+      return false;
+    },
+  );
+}
 
-// S'assurer que l'UI est créée même si le DOM est déjà chargé
-if (
-  document.readyState === "complete" ||
-  document.readyState === "interactive"
-) {
-  createSaverUI();
+const contentGlobal = globalThis as SaveItContentGlobal;
+if (!contentGlobal.__saveItContentInitialized) {
+  initializeContentScript();
+  contentGlobal.__saveItContentInitialized = true;
 }

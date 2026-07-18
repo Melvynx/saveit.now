@@ -6,7 +6,10 @@ import { Modal, View, useWindowDimensions } from "react-native";
 import { LoadingScreen } from "../src/components/ui/loading";
 import { useAuth } from "../src/contexts/AuthContext";
 import OnboardingScreen from "../src/screens/OnboardingScreen";
-import SignInScreen, { type SignInStep } from "../src/screens/SignInScreen";
+import SignInScreen, {
+  type AuthIntent,
+  type SignInStep,
+} from "../src/screens/SignInScreen";
 
 export default function IndexPage() {
   const router = useRouter();
@@ -20,6 +23,7 @@ export default function IndexPage() {
   const [signInEmail, setSignInEmail] = useState("");
   const [signInOtp, setSignInOtp] = useState("");
   const [signInStep, setSignInStep] = useState<SignInStep>("email");
+  const [authIntent, setAuthIntent] = useState<AuthIntent>("signup");
 
   const signInSheetHeight = windowHeight * 0.7;
 
@@ -28,6 +32,11 @@ export default function IndexPage() {
     setSignInEmail("");
     setSignInOtp("");
     setSignInStep("email");
+  }, []);
+
+  const openAuth = useCallback((intent: AuthIntent) => {
+    setAuthIntent(intent);
+    setShowSignIn(true);
   }, []);
 
   useFocusEffect(
@@ -41,7 +50,7 @@ export default function IndexPage() {
         } else if (user) {
           setIsNavigating(true);
           setShowSignIn(false);
-          router.replace("/(tabs)");
+          router.replace(user.onboarding === false ? "/welcome" : "/(tabs)");
         }
       };
 
@@ -62,7 +71,18 @@ export default function IndexPage() {
   if (!user && !isLoading) {
     return (
       <>
-        <OnboardingScreen onSignIn={() => setShowSignIn(true)} />
+        <View
+          className="flex-1"
+          accessibilityElementsHidden={showSignIn}
+          importantForAccessibility={
+            showSignIn ? "no-hide-descendants" : "auto"
+          }
+        >
+          <OnboardingScreen
+            onGetStarted={() => openAuth("signup")}
+            onSignIn={() => openAuth("signin")}
+          />
+        </View>
         <Modal
           visible={showSignIn}
           animationType="slide"
@@ -77,6 +97,7 @@ export default function IndexPage() {
               }}
             >
               <SignInScreen
+                intent={authIntent}
                 onClose={closeSignIn}
                 keyboardAvoidingEnabled={false}
                 email={signInEmail}

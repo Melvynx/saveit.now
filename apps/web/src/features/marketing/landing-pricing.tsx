@@ -6,7 +6,7 @@ const tiers = [
   {
     name: "Free",
     id: "tier-free",
-    href: APP_LINKS.signin,
+    href: `${APP_LINKS.signin}?intent=signup`,
     priceMonthly: "$0",
     description:
       "Perfect for getting started with bookmarking and organizing your digital content.",
@@ -19,12 +19,12 @@ const tiers = [
   {
     name: "Pro",
     id: "tier-pro",
-    href: APP_LINKS.signin,
+    href: APP_LINKS.upgrade,
     priceMonthly: "$5",
     description:
       "Everything you need to organize your digital knowledge with advanced features.",
     features: [
-      "Unlimited bookmarks",
+      "Up to 50,000 bookmarks",
       "API Access",
       "Export to CSV",
       "Priority support",
@@ -65,12 +65,16 @@ export const LandingPricing = () => {
               </span>
               <span className="text-[#666]">/month</span>
             </p>
+            {tier.featured ? (
+              <p className="mt-2 text-xs text-[#666]">Billed annually</p>
+            ) : null}
 
-            <p className="mt-6 text-base text-[#888]">
-              {tier.description}
-            </p>
+            <p className="mt-6 text-base text-[#888]">{tier.description}</p>
 
-            <ul role="list" className="mt-8 space-y-3 text-sm text-[#888] sm:mt-10">
+            <ul
+              role="list"
+              className="mt-8 space-y-3 text-sm text-[#888] sm:mt-10"
+            >
               {tier.features.map((feature) => (
                 <li key={feature} className="flex gap-x-3">
                   <CheckIcon

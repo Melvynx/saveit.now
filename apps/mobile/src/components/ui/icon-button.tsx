@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as React from "react";
-import { Pressable } from "react-native";
+import { Pressable, type PressableProps } from "react-native";
 import { hapticSelection } from "../../lib/haptics";
 import { useThemeColors } from "../../lib/theme";
 import { cn } from "../../lib/utils";
@@ -12,6 +12,10 @@ export type IconButtonProps = {
   color?: string;
   disabled?: boolean;
   className?: string;
+  accessibilityLabel?: PressableProps["accessibilityLabel"];
+  accessibilityHint?: PressableProps["accessibilityHint"];
+  accessibilityState?: PressableProps["accessibilityState"];
+  testID?: string;
 };
 
 const SIZES = {
@@ -28,6 +32,10 @@ export function IconButton({
   color,
   disabled,
   className,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+  testID,
 }: IconButtonProps) {
   const colors = useThemeColors();
   return (
@@ -38,8 +46,13 @@ export function IconButton({
       }}
       disabled={disabled}
       hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ ...accessibilityState, disabled }}
+      testID={testID}
       className={cn(
-        "items-center justify-center rounded-full bg-secondary active:opacity-70 disabled:opacity-50",
+        "items-center justify-center rounded-full bg-secondary active:scale-[0.96] active:opacity-70 disabled:opacity-50",
         SIZES[size].container,
         className,
       )}

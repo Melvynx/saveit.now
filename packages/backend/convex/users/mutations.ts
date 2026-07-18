@@ -2,6 +2,37 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { throwValidationError } from "../utils/errors";
 import { authMutation } from "../functions";
+import {
+  onboardingInterestValidator,
+  seedExampleBookmarkForUser,
+} from "../bookmarks/onboarding";
+import { onboardingUpgradeChoiceValidator } from "./onboarding";
+
+/**
+ * Completes onboarding as one backend-owned command. Seeding is idempotent, so
+ * retrying after a transport failure is safe for both empty and imported
+ * libraries. Any seed or user-update failure rejects the whole command.
+ */
+export const completeOnboarding = authMutation({
+  args: {
+    interest: onboardingInterestValidator,
+    offerChoice: v.optional(onboardingUpgradeChoiceValidator),
+  },
+  handler: async (ctx, args): Promise<{ seeded: boolean }> => {
+    const result = await seedExampleBookmarkForUser(
+      ctx,
+      ctx.user.id,
+      args.interest,
+    );
+    await ctx.runMutation(components.betterAuth.data.completeOnboarding, {
+      userId: ctx.user.id,
+      ...(args.offerChoice !== undefined
+        ? { offerChoice: args.offerChoice }
+        : {}),
+    });
+    return result;
+  },
+});
 
 /**
  * setOnboarding — authMutation
@@ -12,9 +43,8 @@ import { authMutation } from "../functions";
 export const setOnboarding = authMutation({
   args: {},
   handler: async (ctx) => {
-    await ctx.runMutation(components.betterAuth.data.patchUser, {
+    await ctx.runMutation(components.betterAuth.data.completeOnboarding, {
       userId: ctx.user.id,
-      update: { onboarding: true },
     });
     return null;
   },
@@ -49,9 +79,7 @@ export const updatePublicLink = authMutation({
 
       // Validate slug format
       if (slug.length < 3 || slug.length > 50) {
-        throwValidationError(
-          "Slug must be between 3 and 50 characters",
-        );
+        throwValidationError("Slug must be between 3 and 50 characters");
       }
 
       if (!SLUG_REGEX.test(slug)) {

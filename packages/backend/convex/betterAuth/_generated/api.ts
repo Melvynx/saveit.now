@@ -10,6 +10,7 @@
 
 import type * as adapter from "../adapter.js";
 import type * as data from "../data.js";
+import type * as onboarding from "../onboarding.js";
 
 import type {
   ApiFromModules,
@@ -21,6 +22,7 @@ import { anyApi, componentsGeneric } from "convex/server";
 const fullApi: ApiFromModules<{
   adapter: typeof adapter;
   data: typeof data;
+  onboarding: typeof onboarding;
 }> = anyApi as any;
 
 /**

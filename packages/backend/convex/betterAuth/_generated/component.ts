@@ -41,6 +41,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata?: any;
                   name: string;
                   onboarding?: null | boolean;
+                  onboardingUpgradeChoice?: null | "free" | "upgrade";
                   publicLinkEnabled?: null | boolean;
                   publicLinkSlug?: null | string;
                   role?: null | string;
@@ -161,6 +162,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "banExpires"
                     | "stripeCustomerId"
                     | "onboarding"
+                    | "onboardingUpgradeChoice"
                     | "unsubscribed"
                     | "publicLinkSlug"
                     | "publicLinkEnabled"
@@ -443,6 +445,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "banExpires"
                     | "stripeCustomerId"
                     | "onboarding"
+                    | "onboardingUpgradeChoice"
                     | "unsubscribed"
                     | "publicLinkSlug"
                     | "publicLinkEnabled"
@@ -807,6 +810,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata?: any;
                   name?: string;
                   onboarding?: null | boolean;
+                  onboardingUpgradeChoice?: null | "free" | "upgrade";
                   publicLinkEnabled?: null | boolean;
                   publicLinkSlug?: null | string;
                   role?: null | string;
@@ -831,6 +835,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "banExpires"
                     | "stripeCustomerId"
                     | "onboarding"
+                    | "onboardingUpgradeChoice"
                     | "unsubscribed"
                     | "publicLinkSlug"
                     | "publicLinkEnabled"
@@ -1171,6 +1176,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   metadata?: any;
                   name?: string;
                   onboarding?: null | boolean;
+                  onboardingUpgradeChoice?: null | "free" | "upgrade";
                   publicLinkEnabled?: null | boolean;
                   publicLinkSlug?: null | string;
                   role?: null | string;
@@ -1195,6 +1201,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "banExpires"
                     | "stripeCustomerId"
                     | "onboarding"
+                    | "onboardingUpgradeChoice"
                     | "unsubscribed"
                     | "publicLinkSlug"
                     | "publicLinkEnabled"
@@ -1511,6 +1518,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     data: {
+      completeOnboarding: FunctionReference<
+        "mutation",
+        "internal",
+        { offerChoice?: "free" | "upgrade"; userId: string },
+        any,
+        Name
+      >;
       getSessionById: FunctionReference<
         "query",
         "internal",
@@ -1599,6 +1613,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           metadata?: any;
           name: string;
           onboarding?: null | boolean;
+          onboardingUpgradeChoice?: null | "free" | "upgrade";
           publicLinkEnabled?: null | boolean;
           publicLinkSlug?: null | string;
           role?: null | string;
@@ -1660,6 +1675,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             banned?: boolean | null;
             metadata?: any;
             onboarding?: boolean;
+            onboardingUpgradeChoice?: "free" | "upgrade" | null;
             publicLinkEnabled?: boolean;
             publicLinkSlug?: string | null;
             role?: string | null;

@@ -9,7 +9,11 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { adminQuery } from "../functions";
-import { getLimits, isActiveSubscriptionStatus, parseCustomLimits } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  getLimits,
+  parseCustomLimits,
+} from "../billing/plans";
 
 // ---------------------------------------------------------------------------
 // Overview (dashboard)
@@ -37,15 +41,10 @@ export const getOverview = adminQuery({
     ).length;
 
     // Count premium users via subscriptions table (bounded by index scan).
-    const activeSubs = await ctx.db
-      .query("subscriptions")
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "active"),
-          q.eq(q.field("status"), "trialing"),
-        ),
-      )
-      .take(500);
+    const subscriptions = await ctx.db.query("subscriptions").take(500);
+    const activeSubs = subscriptions.filter(
+      (subscription) => deriveEffectivePlan(subscription) === "pro",
+    );
 
     const premiumUserIds = new Set(activeSubs.map((s) => s.userId));
     const premiumUsers = users.filter((u: any) =>
@@ -99,11 +98,7 @@ export const listUsers = adminQuery({
     ),
     order: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
     filter: v.optional(
-      v.union(
-        v.literal("all"),
-        v.literal("premium"),
-        v.literal("regular"),
-      ),
+      v.union(v.literal("all"), v.literal("premium"), v.literal("regular")),
     ),
     status: v.optional(
       v.union(v.literal("all"), v.literal("active"), v.literal("banned")),
@@ -137,15 +132,10 @@ export const listUsers = adminQuery({
     )) as any[];
 
     // Fetch subscriptions once for all users.
-    const activeSubs = await ctx.db
-      .query("subscriptions")
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "active"),
-          q.eq(q.field("status"), "trialing"),
-        ),
-      )
-      .take(500);
+    const subscriptions = await ctx.db.query("subscriptions").take(500);
+    const activeSubs = subscriptions.filter(
+      (subscription) => deriveEffectivePlan(subscription) === "pro",
+    );
 
     const subsByUser = new Map<string, typeof activeSubs>();
     for (const sub of activeSubs) {
@@ -156,9 +146,13 @@ export const listUsers = adminQuery({
 
     // Filter by plan.
     if (args.filter === "premium") {
-      users = users.filter((u) => (subsByUser.get(u._id as string) ?? []).length > 0);
+      users = users.filter(
+        (u) => (subsByUser.get(u._id as string) ?? []).length > 0,
+      );
     } else if (args.filter === "regular") {
-      users = users.filter((u) => (subsByUser.get(u._id as string) ?? []).length === 0);
+      users = users.filter(
+        (u) => (subsByUser.get(u._id as string) ?? []).length === 0,
+      );
     }
 
     // Fetch counters for bookmark/click counts.
@@ -256,11 +250,7 @@ export const getUserDetail = adminQuery({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
 
-    const plan: "free" | "pro" =
-      subscription &&
-      isActiveSubscriptionStatus(subscription.status, subscription.provider)
-        ? "pro"
-        : "free";
+    const plan = deriveEffectivePlan(subscription);
 
     const metadata = userData.metadata;
     const baseLimits = getLimits(plan);
@@ -363,10 +353,9 @@ export const getConversation = adminQuery({
       .order("asc")
       .collect();
 
-    const user = (await ctx.runQuery(
-      components.betterAuth.data.getUserById,
-      { userId: conversation.userId },
-    )) as any;
+    const user = (await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId: conversation.userId,
+    })) as any;
 
     return {
       id: conversation._id as string,

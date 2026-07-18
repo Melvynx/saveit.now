@@ -9,6 +9,8 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 
+const planValidator = v.union(v.literal("free"), v.literal("pro"));
+
 /**
  * upsertFromWebhook — find subscription by userId (by_user index); update if
  * exists, insert if not. Called from checkout.session.completed.
@@ -19,7 +21,7 @@ export const upsertFromWebhook = internalMutation({
     userId: v.string(),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
-    plan: v.string(),
+    plan: planValidator,
     status: v.string(),
     periodStart: v.number(),
     periodEnd: v.number(),
@@ -84,7 +86,7 @@ export const upsertFromWebhook = internalMutation({
 export const updateFromWebhook = internalMutation({
   args: {
     stripeSubscriptionId: v.string(),
-    plan: v.string(),
+    plan: planValidator,
     status: v.string(),
     periodStart: v.number(),
     periodEnd: v.number(),

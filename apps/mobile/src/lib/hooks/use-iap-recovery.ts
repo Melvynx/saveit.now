@@ -9,20 +9,35 @@ import {
   isIapAvailable,
 } from "../purchases";
 
-let hasStartedIapRecovery = false;
+const recoveredUserIds = new Set<string>();
+const recoveryAttempts = new Map<string, symbol>();
 
 export function useIapRecovery() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const syncFromClient = useAction(api.appstore.actions.syncFromClient);
 
   useEffect(() => {
-    if (!isIapAvailable() || !isAuthenticated || hasStartedIapRecovery) return;
+    const userId = isAuthenticated ? (user?.id ?? null) : null;
 
-    hasStartedIapRecovery = true;
+    if (!userId) return;
+
+    if (
+      !isIapAvailable() ||
+      recoveredUserIds.has(userId) ||
+      recoveryAttempts.has(userId)
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const attempt = Symbol(userId);
+    recoveryAttempts.set(userId, attempt);
 
     void (async () => {
       try {
         const purchases = await getAvailableProPurchases();
+        if (cancelled) return;
+
         const uniquePurchases = [
           ...new Map(
             purchases.map((purchase) => [
@@ -33,10 +48,13 @@ export function useIapRecovery() {
         ];
 
         for (const purchase of uniquePurchases) {
+          if (cancelled) return;
+
           try {
             await syncFromClient({
               originalTransactionId: purchase.originalTransactionId,
             });
+            if (cancelled) return;
             await finishTransaction(purchase.purchase);
           } catch (error) {
             console.warn("[iap.recovery] failed to sync purchase", {
@@ -45,9 +63,24 @@ export function useIapRecovery() {
             });
           }
         }
+
+        if (!cancelled) {
+          recoveredUserIds.add(userId);
+        }
       } catch (error) {
         console.warn("[iap.recovery] failed to recover purchases", { error });
+      } finally {
+        if (recoveryAttempts.get(userId) === attempt) {
+          recoveryAttempts.delete(userId);
+        }
       }
     })();
-  }, [isAuthenticated, syncFromClient]);
+
+    return () => {
+      cancelled = true;
+      if (recoveryAttempts.get(userId) === attempt) {
+        recoveryAttempts.delete(userId);
+      }
+    };
+  }, [isAuthenticated, syncFromClient, user?.id]);
 }

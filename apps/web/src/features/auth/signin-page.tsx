@@ -1,4 +1,6 @@
 import { OtpForm } from "@/components/better-auth-otp";
+import { completeOtpSignIn } from "@/features/auth/complete-otp-sign-in";
+import { getSafeInternalRedirectUrl } from "@/features/auth/safe-internal-redirect";
 import { SignInWith } from "@/features/auth/sign-in-with";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -7,24 +9,18 @@ import { Suspense } from "react";
 
 const authVisualImage = "/auth/signin-visual.jpeg";
 
-const getSafeRedirectUrl = (redirectUrl?: string) => {
-  if (!redirectUrl?.startsWith("/") || redirectUrl.startsWith("//")) {
-    return "/app";
-  }
-
-  return redirectUrl;
-};
-
 function SignInPageContent() {
   const navigate = useNavigate();
   const session = useSession();
   const search = useSearch({ strict: false }) as {
     redirectUrl?: string;
     email?: string;
+    intent?: "signin" | "signup";
     step?: "email" | "otp";
   };
+  const isSignup = search.intent === "signup";
   const initialStep = search.step === "otp" && search.email ? "otp" : "email";
-  const redirectUrl = getSafeRedirectUrl(search.redirectUrl);
+  const redirectUrl = getSafeInternalRedirectUrl(search.redirectUrl);
 
   return (
     <main className="grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
@@ -85,13 +81,19 @@ function SignInPageContent() {
         <div className="flex flex-1 items-center justify-center px-5 pb-10 pt-4 sm:px-8 lg:px-10 lg:py-12">
           <div className="w-full max-w-[420px] space-y-8">
             <div className="space-y-3">
-              <p className="text-sm font-medium text-primary">Welcome back</p>
+              <p className="text-sm font-medium text-primary">
+                {isSignup ? "Start free" : "Welcome back"}
+              </p>
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold leading-tight text-foreground text-balance">
-                  Sign in to SaveIt.now
+                  {isSignup
+                    ? "Create your SaveIt.now account"
+                    : "Sign in to SaveIt.now"}
                 </h1>
                 <p className="text-sm leading-6 text-muted-foreground text-pretty">
-                  Use your email code or continue with a connected provider.
+                  {isSignup
+                    ? "Start with 20 bookmarks. No credit card required."
+                    : "Use your email code or a connected account."}
                 </p>
               </div>
             </div>
@@ -100,6 +102,10 @@ function SignInPageContent() {
               <OtpForm
                 defaultEmail={search.email}
                 initialStep={initialStep}
+                submitLabel={
+                  isSignup ? "Continue with email" : "Send code to sign in"
+                }
+                submittingLabel="Sending code..."
                 variant="split"
                 onStepChange={({ email, step }) => {
                   void navigate({
@@ -108,6 +114,7 @@ function SignInPageContent() {
                       redirectUrl:
                         redirectUrl === "/app" ? undefined : redirectUrl,
                       email: step === "otp" ? email : undefined,
+                      intent: isSignup ? "signup" : "signin",
                       step,
                     },
                     replace: true,
@@ -130,8 +137,10 @@ function SignInPageContent() {
                   return result.data.user;
                 }}
                 onSuccess={() => {
-                  void navigate({ to: redirectUrl });
-                  session.refetch();
+                  completeOtpSignIn({
+                    refreshSession: () => session.refetch(),
+                    redirectUrl,
+                  });
                 }}
                 onError={(error) => toast.error(error)}
               />
@@ -149,6 +158,7 @@ function SignInPageContent() {
                   variant="monochrome"
                   callbackURL={redirectUrl}
                   buttonProps={{}}
+                  intent={isSignup ? "signup" : "signin"}
                 />
                 <SignInWith
                   className="w-full"
@@ -156,8 +166,31 @@ function SignInPageContent() {
                   variant="monochrome"
                   callbackURL={redirectUrl}
                   buttonProps={{}}
+                  intent={isSignup ? "signup" : "signin"}
                 />
               </div>
+
+              <p className="text-center text-sm text-muted-foreground">
+                {isSignup ? "Already have an account?" : "New to SaveIt.now?"}{" "}
+                <button
+                  type="button"
+                  className="font-medium text-foreground underline underline-offset-4"
+                  onClick={() =>
+                    void navigate({
+                      to: "/signin",
+                      search: {
+                        redirectUrl:
+                          redirectUrl === "/app" ? undefined : redirectUrl,
+                        intent: isSignup ? "signin" : "signup",
+                        step: "email",
+                      },
+                      replace: true,
+                    })
+                  }
+                >
+                  {isSignup ? "Sign in" : "Create a free account"}
+                </button>
+              </p>
             </div>
           </div>
         </div>

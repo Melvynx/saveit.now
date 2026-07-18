@@ -35,6 +35,11 @@ export const PLANS = {
 } as const;
 
 export type PlanName = keyof typeof PLANS;
+export type SubscriptionPlanState = {
+  plan?: string | null;
+  provider?: "stripe" | "appstore" | null;
+  status?: string | null;
+};
 // Plain numeric shape (NOT the `as const` literal union) so merged/custom
 // limits and runtime-computed values assign cleanly.
 export type PlanLimits = {
@@ -55,6 +60,19 @@ export function isActiveSubscriptionStatus(
     status === "trialing" ||
     (provider === "appstore" && status === "past_due")
   );
+}
+
+/**
+ * Derive the effective entitlement from the canonical subscription row.
+ * A stored plan name or an active-looking status alone must never grant Pro.
+ */
+export function deriveEffectivePlan(
+  subscription: SubscriptionPlanState | null | undefined,
+): PlanName {
+  return subscription?.plan === "pro" &&
+    isActiveSubscriptionStatus(subscription.status, subscription.provider)
+    ? "pro"
+    : "free";
 }
 
 /**
@@ -100,7 +118,10 @@ export function parseCustomLimits(metadata: unknown): Partial<PlanLimits> {
  * getLimits — merges `PLANS[plan]` with `parseCustomLimits(metadata)`.
  * Custom limits always override plan limits (admin-configurable per-user override).
  */
-export function getLimits(plan: "free" | "pro", metadata?: unknown): PlanLimits {
+export function getLimits(
+  plan: "free" | "pro",
+  metadata?: unknown,
+): PlanLimits {
   const planLimits = PLANS[plan] ?? PLANS.free;
   return {
     ...planLimits,

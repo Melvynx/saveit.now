@@ -28,6 +28,10 @@ export const tables = {
     // SaveIt custom user fields
     stripeCustomerId: v.optional(v.union(v.null(), v.string())),
     onboarding: v.optional(v.union(v.null(), v.boolean())),
+    // Onboarding offer history only. Entitlement always comes from subscriptions.
+    onboardingUpgradeChoice: v.optional(
+      v.union(v.null(), v.literal("free"), v.literal("upgrade")),
+    ),
     unsubscribed: v.optional(v.union(v.null(), v.boolean())),
     publicLinkSlug: v.optional(v.union(v.null(), v.string())),
     publicLinkEnabled: v.optional(v.union(v.null(), v.boolean())),

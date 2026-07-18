@@ -134,6 +134,7 @@ npx convex env remove MIGRATION_SECRET
 | user                          | banned/banReason/banExpires                                        | betterAuth/user    | banned/banReason/banExpires       |
 | user                          | stripeCustomerId                                                   | betterAuth/user    | stripeCustomerId                  |
 | user                          | onboarding                                                         | betterAuth/user    | onboarding                        |
+| user                          | onboardingUpgradeChoice                                            | betterAuth/user    | onboardingUpgradeChoice           |
 | user                          | unsubscribed                                                       | betterAuth/user    | unsubscribed                      |
 | user                          | publicLinkSlug                                                     | betterAuth/user    | publicLinkSlug                    |
 | user                          | publicLinkEnabled                                                  | betterAuth/user    | publicLinkEnabled                 |

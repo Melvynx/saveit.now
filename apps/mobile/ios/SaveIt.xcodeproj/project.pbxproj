@@ -456,8 +456,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
@@ -519,8 +519,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2026070602;
 				DEVELOPMENT_TEAM = UUFHFWGCU4;
@@ -603,7 +603,7 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.1.3_typescript@5._512383e9dedcd34ba5cc4f689d06e990/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.2.0_typescript@5._ba7d0916330f1bbefb1569be42c3cfd5/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -661,7 +661,7 @@
 					"$(inherited)",
 					" ",
 				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.1.3_typescript@5._512383e9dedcd34ba5cc4f689d06e990/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.2.0_typescript@5._ba7d0916330f1bbefb1569be42c3cfd5/node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;

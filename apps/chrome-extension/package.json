@@ -1,18 +1,22 @@
 {
   "name": "chrome-extension",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "scripts": {
-    "dev": "tsc --watch && node scripts/copy-assets.js --dev",
-    "build": "trash dist 2>/dev/null || true && node scripts/copy-assets.js",
-    "build:dev": "trash dist 2>/dev/null || true && node scripts/copy-assets.js --dev",
-    "build:prod": "trash dist 2>/dev/null || true && node scripts/copy-assets.js",
-    "package": "npm run build:prod && node scripts/package-extension.js",
-    "package:dev": "npm run build:dev && node scripts/package-extension.js",
-    "version:patch": "bunx bumpp patch package.json public/manifest.json && npm run package",
-    "version:minor": "bunx bumpp minor package.json public/manifest.json && npm run package",
-    "version:major": "bunx bumpp major package.json public/manifest.json && npm run package",
-    "clean": "trash dist package 2>/dev/null || true"
+    "dev": "node scripts/copy-assets.js --dev --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/*.test.ts",
+    "check": "pnpm typecheck && pnpm test",
+    "icons": "swift scripts/generate-icons.swift",
+    "build": "pnpm build:prod",
+    "build:dev": "pnpm check && node scripts/copy-assets.js --dev",
+    "build:prod": "pnpm icons && pnpm check && node scripts/copy-assets.js",
+    "package": "pnpm build:prod && node scripts/package-extension.js",
+    "package:dev": "pnpm build:dev && node scripts/package-extension.js --dev",
+    "version:patch": "bunx bumpp patch package.json public/manifest.json && pnpm package",
+    "version:minor": "bunx bumpp minor package.json public/manifest.json && pnpm package",
+    "version:major": "bunx bumpp major package.json public/manifest.json && pnpm package",
+    "clean": "node scripts/copy-assets.js --clean-all"
   },
   "dependencies": {
     "better-auth": "1.2.8"

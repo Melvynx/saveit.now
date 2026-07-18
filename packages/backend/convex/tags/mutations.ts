@@ -25,12 +25,14 @@ async function resolveTagDTO(tag: any): Promise<TagDTO> {
 
 /**
  * Upsert a tag by (userId, name). Returns the tag document.
- * Creates with type: "USER" if not found.
+ * Creates with the given type ("USER" by default) if not found.
+ * Exported for reuse (e.g. bookmarks/seed.ts).
  */
-async function upsertTagByName(
+export async function upsertTagByName(
   ctx: any,
   userId: string,
   name: string,
+  type: "USER" | "IA" = "USER",
 ): Promise<any> {
   const existing = await ctx.db
     .query("tags")
@@ -44,7 +46,7 @@ async function upsertTagByName(
   const tagId = await ctx.db.insert("tags", {
     userId,
     name,
-    type: "USER",
+    type,
   });
   return ctx.db.get(tagId);
 }
@@ -109,19 +111,13 @@ export const setBookmarkTagsByName = authMutation({
 
     // 1. Trim and deduplicate names (filter empty strings).
     const desiredNames = Array.from(
-      new Set(
-        args.tagNames
-          .map((n) => n.trim())
-          .filter((n) => n.length > 0),
-      ),
+      new Set(args.tagNames.map((n) => n.trim()).filter((n) => n.length > 0)),
     );
 
     // 2. Fetch current bookmarkTags for this bookmark.
     const currentJoinRows = await ctx.db
       .query("bookmarkTags")
-      .withIndex("by_bookmark", (q: any) =>
-        q.eq("bookmarkId", args.bookmarkId),
-      )
+      .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", args.bookmarkId))
       .take(200);
 
     // Resolve current tag names.
@@ -139,9 +135,7 @@ export const setBookmarkTagsByName = authMutation({
 
     // 3. Compute diff.
     const tagsToAdd = desiredNames.filter((n) => !currentNames.includes(n));
-    const tagsToRemove = currentNames.filter(
-      (n) => !desiredNames.includes(n),
-    );
+    const tagsToRemove = currentNames.filter((n) => !desiredNames.includes(n));
 
     // 4. Remove join rows for removed tags.
     for (const name of tagsToRemove) {
@@ -175,9 +169,7 @@ export const setBookmarkTagsByName = authMutation({
     // 6. Return final tag list.
     const finalJoinRows = await ctx.db
       .query("bookmarkTags")
-      .withIndex("by_bookmark", (q: any) =>
-        q.eq("bookmarkId", args.bookmarkId),
-      )
+      .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", args.bookmarkId))
       .take(200);
 
     const finalTags: TagDTO[] = [];
@@ -220,9 +212,7 @@ export const setBookmarkTags = authMutation({
     // Fetch current join rows.
     const currentRows = await ctx.db
       .query("bookmarkTags")
-      .withIndex("by_bookmark", (q: any) =>
-        q.eq("bookmarkId", args.bookmarkId),
-      )
+      .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", args.bookmarkId))
       .take(200);
 
     const currentIds = new Set(currentRows.map((r: any) => r.tagId as string));
@@ -249,9 +239,7 @@ export const setBookmarkTags = authMutation({
     // Return final list.
     const finalRows = await ctx.db
       .query("bookmarkTags")
-      .withIndex("by_bookmark", (q: any) =>
-        q.eq("bookmarkId", args.bookmarkId),
-      )
+      .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", args.bookmarkId))
       .take(200);
 
     const finalTags: TagDTO[] = [];
@@ -431,9 +419,7 @@ export const refactor = authMutation({
       for (const bookmarkId of affectedBookmarkIds) {
         const existing = await ctx.db
           .query("bookmarkTags")
-          .withIndex("by_bookmark", (q: any) =>
-            q.eq("bookmarkId", bookmarkId),
-          )
+          .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", bookmarkId))
           .filter((q: any) => q.eq(q.field("tagId"), bestTagDoc._id))
           .first();
 
@@ -475,10 +461,7 @@ export const refactor = authMutation({
       (sum, r) => sum + r.bookmarksAffected,
       0,
     );
-    const totalTagsRemoved = results.reduce(
-      (sum, r) => sum + r.tagsRemoved,
-      0,
-    );
+    const totalTagsRemoved = results.reduce((sum, r) => sum + r.tagsRemoved, 0);
 
     return {
       success: true,
@@ -508,11 +491,7 @@ export const setBookmarkTagsByNameInternal = internalMutation({
     const tagType = args.type ?? "IA";
 
     const desiredNames = Array.from(
-      new Set(
-        args.tagNames
-          .map((n) => n.trim())
-          .filter((n) => n.length > 0),
-      ),
+      new Set(args.tagNames.map((n) => n.trim()).filter((n) => n.length > 0)),
     );
 
     for (const name of desiredNames) {

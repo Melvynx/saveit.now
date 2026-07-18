@@ -7,6 +7,12 @@ interface User {
   email: string;
   name?: string;
   image?: string | null;
+  /**
+   * Server-side onboarding flag (Better Auth additional field).
+   * `false` = genuinely new account that hasn't completed onboarding,
+   * `true` = completed, `null`/`undefined` = legacy account (never show).
+   */
+  onboarding?: boolean | null;
 }
 
 interface AuthContextType {
@@ -66,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: baUser.email,
         name: baUser.name ?? undefined,
         image: (baUser as any).image ?? null,
+        onboarding: (baUser as any).onboarding ?? null,
       }
     : null;
 

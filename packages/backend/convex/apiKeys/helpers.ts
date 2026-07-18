@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { isActiveSubscriptionStatus } from "../billing/plans";
+import { deriveEffectivePlan } from "../billing/plans";
 
 /**
  * getActiveSubscriptionForUser — internalQuery
@@ -16,9 +16,10 @@ export const getActiveSubscriptionForUser = internalQuery({
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
-    if (!sub || !isActiveSubscriptionStatus(sub.status, sub.provider)) {
+    const plan = deriveEffectivePlan(sub);
+    if (plan !== "pro") {
       return null;
     }
-    return { plan: sub.plan as "free" | "pro", status: sub.status ?? null };
+    return { plan, status: sub?.status ?? null };
   },
 });

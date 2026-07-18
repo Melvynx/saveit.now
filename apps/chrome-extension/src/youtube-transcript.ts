@@ -1,384 +1,404 @@
-// YouTube transcript extraction utilities for Chrome extension
+import { getYouTubeVideoId, MAX_TRANSCRIPT_LENGTH } from "./url-policy";
+
+type TranscriptSource = "xhr-interception" | "page" | "api" | "captions";
 
 interface TranscriptEntry {
   text: string;
   start: number;
-  duration: number;
 }
 
 interface YouTubeTranscriptResult {
   transcript: string;
-  source: 'xhr-interception' | 'page' | 'api' | 'captions';
+  source: TranscriptSource;
   videoId: string;
   extractedAt: string;
 }
 
-/**
- * Extract video ID from YouTube URL
- */
-function getYouTubeVideoId(url: string): string | null {
-  const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] || null : null;
-}
+type CaptionTrack = {
+  baseUrl?: string;
+  languageCode?: string;
+};
 
-/**
- * Check if current page is a YouTube video page
- */
-export function isYouTubeVideoPage(): boolean {
-  return window.location.hostname.includes('youtube.com') && 
-         window.location.pathname === '/watch' && 
-         window.location.search.includes('v=');
-}
-
-/**
- * Start global interception immediately (call this when script loads)
- */
-export function startGlobalInterception() {
-  initializeGlobalInterception();
-  console.log("🚀 Global URL interception started");
-}
-
-/**
- * Extract transcript from YouTube page data
- */
-async function extractTranscriptFromPageData(videoId: string): Promise<string | null> {
-  try {
-    // Method 1: Look for ytInitialPlayerResponse in page scripts
-    const scripts = Array.from(document.querySelectorAll('script'));
-    
-    for (const script of scripts) {
-      const content = script.textContent || '';
-      
-      // Look for ytInitialPlayerResponse
-      const playerResponseMatch = content.match(/var ytInitialPlayerResponse = ({.+?});/);
-      if (playerResponseMatch && playerResponseMatch[1]) {
-        try {
-          const playerResponse = JSON.parse(playerResponseMatch[1]);
-          const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-          
-          if (captions && captions.length > 0) {
-            // Find English captions or first available
-            const englishCaption = captions.find((track: any) => 
-              track.languageCode === 'en' || track.languageCode === 'en-US'
-            ) || captions[0];
-            
-            if (englishCaption?.baseUrl) {
-              const transcriptXml = await fetch(englishCaption.baseUrl).then(r => r.text());
-              return parseXmlTranscript(transcriptXml);
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to parse ytInitialPlayerResponse:', e);
-        }
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting transcript from page data:', error);
-    return null;
-  }
-}
-
-// Global URL tracking
-let allInterceptedUrls: string[] = [];
-let allFetchUrls: string[] = [];
-let originalXHROpen: ((method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) => void) | null = null;
-let originalXHRSend: ((body?: Document | XMLHttpRequestBodyInit | null) => void) | null = null;
-let originalFetch: ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | null = null;
-
-/**
- * Initialize global URL interception
- */
-function initializeGlobalInterception() {
-  if (originalXHROpen) return; // Already initialized
-
-  console.log("🔧 Initializing global URL interception...");
-  
-  // Store original methods
-  originalXHROpen = XMLHttpRequest.prototype.open;
-  originalXHRSend = XMLHttpRequest.prototype.send;
-  originalFetch = window.fetch;
-
-  // Intercept XMLHttpRequest (simplified like working code)
-  XMLHttpRequest.prototype.open = function(method: string, url: string | URL) {
-    (this as any)._url = url;
-    const urlString = url.toString();
-    allInterceptedUrls.push(urlString);
-    console.log(`📡 XHR #${allInterceptedUrls.length}: ${urlString}`);
-    return originalXHROpen!.apply(this, arguments as any);
+type PlayerResponse = {
+  videoDetails?: {
+    videoId?: string;
   };
-
-  XMLHttpRequest.prototype.send = function(body?: Document | XMLHttpRequestBodyInit | null) {
-    if ((this as any)._url && (this as any)._url.includes("/api/timedtext")) {
-      console.log("🎯 TIMEDTEXT XHR detected:", (this as any)._url);
-    }
-    return originalXHRSend!.apply(this, arguments as any);
+  captions?: {
+    playerCaptionsTracklistRenderer?: {
+      captionTracks?: CaptionTrack[];
+    };
   };
+};
 
-  // Intercept fetch
-  window.fetch = function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    const url = input instanceof Request ? input.url : input.toString();
-    allFetchUrls.push(url);
-    console.log(`🌐 FETCH #${allFetchUrls.length}: ${url}`);
-    
-    return originalFetch!.apply(this, arguments as any);
-  };
+type TimedTextEvent = {
+  tStartMs?: number;
+  segs?: Array<{ utf8?: string }>;
+};
 
-  console.log("✅ Global URL interception initialized");
+const MIN_TRANSCRIPT_LENGTH = 50;
+const PLAYER_RESPONSE_MARKERS = [
+  "var ytInitialPlayerResponse =",
+  "ytInitialPlayerResponse =",
+  '"ytInitialPlayerResponse":',
+];
+
+function capTranscript(transcript: string): string {
+  return transcript.trim().slice(0, MAX_TRANSCRIPT_LENGTH);
 }
 
-/**
- * Extract transcript using XHR interception method (via injected script)
- */
-async function extractTranscriptFromXHRInterception(): Promise<string | null> {
-  return new Promise((resolve) => {
-    console.log("🚀 Injecting XHR interception script into page...");
-
-    // Listen for messages from the injected script
-    const messageListener = (event: MessageEvent) => {
-      if (event.source !== window) return;
-      
-      if (event.data.type === 'TRANSCRIPT_EXTRACTED') {
-        console.log("✅ Received transcript from injected script:", event.data.transcript);
-        window.removeEventListener('message', messageListener);
-        resolve(event.data.transcript);
-      }
-      
-      if (event.data.type === 'TRANSCRIPT_URL_INTERCEPTED') {
-        console.log("📡 URL intercepted from page:", event.data.url);
-      }
-    };
-
-    window.addEventListener('message', messageListener);
-
-    // Inject the interception script into the page
-    const script = document.createElement('script');
-    script.src = (chrome as any).runtime.getURL('intercept.js');
-    script.type = 'text/javascript';
-    
-    script.onload = () => {
-      console.log("✅ Intercept script injected successfully");
-    };
-    
-    script.onerror = () => {
-      console.error("❌ Failed to inject intercept script");
-      window.removeEventListener('message', messageListener);
-      resolve(null);
-    };
-
-    document.documentElement.appendChild(script);
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      console.warn("⚠️ Timeout waiting for transcript");
-      window.removeEventListener('message', messageListener);
-      resolve(null);
-    }, 10000);
-  });
+function isCurrentVideo(expectedVideoId: string): boolean {
+  return getYouTubeVideoId(window.location.href) === expectedVideoId;
 }
 
-/**
- * Extract transcript using YouTube's internal API (fallback)
- */
-async function extractTranscriptFromAPI(videoId: string): Promise<string | null> {
+function isYouTubeHostname(hostname: string): boolean {
+  return hostname === "youtube.com" || hostname.endsWith(".youtube.com");
+}
+
+function getTrustedCaptionUrl(
+  baseUrl: string,
+  expectedVideoId: string,
+): string | null {
   try {
-    const apiUrl = `https://www.youtube.com/api/timedtext?lang=en&v=${videoId}&fmt=json3`;
-    
-    const response = await fetch(apiUrl, {
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data?.events) {
-        return formatTranscriptFromEvents(data.events);
-      }
+    const captionUrl = new URL(baseUrl, window.location.href);
+    if (
+      captionUrl.protocol !== "https:" ||
+      !isYouTubeHostname(captionUrl.hostname) ||
+      captionUrl.pathname !== "/api/timedtext" ||
+      captionUrl.searchParams.get("v") !== expectedVideoId
+    ) {
+      return null;
     }
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting transcript from API:', error);
+
+    return captionUrl.href;
+  } catch {
     return null;
   }
 }
 
-/**
- * Extract transcript from caption elements on the page
- */
-function extractTranscriptFromCaptions(): string | null {
-  try {
-    // Look for caption elements that might be rendered
-    const captionSelectors = [
-      '.ytp-caption-segment',
-      '.captions-text',
-      '.caption-line-time'
-    ];
-    
-    for (const selector of captionSelectors) {
-      const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        const transcript = Array.from(elements)
-          .map(el => el.textContent?.trim())
-          .filter(text => text && text.length > 0)
-          .join(' ');
-        
-        if (transcript.length > 100) { // Ensure we have substantial content
-          return transcript;
-        }
+function extractJsonObject(source: string, startIndex: number): string | null {
+  const objectStart = source.indexOf("{", startIndex);
+  if (objectStart === -1) return null;
+
+  let depth = 0;
+  let escaped = false;
+  let insideString = false;
+
+  for (let index = objectStart; index < source.length; index += 1) {
+    const character = source[index];
+    if (insideString) {
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === '"') {
+        insideString = false;
       }
+      continue;
     }
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting transcript from captions:', error);
-    return null;
-  }
-}
 
-/**
- * Parse XML transcript format
- */
-function parseXmlTranscript(xmlContent: string): string {
-  try {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
-    const textNodes = xmlDoc.querySelectorAll('text');
-    
-    const entries: TranscriptEntry[] = [];
-    
-    textNodes.forEach(node => {
-      const start = parseFloat(node.getAttribute('start') || '0');
-      const duration = parseFloat(node.getAttribute('dur') || '0');
-      const text = node.textContent || '';
-      
-      if (text.trim()) {
-        entries.push({ text: text.trim(), start, duration });
-      }
-    });
-    
-    return formatTranscriptEntries(entries);
-  } catch (error) {
-    console.error('Error parsing XML transcript:', error);
-    return '';
-  }
-}
-
-/**
- * Format transcript from YouTube API events
- */
-function formatTranscriptFromEvents(events: any[]): string {
-  try {
-    const entries: TranscriptEntry[] = [];
-    
-    events.forEach(event => {
-      if (event.segs) {
-        const start = event.tStartMs / 1000;
-        const text = event.segs.map((seg: any) => seg.utf8).join('');
-        
-        if (text.trim()) {
-          entries.push({ 
-            text: text.trim(), 
-            start, 
-            duration: event.dDurationMs / 1000 
-          });
-        }
-      }
-    });
-    
-    return formatTranscriptEntries(entries);
-  } catch (error) {
-    console.error('Error formatting transcript from events:', error);
-    return '';
-  }
-}
-
-/**
- * Format transcript entries with timestamps
- */
-function formatTranscriptEntries(entries: TranscriptEntry[]): string {
-  return entries
-    .map(entry => {
-      const minutes = Math.floor(entry.start / 60);
-      const seconds = Math.floor(entry.start % 60);
-      const timestamp = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      return `[${timestamp}] ${entry.text}`;
-    })
-    .join('\n');
-}
-
-/**
- * Main function to extract YouTube transcript
- */
-export async function extractYouTubeTranscript(url: string): Promise<YouTubeTranscriptResult | null> {
-  const videoId = getYouTubeVideoId(url);
-  
-  if (!videoId) {
-    console.warn('Could not extract video ID from URL:', url);
-    return null;
-  }
-  
-  console.log('Attempting to extract transcript for video:', videoId);
-  
-  // Try multiple extraction methods in order of preference
-  const methods = [
-    { name: 'xhr-interception', fn: () => extractTranscriptFromXHRInterception() },
-    { name: 'page', fn: () => extractTranscriptFromPageData(videoId) },
-    { name: 'api', fn: () => extractTranscriptFromAPI(videoId) },
-    { name: 'captions', fn: () => extractTranscriptFromCaptions() }
-  ];
-  
-  for (const method of methods) {
-    try {
-      console.log(`Trying transcript extraction method: ${method.name}`);
-      const transcript = await method.fn();
-      
-      if (transcript && transcript.length > 50) { // Ensure substantial content
-        console.log(`Successfully extracted transcript using method: ${method.name}`);
-        return {
-          transcript,
-          source: method.name as 'xhr-interception' | 'page' | 'api' | 'captions',
-          videoId,
-          extractedAt: new Date().toISOString()
-        };
-      }
-    } catch (error) {
-      console.warn(`Failed to extract transcript using method ${method.name}:`, error);
+    if (character === '"') {
+      insideString = true;
+    } else if (character === "{") {
+      depth += 1;
+    } else if (character === "}") {
+      depth -= 1;
+      if (depth === 0) return source.slice(objectStart, index + 1);
     }
   }
-  
-  console.warn('Failed to extract transcript using all methods');
+
   return null;
 }
 
-/**
- * Wait for YouTube player to be ready
- */
-export function waitForYouTubePlayer(timeout = 10000): Promise<boolean> {
+function parsePlayerResponse(scriptContent: string): PlayerResponse | null {
+  for (const marker of PLAYER_RESPONSE_MARKERS) {
+    const markerIndex = scriptContent.indexOf(marker);
+    if (markerIndex === -1) continue;
+
+    const json = extractJsonObject(scriptContent, markerIndex + marker.length);
+    if (!json) continue;
+
+    try {
+      return JSON.parse(json) as PlayerResponse;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+async function extractTranscriptFromPageData(
+  expectedVideoId: string,
+): Promise<string | null> {
+  if (!isCurrentVideo(expectedVideoId)) return null;
+
+  for (const script of Array.from(document.querySelectorAll("script"))) {
+    const playerResponse = parsePlayerResponse(script.textContent ?? "");
+    if (playerResponse?.videoDetails?.videoId !== expectedVideoId) continue;
+
+    const captionTracks =
+      playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    if (!captionTracks?.length) continue;
+
+    const preferredCaption =
+      captionTracks.find(
+        (track) =>
+          track.languageCode === "en" || track.languageCode === "en-US",
+      ) ?? captionTracks[0];
+    if (!preferredCaption?.baseUrl) continue;
+
+    const captionUrl = getTrustedCaptionUrl(
+      preferredCaption.baseUrl,
+      expectedVideoId,
+    );
+    if (!captionUrl) continue;
+
+    try {
+      const response = await fetch(captionUrl, {
+        credentials: "same-origin",
+      });
+      if (!response.ok || !isCurrentVideo(expectedVideoId)) continue;
+      return parseXmlTranscript(await response.text());
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function createRequestId(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function extractTranscriptFromXHRInterception(
+  expectedVideoId: string,
+): Promise<string | null> {
+  if (!isCurrentVideo(expectedVideoId)) return null;
+
   return new Promise((resolve) => {
-    const startTime = Date.now();
-    
+    let settled = false;
+    const requestId = createRequestId();
+    const script = document.createElement("script");
+
+    const settle = (transcript: string | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("message", messageListener);
+      script.remove();
+      resolve(transcript ? capTranscript(transcript) : null);
+    };
+
+    const messageListener = (event: MessageEvent) => {
+      if (
+        event.source !== window ||
+        event.origin !== window.location.origin ||
+        !event.data ||
+        typeof event.data !== "object"
+      ) {
+        return;
+      }
+
+      const data = event.data as Record<string, unknown>;
+      if (
+        data.requestId !== requestId ||
+        data.videoId !== expectedVideoId ||
+        !isCurrentVideo(expectedVideoId)
+      ) {
+        return;
+      }
+
+      if (data.type === "TRANSCRIPT_EXTRACTED") {
+        settle(typeof data.transcript === "string" ? data.transcript : null);
+      } else if (data.type === "TRANSCRIPT_EXTRACTION_FAILED") {
+        settle(null);
+      }
+    };
+
+    const timeoutId = window.setTimeout(() => settle(null), 8_000);
+    window.addEventListener("message", messageListener);
+
+    script.src = chrome.runtime.getURL("intercept.js");
+    script.dataset.saveitRequestId = requestId;
+    script.dataset.saveitVideoId = expectedVideoId;
+    script.addEventListener("error", () => settle(null), { once: true });
+    document.documentElement.appendChild(script);
+  });
+}
+
+async function extractTranscriptFromAPI(
+  expectedVideoId: string,
+): Promise<string | null> {
+  if (!isCurrentVideo(expectedVideoId)) return null;
+
+  try {
+    const response = await fetch(
+      `https://www.youtube.com/api/timedtext?lang=en&v=${expectedVideoId}&fmt=json3`,
+      {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
+    if (!response.ok || !isCurrentVideo(expectedVideoId)) return null;
+
+    const payload = (await response.json()) as { events?: TimedTextEvent[] };
+    return payload.events ? formatTranscriptFromEvents(payload.events) : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractTranscriptFromCaptions(expectedVideoId: string): string | null {
+  if (!isCurrentVideo(expectedVideoId)) return null;
+
+  const selectors = [
+    ".ytp-caption-segment",
+    ".captions-text",
+    ".caption-line-time",
+  ];
+
+  for (const selector of selectors) {
+    const transcript = capTranscript(
+      Array.from(document.querySelectorAll(selector))
+        .map((element) => element.textContent?.trim())
+        .filter((text): text is string => Boolean(text))
+        .join(" "),
+    );
+    if (transcript.length > MIN_TRANSCRIPT_LENGTH) return transcript;
+  }
+
+  return null;
+}
+
+function parseXmlTranscript(xmlContent: string): string {
+  const xmlDocument = new DOMParser().parseFromString(xmlContent, "text/xml");
+  const entries = Array.from(xmlDocument.querySelectorAll("text"))
+    .map((node): TranscriptEntry | null => {
+      const text = node.textContent?.trim();
+      if (!text) return null;
+      const parsedStart = Number.parseFloat(node.getAttribute("start") ?? "0");
+      return {
+        text,
+        start:
+          Number.isFinite(parsedStart) && parsedStart >= 0 ? parsedStart : 0,
+      };
+    })
+    .filter((entry): entry is TranscriptEntry => entry !== null);
+
+  return formatTranscriptEntries(entries);
+}
+
+function formatTranscriptFromEvents(events: TimedTextEvent[]): string {
+  const entries = events
+    .map((event): TranscriptEntry | null => {
+      const text =
+        event.segs
+          ?.map((segment) => segment.utf8 ?? "")
+          .join("")
+          .trim() ?? "";
+      if (!text) return null;
+
+      const start = (event.tStartMs ?? 0) / 1_000;
+      return { text, start: Number.isFinite(start) && start >= 0 ? start : 0 };
+    })
+    .filter((entry): entry is TranscriptEntry => entry !== null);
+
+  return formatTranscriptEntries(entries);
+}
+
+function formatTranscriptEntries(entries: TranscriptEntry[]): string {
+  let transcript = "";
+
+  for (const entry of entries) {
+    const minutes = Math.floor(entry.start / 60);
+    const seconds = Math.floor(entry.start % 60);
+    const timestamp = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    const line = `${transcript ? "\n" : ""}[${timestamp}] ${entry.text}`;
+    const remainingLength = MAX_TRANSCRIPT_LENGTH - transcript.length;
+    if (remainingLength <= 0) break;
+    transcript += line.slice(0, remainingLength);
+  }
+
+  return capTranscript(transcript);
+}
+
+export function isYouTubeVideoPage(): boolean {
+  return getYouTubeVideoId(window.location.href) !== null;
+}
+
+export async function extractYouTubeTranscript(
+  url: string,
+): Promise<YouTubeTranscriptResult | null> {
+  const expectedVideoId = getYouTubeVideoId(url);
+  if (!expectedVideoId || !isCurrentVideo(expectedVideoId)) return null;
+
+  const methods: Array<{
+    source: TranscriptSource;
+    extract: () => Promise<string | null> | string | null;
+  }> = [
+    {
+      source: "page",
+      extract: () => extractTranscriptFromPageData(expectedVideoId),
+    },
+    {
+      source: "api",
+      extract: () => extractTranscriptFromAPI(expectedVideoId),
+    },
+    {
+      source: "captions",
+      extract: () => extractTranscriptFromCaptions(expectedVideoId),
+    },
+    {
+      source: "xhr-interception",
+      extract: () => extractTranscriptFromXHRInterception(expectedVideoId),
+    },
+  ];
+
+  for (const method of methods) {
+    try {
+      const transcript = capTranscript((await method.extract()) ?? "");
+      if (
+        transcript.length > MIN_TRANSCRIPT_LENGTH &&
+        isCurrentVideo(expectedVideoId)
+      ) {
+        return {
+          transcript,
+          source: method.source,
+          videoId: expectedVideoId,
+          extractedAt: new Date().toISOString(),
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+export function waitForYouTubePlayer(timeout = 10_000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+
     const checkPlayer = () => {
-      if (Date.now() - startTime > timeout) {
+      if (Date.now() - startedAt > timeout) {
         resolve(false);
         return;
       }
-      
-      // Check if YouTube player is loaded
-      const player = document.querySelector('#movie_player, .html5-video-player');
-      const video = document.querySelector('video');
-      
-      if (player && video) {
+
+      if (
+        document.querySelector("#movie_player, .html5-video-player") &&
+        document.querySelector("video")
+      ) {
         resolve(true);
-      } else {
-        setTimeout(checkPlayer, 500);
+        return;
       }
+
+      window.setTimeout(checkPlayer, 500);
     };
-    
+
     checkPlayer();
   });
 }

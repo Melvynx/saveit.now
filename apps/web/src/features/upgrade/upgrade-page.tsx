@@ -45,6 +45,7 @@ export function UpgradePage() {
     typeof window === "undefined" ? "" : window.location.search,
   );
   const error = searchParams.get("error");
+  const canceled = searchParams.get("canceled") === "1";
   const plan = useUserPlan();
   const createCheckout = useAction(api.stripe.actions.createCheckout);
 
@@ -62,7 +63,7 @@ export function UpgradePage() {
       const result = await createCheckout({
         plan: "pro",
         successUrl: "/upgrade/success",
-        cancelUrl: "/upgrade?error=true",
+        cancelUrl: "/upgrade?canceled=1",
         annual: !monthly,
       });
 
@@ -91,7 +92,18 @@ export function UpgradePage() {
     <MaxWidthContainer className="my-8 flex w-full min-w-0 flex-col gap-12 lg:my-12 lg:flex-row">
       <FeaturesList />
       <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
-        {error ? (
+        {canceled ? (
+          <Alert className="flex min-w-0 flex-col gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <CircleAlert className="size-4" />
+              <AlertTitle>Checkout canceled</AlertTitle>
+            </div>
+            <AlertDescription>
+              No charge was made. You can keep using Free or try again whenever
+              you&apos;re ready.
+            </AlertDescription>
+          </Alert>
+        ) : error ? (
           <Alert variant="destructive" className="flex min-w-0 flex-col gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <AlertTriangle className="size-4" />
@@ -120,7 +132,7 @@ export function UpgradePage() {
                 className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 bg-card text-[10px] sm:-right-5 sm:-top-4 sm:translate-y-0 sm:text-xs"
                 variant="outline"
               >
-                -49%
+                Best value
               </Badge>
             </div>
           </TabsList>
@@ -131,7 +143,7 @@ export function UpgradePage() {
               SaveIt<span className="text-primary font-bold">.pro</span>
             </CardTitle>
             <CardDescription>
-              Became a SaveIt.pro member in one simple subscription.
+              Become a SaveIt.pro member with one simple subscription.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,7 +154,7 @@ export function UpgradePage() {
               <Typography variant="muted">/month</Typography>
               {!monthly && (
                 <Typography variant="muted" className="text-green-500 ml-2">
-                  5 month free !
+                  Best value
                 </Typography>
               )}
             </div>
@@ -157,7 +169,7 @@ export function UpgradePage() {
             <ul className="flex flex-2 min-w-0 flex-col gap-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <InfinityIcon className="text-primary size-4" />
-                <span>Unlimited bookmarks</span>
+                <span>Up to 50,000 bookmarks</span>
               </li>
               <li className="flex items-center gap-2">
                 <FileUp className="text-primary size-4" />
@@ -174,11 +186,12 @@ export function UpgradePage() {
             </ul>
             {plan.name === "free" ? (
               <LoadingButton
-                loading={checkoutTask.isPending}
+                loading={checkoutTask.isPending || plan.isLoading}
+                disabled={plan.isLoading || session.isPending}
                 onClick={() => void checkoutTask.run()}
                 className="w-full"
               >
-                Upgrade
+                Upgrade to Pro
               </LoadingButton>
             ) : (
               <Alert variant="default">
@@ -194,11 +207,12 @@ export function UpgradePage() {
         </Card>
         <div className="min-w-0 rounded-lg border bg-card p-4">
           <Typography variant="large" className="font-medium">
-            How to upgrade
+            Upgrade on the web
           </Typography>
           <Typography variant="muted" className="mt-1">
-            SaveIt.pro is managed from the web. Subscriptions are not sold
-            inside the mobile apps — to go premium, upgrade here on saveit.now.
+            You can buy SaveIt Pro here or in the iOS app. Pro follows the
+            SaveIt account you use at checkout and unlocks on every signed-in
+            device.
           </Typography>
           <ol className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
@@ -215,7 +229,7 @@ export function UpgradePage() {
             <li className="flex items-start gap-2">
               <span className="text-primary font-semibold">3.</span>
               <span>
-                Click <span className="text-foreground">Upgrade</span> to
+                Click <span className="text-foreground">Upgrade to Pro</span> to
                 complete a secure checkout with Stripe.
               </span>
             </li>

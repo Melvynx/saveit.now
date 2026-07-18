@@ -74,7 +74,12 @@ function ShareDialog({
         <View className="flex-row items-center justify-between px-5 pt-3">
           <View className="w-10" />
           <View className="h-[5px] w-10 rounded-full bg-border" />
-          <Pressable onPress={onClose} hitSlop={16}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close share dialog"
+            onPress={onClose}
+            hitSlop={16}
+          >
             <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
               <Ionicons name="close" size={20} color={colors.foreground} />
             </View>

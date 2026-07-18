@@ -182,6 +182,11 @@ export default function ShareHandler() {
   }, [hasShareIntent, payloadError?.code]);
 
   const needsAuth = Boolean(payload && !isAuthLoading && !user);
+  const destinationAfterShare = !user
+    ? "/"
+    : user.onboarding === false
+      ? "/welcome"
+      : "/(tabs)";
   const isSavingPending = Boolean(
     payload && !payloadError && !shareIntentError && !saveError && !needsAuth,
   );
@@ -228,7 +233,7 @@ export default function ShareHandler() {
         if (cancelled) return;
         hapticSuccess();
         resetShareIntent();
-        router.replace("/(tabs)");
+        router.replace(destinationAfterShare);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -241,6 +246,7 @@ export default function ShareHandler() {
     };
   }, [
     createBookmark,
+    destinationAfterShare,
     hasStartedCreate,
     isAuthenticated,
     payload,
@@ -251,7 +257,7 @@ export default function ShareHandler() {
 
   const closeShareFlow = () => {
     resetShareIntent();
-    router.replace("/(tabs)");
+    router.replace(destinationAfterShare);
   };
 
   const retrySave = () => {

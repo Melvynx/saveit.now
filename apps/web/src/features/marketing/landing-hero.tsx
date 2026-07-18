@@ -123,7 +123,10 @@ export const LandingHero = () => {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <LandingAppButton className="h-10 rounded-full border border-white/10 bg-white/10 px-6 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20" />
+              <LandingAppButton
+                className="h-10 rounded-full border border-white/10 bg-white/10 px-6 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                signedOutChildren="Get started free"
+              />
               <a
                 href="#demo"
                 className="inline-flex h-10 items-center rounded-full border border-white/10 bg-transparent px-6 text-sm font-medium text-[#d6a176] transition-colors hover:bg-white/5 hover:text-white"

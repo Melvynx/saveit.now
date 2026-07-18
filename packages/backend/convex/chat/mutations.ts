@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { authMutation } from "../functions";
+import { deriveEffectivePlan } from "../billing/plans";
 import { throwNotFound } from "../utils/errors";
 import { startOfMonth } from "./usage";
 import type { Id } from "../_generated/dataModel";
@@ -40,12 +41,11 @@ export const checkAndIncrementUsage = internalMutation({
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(10);
-    const subscription =
-      allSubs.find(
-        (s) => s.status === "active" || s.status === "trialing",
-      ) ?? null;
-
-    const plan = (subscription?.plan ?? "free") as "free" | "pro";
+    const plan = allSubs.some(
+      (subscription) => deriveEffectivePlan(subscription) === "pro",
+    )
+      ? "pro"
+      : "free";
 
     // 3. Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
@@ -62,11 +62,7 @@ export const checkAndIncrementUsage = internalMutation({
     let limit: number = baseLimits[plan];
 
     // Apply custom limits if present.
-    if (
-      metadata &&
-      typeof metadata === "object" &&
-      !Array.isArray(metadata)
-    ) {
+    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
       const customLimits = (metadata as { customLimits?: unknown })
         .customLimits;
       if (
@@ -74,9 +70,8 @@ export const checkAndIncrementUsage = internalMutation({
         typeof customLimits === "object" &&
         !Array.isArray(customLimits)
       ) {
-        const customMonthly = (
-          customLimits as { monthlyChatQueries?: unknown }
-        ).monthlyChatQueries;
+        const customMonthly = (customLimits as { monthlyChatQueries?: unknown })
+          .monthlyChatQueries;
         if (
           typeof customMonthly === "number" &&
           Number.isFinite(customMonthly) &&

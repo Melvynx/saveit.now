@@ -1,132 +1,243 @@
 const fs = require("fs");
 const path = require("path");
-const { build } = require("esbuild");
+const { spawnSync } = require("child_process");
+const { build, context } = require("esbuild");
 
-const sourceDir = path.join(__dirname, "../public");
-const targetDir = path.join(__dirname, "../dist");
-const srcDir = path.join(__dirname, "../src");
+const extensionRoot = path.join(__dirname, "..");
+const sourceDir = path.join(extensionRoot, "public");
+const targetDir = path.join(extensionRoot, "dist");
+const packageDir = path.join(extensionRoot, "package");
+const srcDir = path.join(extensionRoot, "src");
+const ignoredAssetNames = new Set([".DS_Store"]);
+const publicAssetFiles = [
+  "content.css",
+  "manifest.json",
+  "images/icon16.png",
+  "images/icon32.png",
+  "images/icon48.png",
+  "images/icon64.png",
+  "images/icon128.png",
+  "images/icon256.png",
+];
+const buildOutputFiles = [
+  "background.js",
+  "content.js",
+  "intercept.js",
+  ...publicAssetFiles,
+];
 
-// Ensure target directory exists
-if (!fs.existsSync(targetDir)) {
-  fs.mkdirSync(targetDir, { recursive: true });
+function toPortablePath(filePath) {
+  return filePath.split(path.sep).join("/");
 }
 
-// Function to copy files recursively
+function listRelativeFiles(
+  directory,
+  root = directory,
+  ignoreKnownJunk = false,
+) {
+  return fs
+    .readdirSync(directory, { withFileTypes: true })
+    .flatMap((entry) => {
+      if (ignoreKnownJunk && ignoredAssetNames.has(entry.name)) return [];
+
+      const absolutePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        const relativeDirectory = toPortablePath(
+          path.relative(root, absolutePath),
+        );
+        if (relativeDirectory !== "images") {
+          throw new Error(`Unexpected asset directory: ${relativeDirectory}`);
+        }
+        return listRelativeFiles(absolutePath, root, ignoreKnownJunk);
+      }
+      if (!entry.isFile()) {
+        throw new Error(`Unsupported public asset: ${absolutePath}`);
+      }
+      return [toPortablePath(path.relative(root, absolutePath))];
+    })
+    .sort();
+}
+
+function trashPath(targetPath) {
+  if (!fs.existsSync(targetPath)) return;
+
+  const result = spawnSync("/usr/bin/trash", [targetPath], {
+    encoding: "utf8",
+  });
+  if (result.error || result.status !== 0) {
+    const detail =
+      result.error?.message || result.stderr.trim() || "unknown error";
+    throw new Error(`Could not move ${targetPath} to Trash: ${detail}`);
+  }
+}
+
+function validatePublicAssets(files) {
+  const allowedFiles = new Set(publicAssetFiles);
+  const extras = files.filter((file) => !allowedFiles.has(file));
+  if (extras.length > 0) {
+    throw new Error(`Unexpected public extension assets: ${extras.join(", ")}`);
+  }
+}
+
+function validateBuildOutputs() {
+  const files = listRelativeFiles(targetDir);
+  const allowedFileSet = new Set(buildOutputFiles);
+  const missingFiles = buildOutputFiles.filter((file) => !files.includes(file));
+  const extraFiles = files.filter((file) => !allowedFileSet.has(file));
+  if (missingFiles.length > 0 || extraFiles.length > 0) {
+    const details = [
+      missingFiles.length > 0 ? `missing: ${missingFiles.join(", ")}` : null,
+      extraFiles.length > 0 ? `unexpected: ${extraFiles.join(", ")}` : null,
+    ]
+      .filter(Boolean)
+      .join("; ");
+    throw new Error(`Invalid extension build contents (${details})`);
+  }
+}
+
 function copyFiles(source, target) {
-  // Create target directory if it doesn't exist
-  if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
-  }
+  if (!fs.existsSync(target)) fs.mkdirSync(target, { recursive: true });
 
-  // Read source directory
-  const files = fs.readdirSync(source);
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    if (ignoredAssetNames.has(entry.name)) continue;
 
-  // Copy each file/directory
-  for (const file of files) {
-    const sourceFilePath = path.join(source, file);
-    const targetFilePath = path.join(target, file);
-
-    // Check if it's a directory
-    const stat = fs.statSync(sourceFilePath);
-
-    if (stat.isDirectory()) {
-      // Recursively copy directory
-      copyFiles(sourceFilePath, targetFilePath);
-    } else {
-      // Copy file
-      fs.copyFileSync(sourceFilePath, targetFilePath);
+    const sourcePath = path.join(source, entry.name);
+    const targetPath = path.join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyFiles(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(sourcePath, targetPath);
     }
   }
 }
 
-// Compile TypeScript files
-async function compileTypeScript() {
-  try {
-    // Check if --dev flag is passed
-    const isDev = process.argv.includes('--dev');
-    const baseUrl = isDev ? 'http://localhost:3000' : 'https://saveit.now';
-
-    console.log(`Building for ${isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
-    console.log(`Base URL: ${baseUrl}`);
-
-    // Build background, content, and popup scripts with IIFE format for Chrome extension compatibility
-    await build({
-      entryPoints: [
-        path.join(srcDir, "background.ts"),
-        path.join(srcDir, "content.ts"),
-        path.join(srcDir, "popup.ts"),
-      ],
-      bundle: true,
-      outdir: targetDir,
-      platform: "browser",
-      minify: !isDev, // Don't minify in dev mode for better debugging
-      format: "iife",
-      target: "es2020",
-      loader: { ".ts": "ts" },
-      define: {
-        '__BASE_URL__': JSON.stringify(baseUrl),
-        '__IS_DEV__': JSON.stringify(isDev),
-      },
-    });
-
-    console.log("TypeScript files compiled successfully!");
-    return true;
-  } catch (error) {
-    console.error("TypeScript compilation failed:", error);
-    return false;
-  }
-}
-
-// Function to update manifest.json for development
-function updateManifestForDev() {
+function updateManifestForDevelopment() {
   const manifestPath = path.join(targetDir, "manifest.json");
-  
-  if (fs.existsSync(manifestPath)) {
-    const manifestContent = fs.readFileSync(manifestPath, "utf8");
-    const manifest = JSON.parse(manifestContent);
-    
-    // Add localhost:3000 to host_permissions for dev builds
-    if (!manifest.host_permissions.includes("http://localhost:3000/*")) {
-      manifest.host_permissions.push("http://localhost:3000/*");
-    }
-    
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    console.log("Updated manifest.json for development with localhost:3000");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const localOrigin = "http://localhost:3000/*";
+
+  if (!manifest.host_permissions.includes(localOrigin)) {
+    manifest.host_permissions.push(localOrigin);
   }
+
+  manifest.commands = {
+    _execute_action: {
+      suggested_key: {
+        default: "Ctrl+Shift+Y",
+        mac: "Command+Shift+Y",
+      },
+    },
+  };
+
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
-// Main execution
+function syncPublicAssets(isDevelopment) {
+  const sourceFiles = listRelativeFiles(sourceDir, sourceDir, true);
+  const sourceFileSet = new Set(sourceFiles);
+  for (const publicAssetFile of publicAssetFiles) {
+    if (!sourceFileSet.has(publicAssetFile)) {
+      trashPath(path.join(targetDir, ...publicAssetFile.split("/")));
+    }
+  }
+
+  validatePublicAssets(sourceFiles);
+
+  const missingFiles = publicAssetFiles.filter(
+    (file) => !sourceFileSet.has(file),
+  );
+  if (missingFiles.length > 0) {
+    throw new Error(
+      `Missing public extension assets: ${missingFiles.join(", ")}`,
+    );
+  }
+
+  copyFiles(sourceDir, targetDir);
+  if (isDevelopment) updateManifestForDevelopment();
+}
+
+function getBuildOptions(isDevelopment) {
+  const baseUrl = isDevelopment
+    ? "http://localhost:3000"
+    : "https://saveit.now";
+
+  return {
+    entryPoints: [
+      path.join(srcDir, "background.ts"),
+      path.join(srcDir, "content.ts"),
+      path.join(srcDir, "intercept.ts"),
+    ],
+    bundle: true,
+    outdir: targetDir,
+    platform: "browser",
+    minify: !isDevelopment,
+    format: "iife",
+    target: "es2020",
+    loader: { ".ts": "ts" },
+    define: {
+      __BASE_URL__: JSON.stringify(baseUrl),
+      __IS_DEV__: JSON.stringify(isDevelopment),
+    },
+  };
+}
+
+function watchPublicAssets(isDevelopment) {
+  let syncTimer;
+  return fs.watch(sourceDir, { recursive: true }, () => {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      try {
+        syncPublicAssets(isDevelopment);
+        validateBuildOutputs();
+        console.log("Public extension assets updated");
+      } catch (error) {
+        console.error("Public asset update failed", error);
+        process.exit(1);
+      }
+    }, 80);
+  });
+}
+
 async function main() {
-  try {
-    console.log("Starting build process...");
-
-    // Check if --dev flag is passed
-    const isDev = process.argv.includes('--dev');
-
-    // First, copy all files from public to dist
-    console.log("Copying files from public to dist...");
-    copyFiles(sourceDir, targetDir);
-    console.log("Files copied successfully!");
-
-    // Update manifest for development if needed
-    if (isDev) {
-      updateManifestForDev();
-    }
-
-    // Then compile TypeScript
-    console.log("Compiling TypeScript files...");
-    const success = await compileTypeScript();
-
-    if (success) {
-      console.log("Build completed successfully!");
-    } else {
-      console.error("Build completed with errors.");
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error("Build failed:", error);
-    process.exit(1);
+  if (process.argv.includes("--clean-all")) {
+    trashPath(targetDir);
+    trashPath(packageDir);
+    console.log("Extension build artifacts moved to Trash");
+    return;
   }
+
+  const isDevelopment = process.argv.includes("--dev");
+  const shouldWatch = process.argv.includes("--watch");
+  const mode = isDevelopment ? "development" : "production";
+
+  console.log(`Building SaveIt extension for ${mode}`);
+  trashPath(targetDir);
+  syncPublicAssets(isDevelopment);
+
+  if (!shouldWatch) {
+    await build(getBuildOptions(isDevelopment));
+    validateBuildOutputs();
+    console.log("Extension build completed");
+    return;
+  }
+
+  const buildContext = await context(getBuildOptions(isDevelopment));
+  await buildContext.rebuild();
+  validateBuildOutputs();
+  await buildContext.watch();
+  const assetWatcher = watchPublicAssets(isDevelopment);
+  console.log("Watching extension source and public assets");
+
+  const close = async () => {
+    assetWatcher.close();
+    await buildContext.dispose();
+    process.exit(0);
+  };
+  process.once("SIGINT", close);
+  process.once("SIGTERM", close);
 }
 
-main();
+main().catch((error) => {
+  console.error("Extension build failed", error);
+  process.exit(1);
+});

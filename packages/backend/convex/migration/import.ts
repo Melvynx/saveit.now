@@ -225,6 +225,11 @@ export const importUsers = mutation({
 
     for (const user of users) {
       const legacyId: string = String(user.id);
+      const onboardingUpgradeChoice: "free" | "upgrade" | undefined =
+        user.onboardingUpgradeChoice === "free" ||
+        user.onboardingUpgradeChoice === "upgrade"
+          ? user.onboardingUpgradeChoice
+          : undefined;
 
       const convexId: string = await ctx.runMutation(
         components.betterAuth.data.insertUser,
@@ -241,6 +246,9 @@ export const importUsers = mutation({
           banExpires: user.banExpires != null ? toMs(user.banExpires) : null,
           stripeCustomerId: user.stripeCustomerId ?? null,
           onboarding: user.onboarding ?? null,
+          ...(onboardingUpgradeChoice !== undefined
+            ? { onboardingUpgradeChoice }
+            : {}),
           unsubscribed: user.unsubscribed ?? null,
           publicLinkSlug: user.publicLinkSlug ?? null,
           publicLinkEnabled: user.publicLinkEnabled ?? null,

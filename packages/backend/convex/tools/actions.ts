@@ -2,6 +2,7 @@
 import type { ActionCtx } from "../_generated/server";
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { webCorsHeaders } from "../utils/cors";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -44,7 +45,7 @@ async function fetchHtml(ctx: ActionCtx, url: string): Promise<string> {
   return result.body;
 }
 
-function toolErrorResponse(error: unknown): Response {
+function toolErrorResponse(error: unknown, origin: string | null): Response {
   if (error instanceof z.ZodError) {
     return Response.json(
       {
@@ -54,19 +55,20 @@ function toolErrorResponse(error: unknown): Response {
           message: i.message,
         })),
       },
-      { status: 400 },
+      { status: 400, headers: corsHeaders(origin) },
     );
   }
-  const msg = error instanceof Error ? error.message : "Tool request failed";
-  return Response.json({ error: msg }, { status: 400 });
+  console.error("[tools] request failed", error);
+  return Response.json(
+    { error: "Unable to process this URL" },
+    { status: 400, headers: corsHeaders(origin) },
+  );
 }
 
-function corsHeaders(): Record<string, string> {
+function corsHeaders(origin: string | null): Record<string, string> {
   return {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    ...webCorsHeaders(origin),
   };
 }
 
@@ -75,8 +77,9 @@ function corsHeaders(): Record<string, string> {
 // Spec 12 §2.13
 // ---------------------------------------------------------------------------
 export const extractContent = httpAction(async (ctx, request) => {
+  const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   try {
     const body = await request.json();
@@ -179,10 +182,10 @@ export const extractContent = httpAction(async (ctx, request) => {
           ogImageUrl: ogImageUrl ?? null,
         },
       },
-      { headers: corsHeaders() },
+      { headers: corsHeaders(origin) },
     );
   } catch (err) {
-    return toolErrorResponse(err);
+    return toolErrorResponse(err, origin);
   }
 });
 
@@ -191,8 +194,9 @@ export const extractContent = httpAction(async (ctx, request) => {
 // Spec 12 §2.14
 // ---------------------------------------------------------------------------
 export const extractMetadata = httpAction(async (ctx, request) => {
+  const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   try {
     const body = await request.json();
@@ -357,10 +361,10 @@ export const extractMetadata = httpAction(async (ctx, request) => {
         },
         extractedAt: new Date().toISOString(),
       },
-      { headers: corsHeaders() },
+      { headers: corsHeaders(origin) },
     );
   } catch (err) {
-    return toolErrorResponse(err);
+    return toolErrorResponse(err, origin);
   }
 });
 
@@ -416,14 +420,16 @@ async function validateFavicon(
       };
     }
     return { isValid: true, contentType: ct };
-  } catch (e) {
-    return { isValid: false, errorMessage: String(e) };
+  } catch (error) {
+    console.warn("[tools.favicon] validation failed", error);
+    return { isValid: false, errorMessage: "Unable to validate favicon" };
   }
 }
 
 export const extractFavicons = httpAction(async (ctx, request) => {
+  const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   try {
     const body = await request.json();
@@ -551,10 +557,10 @@ export const extractFavicons = httpAction(async (ctx, request) => {
           largestIcon,
         },
       },
-      { headers: corsHeaders() },
+      { headers: corsHeaders(origin) },
     );
   } catch (err) {
-    return toolErrorResponse(err);
+    return toolErrorResponse(err, origin);
   }
 });
 
@@ -563,8 +569,9 @@ export const extractFavicons = httpAction(async (ctx, request) => {
 // Spec 12 §2.16
 // ---------------------------------------------------------------------------
 export const extractOgImages = httpAction(async (ctx, request) => {
+  const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   try {
     const body = await request.json();
@@ -626,10 +633,10 @@ export const extractOgImages = httpAction(async (ctx, request) => {
           },
         },
       },
-      { headers: corsHeaders() },
+      { headers: corsHeaders(origin) },
     );
   } catch (err) {
-    return toolErrorResponse(err);
+    return toolErrorResponse(err, origin);
   }
 });
 
@@ -654,8 +661,9 @@ function parseISO8601Duration(duration: string): string {
 }
 
 export const youtubeMetadata = httpAction(async (_ctx, request) => {
+  const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   try {
     const body = await request.json();
@@ -682,7 +690,7 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
           error:
             "Invalid YouTube URL. Please provide a valid YouTube video URL.",
         },
-        { headers: corsHeaders() },
+        { headers: corsHeaders(origin) },
       );
     }
 
@@ -704,7 +712,7 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
           success: false,
           error: `Failed to fetch YouTube page: ${pageResp.status} ${pageResp.statusText}`,
         },
-        { headers: corsHeaders() },
+        { headers: corsHeaders(origin) },
       );
     }
 
@@ -807,9 +815,9 @@ export const youtubeMetadata = httpAction(async (_ctx, request) => {
           url,
         },
       },
-      { headers: corsHeaders() },
+      { headers: corsHeaders(origin) },
     );
   } catch (err) {
-    return toolErrorResponse(err);
+    return toolErrorResponse(err, origin);
   }
 });

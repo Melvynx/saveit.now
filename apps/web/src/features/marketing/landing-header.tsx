@@ -25,6 +25,7 @@ export const LandingHeader = () => {
 
         <div className="flex items-center gap-3">
           <LandingAppButton
+            authIntent="signin"
             className="font-inter"
             showAlwaysOpenPrompt
             signedOutChildren="Sign In"

@@ -7,8 +7,7 @@ import { internal } from "../_generated/api";
  * `databaseHooks.user.create.after`). Parity with SaveIt's current
  * `onUserCreate`:
  *   1. ensure a Stripe customer (Phase 09)
- *   2. insert the welcome bookmark (Phase 05/06) — wired once bookmarks land
- *   3. schedule the "new-subscriber" marketing drip (Phase 10)
+ *   2. schedule the "new-subscriber" marketing drip (Phase 10)
  *
  * Each downstream piece is scheduled defensively so a missing integration
  * never blocks sign-up.

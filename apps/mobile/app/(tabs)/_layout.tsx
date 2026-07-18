@@ -1,4 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { api } from "@convex/_generated/api";
+import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import {
   Icon,
@@ -20,18 +22,29 @@ export default function TabLayout() {
   const { isAuthenticated, isLoading } = useAuth();
   const colors = useThemeColors();
   const router = useRouter();
+  const flowState = useQuery(
+    api.users.queries.getOnboardingFlowState,
+    isAuthenticated ? {} : "skip",
+  );
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/");
-    }
-  }, [isAuthenticated, isLoading, router]);
+    if (isLoading) return;
 
-  if (isLoading) {
+    if (!isAuthenticated) {
+      router.replace("/");
+      return;
+    }
+
+    if (flowState?.needsOnboarding) {
+      router.replace("/welcome");
+    }
+  }, [flowState?.needsOnboarding, isAuthenticated, isLoading, router]);
+
+  if (isLoading || (isAuthenticated && flowState === undefined)) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || flowState?.needsOnboarding) {
     return <LoadingScreen />;
   }
 
@@ -52,6 +65,25 @@ export default function TabLayout() {
               <VectorIcon family={nativeTabIonicons} name="bookmark-outline" />
             ),
             selected: <VectorIcon family={nativeTabIonicons} name="bookmark" />,
+          }}
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="chat">
+        <Label>Chat</Label>
+        <Icon
+          src={{
+            default: (
+              <VectorIcon
+                family={nativeTabIonicons}
+                name="chatbubble-ellipses-outline"
+              />
+            ),
+            selected: (
+              <VectorIcon
+                family={nativeTabIonicons}
+                name="chatbubble-ellipses"
+              />
+            ),
           }}
         />
       </NativeTabs.Trigger>

@@ -5,7 +5,7 @@
  */
 
 import { cancel, type WorkflowId } from "@convex-dev/workflow";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { authMutation, internalMutation } from "../functions";
 import {
@@ -19,19 +19,39 @@ import {
   assertCanRunProcessing,
   shouldSendLimitEmail,
 } from "../billing/limits";
-import { getLimits, isActiveSubscriptionStatus } from "../billing/plans";
+import { deriveEffectivePlan, getLimits } from "../billing/plans";
 import {
   buildBookmarkDetailDTO,
   type BookmarkDetailDTO,
   type TagInBookmark,
 } from "./dto";
 import { cleanMetadataForStorage } from "../utils/metadata";
+import {
+  extractUniqueImportUrls,
+  summarizeBulkImport,
+  type BulkImportResult,
+} from "./bulkImport";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const READABLE_BOOKMARK_TYPES = ["ARTICLE", "YOUTUBE"] as const;
+const MAX_BOOKMARK_NOTE_LENGTH = 2000;
+
+function assertValidBookmarkNote(note: string | null | undefined): void {
+  if (typeof note === "string" && note.length > MAX_BOOKMARK_NOTE_LENGTH) {
+    throwValidationError(
+      `Bookmark note must be ${MAX_BOOKMARK_NOTE_LENGTH} characters or fewer`,
+    );
+  }
+}
+
+function isExpectedBulkImportFailure(error: unknown): boolean {
+  if (!(error instanceof ConvexError)) return false;
+  const data = error.data as { code?: unknown } | undefined;
+  return data?.code === "VALIDATION_ERROR" || data?.code === "LIMIT_REACHED";
+}
 
 async function resolveTagsForBookmark(
   ctx: { db: { query: Function; get: Function } },
@@ -76,8 +96,9 @@ async function getDetailDTO(
 
 /**
  * Bump or create the userCounters row in the same mutation.
+ * Exported for reuse (e.g. bookmarks/seed.ts).
  */
-async function bumpBookmarkCount(
+export async function bumpBookmarkCount(
   ctx: { db: any },
   userId: string,
   delta: number,
@@ -119,6 +140,7 @@ async function createBookmarkCore(
 ): Promise<BookmarkDetailDTO> {
   // 1. Clean URL.
   const cleanedUrl = assertSafeHttpUrl(cleanUrl(url));
+  assertValidBookmarkNote(note);
 
   // 2. Check limits (total bookmarks + monthly runs).
   await assertCanCreateBookmark(ctx, userId);
@@ -256,6 +278,8 @@ export const update = authMutation({
     if (!doc || doc.userId !== userId) {
       throwNotFound("Bookmark not found");
     }
+
+    assertValidBookmarkNote(args.patch.note);
 
     // Validate read field type guard.
     if (
@@ -458,23 +482,31 @@ export const importBulk = authMutation({
   args: {
     text: v.string(),
   },
-  handler: async (ctx, args): Promise<null> => {
+  handler: async (ctx, args): Promise<BulkImportResult> => {
     const userId = ctx.user.id;
+    const urls = extractUniqueImportUrls(args.text);
 
-    // Extract URLs from text.
-    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-    const urls = Array.from(new Set(args.text.match(urlRegex) ?? []));
-
+    let createdBookmarks = 0;
+    let failedUrls = 0;
     for (const url of urls) {
       try {
         await createBookmarkCore(ctx, userId, url);
-      } catch {
-        // Skip duplicates and limit errors silently for bulk import.
+        createdBookmarks += 1;
+      } catch (error) {
+        // Expected validation/limit failures happen before insert. Unexpected
+        // downstream failures must abort the outer mutation so Convex rolls
+        // back every write instead of returning a misleading success count.
+        if (!isExpectedBulkImportFailure(error)) throw error;
+        failedUrls += 1;
         break;
       }
     }
 
-    return null;
+    return summarizeBulkImport({
+      totalUrls: urls.length,
+      createdBookmarks,
+      failedUrls,
+    });
   },
 });
 
@@ -489,12 +521,12 @@ export const exportCsv = authMutation({
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
       .first();
 
-    const plan =
-      subscription &&
-      isActiveSubscriptionStatus(subscription.status, subscription.provider)
-        ? "pro"
-        : "free";
-    const limits = getLimits(plan);
+    const plan = deriveEffectivePlan(subscription);
+    const dbUser = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId,
+    });
+    const metadata = (dbUser as { metadata?: unknown } | null)?.metadata;
+    const limits = getLimits(plan, metadata);
 
     if (!limits.canExport) {
       throwLimitReached("Export requires a Pro plan");

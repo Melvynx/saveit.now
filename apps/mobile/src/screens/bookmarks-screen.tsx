@@ -260,46 +260,73 @@ export default function BookmarksScreen() {
                 <View className="items-center gap-4 rounded-2xl bg-secondary px-6 py-8">
                   <View className="h-14 w-14 items-center justify-center rounded-2xl bg-primary">
                     <Ionicons
-                      name="bookmark"
+                      name="rocket-outline"
                       size={26}
                       color={colors.primaryForeground}
                     />
                   </View>
                   <Text className="text-center font-sans-bold text-[20px] text-foreground">
-                    Add your first bookmark
+                    Let&apos;s fill your library
                   </Text>
                   <Text className="max-w-[280px] text-center font-sans text-[14px] text-muted-foreground">
-                    Share any link from your browser or apps to save it here
+                    Three quick steps and SaveIt starts working for you.
                   </Text>
                 </View>
 
                 <View className="gap-2.5">
                   <Text variant="section-label" className="mb-1 text-center">
-                    How to save bookmarks
+                    Get started
                   </Text>
                   <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
                     <View className="h-10 w-10 items-center justify-center rounded-xl bg-secondary">
                       <Ionicons
                         name="share-outline"
                         size={18}
-                        color={colors.foreground}
+                        color={colors.primary}
                       />
                     </View>
-                    <Text className="flex-1 font-sans text-[13px] text-muted-foreground">
-                      Tap the share button on any webpage or content
-                    </Text>
+                    <View className="flex-1">
+                      <Text className="font-sans-semibold text-[14px] text-foreground">
+                        Save your first link
+                      </Text>
+                      <Text className="font-sans text-[12.5px] text-muted-foreground">
+                        Tap Share on any page, then pick SaveIt.
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-secondary">
+                      <Ionicons
+                        name="chatbubbles-outline"
+                        size={18}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-sans-semibold text-[14px] text-foreground">
+                        Ask the AI a question
+                      </Text>
+                      <Text className="font-sans text-[12.5px] text-muted-foreground">
+                        Search everything you saved in plain words.
+                      </Text>
+                    </View>
                   </View>
                   <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
                     <View className="h-10 w-10 items-center justify-center rounded-xl bg-secondary">
                       <Ionicons
                         name="globe-outline"
                         size={18}
-                        color={colors.foreground}
+                        color={colors.primary}
                       />
                     </View>
-                    <Text className="flex-1 font-sans text-[13px] text-muted-foreground">
-                      Use our browser extension on desktop
-                    </Text>
+                    <View className="flex-1">
+                      <Text className="font-sans-semibold text-[14px] text-foreground">
+                        Add the browser extension
+                      </Text>
+                      <Text className="font-sans text-[12.5px] text-muted-foreground">
+                        Save from your desktop in one click.
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>

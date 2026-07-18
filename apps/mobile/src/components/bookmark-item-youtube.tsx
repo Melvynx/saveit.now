@@ -1,121 +1,91 @@
-import { type ComponentType } from "react";
-import { Image, Text, useWindowDimensions, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 
 import { type Bookmark } from "../lib/api-client";
+import { useThemeColors } from "../lib/theme";
 import { CardActionButton } from "./bookmark-item";
-
-type YoutubePlayerProps = {
-  height: number;
-  videoId: string;
-  webViewProps?: Record<string, unknown>;
-};
-
-let resolvedYoutubePlayer:
-  | ComponentType<YoutubePlayerProps>
-  | null
-  | undefined;
-
-function getYoutubePlayer() {
-  if (resolvedYoutubePlayer !== undefined) {
-    return resolvedYoutubePlayer;
-  }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const youtubeIframe = require("react-native-youtube-iframe") as {
-      default?: ComponentType<YoutubePlayerProps>;
-    };
-    resolvedYoutubePlayer = youtubeIframe.default ?? null;
-  } catch {
-    resolvedYoutubePlayer = null;
-  }
-
-  return resolvedYoutubePlayer;
-}
+import { YouTubeEmbed } from "./youtube-embed";
 
 interface BookmarkItemYoutubeProps {
   bookmark: Bookmark;
+  onPress: () => void;
   onToggleStar: () => void;
   onToggleRead: () => void;
 }
 
+function BookmarkYoutubeFooter({
+  bookmark,
+  onPress,
+}: Pick<BookmarkItemYoutubeProps, "bookmark" | "onPress">) {
+  const colors = useThemeColors();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open bookmark details: ${bookmark.title || "YouTube video"}`}
+      className="min-h-14 flex-row items-center gap-3 px-4 py-3 active:bg-secondary active:opacity-80"
+    >
+      <View className="flex-1 gap-0.5">
+        <Text
+          numberOfLines={2}
+          className="font-sans-semibold text-[15px] text-foreground"
+        >
+          {bookmark.title || "YouTube video"}
+        </Text>
+        <Text className="font-sans text-[12px] text-muted-foreground">
+          View details
+        </Text>
+      </View>
+      <Ionicons
+        name="chevron-forward"
+        size={17}
+        color={colors.mutedForeground}
+      />
+    </Pressable>
+  );
+}
+
 export function BookmarkItemYoutube({
   bookmark,
+  onPress,
   onToggleStar,
   onToggleRead,
 }: BookmarkItemYoutubeProps) {
   const { width } = useWindowDimensions();
   const youtubeId = bookmark.metadata?.youtubeId;
-  const YoutubePlayer = getYoutubePlayer();
   const playerWidth = width - 48;
-  const playerHeight = Math.round(playerWidth * (9 / 16));
 
   if (!youtubeId) {
     return null;
   }
 
-  if (!YoutubePlayer) {
-    return (
-      <View className="overflow-hidden rounded-2xl border border-border bg-card">
-        <Image
-          source={{
-            uri:
-              bookmark.preview ||
-              `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
-          }}
-          style={{ height: playerHeight, width: "100%" }}
-          resizeMode="cover"
-        />
-        <View className="absolute right-2 top-2 flex-row gap-1.5">
-          <CardActionButton
-            icon={bookmark.starred ? "star" : "star-outline"}
-            color={bookmark.starred ? "#F59E0B" : undefined}
-            onPress={onToggleStar}
-          />
-          <CardActionButton
-            icon={bookmark.read ? "checkmark-circle" : "ellipse-outline"}
-            color={bookmark.read ? "#10B981" : undefined}
-            onPress={onToggleRead}
-          />
-        </View>
-        <View className="px-4 py-3.5">
-          <Text
-            numberOfLines={2}
-            className="font-sans-semibold text-[15px] text-foreground"
-          >
-            {bookmark.title}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View className="overflow-hidden rounded-2xl border border-border bg-card">
-      <YoutubePlayer
-        height={playerHeight}
+      <YouTubeEmbed
         videoId={youtubeId}
-        webViewProps={{
-          scrollEnabled: false,
-          showsVerticalScrollIndicator: false,
-          showsHorizontalScrollIndicator: false,
-          overScrollMode: "never",
-          bounces: false,
-          style: { overflow: "hidden" },
-        }}
+        posterUrl={bookmark.preview}
+        availableWidth={playerWidth}
       />
       <View className="absolute right-2 top-2 flex-row gap-1.5">
         <CardActionButton
           icon={bookmark.starred ? "star" : "star-outline"}
           color={bookmark.starred ? "#F59E0B" : undefined}
+          accessibilityLabel={
+            bookmark.starred ? "Remove bookmark from starred" : "Star bookmark"
+          }
           onPress={onToggleStar}
         />
         <CardActionButton
           icon={bookmark.read ? "checkmark-circle" : "ellipse-outline"}
           color={bookmark.read ? "#10B981" : undefined}
+          accessibilityLabel={
+            bookmark.read ? "Mark bookmark as unread" : "Mark bookmark as read"
+          }
           onPress={onToggleRead}
         />
       </View>
+      <BookmarkYoutubeFooter bookmark={bookmark} onPress={onPress} />
     </View>
   );
 }

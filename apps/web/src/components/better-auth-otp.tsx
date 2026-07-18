@@ -20,9 +20,11 @@ export type OtpFormProps<T> = {
   defaultEmail?: string;
   initialStep?: Step;
   resendCooldown?: number;
+  submitLabel?: string;
+  submittingLabel?: string;
   variant?: "default" | "split";
   onStepChange?: (state: { step: Step; email: string }) => void;
-  onSuccess?: (result: T) => void;
+  onSuccess?: (result: T) => void | Promise<void>;
   onError?: (error: string) => void;
 };
 
@@ -34,6 +36,8 @@ export function OtpForm<T>({
   defaultEmail = "",
   initialStep = "email",
   resendCooldown = 60,
+  submitLabel = "Send code",
+  submittingLabel = "Sending...",
   variant = "default",
   onStepChange,
   onSuccess,
@@ -66,7 +70,7 @@ export function OtpForm<T>({
     setIsLoading(true);
     try {
       const result = await verifyOtp(email, otp);
-      onSuccess?.(result);
+      await onSuccess?.(result);
     } catch (error) {
       onError?.(error instanceof Error ? error.message : "Invalid OTP");
       // Reset the OTP input on error
@@ -140,7 +144,7 @@ export function OtpForm<T>({
                   disabled={isLoading}
                   className={cn("w-full", isSplit && "h-11 rounded-lg")}
                 >
-                  {isLoading ? "Sending..." : "Send code"}
+                  {isLoading ? submittingLabel : submitLabel}
                 </Button>
               </form>
             </motion.div>

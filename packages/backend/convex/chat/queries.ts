@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
+import { deriveEffectivePlan } from "../billing/plans";
 import { authQuery } from "../functions";
 import { startOfMonth } from "./usage";
 import type { Doc } from "../_generated/dataModel";
@@ -168,12 +169,11 @@ export const getChatUsage = authQuery({
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(10);
-    const subscription =
-      allSubs.find(
-        (s) => s.status === "active" || s.status === "trialing",
-      ) ?? null;
-
-    const plan = (subscription?.plan ?? "free") as "free" | "pro";
+    const plan = allSubs.some(
+      (subscription) => deriveEffectivePlan(subscription) === "pro",
+    )
+      ? "pro"
+      : "free";
 
     // Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
@@ -189,11 +189,7 @@ export const getChatUsage = authQuery({
 
     let limit: number = baseLimits[plan];
 
-    if (
-      metadata &&
-      typeof metadata === "object" &&
-      !Array.isArray(metadata)
-    ) {
+    if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
       const customLimits = (metadata as { customLimits?: unknown })
         .customLimits;
       if (
@@ -201,9 +197,8 @@ export const getChatUsage = authQuery({
         typeof customLimits === "object" &&
         !Array.isArray(customLimits)
       ) {
-        const customMonthly = (
-          customLimits as { monthlyChatQueries?: unknown }
-        ).monthlyChatQueries;
+        const customMonthly = (customLimits as { monthlyChatQueries?: unknown })
+          .monthlyChatQueries;
         if (
           typeof customMonthly === "number" &&
           Number.isFinite(customMonthly) &&
@@ -246,9 +241,7 @@ export const getConversationsWithLikes = internalQuery({
     // Collect all conversations — we filter in-memory since there is no
     // index on `likes`. The admin dataset is small enough for this to be safe.
     const all = await ctx.db.query("chatConversations").take(500);
-    return all
-      .filter((c) => c.likes !== 0)
-      .sort((a, b) => b.likes - a.likes);
+    return all.filter((c) => c.likes !== 0).sort((a, b) => b.likes - a.likes);
   },
 });
 

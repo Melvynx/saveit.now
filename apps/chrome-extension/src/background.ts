@@ -1,68 +1,72 @@
-// This background script can handle authentication events and communication
-// between the extension and the SaveIt Now website
-import { getSession, saveBookmark, uploadScreenshot } from "./auth-client";
+import {
+  getSessionResult,
+  saveBookmark,
+  uploadScreenshot,
+} from "./auth-client";
 import { config } from "./config";
+import {
+  type CaptureResult,
+  parseRuntimeRequest,
+  type RuntimeRequest,
+  type RuntimeRequestFor,
+  type RuntimeRequestType,
+  type RuntimeResponse,
+  type RuntimeResponseFor,
+  type TabSaveMessage,
+  type UploadResult,
+} from "./protocol";
+import { isSameDocumentUrl, isSaveableUrl } from "./url-policy";
 
-// Menu contextuel IDs
 const CONTEXT_MENU_SAVE_PAGE = "saveit-save-page";
 const CONTEXT_MENU_SAVE_LINK = "saveit-save-link";
 const CONTEXT_MENU_SAVE_IMAGE = "saveit-save-image";
-const SAVEABLE_PAGE_PROTOCOLS = new Set(["http:", "https:"]);
-
-type SaveMessage = {
-  action: "saveBookmark";
-  type: "page" | "link" | "image";
-  url?: string;
-};
+const tabDeliveryQueues = new Map<number, Promise<void>>();
 
 type TabSaveTarget = {
   tabId: number;
   url: string;
 };
 
-function isSaveablePageUrl(url: string | undefined): url is string {
-  if (!url) return false;
-
-  try {
-    return SAVEABLE_PAGE_PROTOCOLS.has(new URL(url).protocol);
-  } catch {
-    return false;
-  }
-}
-
-function openSaveItApp() {
-  chrome.tabs.create({ url: new URL("/app", config.BASE_URL).toString() });
+function openSaveItPath(path: "/app" | "/signin" | "/upgrade"): void {
+  void chrome.tabs.create({ url: new URL(path, config.BASE_URL).toString() });
 }
 
 function getTabSaveTarget(tab: chrome.tabs.Tab): TabSaveTarget | null {
-  if (typeof tab.id !== "number" || !isSaveablePageUrl(tab.url)) return null;
-
-  return {
-    tabId: tab.id,
-    url: tab.url,
-  };
+  if (typeof tab.id !== "number" || !isSaveableUrl(tab.url)) return null;
+  return { tabId: tab.id, url: tab.url };
 }
 
-function sendMessageToTab(tabId: number, message: SaveMessage): Promise<boolean> {
+function isDeliveryAcknowledgement(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    (value.status === "received" ||
+      value.status === "queued" ||
+      value.status === "duplicate")
+  );
+}
+
+function sendMessageToTab(
+  tabId: number,
+  message: TabSaveMessage,
+): Promise<boolean> {
   return new Promise((resolve) => {
     try {
-      chrome.tabs.sendMessage(tabId, message, () => {
-        resolve(!chrome.runtime.lastError);
+      chrome.tabs.sendMessage(tabId, message, (response: unknown) => {
+        resolve(
+          !chrome.runtime.lastError && isDeliveryAcknowledgement(response),
+        );
       });
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch {
       resolve(false);
     }
   });
 }
 
-function waitForContentScriptRegistration() {
-  return new Promise((resolve) => setTimeout(resolve, 100));
-}
-
-async function sendSaveMessageToTab(
+async function deliverSaveMessageToTab(
   tabId: number,
-  message: SaveMessage,
+  message: TabSaveMessage,
 ): Promise<boolean> {
   if (await sendMessageToTab(tabId, message)) return true;
 
@@ -71,220 +75,329 @@ async function sendSaveMessageToTab(
       target: { tabId },
       files: ["content.js"],
     });
-    await chrome.scripting.insertCSS({
-      target: { tabId },
-      files: ["content.css"],
-    });
-    await waitForContentScriptRegistration();
-  } catch (err) {
-    console.error("Failed to inject content script:", err);
+  } catch (error) {
+    console.error("SaveIt could not run on this page", error);
     return false;
   }
 
-  const delivered = await sendMessageToTab(tabId, message);
-  if (!delivered) {
-    console.error("Failed to send message after content script injection");
-  }
-  return delivered;
+  return sendMessageToTab(tabId, message);
 }
 
-// Listen for installation
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("SaveIt Now extension installed");
+function sendSaveMessageToTab(
+  tabId: number,
+  message: TabSaveMessage,
+): Promise<boolean> {
+  const previousDelivery = tabDeliveryQueues.get(tabId) ?? Promise.resolve();
+  const delivery = previousDelivery
+    .catch(() => undefined)
+    .then(() => deliverSaveMessageToTab(tabId, message));
+  const queueTail = delivery.then(
+    () => undefined,
+    () => undefined,
+  );
+  tabDeliveryQueues.set(tabId, queueTail);
+  void queueTail.finally(() => {
+    if (tabDeliveryQueues.get(tabId) === queueTail) {
+      tabDeliveryQueues.delete(tabId);
+    }
+  });
+  return delivery;
+}
 
-  // Create context menus
+async function createContextMenus(): Promise<void> {
+  await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: CONTEXT_MENU_SAVE_PAGE,
-    title: "Save this page",
+    title: "Save this page to SaveIt",
     contexts: ["page"],
   });
-
+  chrome.contextMenus.create({
+    id: CONTEXT_MENU_SAVE_LINK,
+    title: "Save this link to SaveIt",
+    contexts: ["link"],
+  });
   chrome.contextMenus.create({
     id: CONTEXT_MENU_SAVE_IMAGE,
-    title: "Save this image",
+    title: "Save this image to SaveIt",
     contexts: ["image"],
+  });
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  void createContextMenus().catch((error) => {
+    console.error("SaveIt could not create its context menus", error);
   });
 });
 
-// Gérer les clics sur les menus contextuels
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (typeof tab?.id !== "number") return;
 
-  const tabId = tab.id;
-
-  const sendMessageWithInjection = (message: SaveMessage) => {
-    void sendSaveMessageToTab(tabId, message);
-  };
-
+  let type: TabSaveMessage["type"];
+  let url: unknown;
   switch (info.menuItemId) {
     case CONTEXT_MENU_SAVE_PAGE:
-      sendMessageWithInjection({
-        action: "saveBookmark",
-        type: "page",
-        url: info.pageUrl,
-      });
+      type = "page";
+      url = info.pageUrl ?? tab.url;
       break;
-
     case CONTEXT_MENU_SAVE_LINK:
-      sendMessageWithInjection({
-        action: "saveBookmark",
-        type: "link",
-        url: info.linkUrl,
-      });
+      type = "link";
+      url = info.linkUrl;
       break;
-
     case CONTEXT_MENU_SAVE_IMAGE:
-      sendMessageWithInjection({
-        action: "saveBookmark",
-        type: "image",
-        url: info.srcUrl,
-      });
+      type = "image";
+      url = info.srcUrl;
       break;
-  }
-});
-
-// Handle messages from content scripts
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "saveBookmark") {
-    // Forward to content script to show UI
-    if (sender.tab?.id) {
-      chrome.tabs.sendMessage(sender.tab.id, { action: "showSaveUI" });
-    }
-    sendResponse({ status: "received" });
-  }
-
-  if (message.type === "GET_SESSION") {
-    // Handle session request from content script
-    getSession()
-      .then((session) => {
-        console.log("Background: Session obtained", session);
-        sendResponse({ session });
-      })
-      .catch((error) => {
-        console.error("Background: Session error", error);
-        sendResponse({ session: null, error: error?.message });
-      });
-    return true; // Indicates async response
-  }
-
-  if (message.type === "SAVE_BOOKMARK") {
-    // Handle bookmark save request from content script
-    const url = message.url;
-    const itemType = message.itemType || "page"; // page, link, image
-    const transcript = message.transcript;
-    const metadata = message.metadata;
-
-    console.log("Background: SAVE_BOOKMARK request", {
-      url,
-      itemType,
-      hasTranscript: !!transcript,
-      transcriptLength: transcript?.length,
-      metadata,
-    });
-
-    saveBookmark(url, transcript, metadata)
-      .then((result) => {
-        console.log(`Background: ${itemType} save result`, result);
-        sendResponse({ ...result, itemType });
-      })
-      .catch((error) => {
-        console.error(`Background: ${itemType} save error`, error);
-
-        // If it's already an object with error info, use it directly
-        if (error && typeof error === "object" && error.success === false) {
-          sendResponse({ ...error, itemType });
-        } else {
-          // Fallback for unexpected errors
-          sendResponse({
-            success: false,
-            error: error?.message || "Failed to save bookmark",
-            errorType: "UNKNOWN",
-            itemType,
-          });
-        }
-      });
-    return true; // Indicates async response
-  }
-
-  if (message.type === "CAPTURE_SCREENSHOT") {
-    // Handle screenshot capture request from content script
-    if (sender.tab?.id) {
-      chrome.tabs.captureVisibleTab(
-        sender.tab.windowId,
-        { format: "png" },
-        (screenshotDataUrl) => {
-          if (chrome.runtime.lastError) {
-            sendResponse({
-              success: false,
-              error: chrome.runtime.lastError.message,
-            });
-          } else {
-            sendResponse({
-              success: true,
-              screenshotDataUrl,
-            });
-          }
-        }
-      );
-    } else {
-      sendResponse({
-        success: false,
-        error: "No active tab found",
-      });
-    }
-    return true; // Indicates async response
-  }
-
-  if (message.type === "UPLOAD_SCREENSHOT") {
-    // Handle screenshot upload request from content script
-
-    if (!message.bookmarkId || !message.screenshotDataUrl) {
-      sendResponse({
-        success: false,
-        error: "Missing bookmark ID or screenshot data URL"
-      });
+    default:
       return;
-    }
-
-    // Convert data URL to blob
-    fetch(message.screenshotDataUrl)
-      .then(res => res.blob())
-      .then(blob => uploadScreenshot(message.bookmarkId, blob))
-      .then(result => sendResponse(result))
-      .catch(error => {
-        sendResponse({
-          success: false,
-          error: error?.message || "Failed to upload screenshot"
-        });
-      });
-    
-    return true; // Indicates async response
   }
-});
 
-// Listen for auth events
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "local" && changes.authSession) {
-    // Auth session changed
-  }
-});
-
-// Écouter le clic sur l'icône de l'extension dans la barre d'outils
-chrome.action.onClicked.addListener(async (tab) => {
-  const target = getTabSaveTarget(tab);
-
-  if (!target) {
-    openSaveItApp();
+  if (!isSaveableUrl(url)) {
+    openSaveItPath("/app");
     return;
   }
 
-  const message: SaveMessage = {
+  void sendSaveMessageToTab(tab.id, {
+    action: "saveBookmark",
+    type,
+    url,
+  }).then((delivered) => {
+    if (!delivered) openSaveItPath("/app");
+  });
+});
+
+function queryActiveTab(windowId: number): Promise<chrome.tabs.Tab | null> {
+  return chrome.tabs
+    .query({ active: true, windowId })
+    .then((tabs) => tabs[0] ?? null);
+}
+
+function captureVisibleTab(windowId: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.captureVisibleTab(
+      windowId,
+      { format: "jpeg", quality: 85 },
+      (screenshotDataUrl) => {
+        const captureError = chrome.runtime.lastError;
+        if (captureError || !screenshotDataUrl) {
+          reject(
+            new Error(captureError?.message ?? "Chrome returned no image"),
+          );
+          return;
+        }
+        resolve(screenshotDataUrl);
+      },
+    );
+  });
+}
+
+async function captureSenderTab(
+  sender: chrome.runtime.MessageSender,
+  expectedPageUrl: string,
+): Promise<CaptureResult> {
+  const expectedTabId = sender.tab?.id;
+  const windowId = sender.tab?.windowId;
+  if (typeof expectedTabId !== "number" || typeof windowId !== "number") {
+    return {
+      success: false,
+      error: "No active tab found.",
+      errorType: "NO_ACTIVE_TAB",
+    };
+  }
+  if (sender.url && !isSameDocumentUrl(sender.url, expectedPageUrl)) {
+    return {
+      success: false,
+      error: "The page changed before the preview request reached Chrome.",
+      errorType: "TAB_CHANGED",
+    };
+  }
+
+  let tabChanged = false;
+  const activationListener = (activeInfo: chrome.tabs.TabActiveInfo) => {
+    if (
+      activeInfo.windowId === windowId &&
+      activeInfo.tabId !== expectedTabId
+    ) {
+      tabChanged = true;
+    }
+  };
+  const updateListener = (
+    tabId: number,
+    changeInfo: chrome.tabs.TabChangeInfo,
+  ) => {
+    if (tabId === expectedTabId && typeof changeInfo.url === "string") {
+      tabChanged = true;
+    }
+  };
+
+  chrome.tabs.onActivated.addListener(activationListener);
+  chrome.tabs.onUpdated.addListener(updateListener);
+  try {
+    const activeBefore = await queryActiveTab(windowId);
+    if (
+      activeBefore?.id !== expectedTabId ||
+      (activeBefore.url &&
+        !isSameDocumentUrl(activeBefore.url, expectedPageUrl))
+    ) {
+      return {
+        success: false,
+        error: "The active tab changed before the preview was captured.",
+        errorType: "TAB_CHANGED",
+      };
+    }
+
+    const screenshotDataUrl = await captureVisibleTab(windowId);
+    const activeAfter = await queryActiveTab(windowId);
+    if (
+      tabChanged ||
+      activeAfter?.id !== expectedTabId ||
+      (activeAfter.url && !isSameDocumentUrl(activeAfter.url, expectedPageUrl))
+    ) {
+      return {
+        success: false,
+        error: "The active tab changed while the preview was being captured.",
+        errorType: "TAB_CHANGED",
+      };
+    }
+
+    return { success: true, screenshotDataUrl };
+  } catch {
+    return {
+      success: false,
+      error: "Chrome could not capture this tab.",
+      errorType: "CAPTURE_FAILED",
+    };
+  } finally {
+    chrome.tabs.onActivated.removeListener(activationListener);
+    chrome.tabs.onUpdated.removeListener(updateListener);
+  }
+}
+
+async function uploadScreenshotFromDataUrl(
+  bookmarkId: string,
+  screenshotDataUrl: string,
+): Promise<UploadResult> {
+  try {
+    const response = await fetch(screenshotDataUrl);
+    if (!response.ok) {
+      return {
+        success: false,
+        error: "The preview image could not be decoded.",
+        errorType: "INVALID_FILE",
+      };
+    }
+    return uploadScreenshot(bookmarkId, await response.blob());
+  } catch {
+    return {
+      success: false,
+      error: "The preview image could not be decoded.",
+      errorType: "INVALID_FILE",
+    };
+  }
+}
+
+async function handleRuntimeRequest<T extends RuntimeRequestType>(
+  message: RuntimeRequestFor<T>,
+  sender: chrome.runtime.MessageSender,
+): Promise<RuntimeResponseFor<T>> {
+  let response: RuntimeResponse;
+  switch (message.type) {
+    case "GET_SESSION":
+      response = await getSessionResult();
+      break;
+    case "SAVE_BOOKMARK":
+      if (!isSaveableUrl(message.url)) {
+        response = {
+          success: false,
+          error: "This URL cannot be saved by the extension.",
+          errorType: "UNKNOWN",
+        };
+        break;
+      }
+      response = await saveBookmark(
+        message.url,
+        message.transcript,
+        message.metadata,
+      );
+      break;
+    case "CAPTURE_SCREENSHOT":
+      response = await captureSenderTab(sender, message.expectedPageUrl);
+      break;
+    case "UPLOAD_SCREENSHOT":
+      response = await uploadScreenshotFromDataUrl(
+        message.bookmarkId,
+        message.screenshotDataUrl,
+      );
+      break;
+    case "OPEN_SAVEIT":
+      openSaveItPath(message.path);
+      response = { success: true };
+      break;
+  }
+  return response as RuntimeResponseFor<T>;
+}
+
+function unexpectedResponse(message: RuntimeRequest): RuntimeResponse {
+  switch (message.type) {
+    case "GET_SESSION":
+      return {
+        session: null,
+        error: "SaveIt is unreachable. Check your connection and try again.",
+        errorType: "NETWORK_ERROR",
+      };
+    case "SAVE_BOOKMARK":
+      return {
+        success: false,
+        error: "SaveIt could not save this bookmark.",
+        errorType: "SERVER_ERROR",
+      };
+    case "CAPTURE_SCREENSHOT":
+      return {
+        success: false,
+        error: "Chrome could not capture this tab.",
+        errorType: "CAPTURE_FAILED",
+      };
+    case "UPLOAD_SCREENSHOT":
+      return {
+        success: false,
+        error: "SaveIt could not upload this preview.",
+        errorType: "SERVER_ERROR",
+      };
+    case "OPEN_SAVEIT":
+      return {
+        success: false,
+        error: "SaveIt could not open the requested page.",
+        errorType: "UNKNOWN",
+      };
+  }
+}
+
+chrome.runtime.onMessage.addListener(
+  (rawMessage: unknown, sender, sendResponse) => {
+    if (sender.id !== chrome.runtime.id) return false;
+    const message = parseRuntimeRequest(rawMessage);
+    if (!message) return false;
+
+    void handleRuntimeRequest(message, sender)
+      .then(sendResponse)
+      .catch(() => {
+        sendResponse(unexpectedResponse(message));
+      });
+    return true;
+  },
+);
+
+chrome.action.onClicked.addListener((tab) => {
+  const target = getTabSaveTarget(tab);
+  if (!target) {
+    openSaveItPath("/app");
+    return;
+  }
+
+  void sendSaveMessageToTab(target.tabId, {
     action: "saveBookmark",
     type: "page",
     url: target.url,
-  };
-
-  if (!(await sendSaveMessageToTab(target.tabId, message))) {
-    openSaveItApp();
-  }
+  }).then((delivered) => {
+    if (!delivered) openSaveItPath("/app");
+  });
 });

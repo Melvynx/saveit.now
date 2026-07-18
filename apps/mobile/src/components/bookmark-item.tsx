@@ -19,10 +19,12 @@ interface BookmarkItemProps {
 export function CardActionButton({
   icon,
   color,
+  accessibilityLabel,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   color?: string;
+  accessibilityLabel?: string;
   onPress: () => void;
 }) {
   const colors = useThemeColors();
@@ -33,7 +35,9 @@ export function CardActionButton({
         onPress();
       }}
       hitSlop={6}
-      className="h-9 w-9 items-center justify-center rounded-full border border-border bg-background active:opacity-70"
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      className="h-9 w-9 items-center justify-center rounded-full border border-border bg-background active:scale-[0.96] active:opacity-70"
     >
       <Ionicons name={icon} size={15} color={color ?? colors.mutedForeground} />
     </Pressable>
@@ -61,6 +65,7 @@ export function BookmarkItem({
     return (
       <BookmarkItemYoutube
         bookmark={bookmark}
+        onPress={onPress}
         onToggleStar={onToggleStar}
         onToggleRead={onToggleRead}
       />
@@ -107,6 +112,8 @@ function BookmarkItemPage({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open bookmark: ${bookmark.title || domainName}`}
       className="overflow-hidden rounded-2xl border border-border bg-card active:opacity-90"
     >
       <View className="relative">
@@ -119,12 +126,22 @@ function BookmarkItemPage({
           <CardActionButton
             icon={bookmark.starred ? "star" : "star-outline"}
             color={bookmark.starred ? "#F59E0B" : undefined}
+            accessibilityLabel={
+              bookmark.starred
+                ? "Remove bookmark from starred"
+                : "Star bookmark"
+            }
             onPress={onToggleStar}
           />
           {(bookmark.type === "ARTICLE" || bookmark.type === "YOUTUBE") && (
             <CardActionButton
               icon={bookmark.read ? "checkmark-circle" : "ellipse-outline"}
               color={bookmark.read ? "#10B981" : undefined}
+              accessibilityLabel={
+                bookmark.read
+                  ? "Mark bookmark as unread"
+                  : "Mark bookmark as read"
+              }
               onPress={onToggleRead}
             />
           )}

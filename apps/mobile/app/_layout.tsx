@@ -119,7 +119,14 @@ function RootLayoutNav() {
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="welcome"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
         <Stack.Screen
           name="account"
           options={{ presentation: "modal", headerShown: false }}
@@ -131,7 +138,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="bookmark/[id]"
           options={{
-            presentation: "modal",
+            presentation: "transparentModal",
+            animation: "fade",
+            contentStyle: { backgroundColor: "transparent" },
+            gestureEnabled: false,
             headerShown: false,
           }}
         />

@@ -1,9 +1,11 @@
 import {
+  deriveEffectivePlan,
   getLimits as getPlansLimits,
-  isActiveSubscriptionStatus,
   parseCustomLimits,
 } from "../billing/plans";
+import { components } from "../_generated/api";
 import { authQuery } from "../functions";
+import { deriveOnboardingFlowState } from "./onboarding";
 
 /**
  * getLimits — authQuery
@@ -25,12 +27,12 @@ export const getLimits = authQuery({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
-    const plan: "free" | "pro" =
-      sub && isActiveSubscriptionStatus(sub.status ?? null, sub.provider)
-        ? "pro"
-        : "free";
+    const plan = deriveEffectivePlan(sub);
 
-    const metadata = (ctx.user as { metadata?: unknown }).metadata;
+    const dbUser = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId,
+    });
+    const metadata = (dbUser as { metadata?: unknown } | null)?.metadata;
     const limits = getPlansLimits(plan, metadata);
     const customLimits = parseCustomLimits(metadata);
 
@@ -60,5 +62,22 @@ export const getLimits = authQuery({
       }>,
       subscription,
     };
+  },
+});
+
+/** One reactive snapshot for routing the authenticated onboarding flow. */
+export const getOnboardingFlowState = authQuery({
+  args: {},
+  handler: async (ctx) => {
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", ctx.user.id))
+      .first();
+
+    return deriveOnboardingFlowState({
+      onboarding: ctx.user.onboarding,
+      offerChoice: ctx.user.onboardingUpgradeChoice,
+      effectivePlan: deriveEffectivePlan(subscription),
+    });
   },
 });

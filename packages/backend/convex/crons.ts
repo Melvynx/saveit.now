@@ -198,4 +198,11 @@ crons.cron(
   {},
 );
 
+crons.cron(
+  "emailOtpRateLimitCleanup",
+  "15 * * * *",
+  internal.auth.rateLimit.cleanupEmailOtpRateLimits,
+  {},
+);
+
 export default crons;

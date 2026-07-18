@@ -60,6 +60,8 @@ export default defineSchema({
     processingError: v.optional(v.string()),
     // @convex-dev/workflow run id — lets deletion cancel an in-flight run
     workflowId: v.optional(v.string()),
+    // Seeded onboarding example — pre-enriched, never runs the AI pipeline.
+    isExample: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -211,4 +213,16 @@ export default defineSchema({
     userId: v.string(),
     version: v.string(),
   }).index("by_user_version", ["userId", "version"]),
+
+  // Abuse control for public email-OTP sends. Email addresses are hashed before
+  // they reach this table so the limiter does not create a second PII store.
+  authEmailOtpRateLimits: defineTable({
+    emailHash: v.string(),
+    lastSentAt: v.number(),
+    windowStartedAt: v.number(),
+    windowCount: v.number(),
+    expiresAt: v.number(),
+  })
+    .index("by_email_hash", ["emailHash"])
+    .index("by_expires_at", ["expiresAt"]),
 });

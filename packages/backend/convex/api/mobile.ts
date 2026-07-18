@@ -4,7 +4,8 @@ import { v } from "convex/values";
 import Stripe from "stripe";
 import { components, internal } from "../_generated/api";
 import { authAction } from "../functions";
-import { throwConfigurationError } from "../utils/errors";
+import { throwConfigurationError, throwValidationError } from "../utils/errors";
+import { createOrReuseProCheckoutSession } from "../stripe/checkout";
 
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -21,6 +22,15 @@ export const createCheckout = authAction({
     cancelUrl: v.string(),
   },
   handler: async (ctx, args): Promise<{ checkoutUrl: string }> => {
+    const userId = ctx.user.id;
+    const effectivePlan: "free" | "pro" = await ctx.runQuery(
+      internal.subscriptions.helpers.getEffectivePlanForUser,
+      { userId },
+    );
+    if (effectivePlan === "pro") {
+      throwValidationError("Your Pro plan is already active");
+    }
+
     const monthlyPriceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
     const yearlyPriceId = process.env.STRIPE_PRO_YEARLY_PRICE_ID;
 
@@ -30,7 +40,6 @@ export const createCheckout = authAction({
       );
     }
 
-    const userId = ctx.user.id;
     let stripeCustomerId = ctx.user.stripeCustomerId ?? null;
 
     if (!stripeCustomerId) {
@@ -42,36 +51,22 @@ export const createCheckout = authAction({
       stripeCustomerId = refreshed?.stripeCustomerId ?? null;
     }
 
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId ?? undefined,
-      customer_email: stripeCustomerId ? undefined : ctx.user.email,
-      mode: "subscription",
-      line_items: [
-        {
-          price: args.annual ? yearlyPriceId : monthlyPriceId,
-          quantity: 1,
-        },
-      ],
-      success_url: args.successUrl,
-      cancel_url: args.cancelUrl,
-      allow_promotion_codes: true,
-      metadata: {
-        userId,
-        plan: "pro",
-      },
-      subscription_data: {
-        metadata: {
-          userId,
-          plan: "pro",
-        },
-      },
-    });
-
-    if (!session.url) {
-      throwConfigurationError("Stripe did not return a checkout URL");
+    if (!stripeCustomerId) {
+      throwConfigurationError(
+        "Could not obtain a Stripe customer ID for this user",
+      );
     }
 
+    const stripe = getStripe();
+    const priceId = args.annual ? yearlyPriceId : monthlyPriceId;
+    const session = await createOrReuseProCheckoutSession({
+      stripe,
+      stripeCustomerId,
+      userId,
+      priceId,
+      successUrl: args.successUrl,
+      cancelUrl: args.cancelUrl,
+    });
     return { checkoutUrl: session.url };
   },
 });

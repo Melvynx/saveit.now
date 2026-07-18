@@ -1,6 +1,7 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { preserveFirstOnboardingUpgradeChoice } from "./onboarding";
 
 /**
  * Internal helpers (run INSIDE the betterAuth component) to read/patch the
@@ -9,6 +10,10 @@ import type { Doc } from "./_generated/dataModel";
  */
 
 const MAX_AUTH_ROWS = 500;
+const onboardingUpgradeChoiceValidator = v.union(
+  v.literal("free"),
+  v.literal("upgrade"),
+);
 
 const includesSearch = (value: unknown, search: string) =>
   String(value ?? "")
@@ -95,6 +100,9 @@ export const patchUser = mutationGeneric({
     update: v.object({
       stripeCustomerId: v.optional(v.union(v.string(), v.null())),
       onboarding: v.optional(v.boolean()),
+      onboardingUpgradeChoice: v.optional(
+        v.union(onboardingUpgradeChoiceValidator, v.null()),
+      ),
       unsubscribed: v.optional(v.boolean()),
       publicLinkSlug: v.optional(v.union(v.string(), v.null())),
       publicLinkEnabled: v.optional(v.boolean()),
@@ -123,6 +131,42 @@ export const patchUser = mutationGeneric({
   },
 });
 
+/**
+ * Complete onboarding atomically inside the Better Auth component. The first
+ * recorded offer choice is immutable history and never controls entitlement.
+ */
+export const completeOnboarding = mutationGeneric({
+  args: {
+    userId: v.string(),
+    offerChoice: v.optional(onboardingUpgradeChoiceValidator),
+  },
+  handler: async (ctx, args) => {
+    const id = ctx.db.normalizeId("user", args.userId);
+    if (!id) return null;
+
+    const user = await ctx.db.get(id);
+    if (!user) return null;
+
+    const update: Partial<Doc<"user">> = {
+      onboarding: true,
+      updatedAt: Date.now(),
+    };
+    const preservedChoice = preserveFirstOnboardingUpgradeChoice(
+      user.onboardingUpgradeChoice,
+      args.offerChoice,
+    );
+    if (
+      preservedChoice !== null &&
+      preservedChoice !== user.onboardingUpgradeChoice
+    ) {
+      update.onboardingUpgradeChoice = preservedChoice;
+    }
+
+    await ctx.db.patch(id, update);
+    return ctx.db.get(id);
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Migration helpers — called from convex/migration/import.ts via
 // ctx.runMutation(components.betterAuth.data.insertUser, {...})
@@ -147,6 +191,9 @@ export const insertUser = mutationGeneric({
     banExpires: v.optional(v.union(v.null(), v.number())),
     stripeCustomerId: v.optional(v.union(v.null(), v.string())),
     onboarding: v.optional(v.union(v.null(), v.boolean())),
+    onboardingUpgradeChoice: v.optional(
+      v.union(v.null(), onboardingUpgradeChoiceValidator),
+    ),
     unsubscribed: v.optional(v.union(v.null(), v.boolean())),
     publicLinkSlug: v.optional(v.union(v.null(), v.string())),
     publicLinkEnabled: v.optional(v.union(v.null(), v.boolean())),
@@ -170,6 +217,9 @@ export const insertUser = mutationGeneric({
         banExpires: args.banExpires ?? null,
         stripeCustomerId: args.stripeCustomerId ?? null,
         onboarding: args.onboarding ?? null,
+        ...(args.onboardingUpgradeChoice !== undefined
+          ? { onboardingUpgradeChoice: args.onboardingUpgradeChoice }
+          : {}),
         unsubscribed: args.unsubscribed ?? null,
         publicLinkSlug: args.publicLinkSlug ?? null,
         publicLinkEnabled: args.publicLinkEnabled ?? null,
@@ -191,6 +241,9 @@ export const insertUser = mutationGeneric({
       banExpires: args.banExpires ?? null,
       stripeCustomerId: args.stripeCustomerId ?? null,
       onboarding: args.onboarding ?? null,
+      ...(args.onboardingUpgradeChoice !== undefined
+        ? { onboardingUpgradeChoice: args.onboardingUpgradeChoice }
+        : {}),
       unsubscribed: args.unsubscribed ?? null,
       publicLinkSlug: args.publicLinkSlug ?? null,
       publicLinkEnabled: args.publicLinkEnabled ?? null,

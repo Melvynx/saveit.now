@@ -23,7 +23,8 @@ export default function CatchAllPage() {
       router.replace("/share-handler");
     } else if (isReady) {
       hasNavigated.current = true;
-      router.replace("/(tabs)");
+      // Let the root route make the canonical auth/onboarding decision.
+      router.replace("/");
     }
   }, [hasShareIntent, isReady, params.slug, router]);
 

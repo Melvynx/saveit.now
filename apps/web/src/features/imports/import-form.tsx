@@ -36,7 +36,10 @@ const Schema = z.object({
 type ImportFormValues = z.infer<typeof Schema>;
 
 type ImportResult = {
+  attemptedUrls: number;
   createdBookmarks: number;
+  failedUrls: number;
+  notAttemptedUrls: number;
   totalUrls: number;
 };
 
@@ -82,24 +85,36 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
       return;
     }
 
-    const urls = extractUrlsFromText(validation.data.text);
-
     setIsImporting(true);
     try {
-      await importBulk({ text: validation.data.text });
+      const importResult = await importBulk({ text: validation.data.text });
 
       trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARKS_IMPORTED, {
-        bookmark_count: urls.length,
+        bookmark_count: importResult.createdBookmarks,
       });
 
-      const importResult: ImportResult = {
-        createdBookmarks: urls.length,
-        totalUrls: urls.length,
-      };
-
-      toast.success(
-        `Imported ${urls.length} bookmark${urls.length !== 1 ? "s" : ""}`,
-      );
+      const createdLabel = `${importResult.createdBookmarks} bookmark${
+        importResult.createdBookmarks === 1 ? "" : "s"
+      }`;
+      if (importResult.failedUrls > 0 || importResult.notAttemptedUrls > 0) {
+        const details = [
+          importResult.failedUrls > 0
+            ? `${importResult.failedUrls} attempted ${
+                importResult.failedUrls === 1 ? "link" : "links"
+              } could not be added.`
+            : null,
+          importResult.notAttemptedUrls > 0
+            ? `${importResult.notAttemptedUrls} remaining ${
+                importResult.notAttemptedUrls === 1 ? "link was" : "links were"
+              } not attempted after the import stopped.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        toast.info(`Added ${createdLabel}. ${details}`);
+      } else {
+        toast.success(`Added ${createdLabel}`);
+      }
 
       form.reset();
       onSuccess?.(importResult);
@@ -298,7 +313,7 @@ export function ImportForm({ onSuccess, onError, className }: ImportFormProps) {
               {urlPreview.length !== 1 ? "s" : ""} found)
             </CardTitle>
             <CardDescription>
-              These URLs will be imported as bookmarks
+              SaveIt will try each URL and report anything it could not add
             </CardDescription>
           </CardHeader>
           <CardContent>

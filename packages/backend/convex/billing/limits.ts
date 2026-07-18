@@ -12,7 +12,7 @@ import { components } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../functions";
 import { throwLimitReached } from "../utils/errors";
-import { getLimits, isActiveSubscriptionStatus, PLANS } from "./plans";
+import { deriveEffectivePlan, getLimits, PLANS } from "./plans";
 
 /**
  * startOfMonth — UTC start-of-month in milliseconds.
@@ -34,10 +34,9 @@ export async function assertCanCreateBookmark(
   userId: string,
 ): Promise<void> {
   // 1. Get user metadata for custom limits.
-  const user = await ctx.runQuery(
-    components.betterAuth.data.getUserById,
-    { userId },
-  );
+  const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+    userId,
+  });
   const metadata = (user as { metadata?: unknown } | null)?.metadata;
 
   // 2. Get active subscription for this user.
@@ -47,11 +46,7 @@ export async function assertCanCreateBookmark(
     .first();
 
   // 3. Derive plan.
-  const plan =
-    subscription &&
-    isActiveSubscriptionStatus(subscription.status, subscription.provider)
-      ? "pro"
-      : "free";
+  const plan = deriveEffectivePlan(subscription);
 
   // 4. Compute effective limits (custom overrides plan defaults).
   const limits = getLimits(plan as "free" | "pro", metadata);
@@ -65,9 +60,7 @@ export async function assertCanCreateBookmark(
   const bookmarkCount = counters?.bookmarkCount ?? 0;
 
   if (bookmarkCount >= limits.bookmarks) {
-    throwLimitReached(
-      "You have reached the maximum number of bookmarks",
-    );
+    throwLimitReached("You have reached the maximum number of bookmarks");
   }
 
   // 6. Count monthly processing runs.
@@ -97,10 +90,9 @@ export async function assertCanRunProcessing(
   userId: string,
 ): Promise<void> {
   // 1. Get user metadata + subscription for limit computation.
-  const user = await ctx.runQuery(
-    components.betterAuth.data.getUserById,
-    { userId },
-  );
+  const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+    userId,
+  });
   const metadata = (user as { metadata?: unknown } | null)?.metadata;
 
   const subscription = await ctx.db
@@ -108,11 +100,7 @@ export async function assertCanRunProcessing(
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .first();
 
-  const plan =
-    subscription &&
-    isActiveSubscriptionStatus(subscription.status, subscription.provider)
-      ? "pro"
-      : "free";
+  const plan = deriveEffectivePlan(subscription);
 
   const limits = getLimits(plan as "free" | "pro", metadata);
 
@@ -163,10 +151,9 @@ export async function shouldSendLimitEmail(
   userId: string,
 ): Promise<boolean> {
   // 1. Get user metadata.
-  const user = await ctx.runQuery(
-    components.betterAuth.data.getUserById,
-    { userId },
-  );
+  const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
+    userId,
+  });
   const metadata = (user as { metadata?: unknown } | null)?.metadata as
     | Record<string, unknown>
     | null
@@ -179,10 +166,7 @@ export async function shouldSendLimitEmail(
     .first();
 
   // Only applies to free plan users.
-  if (
-    subscription &&
-    isActiveSubscriptionStatus(subscription.status, subscription.provider)
-  ) {
+  if (deriveEffectivePlan(subscription) === "pro") {
     return false;
   }
 

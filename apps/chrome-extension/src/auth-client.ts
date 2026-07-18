@@ -1,14 +1,46 @@
 import { createAuthClient } from "better-auth/client";
-import { config } from "./config";
 
-// BASE_URL: app origin (https://saveit.now). The session cookie lives on this
-// origin; /api/auth/* and /api/bookmarks* are proxied server-side to Convex.
+import { config } from "./config";
+import type {
+  SaveBookmarkResult,
+  SaveErrorType,
+  Session,
+  SessionResult,
+  UploadErrorType,
+  UploadResult,
+} from "./protocol";
+
 const BASE_URL = config.BASE_URL;
+const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
+const SUPPORTED_SCREENSHOT_TYPES = new Set(["image/jpeg", "image/png"]);
+const SESSION_TIMEOUT_MS = 10_000;
+const API_TIMEOUT_MS = 25_000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = API_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const abortFromUpstream = () => controller.abort(init.signal?.reason);
+  if (init.signal?.aborted) abortFromUpstream();
+  init.signal?.addEventListener("abort", abortFromUpstream, { once: true });
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+    init.signal?.removeEventListener("abort", abortFromUpstream);
+  }
+}
 
 export const authClient = createAuthClient({
   baseURL: BASE_URL,
   fetchOptions: {
-    credentials: "include", // Send session cookies cross-origin
+    customFetchImpl: (input, init) =>
+      fetchWithTimeout(input, init, SESSION_TIMEOUT_MS),
+    credentials: "include",
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
@@ -17,66 +49,129 @@ export const authClient = createAuthClient({
   },
 });
 
-export interface Session {
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-  };
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
-export async function getSession(): Promise<Session | null> {
-  try {
-    console.log("Fetching session from", BASE_URL);
-    const { data, error } = await authClient.getSession();
-
-    if (error) {
-      console.error("Session error:", error);
-      return null;
-    }
-
-    if (!data) {
-      console.log("No session data found");
-      return null;
-    }
-
-    console.log("Session found:", data);
-    return data as Session;
-  } catch (error) {
-    console.error("Failed to get session:", error);
+function parseSession(value: unknown): Session | null {
+  const data = asRecord(value);
+  const user = asRecord(data?.user);
+  if (typeof user?.id !== "string" || typeof user.email !== "string") {
     return null;
   }
+
+  const session: Session = {
+    user: { id: user.id, email: user.email },
+  };
+  if (typeof user.name === "string") session.user.name = user.name;
+  return session;
+}
+
+function isAuthenticationError(error: unknown): boolean {
+  const candidate = asRecord(error);
+  return (
+    candidate?.status === 401 ||
+    candidate?.statusCode === 401 ||
+    candidate?.code === "UNAUTHORIZED"
+  );
+}
+
+export async function getSessionResult(): Promise<SessionResult> {
+  try {
+    const { data, error } = await authClient.getSession();
+    if (error) {
+      if (isAuthenticationError(error)) {
+        return { session: null, errorType: "AUTH_REQUIRED" };
+      }
+      return {
+        session: null,
+        error: "SaveIt is unreachable. Check your connection and try again.",
+        errorType: "NETWORK_ERROR",
+      };
+    }
+
+    const session = parseSession(data);
+    return session
+      ? { session }
+      : { session: null, errorType: "AUTH_REQUIRED" };
+  } catch {
+    return {
+      session: null,
+      error: "SaveIt is unreachable. Check your connection and try again.",
+      errorType: "NETWORK_ERROR",
+    };
+  }
+}
+
+async function readErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const payload = asRecord(await response.json());
+    return typeof payload?.error === "string"
+      ? payload.error
+      : typeof payload?.message === "string"
+        ? payload.message
+        : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function classifySaveError(response: Response, message: string): SaveErrorType {
+  const normalizedMessage = message.toLowerCase();
+  if (response.status === 401) return "AUTH_REQUIRED";
+  if (response.status === 429) return "RATE_LIMITED";
+  if (response.status >= 500) return "SERVER_ERROR";
+  if (normalizedMessage.includes("already exists")) {
+    return "BOOKMARK_ALREADY_EXISTS";
+  }
+  if (normalizedMessage.includes("maximum number of bookmarks")) {
+    return "MAX_BOOKMARKS";
+  }
+  return "UNKNOWN";
+}
+
+function classifyUploadError(
+  response: Response,
+  message: string,
+): UploadErrorType {
+  const normalizedMessage = message.toLowerCase();
+  if (response.status === 401) return "AUTH_REQUIRED";
+  if (response.status === 404) return "NOT_FOUND";
+  if (response.status === 413 || normalizedMessage.includes("less than 2mb")) {
+    return "FILE_TOO_LARGE";
+  }
+  if (
+    response.status === 400 &&
+    (normalizedMessage.includes("image files") ||
+      normalizedMessage.includes("no file"))
+  ) {
+    return "INVALID_FILE";
+  }
+  if (response.status === 429) return "RATE_LIMITED";
+  if (response.status >= 500) return "SERVER_ERROR";
+  return "UNKNOWN";
 }
 
 export async function saveBookmark(
   url: string,
   transcript?: string,
-  metadata?: any,
-): Promise<{ success: boolean; error?: string; errorType?: string; bookmarkId?: string }> {
+  metadata?: Record<string, unknown>,
+): Promise<SaveBookmarkResult> {
+  const requestBody: {
+    url: string;
+    transcript?: string;
+    metadata?: Record<string, unknown>;
+  } = { url };
+  if (transcript) requestBody.transcript = transcript;
+  if (metadata) requestBody.metadata = metadata;
+
   try {
-    // Vérifier d'abord si l'utilisateur est connecté
-    const session = await getSession();
-    if (!session) {
-      return {
-        success: false,
-        error: "You must be logged in to save a bookmark",
-        errorType: "AUTH_REQUIRED",
-      };
-    }
-
-    // Prepare request body
-    const requestBody: any = { url };
-    if (transcript) {
-      requestBody.transcript = transcript;
-    }
-    if (metadata) {
-      requestBody.metadata = metadata;
-    }
-
-    console.log("Saving bookmark with data:", requestBody);
-
-    // POST to the app origin; proxied server-side to the Convex handler.
-    const response = await fetch(`${BASE_URL}/api/bookmarks`, {
+    const response = await fetchWithTimeout(`${BASE_URL}/api/bookmarks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -87,48 +182,30 @@ export async function saveBookmark(
       body: JSON.stringify(requestBody),
     });
 
-    // Gérer la réponse
     if (!response.ok) {
-      let errorMessage = "Failed to save bookmark";
-      let errorType = "UNKNOWN";
-
-      try {
-        const errorData = await response.json();
-        console.error("Error data:", errorData);
-        errorMessage = errorData.error || errorData.message || errorMessage;
-
-        // Detect specific error types based on the message
-        if (errorMessage.includes("already exists")) {
-          errorType = "BOOKMARK_ALREADY_EXISTS";
-        } else if (errorMessage.includes("maximum number of bookmarks")) {
-          errorType = "MAX_BOOKMARKS";
-        } else if (response.status === 401) {
-          errorType = "AUTH_REQUIRED";
-        }
-      } catch (e) {
-        // Si la réponse n'est pas du JSON, on utilise le message par défaut
-        console.error("Failed to parse error response:", e);
-      }
-
-      console.error(
-        "Error response:",
-        response.status,
-        errorMessage,
-        errorType,
-      );
+      const error = await readErrorMessage(response, "Failed to save bookmark");
       return {
         success: false,
-        error: errorMessage,
-        errorType,
+        error,
+        errorType: classifySaveError(response, error),
       };
     }
 
-    const responseData = await response.json();
-    return { success: true, bookmarkId: responseData.bookmark?.id };
-  } catch (error) {
+    const responseData = asRecord(await response.json());
+    const bookmark = asRecord(responseData?.bookmark);
+    if (typeof bookmark?.id !== "string" || bookmark.id.length === 0) {
+      return {
+        success: false,
+        error: "SaveIt returned an incomplete bookmark response.",
+        errorType: "SERVER_ERROR",
+      };
+    }
+
+    return { success: true, bookmarkId: bookmark.id };
+  } catch {
     return {
       success: false,
-      error: "Network error occurred. Please try again.",
+      error: "Network error. Check your connection and try again.",
       errorType: "NETWORK_ERROR",
     };
   }
@@ -137,58 +214,56 @@ export async function saveBookmark(
 export async function uploadScreenshot(
   bookmarkId: string,
   screenshotBlob: Blob,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<UploadResult> {
+  if (screenshotBlob.size > MAX_SCREENSHOT_BYTES) {
+    return {
+      success: false,
+      error: "The preview is larger than SaveIt's 2 MB upload limit.",
+      errorType: "FILE_TOO_LARGE",
+    };
+  }
+  if (!SUPPORTED_SCREENSHOT_TYPES.has(screenshotBlob.type)) {
+    return {
+      success: false,
+      error: "The preview is not a supported PNG or JPEG image.",
+      errorType: "INVALID_FILE",
+    };
+  }
+
+  const formData = new FormData();
+  const fileName =
+    screenshotBlob.type === "image/jpeg" ? "screenshot.jpg" : "screenshot.png";
+  formData.append("file", screenshotBlob, fileName);
+
   try {
-    const session = await getSession();
-    if (!session) {
-      return {
-        success: false,
-        error: "You must be logged in to upload a screenshot",
-      };
-    }
-    const formData = new FormData();
-    formData.append("file", screenshotBlob, "screenshot.png");
-
-    // Upload to the app origin; proxied server-side to the Convex handler.
-    const uploadUrl = `${BASE_URL}/api/bookmarks/${bookmarkId}/upload-screenshot`;
-
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      credentials: "include",
-      mode: "cors",
-      body: formData,
-    });
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/bookmarks/${encodeURIComponent(bookmarkId)}/upload-screenshot`,
+      {
+        method: "POST",
+        credentials: "include",
+        mode: "cors",
+        body: formData,
+      },
+    );
 
     if (!response.ok) {
-      let errorMessage = "Failed to upload screenshot";
-      let responseText = "";
-      
-      try {
-        responseText = await response.text();
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.error || errorData.message || errorMessage;
-      } catch (e) {
-        // Ignore parsing errors
-      }
+      const error = await readErrorMessage(
+        response,
+        "Failed to upload screenshot",
+      );
       return {
         success: false,
-        error: errorMessage,
+        error,
+        errorType: classifyUploadError(response, error),
       };
-    }
-
-    let responseData;
-    try {
-      const responseText = await response.text();
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      responseData = { message: "Upload successful" };
     }
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return {
       success: false,
-      error: "Network error occurred while uploading screenshot",
+      error: "Network error while uploading the screenshot.",
+      errorType: "NETWORK_ERROR",
     };
   }
 }

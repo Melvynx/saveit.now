@@ -33,7 +33,8 @@ export const HowItWorks = () => {
         Up and running <em>in under a minute.</em>
       </h2>
       <p className="mt-4 max-w-xl text-base text-[#888]">
-        No accounts, no configuration, no learning curve. Sign up, install, start saving.
+        No complex setup or folders to configure. Create your free account,
+        install the extension, and start saving.
       </p>
 
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -20,8 +20,10 @@ import { useThemeColors } from "../lib/theme";
 import { useAuth } from "../contexts/AuthContext";
 
 export type SignInStep = "email" | "otp";
+export type AuthIntent = "signup" | "signin";
 
 interface SignInScreenProps {
+  intent?: AuthIntent;
   onClose?: () => void;
   onVerified?: () => void;
   closeOnVerified?: boolean;
@@ -35,6 +37,7 @@ interface SignInScreenProps {
 }
 
 export default function SignInScreen({
+  intent = "signin",
   onClose,
   onVerified,
   closeOnVerified = true,
@@ -60,6 +63,7 @@ export default function SignInScreen({
     (keyboardAvoidingEnabled || hasExplicitKeyboardInset);
   const shouldUseKeyboardAvoidingView =
     keyboardAvoidingEnabled && Platform.OS !== "ios";
+  const isSignup = intent === "signup";
 
   const handleSocialSignIn = async (provider: "google" | "github") => {
     setSocialLoading(provider);
@@ -212,7 +216,12 @@ export default function SignInScreen({
           <View className="w-10" />
           <View className="h-[5px] w-10 rounded-full bg-border" />
           {onClose ? (
-            <Pressable onPress={onClose} hitSlop={20}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close sign-in"
+              onPress={onClose}
+              hitSlop={20}
+            >
               <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
                 <Ionicons name="close" size={20} color={colors.foreground} />
               </View>
@@ -254,7 +263,11 @@ export default function SignInScreen({
                 disabled={otp.length < 6}
                 loading={isLoading}
               >
-                {isLoading ? "Verifying..." : "Verify Code"}
+                {isLoading
+                  ? "Verifying…"
+                  : isSignup
+                    ? "Create free account"
+                    : "Sign in"}
               </Button>
 
               <Button variant="ghost" onPress={handleBackToEmail}>
@@ -268,10 +281,12 @@ export default function SignInScreen({
           <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
             <View className="gap-2">
               <Text variant="title" className="text-[26px] leading-[32px]">
-                Sign in to SaveIt
+                {isSignup ? "Create your free account" : "Welcome back"}
               </Text>
               <Text variant="subtitle">
-                {"Enter your email and we'll send you a verification code"}
+                {isSignup
+                  ? "Save your library across every device. We’ll email you a one-time code."
+                  : "Sign in to your SaveIt account with a one-time email code."}
               </Text>
             </View>
 
@@ -294,7 +309,11 @@ export default function SignInScreen({
                 disabled={!email.trim() || socialLoading !== null}
                 loading={isLoading}
               >
-                {isLoading ? "Sending..." : "Continue"}
+                {isLoading
+                  ? "Sending code…"
+                  : isSignup
+                    ? "Send me a sign-up code"
+                    : "Send me a sign-in code"}
               </Button>
 
               <View className="my-1 flex-row items-center gap-3">

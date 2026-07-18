@@ -11,6 +11,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { httpAction } from "../_generated/server";
+import { webCorsHeaders } from "../utils/cors";
 import { internal } from "../_generated/api";
 import { authComponent, createAuth } from "../auth/config";
 import { withGeminiFallback } from "../lib/gemini_provider";
@@ -121,12 +122,19 @@ function escapeCsvField(field: string): string {
 // HTTP action
 // ---------------------------------------------------------------------------
 
-export const chatStreamHandler = httpAction(async (ctx, request) => {
+type HttpActionCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
+
+async function handleChatStream(
+  ctx: HttpActionCtx,
+  request: Request,
+): Promise<Response> {
+  const origin = request.headers.get("origin");
+  const responseHeaders = corsHeaders(origin);
   // ---- CORS preflight (handled in http.ts but just in case) ----
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders(),
+      headers: responseHeaders,
     });
   }
 
@@ -144,13 +152,13 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
   } catch {
     return new Response("Unauthorized", {
       status: 401,
-      headers: corsHeaders(),
+      headers: responseHeaders,
     });
   }
   if (!userId) {
     return new Response("Unauthorized", {
       status: 401,
-      headers: corsHeaders(),
+      headers: responseHeaders,
     });
   }
 
@@ -161,7 +169,7 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
   } catch {
     return Response.json(
       { error: "Invalid JSON body", success: false },
-      { status: 400, headers: corsHeaders() },
+      { status: 400, headers: responseHeaders },
     );
   }
 
@@ -169,7 +177,7 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
   if (!parsed.success) {
     return Response.json(
       { error: parsed.error.message, success: false },
-      { status: 400, headers: corsHeaders() },
+      { status: 400, headers: responseHeaders },
     );
   }
 
@@ -180,16 +188,11 @@ export const chatStreamHandler = httpAction(async (ctx, request) => {
     await ctx.runMutation(internal.chat.mutations.checkAndIncrementUsage, {
       userId,
     });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : typeof err === "object" && err !== null && "message" in err
-          ? String((err as { message: unknown }).message)
-          : "Chat limit reached.";
+  } catch (error: unknown) {
+    console.warn("[chat.stream] usage rejected", error);
     return Response.json(
-      { error: message, success: false },
-      { status: 429, headers: corsHeaders() },
+      { error: "Chat limit reached.", success: false },
+      { status: 429, headers: responseHeaders },
     );
   }
 
@@ -678,7 +681,7 @@ You can filter by:
 
   // Add CORS headers to the streaming response.
   const headers = new Headers(streamResponse.headers);
-  for (const [key, value] of Object.entries(corsHeaders())) {
+  for (const [key, value] of Object.entries(responseHeaders)) {
     headers.set(key, value);
   }
 
@@ -686,18 +689,29 @@ You can filter by:
     status: streamResponse.status,
     headers,
   });
+}
+
+export const chatStreamHandler = httpAction(async (ctx, request) => {
+  try {
+    return await handleChatStream(ctx, request);
+  } catch (error) {
+    console.error("[chat.stream] request failed", error);
+    return Response.json(
+      { error: "Chat request failed", success: false },
+      {
+        status: 500,
+        headers: corsHeaders(request.headers.get("origin")),
+      },
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
 // CORS helper
 // ---------------------------------------------------------------------------
 
-function corsHeaders(): Record<string, string> {
-  const siteUrl = process.env.SITE_URL ?? "*";
+function corsHeaders(origin: string | null): Record<string, string> {
   return {
-    "Access-Control-Allow-Origin": siteUrl,
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    ...webCorsHeaders(origin, { credentials: true }),
   };
 }

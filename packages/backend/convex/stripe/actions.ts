@@ -7,6 +7,8 @@ import { internalAction } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
 import { authAction } from "../functions";
 import { throwConfigurationError, throwValidationError } from "../utils/errors";
+import { createOrReuseProCheckoutSession } from "./checkout";
+import { stripeCustomerIdempotencyKey } from "./idempotency";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -29,7 +31,8 @@ const getSiteUrl = () => process.env.SITE_URL ?? "http://localhost:3000";
  */
 function generatePromoCode(): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { randomBytes } = require("node:crypto") as typeof import("node:crypto");
+  const { randomBytes } =
+    require("node:crypto") as typeof import("node:crypto");
   const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const bytes = randomBytes(12);
   let code = "";
@@ -37,6 +40,11 @@ function generatePromoCode(): string {
     code += CHARSET[bytes[i]! % CHARSET.length];
   }
   return code;
+}
+
+function normalizeStripePlan(plan: string | undefined): "free" | "pro" {
+  if (plan === undefined || plan === "pro") return "pro";
+  return "free";
 }
 
 // ---------------------------------------------------------------------------
@@ -66,11 +74,14 @@ export const ensureCustomer = internalAction({
 
     const stripe = getStripe();
 
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: user.name ?? undefined,
-      metadata: { userId },
-    });
+    const customer = await stripe.customers.create(
+      {
+        email: user.email,
+        name: user.name ?? undefined,
+        metadata: { userId },
+      },
+      { idempotencyKey: stripeCustomerIdempotencyKey(userId) },
+    );
 
     await ctx.runMutation(components.betterAuth.data.patchUser, {
       userId,
@@ -143,13 +154,21 @@ export const cancelAllForUser = internalAction({
 
 export const createCheckout = authAction({
   args: {
-    plan: v.string(),
+    plan: v.literal("pro"),
     annual: v.boolean(),
     successUrl: v.string(),
     cancelUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const userId = ctx.user.id;
+
+    const effectivePlan: "free" | "pro" = await ctx.runQuery(
+      internal.subscriptions.helpers.getEffectivePlanForUser,
+      { userId },
+    );
+    if (effectivePlan === "pro") {
+      throwValidationError("Your Pro plan is already active");
+    }
 
     const monthlyPriceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
     const yearlyPriceId = process.env.STRIPE_PRO_YEARLY_PRICE_ID;
@@ -158,10 +177,6 @@ export const createCheckout = authAction({
       throwConfigurationError(
         "STRIPE_PRO_MONTHLY_PRICE_ID or STRIPE_PRO_YEARLY_PRICE_ID is not set",
       );
-    }
-
-    if (args.plan !== "pro") {
-      throwValidationError(`Unknown plan: ${args.plan}`);
     }
 
     const priceId = args.annual ? yearlyPriceId : monthlyPriceId;
@@ -186,26 +201,14 @@ export const createCheckout = authAction({
 
     const siteUrl = getSiteUrl();
     const stripe = getStripe();
-
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: "subscription",
-      success_url: `${siteUrl}${args.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}${args.cancelUrl}`,
-      allow_promotion_codes: true,
-      metadata: { userId, plan: args.plan },
-      subscription_data: {
-        metadata: { userId, plan: args.plan },
-      },
+    return createOrReuseProCheckoutSession({
+      stripe,
+      stripeCustomerId,
+      userId,
+      priceId,
+      successUrl: `${siteUrl}${args.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${siteUrl}${args.cancelUrl}`,
     });
-
-    if (!session.url) {
-      throwConfigurationError("Stripe did not return a checkout URL");
-    }
-
-    return { url: session.url };
   },
 });
 
@@ -222,9 +225,7 @@ export const createBillingPortal = authAction({
     const stripeCustomerId = ctx.user.stripeCustomerId;
 
     if (!stripeCustomerId) {
-      throwValidationError(
-        "No billing account found. Please contact support.",
-      );
+      throwValidationError("No billing account found. Please contact support.");
     }
 
     const stripe = getStripe();
@@ -381,7 +382,10 @@ export const retryLimitExceededBookmarks = internalAction({
     // Fetch up to 200 ERROR bookmarks for this user.
     // Uses internal.bookmarks.queries.listErrorBookmarks (Phase 02 provides this).
     // We call it defensively: if it doesn't exist yet, degrade gracefully.
-    let errorBookmarks: Array<{ _id: string; processingError?: string | null }> = [];
+    let errorBookmarks: Array<{
+      _id: string;
+      processingError?: string | null;
+    }> = [];
 
     try {
       errorBookmarks = await ctx.runQuery(
@@ -404,17 +408,14 @@ export const retryLimitExceededBookmarks = internalAction({
     for (const bookmark of limitBookmarks) {
       try {
         // Reset status to PENDING.
-        await ctx.runMutation(
-          internal.bookmarks.mutations.updateProcessing,
-          {
-            id: bookmark._id as never,
-            patch: {
-              status: "PENDING",
-              processingStep: 0,
-              processingError: null,
-            },
+        await ctx.runMutation(internal.bookmarks.mutations.updateProcessing, {
+          id: bookmark._id as never,
+          patch: {
+            status: "PENDING",
+            processingStep: 0,
+            processingError: null,
           },
-        );
+        });
         // Schedule reprocessing via the pipeline.
         await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {
           bookmarkId: bookmark._id as never,
@@ -503,8 +504,7 @@ async function handleCheckoutSessionCompleted(
   }
 
   // Plan name comes from subscription metadata set at checkout session creation.
-  const planName =
-    (stripeSubscription.metadata?.plan as string | undefined) ?? "pro";
+  const planName = normalizeStripePlan(stripeSubscription.metadata?.plan);
 
   await ctx.runMutation(internal.subscriptions.mutations.upsertFromWebhook, {
     userId: user._id as string,
@@ -530,8 +530,7 @@ async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
 ) {
   // Plan name from subscription metadata; fall back to "pro" when absent.
-  const planName =
-    (subscription.metadata?.plan as string | undefined) ?? "pro";
+  const planName = normalizeStripePlan(subscription.metadata?.plan);
 
   await ctx.runMutation(internal.subscriptions.mutations.updateFromWebhook, {
     stripeSubscriptionId: subscription.id,

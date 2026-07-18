@@ -42,6 +42,29 @@ test.describe("Authentication Flow - Simple Tests", () => {
     ).toBeVisible();
   });
 
+  test("signup intent stays distinct and offers a direct sign-in path", async ({
+    page,
+  }) => {
+    await page.goto("/signin?intent=signup");
+
+    await expect(
+      page.getByRole("heading", { name: /create your saveit\.now account/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /continue with email/i }),
+    ).toBeVisible();
+    await expect(page.getByText(/already have an account/i)).toBeVisible();
+
+    await page.getByRole("button", { name: /^sign in$/i }).click();
+
+    await expect(
+      page.getByRole("heading", { name: /sign in to saveit\.now/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /send code to sign in/i }),
+    ).toBeVisible();
+  });
+
   test("landing page loads for unauthenticated users", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
 

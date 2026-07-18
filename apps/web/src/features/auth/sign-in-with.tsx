@@ -29,6 +29,7 @@ export const SignInWith = (props: {
   buttonProps: ButtonProps;
   variant?: "default" | "monochrome";
   callbackURL?: string;
+  intent?: "signin" | "signup";
 }) => {
   const session = useSession();
   const isMonochrome = props.variant === "monochrome";
@@ -96,8 +97,8 @@ export const SignInWith = (props: {
       </span>
 
       <span className={cn(isMonochrome && "text-white")}>
-        {props.type === "github" ? "Sign in with GitHub" : null}
-        {props.type === "google" ? "Sign in with Google" : null}
+        {props.intent === "signup" ? "Continue" : "Sign in"} with{" "}
+        {props.type === "github" ? "GitHub" : "Google"}
       </span>
     </LoadingButton>
   );

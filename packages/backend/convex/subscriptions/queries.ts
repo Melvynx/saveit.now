@@ -6,8 +6,8 @@
 import { components } from "../_generated/api";
 import { authQuery } from "../functions";
 import {
+  deriveEffectivePlan,
   getLimits,
-  isActiveSubscriptionStatus,
   parseCustomLimits,
 } from "../billing/plans";
 import type { Id } from "../_generated/dataModel";
@@ -78,7 +78,7 @@ export const getMine = authQuery({
       _id: sub._id,
       id: sub._id,
       userId: sub.userId,
-      plan: (sub.plan === "pro" ? "pro" : "free") as "free" | "pro",
+      plan: deriveEffectivePlan(sub),
       provider: sub.provider ?? null,
       status: sub.status ?? null,
       appstoreProductId: sub.appstoreProductId ?? null,
@@ -107,17 +107,12 @@ export const getUserPlan = authQuery({
       .first();
 
     // 2. Derive plan from subscription status.
-    const isActive = sub
-      ? isActiveSubscriptionStatus(sub.status, sub.provider)
-      : false;
-    const plan: "free" | "pro" =
-      isActive && sub?.plan === "pro" ? "pro" : "free";
+    const plan = deriveEffectivePlan(sub);
 
     // 3. Fetch user metadata for custom limits.
-    const dbUser = await ctx.runQuery(
-      components.betterAuth.data.getUserById,
-      { userId: user.id },
-    );
+    const dbUser = await ctx.runQuery(components.betterAuth.data.getUserById, {
+      userId: user.id,
+    });
     const metadata = (dbUser as { metadata?: unknown } | null)?.metadata;
 
     // 4. Compute effective limits.

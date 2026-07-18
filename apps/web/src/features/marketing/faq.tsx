@@ -1,22 +1,23 @@
 const faqs = [
   {
-    question: "What does \"agentic\" mean?",
+    question: 'What does "agentic" mean?',
     answer:
       "Agentic AI doesn't just respond - it acts autonomously. While most AI tools wait for you to give commands, agentic systems make decisions and take action on their own. Your SaveIt agent automatically organizes your bookmarks, learns your patterns, and retrieves content before you even search.",
   },
   {
     question: "Can I cancel any time?",
     answer:
-      "Yes, you can cancel and we will send you a reminder before each payment. No questions asked.",
+      "Yes. Manage or cancel from the billing provider you used. Pro stays active until the end of your current billing period.",
   },
   {
     question: "Do I have a limit?",
     answer:
-      "There is no hard limit, but there is a fair usage policy that's really hard to reach. To avoid system outage, we rate limit the number of links saved at the same time.",
+      "Free includes up to 20 bookmarks, 20 AI bookmark runs, and 10 chat questions each month. Pro includes up to 50,000 bookmarks, 1,500 AI runs, and 200 chat questions each month.",
   },
   {
     question: "How to upgrade my plan?",
-    answer: "Just go to the pricing page and upgrade your plan. It takes two clicks.",
+    answer:
+      "Choose Upgrade to Pro during setup or from the pricing page, sign in to the account you want to upgrade, then complete the secure checkout.",
   },
   {
     question: "Is my data sent to any server?",

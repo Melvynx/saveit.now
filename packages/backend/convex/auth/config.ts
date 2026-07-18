@@ -3,7 +3,8 @@ import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { requireRunMutationCtx } from "@convex-dev/better-auth/utils";
 import { apiKey } from "@better-auth/api-key";
 import { expo } from "@better-auth/expo";
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { admin, emailOTP, magicLink, oneTimeToken } from "better-auth/plugins";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
@@ -18,6 +19,14 @@ export const authCookiePrefix =
   process.env.BETTER_AUTH_COOKIE_PREFIX?.trim() || "save-it";
 const appStoreTestEmail = "help@saveit.now";
 const appStoreTestOtp = "123456";
+
+const hashEmailForRateLimit = async (email: string) => {
+  const bytes = new TextEncoder().encode(email.trim().toLowerCase());
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+};
 
 const isAppStoreTestLogin = (email: string) => {
   return email.trim().toLowerCase() === appStoreTestEmail;
@@ -159,6 +168,45 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
   },
   trustedOrigins: getTrustedOrigins(),
   database: authComponent.adapter(ctx),
+  rateLimit: {
+    enabled: true,
+    storage: "database" as const,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/email-otp/send-verification-otp": {
+        window: 60,
+        max: 3,
+      },
+    },
+  },
+  hooks: {
+    before: createAuthMiddleware(async (requestContext) => {
+      if (
+        requestContext.path !== "/email-otp/send-verification-otp" ||
+        typeof requestContext.body?.email !== "string"
+      ) {
+        return;
+      }
+
+      const email = requestContext.body.email.trim().toLowerCase();
+      // The fixed App Store review credential never sends email and therefore
+      // cannot be used for email bombing.
+      if (isAppStoreTestLogin(email)) return;
+
+      const mctx = requireRunMutationCtx(ctx);
+      const result = await mctx.runMutation(
+        internal.auth.rateLimit.consumeEmailOtpSend,
+        { emailHash: await hashEmailForRateLimit(email) },
+      );
+
+      if (!result.allowed) {
+        throw APIError.fromStatus("TOO_MANY_REQUESTS", {
+          message: "Too many sign-in code requests. Please try again later.",
+        });
+      }
+    }),
+  },
   session: {
     // parity with current SaveIt config: 400-day sessions, refresh daily
     expiresIn: 60 * 60 * 24 * 400,
@@ -178,7 +226,17 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
   user: {
     additionalFields: {
       stripeCustomerId: { type: "string" as const, required: false },
-      onboarding: { type: "boolean" as const, required: false },
+      onboarding: {
+        type: "boolean" as const,
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+      onboardingUpgradeChoice: {
+        type: "string" as const,
+        required: false,
+        input: false,
+      },
       unsubscribed: { type: "boolean" as const, required: false },
       publicLinkSlug: { type: "string" as const, required: false },
       publicLinkEnabled: { type: "boolean" as const, required: false },
@@ -309,6 +367,7 @@ export type AuthedUser = {
   banExpires?: number | null;
   stripeCustomerId?: string | null;
   onboarding?: boolean | null;
+  onboardingUpgradeChoice?: "free" | "upgrade" | null;
   unsubscribed?: boolean | null;
   publicLinkSlug?: string | null;
   publicLinkEnabled?: boolean | null;

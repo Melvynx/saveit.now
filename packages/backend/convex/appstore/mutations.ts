@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
-import { isActiveSubscriptionStatus } from "../billing/plans";
+import { deriveEffectivePlan } from "../billing/plans";
 import { throwValidationError } from "../utils/errors";
 
 type Subscription = Doc<"subscriptions">;
@@ -27,11 +27,7 @@ function hasActiveStripeSubscription(subscription: Subscription | null) {
 }
 
 function wasEntitled(subscription: Subscription | null) {
-  return (
-    subscription !== null &&
-    subscription.plan === "pro" &&
-    isActiveSubscriptionStatus(subscription.status, subscription.provider)
-  );
+  return deriveEffectivePlan(subscription) === "pro";
 }
 
 function derivePatch(

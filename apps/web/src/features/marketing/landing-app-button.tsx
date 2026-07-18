@@ -26,6 +26,7 @@ const PROMPT_DISMISSED_STORAGE_KEY = "saveit-now-landing-open-app-dismissed-at";
 const PROMPT_DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 type LandingAppButtonProps = Pick<ButtonProps, "size" | "variant"> & {
+  authIntent?: "signin" | "signup";
   children?: ReactNode;
   className?: string;
   showAlwaysOpenPrompt?: boolean;
@@ -33,6 +34,7 @@ type LandingAppButtonProps = Pick<ButtonProps, "size" | "variant"> & {
 };
 
 export function LandingAppButton({
+  authIntent = "signup",
   children = `Open ${APP_NAME}`,
   className,
   showAlwaysOpenPrompt = false,
@@ -69,7 +71,10 @@ export function LandingAppButton({
   }, [isSignedIn, navigate, session.isPending, showAlwaysOpenPrompt]);
 
   const dismissPrompt = () => {
-    window.localStorage.setItem(PROMPT_DISMISSED_STORAGE_KEY, String(Date.now()));
+    window.localStorage.setItem(
+      PROMPT_DISMISSED_STORAGE_KEY,
+      String(Date.now()),
+    );
     setShowPrompt(false);
   };
 
@@ -134,6 +139,7 @@ export function LandingAppButton({
       search={(previous: Record<string, unknown>) => ({
         ...previous,
         from: currentUrl === "/" ? undefined : currentUrl,
+        intent: authIntent,
         modal: "signin",
         redirectUrl: APP_LINKS.app,
       })}
