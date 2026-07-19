@@ -1,11 +1,10 @@
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "@tanstack/react-router";
+import { replaceLocation } from "@/lib/browser-navigation";
 import { LogOut } from "lucide-react";
 import { ComponentPropsWithRef, useState } from "react";
 
 export const LogoutButton = (props: ComponentPropsWithRef<"button">) => {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   return (
     <button
@@ -19,8 +18,12 @@ export const LogoutButton = (props: ComponentPropsWithRef<"button">) => {
             },
             onSuccess: () => {
               setIsLoading(false);
-              void router.navigate({ to: "/" });
-              void router.invalidate();
+              // A document-level transition clears authenticated Convex
+              // subscriptions before they can re-run without a token.
+              replaceLocation("/");
+            },
+            onError: () => {
+              setIsLoading(false);
             },
           },
         );
