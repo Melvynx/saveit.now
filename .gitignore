@@ -48,3 +48,6 @@ npm-debug.log*
 apps/web.next
 
 apps/web/e2e/test-config.json
+
+# raw landing source images
+/landing_v2/

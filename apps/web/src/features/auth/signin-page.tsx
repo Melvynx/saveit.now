@@ -2,12 +2,31 @@ import { OtpForm } from "@/components/better-auth-otp";
 import { completeOtpSignIn } from "@/features/auth/complete-otp-sign-in";
 import { getSafeInternalRedirectUrl } from "@/features/auth/safe-internal-redirect";
 import { SignInWith } from "@/features/auth/sign-in-with";
+import { V2Style } from "@/features/marketing/v2/v2-theme";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Suspense } from "react";
 
-const authVisualImage = "/auth/signin-visual.jpeg";
+const authVisualImage = "/images/landing/v2/home.webp";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.09, delayChildren: 0.15 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as const },
+  },
+};
 
 function SignInPageContent() {
   const navigate = useNavigate();
@@ -23,52 +42,61 @@ function SignInPageContent() {
   const redirectUrl = getSafeInternalRedirectUrl(search.redirectUrl);
 
   return (
-    <main className="grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-black lg:block">
-        <img
-          src={authVisualImage}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(7,9,15,0.18),rgba(7,9,15,0.82))]" />
-        <div className="relative flex h-full min-h-screen flex-col justify-between p-12 text-white xl:p-16">
-          <a href="/" className="flex w-fit items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 shadow-lg shadow-black/20 backdrop-blur-md">
-              <img
-                src="/icon.png"
-                alt=""
-                className="size-7 rounded-md object-cover"
-              />
-            </span>
-            <span className="text-xl font-semibold">SaveIt.now</span>
+    <main className="v2-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+      <V2Style />
+      <section className="relative hidden min-h-screen bg-[#120a10] p-4 lg:block lg:p-5">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.985 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+          className="relative flex h-full min-h-[calc(100vh-2.5rem)] flex-col justify-between overflow-hidden rounded-[2rem] border border-white/[0.08] p-10 xl:p-14"
+        >
+          <motion.img
+            src={authVisualImage}
+            alt=""
+            initial={{ scale: 1.06 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.4, ease: [0.25, 0.4, 0.25, 1] }}
+            className="absolute inset-0 size-full object-cover object-[center_35%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#120a10]/85 via-[#120a10]/15 to-[#120a10]/40" />
+          <div className="v2-noise absolute inset-0" />
+
+          <a
+            href="/"
+            className="v2-display relative z-10 w-fit text-xl tracking-tight text-[#f7ede8] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]"
+          >
+            SaveIt<span className="text-[#ff8f70]">.now</span>
           </a>
 
-          <div className="max-w-xl space-y-5">
-            <p className="text-4xl font-semibold leading-[1.05] text-balance xl:text-5xl">
-              SaveIt.now - everything worth keeping, ready when you are.
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.6,
+              delay: 0.35,
+              ease: [0.25, 0.4, 0.25, 1],
+            }}
+            className="relative z-10 max-w-md space-y-4"
+          >
+            <p className="v2-display text-4xl leading-[1.1] tracking-tight text-white [text-shadow:0_2px_30px_rgba(18,10,16,0.6)] text-balance xl:text-5xl">
+              Come <em>home</em> to your bookmarks.
             </p>
-            <p className="max-w-md text-base leading-7 text-white/80">
-              Access your bookmark workspace, pick up where you left off, and
-              let search bring the right link back fast.
+            <p className="max-w-sm text-pretty text-base leading-7 text-[#f3dfd6] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]">
+              Everything you've ever saved, one question away. The agent kept
+              the lights on while you were gone.
             </p>
-          </div>
-
-          <p className="max-w-sm text-sm leading-6 text-white/60">
-            Secure sign-in for people who save across articles, videos, posts,
-            and tools.
-          </p>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
-      <section className="flex min-h-screen flex-col bg-card">
+      <section className="flex min-h-screen flex-col bg-[#120a10]">
         <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-8">
-          <a href="/" className="flex items-center gap-2 lg:hidden">
-            <img
-              src="/icon.png"
-              alt=""
-              className="size-8 rounded-md object-cover"
-            />
-            <span className="font-semibold">SaveIt.now</span>
+          <a
+            href="/"
+            className="v2-display text-lg tracking-tight text-[#f7ede8] lg:hidden"
+          >
+            SaveIt<span className="text-[#ff8f70]">.now</span>
           </a>
           <a
             href="/"
@@ -79,16 +107,29 @@ function SignInPageContent() {
         </header>
 
         <div className="flex flex-1 items-center justify-center px-5 pb-10 pt-4 sm:px-8 lg:px-10 lg:py-12">
-          <div className="w-full max-w-[420px] space-y-8">
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-primary">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full max-w-[420px] space-y-8"
+          >
+            <motion.div variants={itemVariants} className="space-y-3">
+              <p className="text-[13px] font-medium uppercase tracking-[0.2em] text-primary">
                 {isSignup ? "Start free" : "Welcome back"}
               </p>
               <div className="space-y-2">
-                <h1 className="text-3xl font-semibold leading-tight text-foreground text-balance">
-                  {isSignup
-                    ? "Create your SaveIt.now account"
-                    : "Sign in to SaveIt.now"}
+                <h1 className="text-3xl leading-tight text-foreground text-balance sm:text-4xl">
+                  {isSignup ? (
+                    <>
+                      Give your links a{" "}
+                      <em className="v2-display v2-gradient-text">home</em>.
+                    </>
+                  ) : (
+                    <>
+                      Welcome back{" "}
+                      <em className="v2-display v2-gradient-text">home</em>.
+                    </>
+                  )}
                 </h1>
                 <p className="text-sm leading-6 text-muted-foreground text-pretty">
                   {isSignup
@@ -96,10 +137,11 @@ function SignInPageContent() {
                     : "Use your email code or a connected account."}
                 </p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="space-y-6">
-              <OtpForm
+            <div className="v2-press space-y-6">
+              <motion.div variants={itemVariants}>
+                <OtpForm
                 defaultEmail={search.email}
                 initialStep={initialStep}
                 submitLabel={
@@ -142,16 +184,23 @@ function SignInPageContent() {
                     redirectUrl,
                   });
                 }}
-                onError={(error) => toast.error(error)}
-              />
+                  onError={(error) => toast.error(error)}
+                />
+              </motion.div>
 
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <motion.div
+                variants={itemVariants}
+                className="flex items-center gap-6 text-sm text-muted-foreground"
+              >
                 <div className="h-px flex-1 bg-border" />
                 <span>or</span>
                 <div className="h-px flex-1 bg-border" />
-              </div>
+              </motion.div>
 
-              <div className="flex flex-col items-center gap-2">
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col items-center gap-2"
+              >
                 <SignInWith
                   className="w-full"
                   type="github"
@@ -168,9 +217,12 @@ function SignInPageContent() {
                   buttonProps={{}}
                   intent={isSignup ? "signup" : "signin"}
                 />
-              </div>
+              </motion.div>
 
-              <p className="text-center text-sm text-muted-foreground">
+              <motion.p
+                variants={itemVariants}
+                className="text-center text-sm text-muted-foreground"
+              >
                 {isSignup ? "Already have an account?" : "New to SaveIt.now?"}{" "}
                 <button
                   type="button"
@@ -190,9 +242,9 @@ function SignInPageContent() {
                 >
                   {isSignup ? "Sign in" : "Create a free account"}
                 </button>
-              </p>
+              </motion.p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </main>
@@ -201,8 +253,9 @@ function SignInPageContent() {
 
 function SignInPageSkeleton() {
   return (
-    <main className="grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-muted lg:block" />
+    <main className="v2-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+      <V2Style />
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#120a10] lg:block" />
       <section className="flex min-h-screen flex-col bg-card">
         <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-8">
           <div className="h-8 w-32 animate-pulse rounded bg-muted lg:hidden" />

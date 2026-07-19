@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as VerifyRouteImport } from "./routes/verify";
 import { Route as VariationsRouteImport } from "./routes/variations";
+import { Route as V2RouteImport } from "./routes/v2";
 import { Route as UpgradeRouteImport } from "./routes/upgrade";
 import { Route as ToolsRouteImport } from "./routes/tools";
 import { Route as TermsRouteImport } from "./routes/terms";
@@ -84,6 +85,11 @@ const VerifyRoute = VerifyRouteImport.update({
 const VariationsRoute = VariationsRouteImport.update({
   id: "/variations",
   path: "/variations",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const V2Route = V2RouteImport.update({
+  id: "/v2",
+  path: "/v2",
   getParentRoute: () => rootRouteImport,
 } as any);
 const UpgradeRoute = UpgradeRouteImport.update({
@@ -436,6 +442,7 @@ export interface FileRoutesByFullPath {
   "/terms": typeof TermsRoute;
   "/tools": typeof ToolsRouteWithChildren;
   "/upgrade": typeof UpgradeRouteWithChildren;
+  "/v2": typeof V2Route;
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
@@ -504,6 +511,7 @@ export interface FileRoutesByTo {
   "/terms": typeof TermsRoute;
   "/tools": typeof ToolsRouteWithChildren;
   "/upgrade": typeof UpgradeRouteWithChildren;
+  "/v2": typeof V2Route;
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
@@ -573,6 +581,7 @@ export interface FileRoutesById {
   "/terms": typeof TermsRoute;
   "/tools": typeof ToolsRouteWithChildren;
   "/upgrade": typeof UpgradeRouteWithChildren;
+  "/v2": typeof V2Route;
   "/variations": typeof VariationsRoute;
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
@@ -643,6 +652,7 @@ export interface FileRouteTypes {
     | "/terms"
     | "/tools"
     | "/upgrade"
+    | "/v2"
     | "/variations"
     | "/verify"
     | "/account/keys"
@@ -711,6 +721,7 @@ export interface FileRouteTypes {
     | "/terms"
     | "/tools"
     | "/upgrade"
+    | "/v2"
     | "/variations"
     | "/verify"
     | "/account/keys"
@@ -779,6 +790,7 @@ export interface FileRouteTypes {
     | "/terms"
     | "/tools"
     | "/upgrade"
+    | "/v2"
     | "/variations"
     | "/verify"
     | "/account/keys"
@@ -848,6 +860,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute;
   ToolsRoute: typeof ToolsRouteWithChildren;
   UpgradeRoute: typeof UpgradeRouteWithChildren;
+  V2Route: typeof V2Route;
   VariationsRoute: typeof VariationsRoute;
   VerifyRoute: typeof VerifyRoute;
   ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren;
@@ -881,6 +894,13 @@ declare module "@tanstack/react-router" {
       path: "/variations";
       fullPath: "/variations";
       preLoaderRoute: typeof VariationsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/v2": {
+      id: "/v2";
+      path: "/v2";
+      fullPath: "/v2";
+      preLoaderRoute: typeof V2RouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/upgrade": {
@@ -1526,6 +1546,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ToolsRoute: ToolsRouteWithChildren,
   UpgradeRoute: UpgradeRouteWithChildren,
+  V2Route: V2Route,
   VariationsRoute: VariationsRoute,
   VerifyRoute: VerifyRoute,
   ApiBookmarksRoute: ApiBookmarksRouteWithChildren,

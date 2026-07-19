@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "web", "dev"],
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=/Users/melvynx/.nvm/versions/node/v22.20.0/bin:$PATH && pnpm --filter web dev"
+      ],
       "port": 3000
     }
   ]

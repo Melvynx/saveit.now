@@ -2,7 +2,7 @@
 
 import { APP_LINKS } from "@/lib/app-links";
 import { authClient } from "@/lib/auth-client";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import {
   buttonVariants,
@@ -43,10 +43,8 @@ export function LandingAppButton({
   variant = "default",
 }: LandingAppButtonProps) {
   const session = authClient.useSession();
-  const location = useLocation();
   const navigate = useNavigate();
   const [showPrompt, setShowPrompt] = useState(false);
-  const currentUrl = `${location.pathname}${location.searchStr}`;
   const classNames = cn(buttonVariants({ size, variant }), className);
   const isSignedIn = Boolean(session.data?.user);
 
@@ -134,16 +132,8 @@ export function LandingAppButton({
   return (
     <Link
       className={classNames}
-      mask={{ to: APP_LINKS.signin, unmaskOnReload: true }}
-      resetScroll={false}
-      search={(previous: Record<string, unknown>) => ({
-        ...previous,
-        from: currentUrl === "/" ? undefined : currentUrl,
-        intent: authIntent,
-        modal: "signin",
-        redirectUrl: APP_LINKS.app,
-      })}
-      to="."
+      to="/signin"
+      search={{ intent: authIntent, step: "email" }}
     >
       {signedOutChildren ?? children}
     </Link>

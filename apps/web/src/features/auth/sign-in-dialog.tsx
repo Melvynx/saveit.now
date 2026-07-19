@@ -84,7 +84,7 @@ function MountedSignInDialog({ search }: { search: SignInDialogSearch }) {
         }
       }}
     >
-      <DialogContent className="gap-6 p-0 sm:max-w-md">
+      <DialogContent className="v2-dusk dark v2-press gap-6 border-white/[0.08] bg-[#1a0e15] p-0 text-[#f7ede8] sm:max-w-md">
         <DialogHeader className="items-center px-6 pt-7 text-center">
           <div className="mb-1 flex items-center gap-2">
             <img
@@ -177,7 +177,7 @@ function MountedSignInDialog({ search }: { search: SignInDialogSearch }) {
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+        <DialogFooter className="mx-0 mb-0 flex-col gap-2 border-white/[0.08] bg-white/[0.03] px-6 py-4 sm:flex-col">
           <p className="text-center text-sm text-muted-foreground">
             {isSignup ? "Already have an account?" : "New to SaveIt.now?"}{" "}
             <button

@@ -1,4 +1,5 @@
 import { ImportForm } from "@/features/imports/import-form";
+import { V2_HEAD_LINKS, V2Style } from "@/features/marketing/v2/v2-theme";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { APP_LINKS } from "@/lib/app-links";
 import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
@@ -29,6 +30,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/start")({
+  head: () => ({
+    links: V2_HEAD_LINKS,
+  }),
   component: StartPage,
 });
 
@@ -178,16 +182,16 @@ function StartPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-background text-foreground">
+    <main className="v2-dusk dark relative flex min-h-screen flex-col bg-background text-foreground">
+      <V2Style />
+      <div className="v2-noise pointer-events-none fixed inset-0" />
       {/* Top bar */}
-      <header className="flex items-center justify-between px-5 py-5 sm:px-8">
-        <a href="/" className="flex items-center gap-2.5">
-          <img
-            src="/icon.png"
-            alt=""
-            className="size-8 rounded-lg object-cover"
-          />
-          <span className="font-semibold tracking-tight">SaveIt.now</span>
+      <header className="relative flex items-center justify-between px-5 py-5 sm:px-8">
+        <a
+          href="/"
+          className="v2-display text-lg tracking-tight text-[#f7ede8]"
+        >
+          SaveIt<span className="text-[#ff8f70]">.now</span>
         </a>
         <Button
           variant="ghost"
@@ -287,7 +291,7 @@ function Stepper({ step }: { step: number }) {
 
 function OnboardingRouteLoading() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5 text-foreground">
+    <main className="v2-dusk dark flex min-h-screen items-center justify-center bg-background px-5 text-foreground">
       <p className="text-sm text-muted-foreground">Preparing your setup...</p>
     </main>
   );
@@ -304,8 +308,10 @@ function StepHeading({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold text-primary">{eyebrow}</p>
-      <h1 className="text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+      <p className="text-[13px] font-medium uppercase tracking-[0.2em] text-primary">
+        {eyebrow}
+      </p>
+      <h1 className="v2-display text-balance text-3xl leading-tight tracking-tight sm:text-4xl">
         {title}
       </h1>
       <p className="text-pretty text-base leading-7 text-muted-foreground">
@@ -320,7 +326,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
     {
       icon: BookmarkCheck,
       title: "Save anything",
-      description: "Articles, videos, tweets — any link, in one place.",
+      description: "Articles, videos, tweets. Any link, in one place.",
     },
     {
       icon: Sparkles,
@@ -383,7 +389,7 @@ function PersonalizeStep({
       <StepHeading
         eyebrow="Step 1 of 3"
         title="What do you save most?"
-        description="Pick one — we'll drop a relevant example in your library so it's never empty."
+        description="Pick one and we'll drop a relevant example in your library so it's never empty."
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -449,7 +455,7 @@ function ImportStep({
       <StepHeading
         eyebrow="Step 2 of 3"
         title="Bring your bookmarks with you."
-        description="Paste your links, or drop your browser's bookmark export — we'll import the links we can and report exactly what happened."
+        description="Paste your links, or drop your browser's bookmark export. We'll import the links we can and report exactly what happened."
       />
 
       <ImportForm onSuccess={onSuccess} />
@@ -508,7 +514,7 @@ function PlanStep({
 
       <div className="space-y-3">
         <p className="text-sm font-semibold text-primary">Step 3 of 3</p>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="v2-display text-balance text-3xl tracking-tight sm:text-4xl">
           {isPro
             ? "Your Pro workspace is ready."
             : "Choose how you want to start."}
@@ -578,7 +584,7 @@ function PlanStep({
             onClick={onContinueFree}
             disabled={isBusy}
           >
-            Continue with Free — 20 bookmarks
+            Continue with Free, 20 bookmarks
           </Button>
           <p className="text-center text-xs leading-5 text-muted-foreground">
             No credit card required for Free. You can upgrade later.

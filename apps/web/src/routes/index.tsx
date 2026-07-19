@@ -1,33 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ExtensionsSection } from "@/features/marketing/extensions-section";
-import { FAQ } from "@/features/marketing/faq";
-import { HowItWorks } from "@/features/marketing/how-it-works";
-import { LandingHeader } from "@/features/marketing/landing-header";
-import { LandingHero } from "@/features/marketing/landing-hero";
-import { LandingPricing } from "@/features/marketing/landing-pricing";
-import { LandingStats } from "@/features/marketing/landing-stats";
-import { WhySaveIt } from "@/features/marketing/why-saveit";
+import { V2Agent } from "@/features/marketing/v2/v2-agent";
+import { V2Closing } from "@/features/marketing/v2/v2-closing";
+import { V2Header } from "@/features/marketing/v2/v2-header";
+import { V2Hero } from "@/features/marketing/v2/v2-hero";
+import { V2Ios } from "@/features/marketing/v2/v2-ios";
+import { V2Pricing } from "@/features/marketing/v2/v2-pricing";
+import { V2Problem } from "@/features/marketing/v2/v2-problem";
+import { V2_HEAD_LINKS, V2Style } from "@/features/marketing/v2/v2-theme";
 import { Footer } from "@/features/page/footer";
-import { SignInDialog } from "@/features/auth/sign-in-dialog";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "SaveIt.now: A home for everything you save" },
+      {
+        name: "description",
+        content:
+          "One tap to save any link. An AI agent reads it, files it, and finds it back the moment you ask. Zero folders, zero tags, zero organizing.",
+      },
+    ],
+    links: V2_HEAD_LINKS,
+  }),
   component: HomePage,
 });
 
 function HomePage() {
   return (
-    <div className="landing-page">
-      <LandingHeader />
-      <LandingHero />
-      <LandingStats />
-      <WhySaveIt />
-      <HowItWorks />
-      <ExtensionsSection />
-      <LandingPricing />
-      <FAQ />
+    <div className="v2-page bg-[#120a10] text-[#f7ede8]">
+      <V2Style />
+      <V2Header />
+      <V2Hero />
+      <V2Problem />
+      <V2Agent />
+      <V2Ios />
+      <V2Pricing />
+      <V2Closing />
       <Footer />
-      <SignInDialog />
     </div>
   );
 }
