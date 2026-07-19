@@ -43,7 +43,7 @@ export const BookmarkFavicon = (props: BookmarkFaviconProps) => {
       src={getSrc()}
       fallbackImage={DEFAULT_FAVICON}
       alt="favicon"
-      className="size-4"
+      className="size-4 rounded-sm"
     />
   );
 };

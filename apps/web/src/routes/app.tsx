@@ -31,15 +31,22 @@ function GuardedAppRoute() {
     api.users.queries.getOnboardingFlowState,
     session.data?.user ? {} : "skip",
   );
+  const isAppPath =
+    location.pathname === "/app" || location.pathname.startsWith("/app/");
   const isAppIndex = location.pathname === "/app";
+  const signInRedirectUrl = isAppPath ? location.href : "/app";
 
   useEffect(() => {
     if (session.isPending) return;
 
     if (!session.data?.user) {
+      // TanStack can keep this route mounted for one render after navigation.
+      // Never turn the destination /signin URL into its own redirect target.
+      if (!isAppPath) return;
+
       void navigate({
         to: "/signin",
-        search: { redirectUrl: location.href },
+        search: { redirectUrl: signInRedirectUrl },
         replace: true,
       });
       return;
@@ -50,10 +57,11 @@ function GuardedAppRoute() {
     }
   }, [
     flowState?.needsOnboarding,
-    location.href,
+    isAppPath,
     navigate,
     session.data?.user,
     session.isPending,
+    signInRedirectUrl,
   ]);
 
   if (

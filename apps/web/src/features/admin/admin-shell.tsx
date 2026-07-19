@@ -16,13 +16,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import {
-  ArrowLeft,
-  BarChart3,
-  Mail,
-  MessageSquareText,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, BarChart3, MessageSquareText, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -67,12 +61,6 @@ const adminNavigation: AdminNavigationGroup[] = [
         label: "Feedback",
         description: "Liked and disliked chats",
         Icon: MessageSquareText,
-      },
-      {
-        href: "/admin/send-email",
-        label: "Marketing email",
-        description: "Campaign composer",
-        Icon: Mail,
       },
     ],
   },

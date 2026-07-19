@@ -3,7 +3,7 @@ import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { requireRunMutationCtx } from "@convex-dev/better-auth/utils";
 import { apiKey } from "@better-auth/api-key";
 import { expo } from "@better-auth/expo";
-import { APIError, betterAuth } from "better-auth";
+import { APIError, betterAuth, type GenericEndpointContext } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
 import { admin, emailOTP, magicLink, oneTimeToken } from "better-auth/plugins";
 import { components, internal } from "../_generated/api";
@@ -243,7 +243,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
     },
     deleteUser: {
       enabled: true,
-      beforeDelete: async (user: { id: string }) => {
+      beforeDelete: async (user: { id: string; email: string }) => {
         try {
           const mctx = requireRunMutationCtx(ctx);
           await mctx.scheduler.runAfter(
@@ -253,6 +253,14 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
           );
         } catch (error) {
           console.warn("[auth] beforeDelete hook skipped", error);
+        }
+        try {
+          const mctx = requireRunMutationCtx(ctx);
+          await mctx.runMutation(internal.integrations.workflows.queueDelete, {
+            email: user.email,
+          });
+        } catch (error) {
+          console.warn("[auth] Lumail deletion hook skipped", error);
         }
       },
     },
@@ -289,6 +297,24 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
             );
           } catch (error) {
             console.warn("[auth] user.create.after hook skipped", error);
+          }
+        },
+      },
+      update: {
+        after: async (
+          user: { id: string; email: string },
+          hookContext: GenericEndpointContext | null,
+        ) => {
+          const previousEmail = hookContext?.context.session?.user.email;
+          if (typeof previousEmail !== "string") return;
+          try {
+            const mctx = requireRunMutationCtx(ctx);
+            await mctx.runMutation(
+              internal.integrations.workflows.queueProfile,
+              { userId: user.id, previousEmail },
+            );
+          } catch (error) {
+            console.warn("[auth] user.update.after Lumail sync skipped", error);
           }
         },
       },

@@ -31,6 +31,9 @@ import {
   summarizeBulkImport,
   type BulkImportResult,
 } from "./bulkImport";
+import { reserveLimitOffer } from "../integrations/lifecycle";
+import { shouldQueueBookmarkLifecycle } from "../integrations/lumailPolicy";
+import { startBookmarkLifecycleSync } from "../integrations/workflows";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -102,7 +105,7 @@ export async function bumpBookmarkCount(
   ctx: { db: any },
   userId: string,
   delta: number,
-): Promise<void> {
+): Promise<number> {
   const now = new Date();
   const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 
@@ -112,17 +115,21 @@ export async function bumpBookmarkCount(
     .first();
 
   if (!counters) {
+    const bookmarkCount = Math.max(0, delta);
     await ctx.db.insert("userCounters", {
       userId,
-      bookmarkCount: Math.max(0, delta),
+      bookmarkCount,
       monthKey,
       monthlyRuns: 0,
       monthlyChatQueries: 0,
     });
+    return bookmarkCount;
   } else {
+    const bookmarkCount = Math.max(0, (counters.bookmarkCount ?? 0) + delta);
     await ctx.db.patch(counters._id, {
-      bookmarkCount: Math.max(0, (counters.bookmarkCount ?? 0) + delta),
+      bookmarkCount,
     });
+    return bookmarkCount;
   }
 }
 
@@ -188,16 +195,18 @@ async function createBookmarkCore(
   });
 
   // 6. Increment bookmark count (same mutation = atomic).
-  await bumpBookmarkCount(ctx, userId, 1);
+  const bookmarkCount = await bumpBookmarkCount(ctx, userId, 1);
 
-  // 7. Check if we should send the limit email (fire-and-forget drip).
+  // 7. Synchronize lifecycle milestones to Lumail. Workflow V2 owns all email
+  // scheduling and delivery; Convex only emits product state changes.
   const sendLimit = await shouldSendLimitEmail(ctx, userId);
-  if (sendLimit) {
-    await ctx.scheduler.runAfter(
-      0,
-      internal.marketing.limitReached.startLimitReachedDrip,
-      { userId },
-    );
+  const offerId = sendLimit ? await reserveLimitOffer(ctx, userId) : null;
+  if (shouldQueueBookmarkLifecycle(bookmarkCount, offerId !== null)) {
+    await startBookmarkLifecycleSync(ctx, {
+      userId,
+      bookmarkCount,
+      ...(offerId ? { offerId } : {}),
+    });
   }
 
   // 8. Schedule pipeline processing.

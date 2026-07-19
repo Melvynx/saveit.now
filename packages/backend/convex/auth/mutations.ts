@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { httpAction } from "../_generated/server";
-import { components } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import { authComponent, createAuth } from "./config";
 import { authMutation } from "../functions";
 
@@ -39,7 +39,10 @@ export const updateProfile = authMutation({
   },
 });
 
-const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET ?? "";
+function getBetterAuthSecret(): string | null {
+  const secret = process.env.BETTER_AUTH_SECRET?.trim();
+  return secret ? secret : null;
+}
 
 function hmacSha256Hex(secret: string, message: string): Promise<string> {
   // We're in default runtime (no "use node"), but we need crypto.
@@ -74,7 +77,12 @@ function hmacSha256Hex(secret: string, message: string): Promise<string> {
  */
 export const unsubscribe = httpAction(async (ctx, request) => {
   const url = new URL(request.url);
-  const userId = url.searchParams.get("userId");
+  const pathUserId = url.pathname.startsWith("/unsubscribe/")
+    ? decodeURIComponent(url.pathname.slice("/unsubscribe/".length)).split(
+        "/",
+      )[0]
+    : null;
+  const userId = url.searchParams.get("userId") ?? pathUserId;
   const token = url.searchParams.get("token");
   const timestamp = url.searchParams.get("timestamp");
 
@@ -88,13 +96,27 @@ export const unsubscribe = httpAction(async (ctx, request) => {
     );
   }
 
-  // Verify HMAC-SHA256 token
-  const expected = await hmacSha256Hex(
-    BETTER_AUTH_SECRET,
-    `${userId}:${timestamp}`,
-  );
+  const secret = getBetterAuthSecret();
+  if (!secret) {
+    return new Response(
+      JSON.stringify({ error: "Unsubscribe is temporarily unavailable" }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
+  }
 
-  if (expected !== token) {
+  // Verify HMAC-SHA256 token
+  const expected = await hmacSha256Hex(secret, `${userId}:${timestamp}`);
+
+  const validToken =
+    /^[a-f0-9]{64}$/i.test(token) &&
+    expected.length === token.length &&
+    Array.from(expected).reduce(
+      (difference, character, index) =>
+        difference | (character.charCodeAt(0) ^ token.charCodeAt(index)),
+      0,
+    ) === 0;
+
+  if (!validToken) {
     return new Response(
       JSON.stringify({ error: "Invalid unsubscribe token", success: false }),
       {
@@ -110,10 +132,18 @@ export const unsubscribe = httpAction(async (ctx, request) => {
     update: { unsubscribed: true },
   });
 
+  await ctx.runMutation(internal.integrations.workflows.queueUnsubscribe, {
+    userId,
+  });
+
   return new Response(
-    JSON.stringify({ success: true, message: "You have been unsubscribed." }),
+    JSON.stringify({
+      success: true,
+      message:
+        "Your unsubscribe request was accepted and is being synchronized.",
+    }),
     {
-      status: 200,
+      status: 202,
       headers: { "Content-Type": "application/json" },
     },
   );

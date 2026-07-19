@@ -25,23 +25,6 @@ function getStripe(): Stripe {
 
 const getSiteUrl = () => process.env.SITE_URL ?? "http://localhost:3000";
 
-/**
- * Generates a 6-character uppercase alphanumeric promo code using Node crypto.
- * Equivalent to nanoid(6).toUpperCase() with A-Z0-9 charset.
- */
-function generatePromoCode(): string {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { randomBytes } =
-    require("node:crypto") as typeof import("node:crypto");
-  const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const bytes = randomBytes(12);
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += CHARSET[bytes[i]! % CHARSET.length];
-  }
-  return code;
-}
-
 function normalizeStripePlan(plan: string | undefined): "free" | "pro" {
   if (plan === undefined || plan === "pro") return "pro";
   return "free";
@@ -317,54 +300,6 @@ export const processWebhook = internalAction({
 });
 
 // ---------------------------------------------------------------------------
-// createPromotionCode (internalAction)
-//
-// Creates a single-use Stripe promo code backed by STRIPE_COUPON_ID with:
-// - 6-char uppercase alphanumeric code
-// - max_redemptions: 1
-// - expires in 3 days (Unix seconds)
-// - first_time_transaction restriction
-// Called from marketing/limitReached.ts.
-// ---------------------------------------------------------------------------
-
-export const createPromotionCode = internalAction({
-  args: {
-    userId: v.string(),
-    stripeCustomerId: v.optional(v.string()),
-  },
-  handler: async (ctx, { userId, stripeCustomerId }) => {
-    const couponId = process.env.STRIPE_COUPON_ID;
-    if (!couponId) throwConfigurationError("STRIPE_COUPON_ID is not set");
-
-    // Resolve stripeCustomerId if not passed directly.
-    let customerId = stripeCustomerId;
-    if (!customerId) {
-      const user = await ctx.runQuery(components.betterAuth.data.getUserById, {
-        userId,
-      });
-      customerId = user?.stripeCustomerId ?? undefined;
-    }
-
-    const stripe = getStripe();
-    const code = generatePromoCode();
-    // expires_at is Unix seconds (not ms) — 3 days from now.
-    const expiresAt = Math.floor(Date.now() / 1000) + 3 * 24 * 60 * 60;
-
-    const promoCode = await stripe.promotionCodes.create({
-      coupon: couponId,
-      code,
-      max_redemptions: 1,
-      expires_at: expiresAt,
-      ...(customerId ? { customer: customerId } : {}),
-      active: true,
-      restrictions: { first_time_transaction: true },
-    });
-
-    return { code: promoCode.code };
-  },
-});
-
-// ---------------------------------------------------------------------------
 // retryLimitExceededBookmarks (internalAction)
 //
 // Finds ERROR bookmarks for a user whose processingError contains
@@ -517,12 +452,10 @@ async function handleCheckoutSessionCompleted(
     cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
   });
 
-  // Schedule subscription thank-you drip on first pro activation.
-  await ctx.scheduler.runAfter(
-    0,
-    internal.marketing.subscription.startSubscriptionDrip,
-    { userId: user._id as string },
-  );
+  // Lumail owns the Pro onboarding workflow and deduplicates it by tag.
+  await ctx.runMutation(internal.integrations.workflows.queuePlan, {
+    userId: user._id as string,
+  });
 }
 
 async function handleSubscriptionUpdated(
@@ -532,18 +465,29 @@ async function handleSubscriptionUpdated(
   // Plan name from subscription metadata; fall back to "pro" when absent.
   const planName = normalizeStripePlan(subscription.metadata?.plan);
 
-  await ctx.runMutation(internal.subscriptions.mutations.updateFromWebhook, {
-    stripeSubscriptionId: subscription.id,
-    plan: planName,
-    status: subscription.status,
-    periodStart: subscription.current_period_start * 1000,
-    periodEnd: subscription.current_period_end * 1000,
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
-  });
+  const storedUserId: string | null = await ctx.runMutation(
+    internal.subscriptions.mutations.updateFromWebhook,
+    {
+      stripeSubscriptionId: subscription.id,
+      plan: planName,
+      status: subscription.status,
+      periodStart: subscription.current_period_start * 1000,
+      periodEnd: subscription.current_period_end * 1000,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    },
+  );
 
   // Upgrade-from-free retry: reset ERROR bookmarks blocked by "Limit exceeded".
   // userId is in subscription metadata (set during checkout session creation).
-  const userId = subscription.metadata?.userId as string | undefined;
+  const userId =
+    (subscription.metadata?.userId as string | undefined) ??
+    storedUserId ??
+    undefined;
+  if (userId) {
+    await ctx.runMutation(internal.integrations.workflows.queuePlan, {
+      userId,
+    });
+  }
   if (userId && subscription.status === "active") {
     await ctx.scheduler.runAfter(
       0,
@@ -557,12 +501,20 @@ async function handleSubscriptionDeleted(
   ctx: WebhookCtx,
   subscription: Stripe.Subscription,
 ) {
-  await ctx.runMutation(internal.subscriptions.mutations.updateFromWebhook, {
-    stripeSubscriptionId: subscription.id,
-    plan: "free",
-    status: "canceled",
-    periodStart: subscription.current_period_start * 1000,
-    periodEnd: Date.now(),
-    cancelAtPeriodEnd: false,
-  });
+  const userId: string | null = await ctx.runMutation(
+    internal.subscriptions.mutations.updateFromWebhook,
+    {
+      stripeSubscriptionId: subscription.id,
+      plan: "free",
+      status: "canceled",
+      periodStart: subscription.current_period_start * 1000,
+      periodEnd: Date.now(),
+      cancelAtPeriodEnd: false,
+    },
+  );
+  if (userId) {
+    await ctx.runMutation(internal.integrations.workflows.queuePlan, {
+      userId,
+    });
+  }
 }

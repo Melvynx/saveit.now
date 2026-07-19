@@ -60,7 +60,6 @@ import { Route as ApiTagsRouteImport } from "./routes/api.tags";
 import { Route as ApiBugReportRouteImport } from "./routes/api.bug-report";
 import { Route as ApiBookmarksRouteImport } from "./routes/api.bookmarks";
 import { Route as AdminUsersRouteImport } from "./routes/admin.users";
-import { Route as AdminSendEmailRouteImport } from "./routes/admin.send-email";
 import { Route as AdminConversationsRouteImport } from "./routes/admin.conversations";
 import { Route as AccountPublicLinkRouteImport } from "./routes/account.public-link";
 import { Route as AccountKeysRouteImport } from "./routes/account.keys";
@@ -332,11 +331,6 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: "/users",
   getParentRoute: () => AdminRoute,
 } as any);
-const AdminSendEmailRoute = AdminSendEmailRouteImport.update({
-  id: "/send-email",
-  path: "/send-email",
-  getParentRoute: () => AdminRoute,
-} as any);
 const AdminConversationsRoute = AdminConversationsRouteImport.update({
   id: "/conversations",
   path: "/conversations",
@@ -448,7 +442,6 @@ export interface FileRoutesByFullPath {
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -517,7 +510,6 @@ export interface FileRoutesByTo {
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -587,7 +579,6 @@ export interface FileRoutesById {
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
   "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/send-email": typeof AdminSendEmailRoute;
   "/admin/users": typeof AdminUsersRouteWithChildren;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
@@ -658,7 +649,6 @@ export interface FileRouteTypes {
     | "/account/keys"
     | "/account/public-link"
     | "/admin/conversations"
-    | "/admin/send-email"
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -727,7 +717,6 @@ export interface FileRouteTypes {
     | "/account/keys"
     | "/account/public-link"
     | "/admin/conversations"
-    | "/admin/send-email"
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -796,7 +785,6 @@ export interface FileRouteTypes {
     | "/account/keys"
     | "/account/public-link"
     | "/admin/conversations"
-    | "/admin/send-email"
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
@@ -1239,13 +1227,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminUsersRouteImport;
       parentRoute: typeof AdminRoute;
     };
-    "/admin/send-email": {
-      id: "/admin/send-email";
-      path: "/send-email";
-      fullPath: "/admin/send-email";
-      preLoaderRoute: typeof AdminSendEmailRouteImport;
-      parentRoute: typeof AdminRoute;
-    };
     "/admin/conversations": {
       id: "/admin/conversations";
       path: "/conversations";
@@ -1392,13 +1373,11 @@ const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminConversationsRoute: typeof AdminConversationsRouteWithChildren;
-  AdminSendEmailRoute: typeof AdminSendEmailRoute;
   AdminUsersRoute: typeof AdminUsersRouteWithChildren;
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminConversationsRoute: AdminConversationsRouteWithChildren,
-  AdminSendEmailRoute: AdminSendEmailRoute,
   AdminUsersRoute: AdminUsersRouteWithChildren,
 };
 

@@ -208,6 +208,16 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_monthKey", ["monthKey"]),
 
+  // Durable, single-claim state for the personalized free-limit offer.
+  marketingLimitOffers: defineTable({
+    userId: v.string(),
+    status: v.union(v.literal("pending"), v.literal("active")),
+    promoCode: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    activatedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
   // Per-user dismissed changelog versions.
   changelogDismissals: defineTable({
     userId: v.string(),

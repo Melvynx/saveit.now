@@ -23,12 +23,12 @@ import {
   Ban,
   Bookmark,
   Crown,
-  Mail,
   MessageSquareText,
   MousePointerClick,
   ShieldCheck,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   validateSearch: parseAdminSearchParams,
@@ -79,7 +79,7 @@ function AdminPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <AdminPageHeader
           title="Dashboard"
-          description="Operational view for users, subscriptions, limits, conversations, and marketing."
+          description="Operational view for users, subscriptions, limits, and conversations."
           action={
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" asChild>
@@ -125,7 +125,7 @@ function AdminPage() {
           />
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2">
           <AdminStatCard
             title="Admins"
             value={overview.adminUsers.toLocaleString()}
@@ -137,12 +137,6 @@ function AdminPage() {
             value={overview.bannedUsers.toLocaleString()}
             description="Restricted accounts"
             icon={Ban}
-          />
-          <AdminStatCard
-            title="Email audience"
-            value={overview.marketingEligibleUsers.toLocaleString()}
-            description="Eligible marketing recipients"
-            icon={Mail}
           />
         </section>
 
@@ -169,12 +163,6 @@ function AdminPage() {
                 title="Conversation feedback"
                 description="Review liked and disliked AI conversations."
               />
-              <AdminWorkflowLink
-                href="/admin/send-email"
-                icon={Mail}
-                title="Marketing email"
-                description="Compose a campaign for subscribed users."
-              />
             </CardContent>
           </Card>
           <Card>
@@ -196,10 +184,6 @@ function AdminPage() {
               <DashboardSignal
                 label="Banned users"
                 value={overview.bannedUsers}
-              />
-              <DashboardSignal
-                label="Marketing audience"
-                value={overview.marketingEligibleUsers}
               />
             </CardContent>
           </Card>
@@ -225,7 +209,7 @@ function AdminWorkflowLink({
   description,
 }: {
   href: string;
-  icon: typeof Mail;
+  icon: LucideIcon;
   title: string;
   description: string;
 }) {

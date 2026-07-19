@@ -50,7 +50,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 **Backend**: Convex stores application data and runs server functions. Schema and functions live in packages/backend.
 
-**Background Jobs**: Inngest for processing bookmarks, sending emails, and handling webhooks.
+**Background Jobs**: Convex workflows and scheduled functions process bookmarks and product lifecycle events. Lumail Workflow V2 owns marketing email automation.
 
 **File Storage**: AWS S3 for bookmark screenshots and media files.
 
@@ -58,6 +58,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 
 - Stripe for payments and subscriptions
 - Resend for transactional emails
+- Lumail for marketing subscribers, tags, campaigns, and Workflow V2 automations
 - Self-hosted Umami for analytics
 - OpenAI and Google Gemini for AI features
 - Better Auth for authentication

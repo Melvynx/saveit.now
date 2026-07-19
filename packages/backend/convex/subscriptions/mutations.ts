@@ -121,6 +121,6 @@ export const updateFromWebhook = internalMutation({
       updatedAt: Date.now(),
     });
 
-    return null;
+    return existing.userId;
   },
 });

@@ -27,7 +27,7 @@ This is a TypeScript monorepo using pnpm workspaces and Turbo for task orchestra
 - **Backend**: Convex for data, auth integration, and background work
 - **Payments**: Stripe integration for subscriptions
 - **File Storage**: AWS S3 for screenshots and media
-- **Email**: Resend for transactional emails
+- **Email**: Resend for transactional emails; Lumail Workflow V2 for lifecycle marketing
 - **Analytics**: Self-hosted Umami
 - **AI Features**: OpenAI and Google Gemini integration
 

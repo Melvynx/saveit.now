@@ -535,6 +535,9 @@ importers:
       image-size:
         specifier: ^2.0.2
         version: 2.0.2
+      lumail:
+        specifier: ^0.1.5
+        version: 0.1.5
       mime-types:
         specifier: ^3.0.2
         version: 3.0.2
@@ -8493,6 +8496,10 @@ packages:
     resolution: {integrity: sha512-NJzvVu1HwFVeZ+Gwq2q00KygM1aBhy/ZrhY9FsAgJtpB+E4R7uxRk9M2iKvHa6/vNxZydIB59htha4c2vvwvVg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lumail@0.1.5:
+    resolution: {integrity: sha512-CxuEaY6uNjlQmWoPXLIJWp2QPBEBmrQ8maONxnMvcA8icZqoJnXA7vtJ75EY1V13L+4LgbN3CBFolV43gO8Ulw==}
+    hasBin: true
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -22716,6 +22723,11 @@ snapshots:
   lucide-react@0.475.0(react@19.2.4):
     dependencies:
       react: 19.2.4
+
+  lumail@0.1.5:
+    dependencies:
+      commander: 14.0.3
+      picocolors: 1.1.1
 
   lz-string@1.5.0: {}
 

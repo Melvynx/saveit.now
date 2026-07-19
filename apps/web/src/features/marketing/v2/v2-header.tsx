@@ -22,7 +22,7 @@ export const V2Header = () => {
 
         <LandingAppButton
           authIntent="signin"
-          className="h-8 rounded-full border-white/15 bg-white/10 px-4 text-[13px] font-medium text-[#f7ede8] hover:bg-white/20 hover:text-white"
+          className="h-11 min-h-11 touch-manipulation rounded-full border-white/15 bg-white/10 px-4 text-[13px] font-medium text-[#f7ede8] hover:bg-white/20 hover:text-white"
           showAlwaysOpenPrompt
           signedOutChildren="Sign in"
           variant="outline"

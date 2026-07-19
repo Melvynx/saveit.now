@@ -36,10 +36,6 @@ export const getOverview = adminQuery({
     const activeUsers = users.filter((u: any) => u.banned !== true).length;
     const bannedUsers = users.filter((u: any) => u.banned === true).length;
     const adminUsers = users.filter((u: any) => u.role === "admin").length;
-    const marketingEligibleUsers = users.filter(
-      (u: any) => u.unsubscribed !== true && u.email,
-    ).length;
-
     // Count premium users via subscriptions table (bounded by index scan).
     const subscriptions = await ctx.db.query("subscriptions").take(500);
     const activeSubs = subscriptions.filter(
@@ -71,7 +67,6 @@ export const getOverview = adminQuery({
       regularUsers,
       totalBookmarks,
       totalClicks: totalClicks.length,
-      marketingEligibleUsers,
     };
   },
 });
@@ -369,28 +364,5 @@ export const getConversation = adminQuery({
       },
       messages: messageRows.map((row) => row.content),
     };
-  },
-});
-
-// ---------------------------------------------------------------------------
-// Marketing stats
-// ---------------------------------------------------------------------------
-
-/**
- * getMarketingStats — count of eligible users for broadcast email.
- */
-export const getMarketingStats = adminQuery({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.runQuery(
-      components.betterAuth.data.listUsersForAdmin,
-      { limit: 500, sort: "desc" },
-    );
-
-    const eligibleUsersCount = (users as any[]).filter(
-      (u) => u.email && u.unsubscribed !== true,
-    ).length;
-
-    return { eligibleUsersCount };
   },
 });

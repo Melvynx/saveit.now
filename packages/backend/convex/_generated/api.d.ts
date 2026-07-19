@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as admin_actions from "../admin/actions.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as api_extensions from "../api/extensions.js";
@@ -50,16 +49,14 @@ import type * as files_actions from "../files/actions.js";
 import type * as functions from "../functions.js";
 import type * as health from "../health.js";
 import type * as http from "../http.js";
+import type * as integrations_lifecycle from "../integrations/lifecycle.js";
+import type * as integrations_lumail from "../integrations/lumail.js";
+import type * as integrations_lumailDeletion from "../integrations/lumailDeletion.js";
+import type * as integrations_lumailPolicy from "../integrations/lumailPolicy.js";
+import type * as integrations_state from "../integrations/state.js";
+import type * as integrations_workflows from "../integrations/workflows.js";
 import type * as lib_gemini_provider from "../lib/gemini_provider.js";
 import type * as lib_safe_fetch from "../lib/safe_fetch.js";
-import type * as marketing_drips from "../marketing/drips.js";
-import type * as marketing_dripsQueries from "../marketing/dripsQueries.js";
-import type * as marketing_emailTemplates from "../marketing/emailTemplates.js";
-import type * as marketing_limitReached from "../marketing/limitReached.js";
-import type * as marketing_maintenance from "../marketing/maintenance.js";
-import type * as marketing_maintenanceQueries from "../marketing/maintenanceQueries.js";
-import type * as marketing_newSubscriber from "../marketing/newSubscriber.js";
-import type * as marketing_subscription from "../marketing/subscription.js";
 import type * as migration_import from "../migration/import.js";
 import type * as migration_reembed from "../migration/reembed.js";
 import type * as migration_reembed_helpers from "../migration/reembed_helpers.js";
@@ -87,6 +84,7 @@ import type * as search_queries from "../search/queries.js";
 import type * as stripe_actions from "../stripe/actions.js";
 import type * as stripe_checkout from "../stripe/checkout.js";
 import type * as stripe_idempotency from "../stripe/idempotency.js";
+import type * as stripe_promotionCodes from "../stripe/promotionCodes.js";
 import type * as subscriptions_helpers from "../subscriptions/helpers.js";
 import type * as subscriptions_mutations from "../subscriptions/mutations.js";
 import type * as subscriptions_queries from "../subscriptions/queries.js";
@@ -111,7 +109,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "admin/actions": typeof admin_actions;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
   "api/extensions": typeof api_extensions;
@@ -153,16 +150,14 @@ declare const fullApi: ApiFromModules<{
   functions: typeof functions;
   health: typeof health;
   http: typeof http;
+  "integrations/lifecycle": typeof integrations_lifecycle;
+  "integrations/lumail": typeof integrations_lumail;
+  "integrations/lumailDeletion": typeof integrations_lumailDeletion;
+  "integrations/lumailPolicy": typeof integrations_lumailPolicy;
+  "integrations/state": typeof integrations_state;
+  "integrations/workflows": typeof integrations_workflows;
   "lib/gemini_provider": typeof lib_gemini_provider;
   "lib/safe_fetch": typeof lib_safe_fetch;
-  "marketing/drips": typeof marketing_drips;
-  "marketing/dripsQueries": typeof marketing_dripsQueries;
-  "marketing/emailTemplates": typeof marketing_emailTemplates;
-  "marketing/limitReached": typeof marketing_limitReached;
-  "marketing/maintenance": typeof marketing_maintenance;
-  "marketing/maintenanceQueries": typeof marketing_maintenanceQueries;
-  "marketing/newSubscriber": typeof marketing_newSubscriber;
-  "marketing/subscription": typeof marketing_subscription;
   "migration/import": typeof migration_import;
   "migration/reembed": typeof migration_reembed;
   "migration/reembed_helpers": typeof migration_reembed_helpers;
@@ -190,6 +185,7 @@ declare const fullApi: ApiFromModules<{
   "stripe/actions": typeof stripe_actions;
   "stripe/checkout": typeof stripe_checkout;
   "stripe/idempotency": typeof stripe_idempotency;
+  "stripe/promotionCodes": typeof stripe_promotionCodes;
   "subscriptions/helpers": typeof subscriptions_helpers;
   "subscriptions/mutations": typeof subscriptions_mutations;
   "subscriptions/queries": typeof subscriptions_queries;

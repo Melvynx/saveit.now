@@ -5,6 +5,7 @@ import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
 import { deriveEffectivePlan } from "../billing/plans";
 import { throwValidationError } from "../utils/errors";
+import { startPlanSync } from "../integrations/workflows";
 
 type Subscription = Doc<"subscriptions">;
 type AppleStatus = 1 | 2 | 3 | 4 | 5;
@@ -155,6 +156,8 @@ export const upsertFromApple = internalMutation({
         { userId: args.userId },
       );
     }
+
+    await startPlanSync(ctx, { userId: args.userId });
 
     return {
       applied: true,

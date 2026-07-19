@@ -129,13 +129,14 @@ export function LandingAppButton({
     );
   }
 
+  const signInHref = `/signin?intent=${authIntent}&step=email`;
+
   return (
-    <Link
+    <a
       className={classNames}
-      to="/signin"
-      search={{ intent: authIntent, step: "email" }}
+      href={signInHref}
     >
       {signedOutChildren ?? children}
-    </Link>
+    </a>
   );
 }

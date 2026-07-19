@@ -40,7 +40,7 @@ sync_missing_env_value() {
     if convex_has_env_key "$key"; then
       return 0
     fi
-    convex env set "$key" "$value" >/dev/null
+    printf '%s\n' "$value" | convex env set "$key" >/dev/null
     echo "[convex-env] set missing $key"
   fi
 }
@@ -73,6 +73,8 @@ sync_missing_env_value STRIPE_COUPON_ID
 sync_missing_env_value RESEND_API_KEY
 sync_missing_env_value RESEND_EMAIL_FROM
 sync_missing_env_value HELP_EMAIL
+# Email marketing (Lumail)
+sync_missing_env_value LUMAIL_API_KEY
 # Storage (Cloudflare R2 via S3 SDK)
 sync_missing_env_value AWS_ACCESS_KEY_ID
 sync_missing_env_value AWS_SECRET_ACCESS_KEY

@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "installCommand": "cd ../.. && corepack pnpm@10.4.1 install --no-frozen-lockfile",
   "buildCommand": "cd ../.. && NITRO_PRESET=vercel pnpm vercel-build"
 }
