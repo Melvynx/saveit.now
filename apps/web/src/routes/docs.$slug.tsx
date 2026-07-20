@@ -2,8 +2,12 @@ import { DocsApiExamples } from "@/components/docs/docs-api-examples";
 import { DocsCopyButton } from "@/components/docs/docs-copy-button";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
+import { LandingHeader } from "@/features/marketing/landing/header";
+import {
+  LANDING_HEAD_LINKS,
+  LandingStyle,
+} from "@/features/marketing/landing/theme";
 import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
 import {
   getAllDocs,
   getDocBySlug,
@@ -64,6 +68,9 @@ async function getDocData(data: { slug: string }) {
 
 export const Route = createFileRoute("/docs/$slug")({
   loader: ({ params }) => getDocData(params),
+  head: () => ({
+    links: LANDING_HEAD_LINKS,
+  }),
   component: DocPage,
 });
 
@@ -72,9 +79,10 @@ function DocPage() {
 
   if (!doc) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 px-6 py-8">
+      <div className="landing-page landing-dusk dark flex min-h-screen flex-col bg-[#120a10] text-[#f7ede8]">
+        <LandingStyle />
+        <LandingHeader />
+        <main className="flex-1 px-6 pt-24 pb-8 sm:pt-28">
           <Typography variant="h1">Documentation not found</Typography>
         </main>
         <Footer />
@@ -86,8 +94,9 @@ function DocPage() {
   const hasApiExamples = Boolean(method ?? endpoint ?? examples ?? results);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
+    <div className="landing-page landing-dusk dark flex min-h-screen flex-col bg-[#120a10] text-[#f7ede8]">
+      <LandingStyle />
+      <LandingHeader />
       <div className="flex min-w-0 flex-1">
         <DocsSidebar groupedDocs={groupedDocs} />
         <main
@@ -99,16 +108,13 @@ function DocPage() {
                 : "min-w-0 flex-1"
           }
         >
-          <div className="mx-auto w-full min-w-0 max-w-full px-4 py-8 sm:px-6">
+          <div className="mx-auto w-full min-w-0 max-w-full px-4 pt-24 pb-8 sm:px-6 sm:pt-28">
             <article className="mx-auto flex w-full min-w-0 max-w-prose flex-col gap-6">
               <div className="flex flex-col gap-3">
                 <div className="flex min-w-0 items-start justify-between gap-4">
-                  <Typography
-                    variant="h1"
-                    className="min-w-0 flex-1 text-4xl font-bold tracking-tight"
-                  >
+                  <h1 className="landing-display min-w-0 flex-1 text-4xl tracking-tight text-[#f7ede8] sm:text-5xl">
                     {doc.frontmatter.title}
-                  </Typography>
+                  </h1>
                   <DocsCopyButton content={doc.content} />
                 </div>
                 {doc.frontmatter.description && (

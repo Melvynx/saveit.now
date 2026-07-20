@@ -6,8 +6,12 @@ import {
 } from "@/components/docs/doc-card";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
+import { LandingHeader } from "@/features/marketing/landing/header";
+import {
+  LANDING_HEAD_LINKS,
+  LandingStyle,
+} from "@/features/marketing/landing/theme";
 import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
 import { getDocBySlug, getGroupedDocs } from "@/lib/mdx/docs-manager";
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { Typography } from "@workspace/ui/components/typography";
@@ -49,6 +53,9 @@ async function getDocsIndexData() {
 
 export const Route = createFileRoute("/docs")({
   loader: () => getDocsIndexData(),
+  head: () => ({
+    links: LANDING_HEAD_LINKS,
+  }),
   component: DocsIndexPage,
 });
 
@@ -62,9 +69,10 @@ function DocsIndexPage() {
 
   if (!doc) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 px-6 py-8">
+      <div className="landing-page landing-dusk dark flex min-h-screen flex-col bg-[#120a10] text-[#f7ede8]">
+        <LandingStyle />
+        <LandingHeader />
+        <main className="flex-1 px-6 pt-24 pb-8 sm:pt-28">
           <Typography variant="h1">Documentation not found</Typography>
         </main>
         <Footer />
@@ -73,20 +81,18 @@ function DocsIndexPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
+    <div className="landing-page landing-dusk dark flex min-h-screen flex-col bg-[#120a10] text-[#f7ede8]">
+      <LandingStyle />
+      <LandingHeader />
       <div className="flex flex-1">
         <DocsSidebar groupedDocs={groupedDocs} />
         <main className={toc.length > 0 ? "flex-1 xl:pr-64" : "flex-1"}>
-          <div className="mx-auto px-6 py-8">
+          <div className="mx-auto px-6 pt-24 pb-8 sm:pt-28">
             <div className="mx-auto flex max-w-prose flex-col gap-6">
               <div className="flex flex-col gap-3">
-                <Typography
-                  variant="h1"
-                  className="text-4xl font-bold tracking-tight"
-                >
+                <h1 className="landing-display text-4xl tracking-tight text-[#f7ede8] sm:text-5xl">
                   {doc.frontmatter.title}
-                </Typography>
+                </h1>
                 <Typography variant="p" className="text-muted-foreground text-lg">
                   {doc.frontmatter.description}
                 </Typography>

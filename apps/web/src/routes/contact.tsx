@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock, HelpCircle, Mail, MessageSquare, Twitter, Users } from "lucide-react";
 
+import { LandingHeader } from "@/features/marketing/landing/header";
+import { LandingReveal } from "@/features/marketing/landing/reveal";
+import {
+  LANDING_HEAD_LINKS,
+  LandingStyle,
+} from "@/features/marketing/landing/theme";
 import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
-import { MaxWidthContainer } from "@/features/page/page";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -14,6 +18,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Typography } from "@workspace/ui/components/typography";
+import { cn } from "@workspace/ui/lib/utils";
 
 const contactMethods = [
   {
@@ -52,42 +57,64 @@ const faqs = [
 ];
 
 export const Route = createFileRoute("/contact")({
+  head: () => ({
+    links: LANDING_HEAD_LINKS,
+  }),
   component: ContactPage,
 });
 
 function ContactPage() {
   return (
-    <div>
-      <Header />
-      <MaxWidthContainer className="py-16">
+    <div className="landing-page landing-dusk dark bg-[#120a10] text-[#f7ede8]">
+      <LandingStyle />
+      <LandingHeader />
+      <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-28">
         <div className="flex flex-col gap-16">
-          <div className="text-center space-y-6">
-            <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+          <LandingReveal className="text-center space-y-6">
+            <Badge className="border-[#ff8f70]/20 bg-[#ff8f70]/10 text-[#ff8f70]">
               <HelpCircle className="size-3 mr-1" />
               Support
             </Badge>
-            <Typography variant="h1" className="max-w-3xl mx-auto">
-              We're here to help
-            </Typography>
-            <Typography variant="lead" className="max-w-2xl mx-auto text-muted-foreground">
+            <h1 className="landing-display max-w-3xl mx-auto text-balance text-5xl tracking-tight text-[#f7ede8] sm:text-6xl">
+              We're here to <em className="landing-gradient-text">help</em>
+            </h1>
+            <Typography variant="lead" className="max-w-2xl mx-auto">
               Have a question, need support, or want to share feedback? We would love to hear from you.
             </Typography>
-          </div>
+          </LandingReveal>
 
           <div className="space-y-8">
-            <Typography variant="h2" className="text-center">Get in Touch</Typography>
+            <h2 className="landing-display text-center text-3xl tracking-tight text-[#f7ede8] sm:text-4xl">Get in Touch</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {contactMethods.map((method) => {
                 const IconComponent = method.icon;
                 return (
-                  <Card key={method.title} className={`h-fit ${method.primary ? "border-primary/40 bg-primary/5" : ""}`}>
+                  <Card
+                    key={method.title}
+                    className={cn(
+                      "h-fit rounded-2xl shadow-none",
+                      method.primary
+                        ? "border-[#ff8f70]/30 bg-[#ff8f70]/[0.06]"
+                        : "border-white/[0.08] bg-white/[0.03]",
+                    )}
+                  >
                     <CardHeader className="text-center">
-                      <div className={`mx-auto mb-3 size-12 rounded-lg flex items-center justify-center ${method.primary ? "bg-primary/20" : "bg-muted"}`}>
-                        <IconComponent className={`size-6 ${method.primary ? "text-primary" : "text-muted-foreground"}`} />
+                      <div
+                        className={cn(
+                          "mx-auto mb-3 size-12 rounded-2xl flex items-center justify-center",
+                          method.primary ? "bg-[#ff8f70]/15" : "bg-white/[0.06]",
+                        )}
+                      >
+                        <IconComponent
+                          className={cn(
+                            "size-6",
+                            method.primary ? "text-[#ff8f70]" : "text-[#a89099]",
+                          )}
+                        />
                       </div>
                       <CardTitle className="flex items-center justify-center gap-2">
                         {method.title}
-                        {method.primary && <Badge className="bg-primary/20 text-primary">Recommended</Badge>}
+                        {method.primary && <Badge className="bg-[#ff8f70]/15 text-[#ff8f70]">Recommended</Badge>}
                       </CardTitle>
                       <CardDescription className="text-center">{method.description}</CardDescription>
                     </CardHeader>
@@ -117,14 +144,14 @@ function ContactPage() {
 
           <div className="space-y-8">
             <div className="text-center space-y-4">
-              <Typography variant="h2">Frequently Asked Questions</Typography>
+              <h2 className="landing-display text-3xl tracking-tight text-[#f7ede8] sm:text-4xl">Frequently Asked Questions</h2>
               <Typography variant="muted" className="max-w-2xl mx-auto">
                 Quick answers to common questions. Can not find what you are looking for? Contact us directly.
               </Typography>
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               {faqs.map(([question, answer]) => (
-                <Card key={question} className="h-fit">
+                <Card key={question} className="h-fit rounded-2xl border-white/[0.08] bg-white/[0.03] shadow-none">
                   <CardHeader>
                     <CardTitle className="text-lg">{question}</CardTitle>
                   </CardHeader>
@@ -137,13 +164,13 @@ function ContactPage() {
           </div>
 
           <div className="space-y-8">
-            <Typography variant="h2" className="text-center">Additional Resources</Typography>
+            <h2 className="landing-display text-center text-3xl tracking-tight text-[#f7ede8] sm:text-4xl">Additional Resources</h2>
             <div className="grid gap-6 md:grid-cols-2">
-              <Card>
+              <Card className="rounded-2xl border-white/[0.08] bg-white/[0.03] shadow-none">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <HelpCircle className="size-5 text-green-600" />
+                    <div className="size-10 rounded-xl bg-emerald-400/10 flex items-center justify-center">
+                      <HelpCircle className="size-5 text-emerald-300" />
                     </div>
                     <div>
                       <CardTitle>Help Center</CardTitle>
@@ -157,11 +184,11 @@ function ContactPage() {
                   </Button>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="rounded-2xl border-white/[0.08] bg-white/[0.03] shadow-none">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Users className="size-5 text-blue-600" />
+                    <div className="size-10 rounded-xl bg-sky-400/10 flex items-center justify-center">
+                      <Users className="size-5 text-sky-300" />
                     </div>
                     <div>
                       <CardTitle>Community</CardTitle>
@@ -180,7 +207,7 @@ function ContactPage() {
             </div>
           </div>
         </div>
-      </MaxWidthContainer>
+      </div>
       <Footer />
     </div>
   );

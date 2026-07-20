@@ -1,8 +1,12 @@
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 
+import { LandingHeader } from "@/features/marketing/landing/header";
+import { LandingReveal } from "@/features/marketing/landing/reveal";
+import {
+  LANDING_HEAD_LINKS,
+  LandingStyle,
+} from "@/features/marketing/landing/theme";
 import { Footer } from "@/features/page/footer";
-import { Header } from "@/features/page/header";
-import { MaxWidthContainer } from "@/features/page/page";
 import {
   getAllPosts,
   getFeaturedPosts,
@@ -27,6 +31,9 @@ async function getPostsData() {
 
 export const Route = createFileRoute("/posts")({
   loader: () => getPostsData(),
+  head: () => ({
+    links: LANDING_HEAD_LINKS,
+  }),
   component: BlogPage,
 });
 
@@ -39,22 +46,24 @@ function BlogPage() {
   }
 
   return (
-    <div>
-      <Header />
-      <MaxWidthContainer className="py-16">
+    <div className="landing-page landing-dusk dark bg-[#120a10] text-[#f7ede8]">
+      <LandingStyle />
+      <LandingHeader />
+      <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-28">
         <div className="flex flex-col gap-16">
-          <div className="text-center space-y-6">
-            <Typography variant="h1" className="max-w-3xl mx-auto">
-              Insights, tips, and updates from the SaveIt team
-            </Typography>
-          </div>
+          <LandingReveal className="text-center">
+            <h1 className="landing-display max-w-3xl mx-auto text-balance text-5xl tracking-tight text-[#f7ede8] sm:text-6xl">
+              Insights, tips, and updates from the{" "}
+              <em className="landing-gradient-text">SaveIt</em> team
+            </h1>
+          </LandingReveal>
 
           {featuredPost && <PostCard post={featuredPost} large />}
 
           <div className="space-y-8">
-            <Typography variant="h2" className="text-center">
+            <h2 className="landing-display text-center text-3xl tracking-tight text-[#f7ede8] sm:text-4xl">
               Recent Articles
-            </Typography>
+            </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {regularPosts.map((post) => (
                 <PostCard key={post.slug} post={post} />
@@ -64,7 +73,7 @@ function BlogPage() {
 
           {allPosts.length === 0 && (
             <div className="text-center space-y-4 py-8">
-              <Typography variant="h3" className="text-muted-foreground">
+              <Typography variant="h3" className="text-[#a89099]">
                 Articles coming soon
               </Typography>
               <Typography variant="muted" className="max-w-md mx-auto">
@@ -74,7 +83,7 @@ function BlogPage() {
             </div>
           )}
         </div>
-      </MaxWidthContainer>
+      </div>
       <Footer />
     </div>
   );
@@ -87,7 +96,7 @@ function PostCard(props: { post: Post; large?: boolean }) {
     <a href={`/posts/${post.slug}`} className="block group">
       <Card
         className={cn(
-          "overflow-hidden border-none hover:bg-card transition shadow-none bg-transparent group-hover:shadow-md p-2",
+          "overflow-hidden rounded-2xl border-white/[0.08] bg-white/[0.03] shadow-none p-2 transition-colors group-hover:bg-white/[0.06]",
           large && "mb-8",
         )}
       >
@@ -96,7 +105,7 @@ function PostCard(props: { post: Post; large?: boolean }) {
             src={post.frontmatter.banner}
             alt={post.frontmatter.title}
             className={cn(
-              "w-full object-cover rounded-lg",
+              "w-full object-cover rounded-xl",
               large ? "h-64 md:h-96" : "h-40",
             )}
             loading="lazy"
@@ -105,11 +114,11 @@ function PostCard(props: { post: Post; large?: boolean }) {
         <div className={cn("p-4", large ? "py-8" : "py-4")}>
           <Typography
             variant={large ? "h2" : "h3"}
-            className="mb-2 line-clamp-2"
+            className="landing-display mb-2 line-clamp-2 text-[#f7ede8]"
           >
             {post.frontmatter.title}
           </Typography>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-[#a89099]">
             {new Date(post.frontmatter.date).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",

@@ -68,8 +68,8 @@ export function DocCard({
     <a
       href={href}
       className={cn(
-        "group border-border flex flex-col gap-3 rounded-lg border p-4 no-underline",
-        "hover:border-muted-foreground/25 hover:bg-muted/40 transition-colors",
+        "group flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 no-underline",
+        "transition-colors hover:border-white/[0.16] hover:bg-white/[0.06]",
       )}
       {...externalProps}
     >
