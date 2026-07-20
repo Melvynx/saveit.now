@@ -5,7 +5,7 @@ import {
   LandingPage,
 } from "@/features/marketing/landing/landing-page";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/home")({
   head: () => LANDING_HEAD,
   component: LandingPage,
 });

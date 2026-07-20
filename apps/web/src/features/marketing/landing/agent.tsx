@@ -2,7 +2,7 @@
 
 import { CheckIcon, Loader2Icon, SearchIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { V2Reveal } from "./v2-reveal";
+import { LandingReveal } from "./reveal";
 
 const DEMO_BOOKMARKS = [
   {
@@ -47,7 +47,8 @@ const STATS = [
   },
   {
     value: "$5/mo",
-    label: "Flat. Free forever with 20 bookmarks, no credit card.",
+    label:
+      "Billed annually ($60/year). Free forever with 20 bookmarks, no credit card.",
   },
 ];
 
@@ -247,20 +248,20 @@ const AgentChatDemo = () => {
   );
 };
 
-export const V2Agent = () => {
+export const LandingAgent = () => {
   return (
     <>
       {/* The agentic side */}
       <section id="agent" className="relative bg-[#120a10] px-6 py-24 sm:py-32">
         <div className="mx-auto max-w-6xl">
           <div className="grid items-center gap-12 lg:grid-cols-2">
-            <V2Reveal>
+            <LandingReveal>
               <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-[#ff8f70]">
                 The agentic side
               </span>
               <h2 className="mt-4 text-4xl leading-[1.05] tracking-tight text-[#f7ede8] sm:text-6xl">
                 Your bookmarks{" "}
-                <em className="v2-display v2-gradient-text">work for you</em>{" "}
+                <em className="landing-display landing-gradient-text">work for you</em>{" "}
                 now.
               </h2>
               <p className="mt-6 max-w-md text-base leading-relaxed text-[#a89099]">
@@ -277,18 +278,18 @@ export const V2Agent = () => {
                   className="h-56 w-full object-cover sm:h-64"
                 />
               </div>
-            </V2Reveal>
+            </LandingReveal>
 
-            <V2Reveal delay={0.12}>
+            <LandingReveal delay={0.12}>
               <AgentChatDemo />
-            </V2Reveal>
+            </LandingReveal>
           </div>
         </div>
       </section>
 
       {/* The 100% promise */}
       <section className="relative bg-[#120a10] px-6 pb-24 sm:pb-32">
-        <V2Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
+        <LandingReveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
           <img
             src="/images/landing/v2/portal-ridge.webp"
             alt="A glowing portal on a mountain ridge at sunset"
@@ -296,7 +297,7 @@ export const V2Agent = () => {
             className="absolute inset-0 size-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#120a10]/95 via-[#120a10]/60 to-[#120a10]/10" />
-          <div className="v2-noise absolute inset-0" />
+          <div className="landing-noise absolute inset-0" />
 
           <div className="relative z-10 px-8 py-20 sm:px-14 sm:py-28">
             <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-[#ffd9c2]">
@@ -304,7 +305,7 @@ export const V2Agent = () => {
             </span>
             <h2 className="mt-4 max-w-xl text-4xl leading-[1.05] tracking-tight text-white sm:text-6xl">
               If you saved it,{" "}
-              <em className="v2-display italic">you'll find it.</em>
+              <em className="landing-display italic">you'll find it.</em>
             </h2>
             <p className="mt-6 max-w-md text-base leading-relaxed text-[#f3dfd6]">
               Every save is captured whole: screenshot, full text, transcript.
@@ -323,21 +324,21 @@ export const V2Agent = () => {
               ))}
             </div>
           </div>
-        </V2Reveal>
+        </LandingReveal>
 
         {/* Honest numbers */}
         <div className="mx-auto mt-4 grid max-w-6xl gap-4 sm:grid-cols-3">
           {STATS.map((stat, i) => (
-            <V2Reveal key={stat.value} delay={i * 0.08}>
+            <LandingReveal key={stat.value} delay={i * 0.08}>
               <div className="h-full rounded-3xl border border-white/[0.06] bg-white/[0.03] p-7">
-                <p className="v2-display text-4xl tracking-tight text-[#f7ede8]">
+                <p className="landing-display text-4xl tracking-tight text-[#f7ede8]">
                   {stat.value}
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-[#a89099]">
                   {stat.label}
                 </p>
               </div>
-            </V2Reveal>
+            </LandingReveal>
           ))}
         </div>
       </section>

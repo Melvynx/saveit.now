@@ -2,7 +2,7 @@ import { OtpForm } from "@/components/better-auth-otp";
 import { completeOtpSignIn } from "@/features/auth/complete-otp-sign-in";
 import { getSafeInternalRedirectUrl } from "@/features/auth/safe-internal-redirect";
 import { SignInWith } from "@/features/auth/sign-in-with";
-import { V2Style } from "@/features/marketing/v2/v2-theme";
+import { LandingStyle } from "@/features/marketing/landing/theme";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { motion } from "motion/react";
@@ -42,8 +42,8 @@ function SignInPageContent() {
   const redirectUrl = getSafeInternalRedirectUrl(search.redirectUrl);
 
   return (
-    <main className="v2-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
-      <V2Style />
+    <main className="landing-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+      <LandingStyle />
       <section className="relative hidden min-h-screen bg-[#120a10] p-4 lg:block lg:p-5">
         <motion.div
           initial={{ opacity: 0, scale: 0.985 }}
@@ -60,11 +60,11 @@ function SignInPageContent() {
             className="absolute inset-0 size-full object-cover object-[center_35%]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#120a10]/85 via-[#120a10]/15 to-[#120a10]/40" />
-          <div className="v2-noise absolute inset-0" />
+          <div className="landing-noise absolute inset-0" />
 
           <a
             href="/"
-            className="v2-display relative z-10 w-fit text-xl tracking-tight text-[#f7ede8] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]"
+            className="landing-display relative z-10 w-fit text-xl tracking-tight text-[#f7ede8] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]"
           >
             SaveIt<span className="text-[#ff8f70]">.now</span>
           </a>
@@ -79,7 +79,7 @@ function SignInPageContent() {
             }}
             className="relative z-10 max-w-md space-y-4"
           >
-            <p className="v2-display text-4xl leading-[1.1] tracking-tight text-white [text-shadow:0_2px_30px_rgba(18,10,16,0.6)] text-balance xl:text-5xl">
+            <p className="landing-display text-4xl leading-[1.1] tracking-tight text-white [text-shadow:0_2px_30px_rgba(18,10,16,0.6)] text-balance xl:text-5xl">
               Come <em>home</em> to your bookmarks.
             </p>
             <p className="max-w-sm text-pretty text-base leading-7 text-[#f3dfd6] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]">
@@ -94,7 +94,7 @@ function SignInPageContent() {
         <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-8">
           <a
             href="/"
-            className="v2-display text-lg tracking-tight text-[#f7ede8] lg:hidden"
+            className="landing-display text-lg tracking-tight text-[#f7ede8] lg:hidden"
           >
             SaveIt<span className="text-[#ff8f70]">.now</span>
           </a>
@@ -122,12 +122,12 @@ function SignInPageContent() {
                   {isSignup ? (
                     <>
                       Give your links a{" "}
-                      <em className="v2-display v2-gradient-text">home</em>.
+                      <em className="landing-display landing-gradient-text">home</em>.
                     </>
                   ) : (
                     <>
                       Welcome back{" "}
-                      <em className="v2-display v2-gradient-text">home</em>.
+                      <em className="landing-display landing-gradient-text">home</em>.
                     </>
                   )}
                 </h1>
@@ -139,7 +139,7 @@ function SignInPageContent() {
               </div>
             </motion.div>
 
-            <div className="v2-press space-y-6">
+            <div className="landing-press space-y-6">
               <motion.div variants={itemVariants}>
                 <OtpForm
                 defaultEmail={search.email}
@@ -253,8 +253,8 @@ function SignInPageContent() {
 
 function SignInPageSkeleton() {
   return (
-    <main className="v2-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
-      <V2Style />
+    <main className="landing-dusk dark grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+      <LandingStyle />
       <section className="relative hidden min-h-screen overflow-hidden bg-[#120a10] lg:block" />
       <section className="flex min-h-screen flex-col bg-card">
         <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-8">

@@ -24,6 +24,7 @@ import { Route as PricingRouteImport } from "./routes/pricing";
 import { Route as PostsRouteImport } from "./routes/posts";
 import { Route as IosRouteImport } from "./routes/ios";
 import { Route as ImportsRouteImport } from "./routes/imports";
+import { Route as HomeRouteImport } from "./routes/home";
 import { Route as HelpRouteImport } from "./routes/help";
 import { Route as GoodbyeRouteImport } from "./routes/goodbye";
 import { Route as ExtensionsRouteImport } from "./routes/extensions";
@@ -149,6 +150,11 @@ const IosRoute = IosRouteImport.update({
 const ImportsRoute = ImportsRouteImport.update({
   id: "/imports",
   path: "/imports",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const HomeRoute = HomeRouteImport.update({
+  id: "/home",
+  path: "/home",
   getParentRoute: () => rootRouteImport,
 } as any);
 const HelpRoute = HelpRouteImport.update({
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   "/extensions": typeof ExtensionsRoute;
   "/goodbye": typeof GoodbyeRoute;
   "/help": typeof HelpRoute;
+  "/home": typeof HomeRoute;
   "/imports": typeof ImportsRoute;
   "/ios": typeof IosRoute;
   "/posts": typeof PostsRouteWithChildren;
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   "/extensions": typeof ExtensionsRoute;
   "/goodbye": typeof GoodbyeRoute;
   "/help": typeof HelpRoute;
+  "/home": typeof HomeRoute;
   "/imports": typeof ImportsRoute;
   "/ios": typeof IosRoute;
   "/posts": typeof PostsRouteWithChildren;
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   "/extensions": typeof ExtensionsRoute;
   "/goodbye": typeof GoodbyeRoute;
   "/help": typeof HelpRoute;
+  "/home": typeof HomeRoute;
   "/imports": typeof ImportsRoute;
   "/ios": typeof IosRoute;
   "/posts": typeof PostsRouteWithChildren;
@@ -631,6 +640,7 @@ export interface FileRouteTypes {
     | "/extensions"
     | "/goodbye"
     | "/help"
+    | "/home"
     | "/imports"
     | "/ios"
     | "/posts"
@@ -699,6 +709,7 @@ export interface FileRouteTypes {
     | "/extensions"
     | "/goodbye"
     | "/help"
+    | "/home"
     | "/imports"
     | "/ios"
     | "/posts"
@@ -767,6 +778,7 @@ export interface FileRouteTypes {
     | "/extensions"
     | "/goodbye"
     | "/help"
+    | "/home"
     | "/imports"
     | "/ios"
     | "/posts"
@@ -836,6 +848,7 @@ export interface RootRouteChildren {
   ExtensionsRoute: typeof ExtensionsRoute;
   GoodbyeRoute: typeof GoodbyeRoute;
   HelpRoute: typeof HelpRoute;
+  HomeRoute: typeof HomeRoute;
   ImportsRoute: typeof ImportsRoute;
   IosRoute: typeof IosRoute;
   PostsRoute: typeof PostsRouteWithChildren;
@@ -973,6 +986,13 @@ declare module "@tanstack/react-router" {
       path: "/imports";
       fullPath: "/imports";
       preLoaderRoute: typeof ImportsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/home": {
+      id: "/home";
+      path: "/home";
+      fullPath: "/home";
+      preLoaderRoute: typeof HomeRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/help": {
@@ -1513,6 +1533,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtensionsRoute: ExtensionsRoute,
   GoodbyeRoute: GoodbyeRoute,
   HelpRoute: HelpRoute,
+  HomeRoute: HomeRoute,
   ImportsRoute: ImportsRoute,
   IosRoute: IosRoute,
   PostsRoute: PostsRouteWithChildren,

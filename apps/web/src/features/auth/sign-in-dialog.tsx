@@ -84,7 +84,7 @@ function MountedSignInDialog({ search }: { search: SignInDialogSearch }) {
         }
       }}
     >
-      <DialogContent className="v2-dusk dark v2-press gap-6 border-white/[0.08] bg-[#1a0e15] p-0 text-[#f7ede8] sm:max-w-md">
+      <DialogContent className="landing-dusk dark landing-press gap-6 border-white/[0.08] bg-[#1a0e15] p-0 text-[#f7ede8] sm:max-w-md">
         <DialogHeader className="items-center px-6 pt-7 text-center">
           <div className="mb-1 flex items-center gap-2">
             <img

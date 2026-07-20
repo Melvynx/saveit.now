@@ -6,7 +6,7 @@ import {
   AccordionTrigger,
 } from "@workspace/ui/components/accordion";
 import { LandingAppButton } from "../landing-app-button";
-import { V2Reveal } from "./v2-reveal";
+import { LandingReveal } from "./reveal";
 
 const FAQ_ITEMS = [
   {
@@ -27,27 +27,27 @@ const FAQ_ITEMS = [
   {
     question: "How much does it cost?",
     answer:
-      "Free forever with 20 bookmarks, no credit card. Pro is $5/month flat for up to 50,000 bookmarks. No per-bookmark pricing, no surprises.",
+      "Free forever with 20 bookmarks, no credit card. Pro is $5/month when billed annually ($60/year) for up to 50,000 bookmarks. No per-bookmark pricing, no surprises.",
   },
 ];
 
-export const V2Closing = () => {
+export const LandingClosing = () => {
   return (
     <>
       {/* FAQ */}
       <section className="relative bg-[#120a10] px-6 pb-24 sm:pb-32">
         <div className="mx-auto flex max-w-5xl flex-col gap-12 lg:flex-row">
-          <V2Reveal className="shrink-0 lg:w-72">
+          <LandingReveal className="shrink-0 lg:w-72">
             <p className="mb-3 text-[13px] font-medium uppercase tracking-[0.2em] text-[#ff8f70]">
               FAQ
             </p>
             <h2 className="text-4xl tracking-tight text-[#f7ede8]">
               Questions
               <br />
-              <em className="v2-display v2-gradient-text">& answers.</em>
+              <em className="landing-display landing-gradient-text">& answers.</em>
             </h2>
-          </V2Reveal>
-          <V2Reveal delay={0.1} className="flex-1">
+          </LandingReveal>
+          <LandingReveal delay={0.1} className="flex-1">
             <Accordion>
               {FAQ_ITEMS.map((item, i) => (
                 <AccordionItem
@@ -64,13 +64,13 @@ export const V2Closing = () => {
                 </AccordionItem>
               ))}
             </Accordion>
-          </V2Reveal>
+          </LandingReveal>
         </div>
       </section>
 
       {/* Final CTA */}
       <section className="relative bg-[#120a10] px-6 pb-24 sm:pb-32">
-        <V2Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
+        <LandingReveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
           <img
             src="/images/landing/v2/lake.webp"
             alt="A calm mountain lake at sunrise"
@@ -78,11 +78,11 @@ export const V2Closing = () => {
             className="absolute inset-0 size-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#120a10]/90 via-[#120a10]/40 to-[#120a10]/30" />
-          <div className="v2-noise absolute inset-0" />
+          <div className="landing-noise absolute inset-0" />
 
           <div className="relative z-10 flex flex-col items-center px-8 py-24 text-center sm:py-32">
             <h2 className="max-w-2xl text-4xl leading-[1.05] tracking-tight text-white [text-shadow:0_2px_30px_rgba(18,10,16,0.6)] sm:text-6xl">
-              Come <em className="v2-display italic">home</em> to your
+              Come <em className="landing-display italic">home</em> to your
               bookmarks.
             </h2>
             <p className="mt-6 max-w-md text-base leading-relaxed text-[#f3dfd6] [text-shadow:0_1px_20px_rgba(18,10,16,0.7)]">
@@ -102,7 +102,7 @@ export const V2Closing = () => {
               </a>
             </div>
           </div>
-        </V2Reveal>
+        </LandingReveal>
       </section>
     </>
   );

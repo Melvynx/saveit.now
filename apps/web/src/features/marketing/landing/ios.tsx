@@ -1,6 +1,6 @@
 import { APP_LINKS } from "@/lib/app-links";
 import { BookmarkIcon, SearchIcon, SettingsIcon } from "lucide-react";
-import { V2Reveal } from "./v2-reveal";
+import { LandingReveal } from "./reveal";
 
 const APP_BOOKMARKS = [
   {
@@ -88,10 +88,10 @@ const PhoneMockup = () => {
   );
 };
 
-export const V2Ios = () => {
+export const LandingIos = () => {
   return (
     <section id="ios" className="relative bg-[#120a10] px-6 pb-24 sm:pb-32">
-      <V2Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
+      <LandingReveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] border border-white/[0.08]">
         <img
           src="/images/landing/v2/portal-arch.webp"
           alt="A glowing arch on a flowered hill at dusk"
@@ -99,7 +99,7 @@ export const V2Ios = () => {
           className="absolute inset-0 size-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#120a10]/80 via-[#120a10]/30 to-[#120a10]/85 sm:bg-gradient-to-r sm:from-[#120a10]/90 sm:via-[#120a10]/40 sm:to-[#120a10]/20" />
-        <div className="v2-noise absolute inset-0" />
+        <div className="landing-noise absolute inset-0" />
 
         <div className="relative z-10 grid items-center gap-12 px-8 py-16 sm:px-14 sm:py-20 lg:grid-cols-2">
           <div>
@@ -108,7 +108,7 @@ export const V2Ios = () => {
             </span>
             <h2 className="mt-4 max-w-md text-4xl leading-[1.05] tracking-tight text-white sm:text-6xl">
               Your pocket has a{" "}
-              <em className="v2-display italic">door</em> too.
+              <em className="landing-display italic">door</em> too.
             </h2>
             <p className="mt-6 max-w-md text-base leading-relaxed text-[#f3dfd6]">
               Share, tap SaveIt, done. From TikTok, Safari, X or YouTube, your
@@ -124,11 +124,11 @@ export const V2Ios = () => {
             </a>
           </div>
 
-          <V2Reveal delay={0.15}>
+          <LandingReveal delay={0.15}>
             <PhoneMockup />
-          </V2Reveal>
+          </LandingReveal>
         </div>
-      </V2Reveal>
+      </LandingReveal>
     </section>
   );
 };

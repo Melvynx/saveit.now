@@ -3,13 +3,13 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
-type V2RevealProps = {
+type LandingRevealProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
 };
 
-export const V2Reveal = ({ children, className, delay = 0 }: V2RevealProps) => {
+export const LandingReveal = ({ children, className, delay = 0 }: LandingRevealProps) => {
   return (
     <motion.div
       className={className}

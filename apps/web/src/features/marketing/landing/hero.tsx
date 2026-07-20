@@ -29,7 +29,7 @@ const itemVariants = {
   },
 };
 
-export const V2Hero = () => {
+export const LandingHero = () => {
   return (
     <section className="px-6 pt-24 sm:pt-28">
       <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-white/[0.08]">
@@ -41,7 +41,7 @@ export const V2Hero = () => {
           className="absolute inset-0 size-full object-cover object-[center_30%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#120a10]/50 via-[#120a10]/20 to-[#120a10]/90" />
-        <div className="v2-noise absolute inset-0 z-[1]" />
+        <div className="landing-noise absolute inset-0 z-[1]" />
 
         <div className="relative z-[2] px-6 pb-20 pt-16 sm:px-12 sm:pb-28 sm:pt-24 lg:px-16">
           <motion.div
@@ -58,7 +58,7 @@ export const V2Hero = () => {
 
             <motion.h1
               variants={itemVariants}
-              className="v2-display mt-6 text-5xl tracking-tight text-white [text-shadow:0_2px_40px_rgba(18,10,16,0.55)] sm:text-6xl lg:text-7xl"
+              className="landing-display mt-6 text-5xl tracking-tight text-white [text-shadow:0_2px_40px_rgba(18,10,16,0.55)] sm:text-6xl lg:text-7xl"
             >
               A home for everything
               <br />

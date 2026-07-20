@@ -51,3 +51,6 @@ apps/web/e2e/test-config.json
 
 # raw landing source images
 /landing_v2/
+
+# Product Hunt launch source assets (large PNGs, kept local)
+product-hunt-launch/
