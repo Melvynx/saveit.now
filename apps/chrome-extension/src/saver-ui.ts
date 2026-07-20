@@ -41,54 +41,50 @@ const STATE_DESCRIPTORS: Record<SaverState, StateDescriptor> = {
     role: "status",
   },
   [SAVER_STATE.LOADING]: {
-    title: (item) => `Saving this ${item}`,
-    message: () => "Connecting to your collection…",
+    title: (item) => `Saving ${item}…`,
+    message: () => "",
     role: "status",
   },
   [SAVER_STATE.CAPTURING_SCREENSHOT]: {
-    title: () => "Creating a preview",
-    message: () => "Capturing this tab without the SaveIt card…",
+    title: () => "Capturing preview…",
+    message: () => "",
     role: "status",
   },
   [SAVER_STATE.SUCCESS]: {
-    title: (item) => `${capitalize(item)} saved`,
-    message: () =>
-      "Added to your collection. Processing continues in the background.",
+    title: () => "Saved",
+    message: () => "",
     role: "status",
-    link: { label: "Open SaveIt", path: "/app" },
-    autoHideMs: 3600,
+    autoHideMs: 3200,
   },
   [SAVER_STATE.ERROR]: {
-    title: (item) => `Couldn't save this ${item}`,
+    title: () => "Couldn't save",
     message: () => "Check your connection and try again.",
     role: "alert",
     retryLabel: "Try again",
   },
   [SAVER_STATE.SCREENSHOT_ERROR]: {
-    title: () => "Bookmark saved, preview failed",
-    message: () => "Your bookmark is safe, but its preview could not be added.",
+    title: () => "Saved, preview failed",
+    message: () => "The preview could not be added.",
     role: "alert",
-    link: { label: "Open SaveIt", path: "/app" },
-    retryLabel: "Retry preview",
+    retryLabel: "Retry",
   },
   [SAVER_STATE.AUTH_REQUIRED]: {
-    title: () => "Sign in to SaveIt",
-    message: (item) => `Connect your account to save this ${item}.`,
+    title: () => "Sign in to save",
+    message: () => "",
     role: "status",
     link: { label: "Sign in", path: "/signin", variant: "primary" },
   },
   [SAVER_STATE.MAX_BOOKMARKS]: {
     title: () => "Bookmark limit reached",
-    message: () => "Upgrade your plan to keep saving to your collection.",
+    message: () => "",
     role: "status",
-    link: { label: "View plans", path: "/upgrade", variant: "primary" },
+    link: { label: "Upgrade", path: "/upgrade", variant: "primary" },
   },
   [SAVER_STATE.BOOKMARK_EXISTS]: {
-    title: () => "Already in your collection",
-    message: (item) => `This ${item} was saved before.`,
+    title: () => "Already saved",
+    message: () => "",
     role: "status",
-    link: { label: "Open SaveIt", path: "/app" },
-    autoHideMs: 4200,
+    autoHideMs: 3600,
   },
 };
 
@@ -116,10 +112,30 @@ export type SaverUI = {
   setMessage: (message: string) => void;
 };
 
-function capitalize(value: string): string {
-  return value.length === 0
-    ? value
-    : `${value[0]?.toUpperCase()}${value.slice(1)}`;
+const BRAND_FONT_FILES: Array<{ file: string; style: "normal" | "italic" }> = [
+  { file: "fonts/instrument-serif-regular.woff2", style: "normal" },
+  { file: "fonts/instrument-serif-italic.woff2", style: "italic" },
+];
+
+// Instrument Serif is registered on the page's FontFaceSet because @font-face
+// rules inside a shadow root never load fonts in Chromium. Pages with a strict
+// font-src CSP fall back to the system serif stack from content.css.
+function loadBrandFonts(): void {
+  for (const { file, style } of BRAND_FONT_FILES) {
+    try {
+      const face = new FontFace(
+        "SaveIt Serif",
+        `url("${chrome.runtime.getURL(file)}")`,
+        { style, weight: "400", display: "swap" },
+      );
+      void face
+        .load()
+        .then((loadedFace) => document.fonts.add(loadedFace))
+        .catch(() => undefined);
+    } catch {
+      // Fall back to the system serif stack.
+    }
+  }
 }
 
 function itemLabel(saveType: SaveType): string {
@@ -160,6 +176,7 @@ function waitForRenderedFrame(): Promise<void> {
 
 export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
   document.getElementById(UI_ROOT_ID)?.remove();
+  loadBrandFonts();
 
   const host = document.createElement("div");
   host.id = UI_ROOT_ID;
@@ -200,32 +217,29 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
   panel.setAttribute("role", "status");
   panel.innerHTML = `
     <div class="saveit-surface">
-      <button class="saveit-dismiss" type="button" aria-label="Dismiss SaveIt message">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-      </button>
-      <div class="saveit-layout">
-        <div class="saveit-brand" aria-hidden="true">
-          <img src="${chrome.runtime.getURL("images/icon48.png")}" alt="" />
-        </div>
+      <div class="saveit-aurora" aria-hidden="true"></div>
+      <div class="saveit-noise" aria-hidden="true"></div>
+      <div class="saveit-row">
+        <img class="saveit-brand" aria-hidden="true" src="${chrome.runtime.getURL("images/icon48.png")}" alt="" />
         <div class="saveit-copy">
-          <p class="saveit-eyebrow">SaveIt.now</p>
-          <p id="saveit-title" class="saveit-title">Saving this page</p>
-          <p id="saveit-message" class="saveit-message">Connecting to your collection…</p>
+          <p id="saveit-title" class="saveit-title">Saving page…</p>
+          <p id="saveit-message" class="saveit-message"></p>
         </div>
         <div class="saveit-indicator" aria-hidden="true">
           <svg class="saveit-state-icon saveit-icon-loading" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-6.22-8.56" /></svg>
-          <svg class="saveit-state-icon saveit-icon-success" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" /></svg>
-          <svg class="saveit-state-icon saveit-icon-error" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 7v6m0 4h.01" /></svg>
-          <svg class="saveit-state-icon saveit-icon-info" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 11v6m0-10h.01" /></svg>
-          <svg class="saveit-state-icon saveit-icon-auth" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="3" /><path d="M8 10V8a4 4 0 0 1 8 0v2" /></svg>
+          <span class="saveit-badge saveit-badge--success"><svg class="saveit-state-icon saveit-icon-success" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" /></svg></span>
+          <span class="saveit-badge saveit-badge--exists"><svg class="saveit-state-icon saveit-icon-info" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" /></svg></span>
         </div>
-      </div>
-      <div id="saveit-actions" class="saveit-actions">
-        <button id="saveit-retry-action" class="saveit-action saveit-action--primary" type="button">Try again</button>
-        <button id="saveit-link-action" class="saveit-action saveit-action--secondary" type="button">Open SaveIt</button>
+        <div id="saveit-actions" class="saveit-actions">
+          <button id="saveit-retry-action" class="saveit-action saveit-action--primary" type="button">Try again</button>
+          <button id="saveit-link-action" class="saveit-action saveit-action--secondary" type="button">Open SaveIt</button>
+        </div>
       </div>
       <div class="saveit-progress" aria-hidden="true"></div>
     </div>
+    <button class="saveit-dismiss" type="button" aria-label="Dismiss SaveIt message">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
   `;
   shadowRoot.appendChild(panel);
   document.documentElement.appendChild(host);
@@ -292,6 +306,10 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     panel.setAttribute("role", descriptor.role);
     title.textContent = options.title ?? descriptor.title(item);
     message.textContent = options.message ?? descriptor.message(item);
+    panel.classList.toggle(
+      "saveit-has-message",
+      message.textContent.length > 0,
+    );
     setDevelopmentHook("saveitRetry", "false");
     setDevelopmentHook("saveitAction");
 
@@ -323,6 +341,11 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
       actions.classList.add("is-visible");
       setDevelopmentHook("saveitAction", link.path);
     }
+
+    panel.classList.toggle(
+      "saveit-has-actions",
+      actions.classList.contains("is-visible"),
+    );
 
     shouldReveal = true;
     if (stylesheetReady) {
@@ -370,6 +393,7 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     render,
     setMessage: (nextMessage) => {
       message.textContent = nextMessage;
+      panel.classList.toggle("saveit-has-message", nextMessage.length > 0);
     },
   };
 }

@@ -8,7 +8,8 @@
         "-c",
         "export PATH=/Users/melvynx/.nvm/versions/node/v22.20.0/bin:$PATH && pnpm --filter web dev"
       ],
-      "port": 3000
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

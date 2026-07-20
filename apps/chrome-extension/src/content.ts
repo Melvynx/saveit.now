@@ -127,7 +127,7 @@ class SaveController {
           this.ui.render({
             state: SAVER_STATE.SUCCESS,
             saveType: this.currentTarget.type,
-            message: "The bookmark and its preview are now in your collection.",
+            message: "Preview added.",
           });
         }
         return;
@@ -247,8 +247,7 @@ class SaveController {
         this.ui.render({
           state: SAVER_STATE.ERROR,
           saveType: this.currentTarget.type,
-          message:
-            "SaveIt is unreachable. Check your connection and try again.",
+          message: "Check your connection and try again.",
           allowRetry: true,
         });
         return;
@@ -256,7 +255,7 @@ class SaveController {
         this.ui.render({
           state: SAVER_STATE.ERROR,
           saveType: this.currentTarget.type,
-          message: "SaveIt is receiving too many requests. Try again shortly.",
+          message: "Too many requests. Try again shortly.",
           allowRetry: true,
         });
         return;
@@ -264,7 +263,7 @@ class SaveController {
         this.ui.render({
           state: SAVER_STATE.ERROR,
           saveType: this.currentTarget.type,
-          message: "SaveIt could not finish this request. Please try again.",
+          message: "Something went wrong. Please try again.",
           allowRetry: true,
         });
         return;
@@ -288,7 +287,7 @@ class SaveController {
       this.ui.render({
         state: SAVER_STATE.SCREENSHOT_ERROR,
         saveType: this.currentTarget.type,
-        message: "Your bookmark is safe. Sign in again to add its preview.",
+        message: "Sign in again to add the preview.",
         allowRetry: false,
         link: { label: "Sign in", path: "/signin", variant: "primary" },
       });
@@ -298,12 +297,9 @@ class SaveController {
     const deterministicMessages: Partial<
       Record<typeof result.errorType, string>
     > = {
-      FILE_TOO_LARGE:
-        "Your bookmark is safe, but Chrome could not reduce its preview below 2 MB.",
-      INVALID_FILE:
-        "Your bookmark is safe, but Chrome returned an invalid preview image.",
-      NOT_FOUND:
-        "Your bookmark is safe, but it is no longer available for a preview upload.",
+      FILE_TOO_LARGE: "The preview image was too large to upload.",
+      INVALID_FILE: "Chrome returned an invalid preview image.",
+      NOT_FOUND: "This bookmark no longer accepts a preview.",
     };
     this.ui.render({
       state: SAVER_STATE.SCREENSHOT_ERROR,
@@ -328,8 +324,7 @@ class SaveController {
         this.ui.render({
           state: SAVER_STATE.SCREENSHOT_ERROR,
           saveType: this.currentTarget.type,
-          message:
-            "The page changed before Chrome could capture it. Return to the saved page to retry.",
+          message: "The page changed. Go back to it and retry.",
           allowRetry: true,
         });
         return false;
@@ -369,8 +364,7 @@ class SaveController {
     this.ui.render({
       state: SAVER_STATE.LOADING,
       saveType: this.currentTarget.type,
-      title: "Uploading your preview",
-      message: "Finishing the visual preview for this bookmark…",
+      title: "Adding preview…",
     });
     const upload = await this.uploadScreenshot(
       retry.bookmarkId,
@@ -426,10 +420,10 @@ class SaveController {
     let metadata: Record<string, unknown> | undefined;
 
     if (canUsePageContext && isYouTubeVideoPage()) {
-      this.ui.setMessage("Waiting for the YouTube player…");
+      this.ui.setMessage("Waiting for the player…");
       const playerReady = await waitForYouTubePlayer(5_000);
       if (playerReady) {
-        this.ui.setMessage("Looking for the video transcript…");
+        this.ui.setMessage("Grabbing the transcript…");
         const transcriptResult = await extractYouTubeTranscript(target.url);
         if (transcriptResult) {
           transcript = transcriptResult.transcript;
@@ -444,7 +438,7 @@ class SaveController {
       }
     }
 
-    this.ui.setMessage(`Adding this ${target.type} to your collection…`);
+    this.ui.setMessage("");
     const result = await this.saveBookmark(target.url, transcript, metadata);
     if (!result.success) {
       this.showSaveFailure(result);

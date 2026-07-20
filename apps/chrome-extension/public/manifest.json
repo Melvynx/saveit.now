@@ -30,7 +30,12 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["images/icon48.png", "content.css"],
+      "resources": [
+        "images/icon48.png",
+        "content.css",
+        "fonts/instrument-serif-regular.woff2",
+        "fonts/instrument-serif-italic.woff2"
+      ],
       "matches": ["<all_urls>"]
     },
     {

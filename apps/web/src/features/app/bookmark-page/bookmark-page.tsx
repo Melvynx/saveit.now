@@ -3,6 +3,8 @@ import { BookmarkTagSelector } from "@/features/app/bookmark-card/bookmark-tag-s
 import { BookmarkFavicon } from "@/features/app/bookmark-favicon";
 import { TranscriptViewer } from "@/features/bookmarks/transcript-viewer";
 import { useSession } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
@@ -12,10 +14,11 @@ import {
   DialogContent,
   DialogTitle,
 } from "@workspace/ui/components/dialog";
-import { Loader } from "@workspace/ui/components/loader";
 import { Separator } from "@workspace/ui/components/separator";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Typography } from "@workspace/ui/components/typography";
+import { useMutation } from "convex/react";
 import { ExternalLink, X } from "lucide-react";
 import { useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -25,6 +28,7 @@ import { CopyLinkButton, ShareButton } from "./bookmark-actions-button";
 import { BookmarkHeroPreview } from "./bookmark-hero-preview";
 import { BookmarkMoreMenu } from "./bookmark-more-menu";
 import { BookmarkNote } from "./bookmark-note";
+import { EditableText } from "./editable-text";
 import { ReadButton } from "./read-button";
 import { StarButton } from "./star-button";
 import { useBookmark } from "./use-bookmark";
@@ -60,6 +64,102 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => {
     </Typography>
   );
 };
+
+function BookmarkDetailSkeletonContent() {
+  return (
+    <div
+      aria-busy="true"
+      data-testid="bookmark-detail-skeleton"
+      className="flex h-full min-h-0 flex-col overflow-hidden md:grid md:grid-cols-[1.4fr_1fr]"
+    >
+      <span className="sr-only">Loading bookmark details</span>
+
+      <div className="bg-muted/30 flex flex-col border-b md:min-h-0 md:border-r md:border-b-0">
+        <Skeleton className="h-56 w-full rounded-none md:h-auto md:min-h-0 md:flex-1" />
+        <div className="bg-background flex items-center gap-2 border-t px-4 py-2.5">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="ml-auto h-3 w-28" />
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-col gap-4 p-5">
+        <div className="flex items-start gap-3">
+          <Skeleton className="size-9 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-3/5" />
+          </div>
+          <Skeleton className="size-8 shrink-0" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 flex-1" />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="size-9 shrink-0" />
+          ))}
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-11/12" />
+          <Skeleton className="h-3.5 w-2/3" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-10" />
+          <Skeleton className="h-9 w-full" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookmarkDetailSkeleton({
+  renderMode,
+  onClose,
+}: Pick<BookmarkDetailProps, "renderMode" | "onClose">) {
+  const content = <BookmarkDetailSkeletonContent />;
+
+  if (renderMode === "page") {
+    return (
+      <main className="bg-muted/40 min-h-screen p-4">
+        <section className="bg-background mx-auto h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-lg border">
+          {content}
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose?.();
+      }}
+    >
+      <DialogContent
+        disableClose
+        className="flex flex-col gap-0 overflow-hidden p-0"
+        style={{
+          maxWidth: "min(calc(100vw - 32px), 1100px)",
+          height: "min(calc(100vh - 32px), 680px)",
+        }}
+        onEscapeKeyDown={onClose}
+      >
+        <DialogTitle className="sr-only">Loading bookmark</DialogTitle>
+        {content}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 type BookmarkDialogProps = {
   bookmarkId: string;
@@ -99,6 +199,7 @@ function BookmarkDetail({
   const query = useBookmark(bookmarkId);
   const bookmark = query.data?.bookmark as BookmarkDetailDTO | undefined;
   const session = useSession();
+  const updateBookmark = useMutation(api.bookmarks.mutations.update);
   const isAdmin =
     (session.data?.user as { role?: string } | undefined)?.role === "admin";
 
@@ -114,27 +215,11 @@ function BookmarkDetail({
   });
 
   if (!bookmark) {
-    if (renderMode === "page") {
-      return (
-        <main className="flex min-h-screen items-center justify-center">
-          <Loader />
-        </main>
-      );
-    }
-
     return (
-      <Dialog
-        open={true}
-        key="loading"
-        onOpenChange={(open) => {
-          if (!open) handleClose();
-        }}
-      >
-        <DialogContent onEscapeKeyDown={handleClose}>
-          <DialogTitle className="sr-only">Loading bookmark</DialogTitle>
-          <Loader />
-        </DialogContent>
-      </Dialog>
+      <BookmarkDetailSkeleton
+        renderMode={renderMode}
+        onClose={renderMode === "dialog" ? handleClose : undefined}
+      />
     );
   }
 
@@ -183,12 +268,21 @@ function BookmarkDetail({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <Typography
+            <EditableText
+              value={bookmark.title}
+              displayValue={bookmark.title || bookmark.url}
               variant="large"
               className="line-clamp-2 text-base leading-snug"
-            >
-              {bookmark.title || bookmark.url}
-            </Typography>
+              onSave={(title) =>
+                updateBookmark({
+                  id: bookmark.id as Id<"bookmarks">,
+                  patch: { title },
+                })
+              }
+              commitOnEnter
+              allowEmpty={false}
+              ariaLabel="Bookmark title"
+            />
             <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
               <Typography
                 variant="muted"
@@ -241,9 +335,21 @@ function BookmarkDetail({
 
         <div className="flex flex-col gap-1.5">
           <SectionLabel>Summary</SectionLabel>
-          <Typography variant="muted" className="text-sm leading-relaxed">
-            {bookmark.summary || "No summary generated"}
-          </Typography>
+          <EditableText
+            value={bookmark.summary}
+            displayValue={bookmark.summary || "No summary generated"}
+            variant="muted"
+            className="text-sm leading-relaxed"
+            onSave={(summary) =>
+              updateBookmark({
+                id: bookmark.id as Id<"bookmarks">,
+                patch: { summary },
+              })
+            }
+            commitOnEnter={false}
+            allowEmpty
+            ariaLabel="Bookmark summary"
+          />
         </div>
 
         {bookmark.type === "PRODUCT" && metadata && (

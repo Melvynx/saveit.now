@@ -8,6 +8,7 @@ export const ANALYTICS_EVENTS = {
   BOOKMARK_SHARED: "bookmark_shared",
   BOOKMARKS_EXPORTED: "bookmarks_exported",
   BOOKMARKS_IMPORTED: "bookmarks_imported",
+  EXTENSION_INSTALL_CLICKED: "extension_install_clicked",
   IOS_DOWNLOAD_CLICKED: "ios_download_clicked",
   ONBOARDING_COMPLETED: "onboarding_completed",
   SUBSCRIPTION_ACTIVATED: "subscription_activated",

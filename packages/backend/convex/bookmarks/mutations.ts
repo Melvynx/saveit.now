@@ -41,11 +41,29 @@ import { startBookmarkLifecycleSync } from "../integrations/workflows";
 
 const READABLE_BOOKMARK_TYPES = ["ARTICLE", "YOUTUBE"] as const;
 const MAX_BOOKMARK_NOTE_LENGTH = 2000;
+const MAX_BOOKMARK_TITLE_LENGTH = 500;
+const MAX_BOOKMARK_SUMMARY_LENGTH = 5000;
 
 function assertValidBookmarkNote(note: string | null | undefined): void {
   if (typeof note === "string" && note.length > MAX_BOOKMARK_NOTE_LENGTH) {
     throwValidationError(
       `Bookmark note must be ${MAX_BOOKMARK_NOTE_LENGTH} characters or fewer`,
+    );
+  }
+}
+
+function assertValidBookmarkTitle(title: string | undefined): void {
+  if (title !== undefined && title.length > MAX_BOOKMARK_TITLE_LENGTH) {
+    throwValidationError(
+      `Bookmark title must be ${MAX_BOOKMARK_TITLE_LENGTH} characters or fewer`,
+    );
+  }
+}
+
+function assertValidBookmarkSummary(summary: string | undefined): void {
+  if (summary !== undefined && summary.length > MAX_BOOKMARK_SUMMARY_LENGTH) {
+    throwValidationError(
+      `Bookmark summary must be ${MAX_BOOKMARK_SUMMARY_LENGTH} characters or fewer`,
     );
   }
 }
@@ -274,6 +292,8 @@ export const update = authMutation({
   args: {
     id: v.id("bookmarks"),
     patch: v.object({
+      title: v.optional(v.string()),
+      summary: v.optional(v.string()),
       starred: v.optional(v.boolean()),
       read: v.optional(v.boolean()),
       note: v.optional(v.union(v.string(), v.null())),
@@ -289,6 +309,8 @@ export const update = authMutation({
     }
 
     assertValidBookmarkNote(args.patch.note);
+    assertValidBookmarkTitle(args.patch.title);
+    assertValidBookmarkSummary(args.patch.summary);
 
     // Validate read field type guard.
     if (
@@ -306,6 +328,9 @@ export const update = authMutation({
       patchData.starred = args.patch.starred;
     if (args.patch.read !== undefined) patchData.read = args.patch.read;
     if (args.patch.note !== undefined) patchData.note = args.patch.note;
+    if (args.patch.title !== undefined) patchData.title = args.patch.title;
+    if (args.patch.summary !== undefined)
+      patchData.summary = args.patch.summary;
 
     if (args.patch.status === "PENDING") {
       await assertCanRunProcessing(ctx, userId);
