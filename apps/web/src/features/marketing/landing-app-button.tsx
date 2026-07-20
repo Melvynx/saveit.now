@@ -2,7 +2,7 @@
 
 import { APP_LINKS } from "@/lib/app-links";
 import { authClient } from "@/lib/auth-client";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import {
   buttonVariants,
@@ -44,12 +44,16 @@ export function LandingAppButton({
 }: LandingAppButtonProps) {
   const session = authClient.useSession();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPrompt, setShowPrompt] = useState(false);
   const classNames = cn(buttonVariants({ size, variant }), className);
   const isSignedIn = Boolean(session.data?.user);
+  // /home is the explicit "show me the landing" URL: never auto-open the app,
+  // even for users who opted into "Always open SaveIt.now".
+  const isLandingHomeRoute = location.pathname === "/home";
 
   useEffect(() => {
-    if (session.isPending || !isSignedIn) return;
+    if (session.isPending || !isSignedIn || isLandingHomeRoute) return;
 
     if (window.localStorage.getItem(ALWAYS_OPEN_APP_STORAGE_KEY) === "true") {
       void navigate({ to: APP_LINKS.app, replace: true });
@@ -66,7 +70,13 @@ export function LandingAppButton({
       Date.now() - dismissedAt < PROMPT_DISMISS_DURATION_MS;
 
     setShowPrompt(!isRecentlyDismissed);
-  }, [isSignedIn, navigate, session.isPending, showAlwaysOpenPrompt]);
+  }, [
+    isLandingHomeRoute,
+    isSignedIn,
+    navigate,
+    session.isPending,
+    showAlwaysOpenPrompt,
+  ]);
 
   const dismissPrompt = () => {
     window.localStorage.setItem(
