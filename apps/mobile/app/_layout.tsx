@@ -8,6 +8,10 @@ import {
   useFonts,
 } from "@expo-google-fonts/dm-sans";
 import {
+  InstrumentSerif_400Regular,
+  InstrumentSerif_400Regular_Italic,
+} from "@expo-google-fonts/instrument-serif";
+import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
@@ -57,6 +61,8 @@ export default function RootLayout() {
     DMSans_500Medium,
     DMSans_600SemiBold,
     DMSans_700Bold,
+    InstrumentSerif_400Regular,
+    InstrumentSerif_400Regular_Italic,
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.

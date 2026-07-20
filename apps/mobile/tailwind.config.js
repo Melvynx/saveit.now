@@ -10,6 +10,8 @@ module.exports = {
         "sans-medium": ["DMSans_500Medium", "System", "sans-serif"],
         "sans-semibold": ["DMSans_600SemiBold", "System", "sans-serif"],
         "sans-bold": ["DMSans_700Bold", "System", "sans-serif"],
+        serif: ["InstrumentSerif_400Regular", "Georgia", "serif"],
+        "serif-italic": ["InstrumentSerif_400Regular_Italic", "Georgia", "serif"],
       },
       colors: {
         background: "var(--background)",
@@ -32,6 +34,20 @@ module.exports = {
         warning: "#F59E0B",
         disabled: "var(--disabled)",
         "disabled-foreground": "var(--disabled-foreground)",
+        // Fixed "dusk" palette mirroring the web landing/auth theme
+        // (apps/web landing v2). These surfaces are always dark by design
+        // and do not follow the light/dark scheme.
+        dusk: {
+          DEFAULT: "#120a10",
+          card: "#1a0e15",
+          raised: "#251621",
+          fg: "#f7ede8",
+          muted: "#a89099",
+          cream: "#f3dfd6",
+          peach: "#ffd9c2",
+          primary: "#ff8f70",
+          "primary-fg": "#23100a",
+        },
       },
     },
   },

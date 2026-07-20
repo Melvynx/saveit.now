@@ -50,6 +50,26 @@ export const themeColors: { light: ThemeColors; dark: ThemeColors } = {
 };
 
 /**
+ * Fixed "dusk" palette for marketing/auth surfaces (onboarding, sign-in,
+ * welcome, paywall). Mirrors the web landing v2 theme — always dark,
+ * independent of the user's color scheme. Use for icon/spinner `color`
+ * props on those screens; className styling uses the `dusk-*` tokens.
+ */
+export const duskColors = {
+  background: "#120a10",
+  card: "#1a0e15",
+  raised: "#251621",
+  foreground: "#f7ede8",
+  muted: "#a89099",
+  cream: "#f3dfd6",
+  peach: "#ffd9c2",
+  primary: "#ff8f70",
+  primaryForeground: "#23100a",
+  border: "rgba(255, 255, 255, 0.09)",
+  destructive: "#f87171",
+} as const;
+
+/**
  * Single source of truth for the active theme. NativeWind's colorScheme can be
  * null on the first frame — fall back to the system scheme so nav chrome
  * matches the media-query-driven CSS variables.

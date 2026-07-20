@@ -41,6 +41,7 @@ export const LandingHero = () => {
           className="absolute inset-0 size-full object-cover object-[center_30%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#120a10]/50 via-[#120a10]/20 to-[#120a10]/90" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#120a10]" />
         <div className="landing-noise absolute inset-0 z-[1]" />
 
         <div className="relative z-[2] px-6 pb-20 pt-16 sm:px-12 sm:pb-28 sm:pt-24 lg:px-16">

@@ -100,6 +100,9 @@ importers:
       '@expo-google-fonts/dm-sans':
         specifier: ^0.4.1
         version: 0.4.2
+      '@expo-google-fonts/instrument-serif':
+        specifier: 0.4.1
+        version: 0.4.1
       '@expo/vector-icons':
         specifier: ^15.1.1
         version: 15.1.1(expo-font@14.0.12(expo@54.0.35)(react-native@0.81.5(@babel/core@7.28.0)(@react-native-community/cli@20.2.0(typescript@5.9.3))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.0)(@react-native-community/cli@20.2.0(typescript@5.9.3))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -2628,6 +2631,9 @@ packages:
 
   '@expo-google-fonts/dm-sans@0.4.2':
     resolution: {integrity: sha512-e/fLH5aCJzkEenz7axvEn8N7IJAKhUwNjIxS75h9j+Ip1M9S7d22M19gJN3A7QW4egVkBJRyQh1hQFhngQn9yA==}
+
+  '@expo-google-fonts/instrument-serif@0.4.1':
+    resolution: {integrity: sha512-1CgCrLbTSgE7RV8ZrTT7i06UAyNQDBrhxQuxkReNnfq5yvUhTmvpOK17grlEsXG5p04lJ1ZXGiIjPeHo6X0sXg==}
 
   '@expo/cli@54.0.25':
     resolution: {integrity: sha512-WnUqIb8oMBhtwSfIqdCHCzcaDIpLNXItRVd5miuvWi4GO0SGo89PSsAkbVJ+LJgcaY+v5rbgMELJS9I/CqOulA==}
@@ -14425,6 +14431,8 @@ snapshots:
       levn: 0.4.1
 
   '@expo-google-fonts/dm-sans@0.4.2': {}
+
+  '@expo-google-fonts/instrument-serif@0.4.1': {}
 
   '@expo/cli@54.0.25(expo-router@6.0.24)(expo@54.0.35)(graphql@16.14.1)(react-native@0.81.5(@babel/core@7.28.0)(@react-native-community/cli@20.2.0(typescript@5.9.3))(@types/react@19.1.17)(react@19.1.0))(typescript@5.9.3)':
     dependencies:
