@@ -25,6 +25,61 @@ export const getForProcessing = internalQuery({
 });
 
 /**
+ * Snapshot the fields that define a bookmark's semantic-search document.
+ * The refresh mutation compares this snapshot before applying its result so
+ * an older embedding can never overwrite a newer title or vector summary.
+ */
+export const getForEmbeddingRefresh = internalQuery({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+  },
+  returns: v.union(
+    v.object({
+      title: v.union(v.string(), v.null()),
+      vectorSummary: v.union(v.string(), v.null()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, { bookmarkId }) => {
+    const bookmark = await ctx.db.get(bookmarkId);
+    if (!bookmark) return null;
+
+    return {
+      title: bookmark.title ?? null,
+      vectorSummary: bookmark.vectorSummary ?? null,
+    };
+  },
+});
+
+export const applyRefreshedEmbedding = internalMutation({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+    expectedTitle: v.union(v.string(), v.null()),
+    expectedVectorSummary: v.union(v.string(), v.null()),
+    searchEmbedding: v.array(v.float64()),
+    embeddingModel: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const bookmark = await ctx.db.get(args.bookmarkId);
+    if (!bookmark) return false;
+
+    if (
+      (bookmark.title ?? null) !== args.expectedTitle ||
+      (bookmark.vectorSummary ?? null) !== args.expectedVectorSummary
+    ) {
+      return false;
+    }
+
+    await ctx.db.patch(args.bookmarkId, {
+      searchEmbedding: args.searchEmbedding,
+      embeddingModel: args.embeddingModel,
+    });
+    return true;
+  },
+});
+
+/**
  * start — set bookmark status=PROCESSING, insert bookmarkProcessingRun (STARTED).
  * Guards: bookmark must exist, userId must match, status must not already be PROCESSING.
  */
@@ -345,9 +400,7 @@ export const findReadyByUrl = internalQuery({
       // For tweets/YouTube: exact URL match within same user
       const candidates = await ctx.db
         .query("bookmarks")
-        .withIndex("by_user_url", (q) =>
-          q.eq("userId", userId).eq("url", url),
-        )
+        .withIndex("by_user_url", (q) => q.eq("userId", userId).eq("url", url))
         .collect();
 
       const match = candidates.find(
@@ -365,9 +418,7 @@ export const findReadyByUrl = internalQuery({
 
     const candidates = await ctx.db
       .query("bookmarks")
-      .withIndex("by_user_url", (q) =>
-        q.eq("userId", userId).eq("url", url),
-      )
+      .withIndex("by_user_url", (q) => q.eq("userId", userId).eq("url", url))
       .collect();
 
     const match = candidates.find((b) => {

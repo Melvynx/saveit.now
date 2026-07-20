@@ -312,6 +312,18 @@ export const update = authMutation({
     assertValidBookmarkTitle(args.patch.title);
     assertValidBookmarkSummary(args.patch.summary);
 
+    const updatesGeneratedContent =
+      args.patch.title !== undefined || args.patch.summary !== undefined;
+    const isProcessing =
+      doc.status === "PENDING" ||
+      doc.status === "PROCESSING" ||
+      args.patch.status === "PENDING";
+    if (updatesGeneratedContent && isProcessing) {
+      throwValidationError(
+        "Bookmark title and summary cannot be edited while processing",
+      );
+    }
+
     // Validate read field type guard.
     if (
       args.patch.read !== undefined &&
@@ -328,7 +340,11 @@ export const update = authMutation({
       patchData.starred = args.patch.starred;
     if (args.patch.read !== undefined) patchData.read = args.patch.read;
     if (args.patch.note !== undefined) patchData.note = args.patch.note;
-    if (args.patch.title !== undefined) patchData.title = args.patch.title;
+    if (args.patch.title !== undefined) {
+      patchData.title = args.patch.title;
+      patchData.searchEmbedding = undefined;
+      patchData.embeddingModel = undefined;
+    }
     if (args.patch.summary !== undefined)
       patchData.summary = args.patch.summary;
 
@@ -340,6 +356,14 @@ export const update = authMutation({
     }
 
     await ctx.db.patch(args.id, patchData);
+
+    if (args.patch.title !== undefined) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.processing.embeddings.refreshBookmarkSearchEmbedding,
+        { bookmarkId: args.id },
+      );
+    }
 
     if (args.patch.status === "PENDING") {
       await ctx.scheduler.runAfter(0, internal.processing.workflow.kickoff, {

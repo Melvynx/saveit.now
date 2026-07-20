@@ -4,23 +4,18 @@ import { BookmarkFavicon } from "@/features/app/bookmark-favicon";
 import { TranscriptViewer } from "@/features/bookmarks/transcript-viewer";
 import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
-import type { Id } from "@convex/_generated/dataModel";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
+import { DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
 import { Separator } from "@workspace/ui/components/separator";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Typography } from "@workspace/ui/components/typography";
 import { useMutation } from "convex/react";
 import { ExternalLink, X } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { ExternalLinkTracker } from "../external-link-tracker";
@@ -122,42 +117,62 @@ function BookmarkDetailSkeletonContent() {
   );
 }
 
-function BookmarkDetailSkeleton({
+type BookmarkDetailProps = {
+  bookmarkId: string;
+  renderMode: "dialog" | "page";
+  onClose?: () => void;
+};
+
+function BookmarkDetailShell({
   renderMode,
   onClose,
-}: Pick<BookmarkDetailProps, "renderMode" | "onClose">) {
-  const content = <BookmarkDetailSkeletonContent />;
-
+  title,
+  children,
+}: Pick<BookmarkDetailProps, "renderMode" | "onClose"> & {
+  title: string;
+  children: ReactNode;
+}) {
   if (renderMode === "page") {
     return (
-      <main className="bg-muted/40 min-h-screen p-4">
-        <section className="bg-background mx-auto h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-lg border">
-          {content}
+      <main className="bg-muted/40 min-h-dvh p-4">
+        <section className="bg-background mx-auto h-[calc(100dvh-2rem)] max-w-6xl overflow-hidden rounded-lg border">
+          <h1 className="sr-only">{title}</h1>
+          {children}
         </section>
       </main>
     );
   }
 
   return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose?.();
-      }}
-    >
+    <InterceptDialog fallbackTo="/app" onClose={onClose}>
       <DialogContent
         disableClose
         className="flex flex-col gap-0 overflow-hidden p-0"
         style={{
           maxWidth: "min(calc(100vw - 32px), 1100px)",
-          height: "min(calc(100vh - 32px), 680px)",
+          height: "min(calc(100dvh - 32px), 680px)",
         }}
         onEscapeKeyDown={onClose}
       >
-        <DialogTitle className="sr-only">Loading bookmark</DialogTitle>
-        {content}
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        {children}
       </DialogContent>
-    </Dialog>
+    </InterceptDialog>
+  );
+}
+
+function BookmarkDetailSkeleton({
+  renderMode,
+  onClose,
+}: Pick<BookmarkDetailProps, "renderMode" | "onClose">) {
+  return (
+    <BookmarkDetailShell
+      renderMode={renderMode}
+      onClose={onClose}
+      title="Loading bookmark"
+    >
+      <BookmarkDetailSkeletonContent />
+    </BookmarkDetailShell>
   );
 }
 
@@ -175,12 +190,6 @@ export function BookmarkDialog({ bookmarkId, onClose }: BookmarkDialogProps) {
     />
   );
 }
-
-type BookmarkDetailProps = {
-  bookmarkId: string;
-  renderMode: "dialog" | "page";
-  onClose?: () => void;
-};
 
 function BookmarkDetail({
   bookmarkId,
@@ -226,6 +235,8 @@ function BookmarkDetail({
   const metadata = bookmark.metadata as Record<string, unknown> | null;
   const transcript = metadata?.transcript as string | undefined;
   const embeddedText = isAdmin ? getEmbeddedText(bookmark) : null;
+  const isContentEditable =
+    bookmark.status !== "PENDING" && bookmark.status !== "PROCESSING";
   const readUrl = hasMarkdownContent(bookmark.metadata)
     ? `/p/${bookmark.id}/read`
     : undefined;
@@ -235,14 +246,6 @@ function BookmarkDetail({
 
   const content = (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto md:grid md:grid-cols-[1.4fr_1fr] md:overflow-hidden">
-      {renderMode === "dialog" ? (
-        <DialogTitle className="sr-only">
-          {bookmark.title || "Bookmark details"}
-        </DialogTitle>
-      ) : (
-        <h1 className="sr-only">{bookmark.title || "Bookmark details"}</h1>
-      )}
-
       {/* Left pane — hero preview */}
       <div className="bg-muted/30 flex flex-col border-b md:min-h-0 md:border-r md:border-b-0">
         <div className="relative h-56 overflow-hidden md:h-auto md:min-h-0 md:flex-1">
@@ -273,15 +276,17 @@ function BookmarkDetail({
               displayValue={bookmark.title || bookmark.url}
               variant="large"
               className="line-clamp-2 text-base leading-snug"
-              onSave={(title) =>
-                updateBookmark({
-                  id: bookmark.id as Id<"bookmarks">,
+              onSave={async (title) => {
+                await updateBookmark({
+                  id: bookmark._id,
                   patch: { title },
-                })
-              }
+                });
+              }}
               commitOnEnter
               allowEmpty={false}
               ariaLabel="Bookmark title"
+              disabled={!isContentEditable}
+              maxLength={500}
             />
             <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
               <Typography
@@ -340,15 +345,17 @@ function BookmarkDetail({
             displayValue={bookmark.summary || "No summary generated"}
             variant="muted"
             className="text-sm leading-relaxed"
-            onSave={(summary) =>
-              updateBookmark({
-                id: bookmark.id as Id<"bookmarks">,
+            onSave={async (summary) => {
+              await updateBookmark({
+                id: bookmark._id,
                 patch: { summary },
-              })
-            }
+              });
+            }}
             commitOnEnter={false}
             allowEmpty
             ariaLabel="Bookmark summary"
+            disabled={!isContentEditable}
+            maxLength={5000}
           />
         </div>
 
@@ -415,30 +422,14 @@ function BookmarkDetail({
     </div>
   );
 
-  if (renderMode === "page") {
-    return (
-      <main className="bg-muted/40 min-h-screen p-4">
-        <section className="bg-background mx-auto h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-lg border">
-          {content}
-        </section>
-      </main>
-    );
-  }
-
   return (
-    <InterceptDialog fallbackTo="/app" onClose={handleClose}>
-      <DialogContent
-        disableClose
-        className="flex flex-col gap-0 overflow-hidden p-0"
-        style={{
-          maxWidth: "min(calc(100vw - 32px), 1100px)",
-          height: "min(calc(100vh - 32px), 680px)",
-        }}
-        onEscapeKeyDown={handleClose}
-      >
-        {content}
-      </DialogContent>
-    </InterceptDialog>
+    <BookmarkDetailShell
+      renderMode={renderMode}
+      onClose={renderMode === "dialog" ? handleClose : undefined}
+      title={bookmark.title || "Bookmark details"}
+    >
+      {content}
+    </BookmarkDetailShell>
   );
 }
 
