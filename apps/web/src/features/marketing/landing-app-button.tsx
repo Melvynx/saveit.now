@@ -48,12 +48,13 @@ export function LandingAppButton({
   const [showPrompt, setShowPrompt] = useState(false);
   const classNames = cn(buttonVariants({ size, variant }), className);
   const isSignedIn = Boolean(session.data?.user);
-  // /home is the explicit "show me the landing" URL: never auto-open the app,
-  // even for users who opted into "Always open SaveIt.now".
-  const isLandingHomeRoute = location.pathname === "/home";
+  // Only the root landing (/) auto-opens the app for opted-in users. Every
+  // other page that shows this button (/home, /docs, /pricing, …) must keep
+  // rendering — it just links to the app instead of redirecting.
+  const isRootLandingRoute = location.pathname === "/";
 
   useEffect(() => {
-    if (session.isPending || !isSignedIn || isLandingHomeRoute) return;
+    if (session.isPending || !isSignedIn || !isRootLandingRoute) return;
 
     if (window.localStorage.getItem(ALWAYS_OPEN_APP_STORAGE_KEY) === "true") {
       void navigate({ to: APP_LINKS.app, replace: true });
@@ -71,7 +72,7 @@ export function LandingAppButton({
 
     setShowPrompt(!isRecentlyDismissed);
   }, [
-    isLandingHomeRoute,
+    isRootLandingRoute,
     isSignedIn,
     navigate,
     session.isPending,
