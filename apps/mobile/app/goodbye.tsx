@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 
-import { Button } from "../src/components/ui/button";
+import { DuskButton } from "../src/components/dusk/dusk-button";
 import { StatusScreen } from "../src/components/ui/status-screen";
 import { Text } from "../src/components/ui/text";
 import { useAuth } from "../src/contexts/AuthContext";
@@ -28,23 +29,27 @@ export default function GoodbyeScreen() {
   };
 
   return (
-    <StatusScreen
-      icon="checkmark-circle"
-      iconColor="#10B981"
-      badgeClassName="bg-secondary"
-      title="Account Deleted"
-      message="Your account has been successfully deleted."
-      footer={
-        <>
-          <Text className="max-w-[300px] text-center font-sans text-[14px] leading-[21px] text-muted-foreground">
-            Thank you for using SaveIt.now. We&apos;re sorry to see you go. All
-            your data has been permanently removed.
-          </Text>
-          <Button onPress={goToHome} className="mt-2 self-stretch">
-            Continue
-          </Button>
-        </>
-      }
-    />
+    <>
+      <StatusBar style="light" />
+      <StatusScreen
+        variant="dusk"
+        icon="checkmark-circle"
+        iconColor="#34d399"
+        badgeClassName="bg-dusk-raised"
+        title="Account Deleted"
+        message="Your account has been successfully deleted."
+        footer={
+          <>
+            <Text className="max-w-[300px] text-center font-sans text-[14px] leading-[21px] text-dusk-muted">
+              Thank you for using SaveIt.now. We&apos;re sorry to see you go.
+              All your data has been permanently removed.
+            </Text>
+            <DuskButton onPress={goToHome} className="mt-2 self-stretch">
+              Continue
+            </DuskButton>
+          </>
+        }
+      />
+    </>
   );
 }

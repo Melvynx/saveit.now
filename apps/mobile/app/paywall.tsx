@@ -2,14 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import type { OnboardingInterest } from "@convex/bookmarks/onboarding";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { api } from "@convex/_generated/api";
-import { BlurHeaderScreen } from "../src/components/ui/blur-header-screen";
-import { Button } from "../src/components/ui/button";
+import portalScene from "../assets/images/landing/portal-arch.webp";
+import { DuskButton } from "../src/components/dusk/dusk-button";
+import { DuskScene } from "../src/components/dusk/scene";
 import { LoadingScreen, LoadingSpinner } from "../src/components/ui/loading";
 import { StatusScreen } from "../src/components/ui/status-screen";
 import { Text } from "../src/components/ui/text";
@@ -26,7 +28,7 @@ import {
   type ProPurchase,
   type ProSubscription,
 } from "../src/lib/purchases";
-import { useThemeColors } from "../src/lib/theme";
+import { duskColors } from "../src/lib/theme";
 import { cn } from "../src/lib/utils";
 
 type PlanOptionProps = {
@@ -60,7 +62,6 @@ function parseOnboardingInterest(value: string | string[] | undefined) {
 }
 
 function PlanOption({ plan, selected, disabled, onPress }: PlanOptionProps) {
-  const colors = useThemeColors();
   const productId = plan.productId;
   const isYearly = productId.includes("yearly");
 
@@ -74,30 +75,30 @@ function PlanOption({ plan, selected, disabled, onPress }: PlanOptionProps) {
       disabled={disabled}
       onPress={onPress}
       className={cn(
-        "rounded-2xl border bg-card p-4 active:scale-[0.96]",
-        selected ? "border-primary" : "border-border",
+        "rounded-2xl border bg-dusk-card p-4 active:scale-[0.96]",
+        selected ? "border-dusk-primary" : "border-white/10",
         disabled && "opacity-60",
       )}
     >
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1 gap-1">
           <View className="flex-row items-center gap-2">
-            <Text className="font-sans-bold text-[18px] text-foreground">
+            <Text className="font-sans-bold text-[18px] text-dusk-fg">
               {isYearly ? "Annual" : "Monthly"}
             </Text>
           </View>
-          <Text className="font-sans text-[13px] text-muted-foreground">
+          <Text className="font-sans text-[13px] text-dusk-muted">
             50,000 bookmarks, more AI usage, export, and API access
           </Text>
         </View>
         <View className="items-end gap-2">
-          <Text className="font-sans-bold text-[18px] text-foreground">
+          <Text className="font-sans-bold text-[18px] text-dusk-fg">
             {plan.priceString}
           </Text>
           <Ionicons
             name={selected ? "checkmark-circle" : "ellipse-outline"}
             size={22}
-            color={selected ? colors.primary : colors.mutedForeground}
+            color={selected ? duskColors.primary : duskColors.muted}
           />
         </View>
       </View>
@@ -115,7 +116,6 @@ export default function PaywallScreen({
     source?: string | string[];
     interest?: string | string[];
   }>();
-  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const source =
@@ -409,14 +409,17 @@ export default function PaywallScreen({
   if (isOnboardingSource && onboardingError) {
     return (
       <StatusScreen
+        variant="dusk"
         icon="cloud-offline-outline"
         title="Setup needs one more try"
         message={onboardingError}
         footer={
           <View className="w-full max-w-[320px] gap-3">
-            <Button onPress={finalizeOnboardingUpgrade}>Try again</Button>
-            <Button
-              variant="secondary"
+            <DuskButton onPress={finalizeOnboardingUpgrade}>
+              Try again
+            </DuskButton>
+            <DuskButton
+              variant="glass"
               onPress={() => {
                 if (onBackToPlanChoiceOverride) {
                   onBackToPlanChoiceOverride();
@@ -427,7 +430,7 @@ export default function PaywallScreen({
               }}
             >
               Back to plan choice
-            </Button>
+            </DuskButton>
           </View>
         }
       />
@@ -441,14 +444,14 @@ export default function PaywallScreen({
   if (isPro) {
     return (
       <StatusScreen
+        variant="dusk"
         icon="sparkles"
         title="You're on Pro"
         message="SaveIt Pro is active on this account."
-        badgeClassName="bg-primary"
         footer={
-          <Button variant="secondary" onPress={leavePaywall} className="mt-2">
+          <DuskButton variant="glass" onPress={leavePaywall} className="mt-2">
             Done
-          </Button>
+          </DuskButton>
         }
       />
     );
@@ -457,19 +460,19 @@ export default function PaywallScreen({
   if (isActivating) {
     return (
       <StatusScreen
+        variant="dusk"
         spinner
         title="Activating your subscription"
         message="SaveIt Pro will unlock here as soon as your account updates."
-        badgeClassName="bg-primary"
         footer={
-          <Button variant="secondary" onPress={leavePaywall} className="mt-2">
+          <DuskButton variant="glass" onPress={leavePaywall} className="mt-2">
             Done
-          </Button>
+          </DuskButton>
         }
       >
         {showActivationDelayNote ? (
-          <View className="rounded-2xl border border-border bg-card px-4 py-3">
-            <Text className="max-w-[300px] text-center font-sans text-[13px] leading-[19px] text-muted-foreground">
+          <View className="rounded-2xl border border-white/10 bg-dusk-card px-4 py-3">
+            <Text className="max-w-[300px] text-center font-sans text-[13px] leading-[19px] text-dusk-muted">
               This can take a minute. Your purchase is confirmed by the App
               Store. If Pro doesn&apos;t unlock shortly, restart the app or
               contact help@saveit.now.
@@ -481,141 +484,153 @@ export default function PaywallScreen({
   }
 
   return (
-    <BlurHeaderScreen
-      title="SaveIt Pro"
-      contentTopOffset={8}
-      headerTopPadding={24}
-      trailing={
-        <Button
-          variant="secondary"
-          size="icon"
-          accessibilityLabel="Close paywall"
-          onPress={leavePaywall}
-        >
-          <Ionicons name="close" size={18} color={colors.foreground} />
-        </Button>
-      }
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingBottom: insets.bottom + 32,
-      }}
-    >
-      <View className="gap-6">
-        <View className="gap-3 rounded-2xl border border-border bg-card p-5">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
-            <Ionicons name="sparkles" size={22} color={colors.primary} />
-          </View>
-          <View className="gap-2">
-            <Text className="font-sans-bold text-[24px] leading-[30px] text-foreground">
-              Go further with SaveIt Pro
+    <View className="flex-1 bg-dusk">
+      <StatusBar style="light" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: Math.max(insets.top, 16) + 8,
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 32,
+        }}
+      >
+        <View className="gap-6">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-serif text-[30px] text-dusk-fg">
+              SaveIt{" "}
+              <Text className="font-serif-italic text-[30px] text-dusk-primary">
+                Pro
+              </Text>
             </Text>
-            <Text className="font-sans text-[15px] leading-[22px] text-muted-foreground">
-              Build a library of up to 50,000 bookmarks, process more saves with
-              AI, ask more chat questions, export your data, and use API access.
-            </Text>
-          </View>
-        </View>
-
-        <View className="gap-3">
-          <Text variant="section-label">Choose a plan</Text>
-          {isLoadingOfferings ? (
-            <View className="items-center justify-center rounded-2xl border border-border bg-card py-10">
-              <LoadingSpinner />
-            </View>
-          ) : plans.length > 0 ? (
-            plans.map((plan) => (
-              <PlanOption
-                key={plan.productId}
-                plan={plan}
-                selected={plan.productId === selectedPlan?.productId}
-                disabled={isPurchasing || isRestoring}
-                onPress={() => setSelectedId(plan.productId)}
-              />
-            ))
-          ) : null}
-        </View>
-
-        {error ? (
-          <View className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3">
-            <Text className="font-sans text-[13px] text-destructive">
-              {error}
-            </Text>
-          </View>
-        ) : null}
-
-        <View className="gap-3">
-          {plans.length > 0 ? (
-            <Button
-              loading={isPurchasing}
-              disabled={!selectedPlan || isLoadingOfferings || isRestoring}
-              onPress={purchase}
-              className="rounded-2xl active:scale-[0.96]"
-            >
-              {`Upgrade to Pro · ${selectedPlanLabel}`}
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              loading={isLoadingOfferings}
-              disabled={isLoadingOfferings}
-              onPress={loadOfferings}
-              className="rounded-2xl active:scale-[0.96]"
-            >
-              Retry
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            loading={isRestoring}
-            disabled={isPurchasing || isLoadingOfferings}
-            onPress={restore}
-            className="active:scale-[0.96]"
-          >
-            Restore Purchases
-          </Button>
-          {isOnboardingSource ? (
-            <Button
-              variant="outline"
-              disabled={isPurchasing || isRestoring}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close paywall"
               onPress={leavePaywall}
-              className="active:scale-[0.96]"
+              hitSlop={12}
+              className="h-10 w-10 items-center justify-center rounded-full bg-white/10 active:scale-[0.96]"
             >
-              Continue with Free
-            </Button>
-          ) : null}
-        </View>
+              <Ionicons name="close" size={18} color={duskColors.foreground} />
+            </Pressable>
+          </View>
 
-        <Text className="px-2 text-center font-sans text-[12px] leading-[18px] text-muted-foreground">
-          Payment is charged to your Apple ID. Your subscription renews
-          automatically until canceled in App Store settings.
-        </Text>
-
-        <View className="flex-row flex-wrap items-center justify-center gap-2 pb-2">
-          <Pressable
-            accessibilityRole="link"
-            accessibilityLabel="Terms"
-            onPress={() => openLegalLink("terms")}
-            className="min-h-11 justify-center px-2 py-1 active:opacity-70"
+          <DuskScene
+            source={portalScene}
+            className="h-44 justify-end p-5"
+            imagePosition={{ top: "45%", left: "50%" }}
           >
-            <Text className="font-sans-semibold text-[13px] text-primary">
-              Terms
+            <Text className="font-serif text-[26px] leading-[31px] text-dusk-fg">
+              Go{" "}
+              <Text className="font-serif-italic text-[26px] leading-[31px] text-dusk-fg">
+                further.
+              </Text>
             </Text>
-          </Pressable>
-          <Text className="font-sans text-[13px] text-muted-foreground">
-            and
+            <Text className="mt-1 font-sans text-[13px] leading-[19px] text-dusk-cream">
+              More room, more AI, more answers.
+            </Text>
+          </DuskScene>
+
+          <Text className="font-sans text-[15px] leading-[22px] text-dusk-muted">
+            Build a library of up to 50,000 bookmarks, process more saves with
+            AI, ask more chat questions, export your data, and use API access.
           </Text>
-          <Pressable
-            accessibilityRole="link"
-            accessibilityLabel="Privacy"
-            onPress={() => openLegalLink("privacy")}
-            className="min-h-11 justify-center px-2 py-1 active:opacity-70"
-          >
-            <Text className="font-sans-semibold text-[13px] text-primary">
-              Privacy
+
+          <View className="gap-3">
+            <Text className="font-sans-semibold text-[13px] uppercase tracking-wider text-dusk-muted">
+              Choose a plan
             </Text>
-          </Pressable>
+            {isLoadingOfferings ? (
+              <View className="items-center justify-center rounded-2xl border border-white/10 bg-dusk-card py-10">
+                <LoadingSpinner color={duskColors.foreground} />
+              </View>
+            ) : plans.length > 0 ? (
+              plans.map((plan) => (
+                <PlanOption
+                  key={plan.productId}
+                  plan={plan}
+                  selected={plan.productId === selectedPlan?.productId}
+                  disabled={isPurchasing || isRestoring}
+                  onPress={() => setSelectedId(plan.productId)}
+                />
+              ))
+            ) : null}
+          </View>
+
+          {error ? (
+            <View className="rounded-2xl border border-dusk-destructive/25 bg-dusk-destructive/10 px-4 py-3">
+              <Text className="font-sans text-[13px] text-dusk-destructive">
+                {error}
+              </Text>
+            </View>
+          ) : null}
+
+          <View className="gap-3">
+            {plans.length > 0 ? (
+              <DuskButton
+                loading={isPurchasing}
+                disabled={!selectedPlan || isLoadingOfferings || isRestoring}
+                onPress={purchase}
+              >
+                {`Upgrade to Pro · ${selectedPlanLabel}`}
+              </DuskButton>
+            ) : (
+              <DuskButton
+                variant="glass"
+                loading={isLoadingOfferings}
+                disabled={isLoadingOfferings}
+                onPress={loadOfferings}
+              >
+                Retry
+              </DuskButton>
+            )}
+            <DuskButton
+              variant="ghost"
+              loading={isRestoring}
+              disabled={isPurchasing || isLoadingOfferings}
+              onPress={restore}
+            >
+              Restore Purchases
+            </DuskButton>
+            {isOnboardingSource ? (
+              <DuskButton
+                variant="glass"
+                disabled={isPurchasing || isRestoring}
+                onPress={leavePaywall}
+              >
+                Continue with Free
+              </DuskButton>
+            ) : null}
+          </View>
+
+          <Text className="px-2 text-center font-sans text-[12px] leading-[18px] text-dusk-muted">
+            Payment is charged to your Apple ID. Your subscription renews
+            automatically until canceled in App Store settings.
+          </Text>
+
+          <View className="flex-row flex-wrap items-center justify-center gap-2 pb-2">
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Terms"
+              onPress={() => openLegalLink("terms")}
+              className="min-h-11 justify-center px-2 py-1 active:opacity-70"
+            >
+              <Text className="font-sans-semibold text-[13px] text-dusk-primary">
+                Terms
+              </Text>
+            </Pressable>
+            <Text className="font-sans text-[13px] text-dusk-muted">and</Text>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Privacy"
+              onPress={() => openLegalLink("privacy")}
+              className="min-h-11 justify-center px-2 py-1 active:opacity-70"
+            >
+              <Text className="font-sans-semibold text-[13px] text-dusk-primary">
+                Privacy
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </BlurHeaderScreen>
+      </ScrollView>
+    </View>
   );
 }

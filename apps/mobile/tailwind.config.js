@@ -47,6 +47,7 @@ module.exports = {
           peach: "#ffd9c2",
           primary: "#ff8f70",
           "primary-fg": "#23100a",
+          destructive: "#f87171",
         },
       },
     },

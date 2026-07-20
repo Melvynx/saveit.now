@@ -13,11 +13,11 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { Button } from "../components/ui/button";
+import { DuskButton } from "../components/dusk/dusk-button";
 import { Input } from "../components/ui/input";
 import { Text } from "../components/ui/text";
-import { useThemeColors } from "../lib/theme";
 import { useAuth } from "../contexts/AuthContext";
+import { duskColors } from "../lib/theme";
 
 export type SignInStep = "email" | "otp";
 export type AuthIntent = "signup" | "signin";
@@ -55,7 +55,6 @@ export default function SignInScreen({
   >(null);
   const [observedKeyboardInset, setObservedKeyboardInset] = useState(0);
   const { sendOTP, verifyOTP, signInWithSocial, signInWithApple } = useAuth();
-  const colors = useThemeColors();
   const normalizedKeyboardBottomInset = Math.max(0, observedKeyboardInset);
   const hasExplicitKeyboardInset = normalizedKeyboardBottomInset > 0;
   const shouldUseIOSScrollInsets =
@@ -195,7 +194,7 @@ export default function SignInScreen({
       style={styles.keyboardAvoidingView}
     >
       <ScrollView
-        className="flex-1 bg-background"
+        className="flex-1 bg-dusk"
         contentContainerStyle={[
           styles.contentContainer,
           hasExplicitKeyboardInset
@@ -214,7 +213,7 @@ export default function SignInScreen({
       >
         <View className="mb-5 flex-row items-center justify-between">
           <View className="w-10" />
-          <View className="h-[5px] w-10 rounded-full bg-border" />
+          <View className="h-[5px] w-10 rounded-full bg-white/15" />
           {onClose ? (
             <Pressable
               accessibilityRole="button"
@@ -222,8 +221,8 @@ export default function SignInScreen({
               onPress={onClose}
               hitSlop={20}
             >
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                <Ionicons name="close" size={20} color={colors.foreground} />
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                <Ionicons name="close" size={20} color={duskColors.foreground} />
               </View>
             </Pressable>
           ) : (
@@ -234,12 +233,12 @@ export default function SignInScreen({
         {step === "otp" ? (
           <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
             <View className="gap-2">
-              <Text variant="title" className="text-[26px] leading-[32px]">
+              <Text className="font-serif text-[30px] leading-[36px] text-dusk-fg">
                 Check your email
               </Text>
-              <Text variant="subtitle">
+              <Text className="font-sans text-[15px] leading-[21px] text-dusk-muted">
                 {"We sent a 6-digit code to "}
-                <Text className="font-sans-semibold text-[15px] text-foreground">
+                <Text className="font-sans-semibold text-[15px] text-dusk-fg">
                   {email}
                 </Text>
               </Text>
@@ -248,17 +247,19 @@ export default function SignInScreen({
             <View className="gap-3">
               <Input
                 placeholder="000000"
+                placeholderTextColor={duskColors.muted}
+                selectionColor={duskColors.primary}
+                keyboardAppearance="dark"
                 value={otp}
                 onChangeText={onOtpChange}
                 keyboardType="number-pad"
                 maxLength={6}
                 autoComplete="one-time-code"
                 autoFocus
-                variant="filled"
-                className="h-[56px] rounded-full text-center font-sans-bold text-[24px] tracking-[8px]"
+                className="h-[56px] rounded-full border-white/10 bg-white/10 text-center font-sans-bold text-[24px] tracking-[8px] text-dusk-fg"
               />
 
-              <Button
+              <DuskButton
                 onPress={handleVerifyOTP}
                 disabled={otp.length < 6}
                 loading={isLoading}
@@ -268,31 +269,48 @@ export default function SignInScreen({
                   : isSignup
                     ? "Create free account"
                     : "Sign in"}
-              </Button>
+              </DuskButton>
 
-              <Button variant="ghost" onPress={handleBackToEmail}>
-                <Text className="font-sans-semibold text-[15px] text-muted-foreground">
-                  Use different email
-                </Text>
-              </Button>
+              <DuskButton variant="ghost" onPress={handleBackToEmail}>
+                Use different email
+              </DuskButton>
             </View>
           </Animated.View>
         ) : (
           <Animated.View entering={FadeInDown.duration(300)} className="gap-6">
             <View className="gap-2">
-              <Text variant="title" className="text-[26px] leading-[32px]">
-                {isSignup ? "Create your free account" : "Welcome back"}
+              <Text className="font-serif text-[30px] leading-[36px] text-dusk-fg">
+                {isSignup ? (
+                  <>
+                    Give your links a{" "}
+                    <Text className="font-serif-italic text-[30px] leading-[36px] text-dusk-primary">
+                      home
+                    </Text>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Welcome back{" "}
+                    <Text className="font-serif-italic text-[30px] leading-[36px] text-dusk-primary">
+                      home
+                    </Text>
+                    .
+                  </>
+                )}
               </Text>
-              <Text variant="subtitle">
+              <Text className="font-sans text-[15px] leading-[21px] text-dusk-muted">
                 {isSignup
-                  ? "Save your library across every device. We’ll email you a one-time code."
-                  : "Sign in to your SaveIt account with a one-time email code."}
+                  ? "Start with 20 bookmarks, no credit card. We’ll email you a one-time code."
+                  : "Sign in with a one-time email code or a connected account."}
               </Text>
             </View>
 
             <View className="gap-3">
               <Input
                 placeholder="you@example.com"
+                placeholderTextColor={duskColors.muted}
+                selectionColor={duskColors.primary}
+                keyboardAppearance="dark"
                 value={email}
                 onChangeText={onEmailChange}
                 keyboardType="email-address"
@@ -300,11 +318,11 @@ export default function SignInScreen({
                 autoCorrect={false}
                 autoComplete="email"
                 autoFocus
-                variant="filled"
                 inputSize="pill"
+                className="border-white/10 bg-white/10 text-dusk-fg"
               />
 
-              <Button
+              <DuskButton
                 onPress={handleSendOTP}
                 disabled={!email.trim() || socialLoading !== null}
                 loading={isLoading}
@@ -314,61 +332,64 @@ export default function SignInScreen({
                   : isSignup
                     ? "Send me a sign-up code"
                     : "Send me a sign-in code"}
-              </Button>
+              </DuskButton>
 
               <View className="my-1 flex-row items-center gap-3">
-                <View className="h-px flex-1 bg-border" />
-                <Text variant="caption" className="text-muted-foreground">
+                <View className="h-px flex-1 bg-white/10" />
+                <Text className="font-sans text-[12px] text-dusk-muted">
                   or
                 </Text>
-                <View className="h-px flex-1 bg-border" />
+                <View className="h-px flex-1 bg-white/10" />
               </View>
 
               {Platform.OS === "ios" ? (
-                <Button
+                <DuskButton
+                  variant="white"
                   onPress={handleAppleSignIn}
                   loading={socialLoading === "apple"}
                   disabled={isLoading || socialLoading !== null}
-                  className="bg-black"
+                  accessibilityLabel="Continue with Apple"
                 >
-                  <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
-                  <Text className="font-sans-semibold text-[15px] text-white">
+                  <Ionicons name="logo-apple" size={19} color="#120a10" />
+                  <Text className="font-sans-semibold text-[15px] text-dusk">
                     Continue with Apple
                   </Text>
-                </Button>
+                </DuskButton>
               ) : null}
 
-              <Button
-                variant="outline"
+              <DuskButton
+                variant="glass"
                 onPress={() => handleSocialSignIn("google")}
                 loading={socialLoading === "google"}
                 disabled={isLoading || socialLoading !== null}
+                accessibilityLabel="Continue with Google"
               >
                 <Ionicons
                   name="logo-google"
                   size={18}
-                  color={colors.foreground}
+                  color={duskColors.foreground}
                 />
-                <Text className="font-sans-semibold text-[15px] text-foreground">
+                <Text className="font-sans-semibold text-[15px] text-dusk-fg">
                   Continue with Google
                 </Text>
-              </Button>
+              </DuskButton>
 
-              <Button
-                variant="outline"
+              <DuskButton
+                variant="glass"
                 onPress={() => handleSocialSignIn("github")}
                 loading={socialLoading === "github"}
                 disabled={isLoading || socialLoading !== null}
+                accessibilityLabel="Continue with GitHub"
               >
                 <Ionicons
                   name="logo-github"
                   size={18}
-                  color={colors.foreground}
+                  color={duskColors.foreground}
                 />
-                <Text className="font-sans-semibold text-[15px] text-foreground">
+                <Text className="font-sans-semibold text-[15px] text-dusk-fg">
                   Continue with GitHub
                 </Text>
-              </Button>
+              </DuskButton>
             </View>
           </Animated.View>
         )}

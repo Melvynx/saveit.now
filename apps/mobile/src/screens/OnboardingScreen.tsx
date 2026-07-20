@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   View,
   useWindowDimensions,
@@ -12,10 +12,12 @@ import {
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Button } from "../components/ui/button";
+import heroScene from "../../assets/images/landing/home.webp";
+import { DuskButton } from "../components/dusk/dusk-button";
+import { DuskScene } from "../components/dusk/scene";
+import { DuskWordmark } from "../components/dusk/wordmark";
 import { Text } from "../components/ui/text";
-import { useThemeColors } from "../lib/theme";
-import onboardingLogo from "../../assets/images/splash-icon.png";
+import { duskColors } from "../lib/theme";
 
 interface OnboardingScreenProps {
   onGetStarted: () => void;
@@ -23,16 +25,17 @@ interface OnboardingScreenProps {
 }
 
 /**
- * Pre-auth onboarding. Two value-first slides that *show* the product's magic
- * (a link becoming an AI-enriched card, then a library that answers questions)
- * before ever asking the user to sign in.
+ * Pre-auth onboarding in the landing "dusk" theme. Slide 1 is the brand hero
+ * (the glowing house from the web landing); slide 2 shows the product's magic
+ * (a link becoming an AI-enriched card, a library that answers back) before
+ * ever asking the user to sign in.
  */
 export default function OnboardingScreen({
   onGetStarted,
   onSignIn,
 }: OnboardingScreenProps) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
   const slides = 2;
@@ -54,9 +57,10 @@ export default function OnboardingScreen({
 
   return (
     <View
-      className="flex-1 bg-background"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}
+      className="flex-1 bg-dusk"
+      style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}
     >
+      <StatusBar style="light" />
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -66,35 +70,35 @@ export default function OnboardingScreen({
         scrollEventThrottle={16}
         className="flex-1"
       >
-        <HookSlide width={width} />
+        <HeroSlide width={width} height={height} />
         <PayoffSlide width={width} />
       </ScrollView>
 
-      <View className="gap-4 px-6 pt-2">
+      <View className="gap-4 px-6 pt-3">
         <View className="flex-row items-center justify-center gap-2">
           {Array.from({ length: slides }).map((_, i) => (
             <View
               key={i}
               className={
                 i === index
-                  ? "h-[6px] w-5 rounded-full bg-primary"
-                  : "h-[6px] w-[6px] rounded-full bg-border"
+                  ? "h-[6px] w-5 rounded-full bg-dusk-primary"
+                  : "h-[6px] w-[6px] rounded-full bg-white/20"
               }
             />
           ))}
         </View>
 
-        <Button onPress={goNext} className="active:scale-[0.96]">
-          {isLast ? "Get started free" : "See how SaveIt works"}
-        </Button>
+        <DuskButton variant="white" onPress={goNext}>
+          {isLast ? "Start saving free" : "See how SaveIt works"}
+        </DuskButton>
 
-        <Button
-          variant="outline"
-          onPress={onSignIn}
-          className="active:scale-[0.96]"
-        >
+        <DuskButton variant="glass" onPress={onSignIn}>
           Sign in
-        </Button>
+        </DuskButton>
+
+        <Text className="text-center font-sans text-[12px] text-dusk-muted">
+          Free forever · 20 bookmarks · No credit card
+        </Text>
       </View>
     </View>
   );
@@ -113,44 +117,102 @@ function SlideShell({
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
       }}
       nestedScrollEnabled
       showsVerticalScrollIndicator={false}
     >
-      <View className="gap-8">{children}</View>
+      <View className="gap-6">{children}</View>
     </ScrollView>
   );
 }
 
-function HookSlide({ width }: { width: number }) {
+function HeroSlide({ width, height }: { width: number; height: number }) {
+  const heroHeight = Math.min(Math.max(height * 0.42, 260), 430);
+
+  return (
+    <SlideShell width={width}>
+      <Animated.View entering={FadeIn.duration(500)}>
+        <DuskScene
+          source={heroScene}
+          imagePosition={{ top: "30%", left: "50%" }}
+          style={{ height: heroHeight }}
+          className="justify-between p-5"
+        >
+          <DuskWordmark size={22} overImage />
+          <Text className="font-sans-medium text-[13px] tracking-wide text-dusk-peach">
+            Agentic bookmarks · Web + iOS
+          </Text>
+        </DuskScene>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(120)}
+        className="gap-4"
+      >
+        <Text className="font-serif text-[40px] leading-[46px] text-dusk-fg">
+          A home for everything{" "}
+          <Text className="font-serif-italic text-[40px] leading-[46px] text-dusk-fg">
+            you save.
+          </Text>
+        </Text>
+        <Text className="max-w-[320px] font-sans text-[15px] leading-[22px] text-dusk-muted">
+          One tap to save any link. An AI agent reads it, files it, and hands
+          it back the moment you ask.
+        </Text>
+      </Animated.View>
+    </SlideShell>
+  );
+}
+
+function PayoffSlide({ width }: { width: number }) {
   return (
     <SlideShell width={width}>
       <Animated.View
         entering={FadeInDown.duration(400).delay(80)}
         className="gap-4"
       >
-        <Image
-          source={onboardingLogo}
-          className="h-14 w-14 rounded-2xl"
-          resizeMode="contain"
-        />
-        <Text variant="title" className="text-[32px] leading-[37px]">
-          Save now.{"\n"}
-          <Text
-            variant="title"
-            className="text-[32px] leading-[37px] text-primary"
-          >
-            Understand later.
+        <Text className="font-serif text-[36px] leading-[42px] text-dusk-fg">
+          Your memory,{"\n"}
+          <Text className="font-serif-italic text-[36px] leading-[42px] text-dusk-primary">
+            that answers back.
           </Text>
         </Text>
-        <Text variant="subtitle" className="max-w-[300px] text-[15px]">
-          Paste any link. Our AI titles, summarizes and tags it — automatically.
+        <Text className="max-w-[310px] font-sans text-[15px] leading-[22px] text-dusk-muted">
+          Paste any link, then ask in plain words. SaveIt reads everything you
+          saved and answers with sources.
         </Text>
       </Animated.View>
 
       <DemoCard />
+
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(320)}
+        className="gap-2.5"
+      >
+        <View className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-dusk-primary px-3.5 py-2.5">
+          <Text className="font-sans text-[13px] text-dusk-primary-fg">
+            What did I save about React 19?
+          </Text>
+        </View>
+        <View className="max-w-[88%] self-start rounded-2xl rounded-bl-md bg-dusk-raised px-3.5 py-2.5">
+          <Text className="font-sans text-[13px] text-dusk-fg">
+            You have 3 resources: the official changelog, a thread on Server
+            Components and a video about use().
+          </Text>
+          <View className="mt-2 flex-row items-center gap-1.5">
+            <Ionicons
+              name="documents-outline"
+              size={12}
+              color={duskColors.muted}
+            />
+            <Text className="font-sans-semibold text-[11px] text-dusk-muted">
+              3 bookmarks · sources cited
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
     </SlideShell>
   );
 }
@@ -160,7 +222,6 @@ function HookSlide({ width }: { width: number }) {
  * card (title + AI summary + tags) — the "aha" before any ask.
  */
 function DemoCard() {
-  const colors = useThemeColors();
   const [enriched, setEnriched] = useState(false);
 
   useEffect(() => {
@@ -170,20 +231,14 @@ function DemoCard() {
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).delay(260)}
-      className="rounded-2xl border border-border bg-card p-4"
-      style={{
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowRadius: 20,
-        shadowOffset: { width: 0, height: 12 },
-      }}
+      entering={FadeInDown.duration(400).delay(200)}
+      className="rounded-2xl border border-white/10 bg-dusk-card p-4"
     >
       <View className="flex-row items-center gap-2">
-        <Ionicons name="link" size={14} color={colors.mutedForeground} />
+        <Ionicons name="link" size={14} color={duskColors.muted} />
         <Text
           numberOfLines={1}
-          className="flex-1 font-sans text-[12px] text-muted-foreground"
+          className="flex-1 font-sans text-[12px] text-dusk-muted"
         >
           theverge.com/ai-agents-2026-guide
         </Text>
@@ -191,34 +246,37 @@ function DemoCard() {
 
       {!enriched ? (
         <View className="mt-3 flex-row items-center gap-2">
-          <ActivityIndicator size="small" color={colors.primary} />
-          <Text className="font-sans-semibold text-[12px] text-primary">
+          <ActivityIndicator size="small" color={duskColors.primary} />
+          <Text className="font-sans-semibold text-[12px] text-dusk-primary">
             AI is reading the page…
           </Text>
         </View>
       ) : (
         <Animated.View entering={FadeIn.duration(400)} className="mt-3 gap-2.5">
-          <View className="h-20 items-start justify-start rounded-xl bg-primary/15 p-2">
-            <View className="rounded-full bg-primary px-2 py-0.5">
-              <Text className="font-sans-bold text-[9px] text-primary-foreground">
+          <View className="h-20 items-start justify-start rounded-xl bg-dusk-primary/15 p-2">
+            <View className="rounded-full bg-dusk-primary px-2 py-0.5">
+              <Text className="font-sans-bold text-[9px] text-dusk-primary-fg">
                 ARTICLE
               </Text>
             </View>
           </View>
-          <Text className="font-sans-bold text-[14px] text-foreground">
+          <Text className="font-sans-bold text-[14px] text-dusk-fg">
             The complete guide to AI agents in 2026
           </Text>
           <View className="flex-row items-start gap-1.5">
-            <Ionicons name="sparkles" size={13} color={colors.primary} />
-            <Text className="flex-1 font-sans text-[12px] text-muted-foreground">
+            <Ionicons name="sparkles" size={13} color={duskColors.primary} />
+            <Text className="flex-1 font-sans text-[12px] text-dusk-muted">
               A tour of agent architectures, tool-use and the emerging
               multi-agent patterns.
             </Text>
           </View>
           <View className="flex-row flex-wrap gap-1.5">
             {["#AI", "#agents", "#to-read", "#dev"].map((tag) => (
-              <View key={tag} className="rounded-full bg-secondary px-2.5 py-1">
-                <Text className="font-sans-semibold text-[10.5px] text-foreground">
+              <View
+                key={tag}
+                className="rounded-full bg-dusk-raised px-2.5 py-1"
+              >
+                <Text className="font-sans-semibold text-[10.5px] text-dusk-cream">
                   {tag}
                 </Text>
               </View>
@@ -227,61 +285,5 @@ function DemoCard() {
         </Animated.View>
       )}
     </Animated.View>
-  );
-}
-
-function PayoffSlide({ width }: { width: number }) {
-  const colors = useThemeColors();
-  return (
-    <SlideShell width={width}>
-      <Animated.View
-        entering={FadeInDown.duration(400).delay(80)}
-        className="gap-4"
-      >
-        <View className="h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
-          <Ionicons
-            name="chatbubbles-outline"
-            size={26}
-            color={colors.primary}
-          />
-        </View>
-        <Text variant="title" className="text-[32px] leading-[37px]">
-          Your memory,{"\n"}
-          <Text
-            variant="title"
-            className="text-[32px] leading-[37px] text-primary"
-          >
-            that answers back.
-          </Text>
-        </Text>
-        <Text variant="subtitle" className="max-w-[300px] text-[15px]">
-          Ask a question in plain words. SaveIt searches everything you saved.
-        </Text>
-      </Animated.View>
-
-      <View className="gap-2.5">
-        <View className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5">
-          <Text className="font-sans text-[13px] text-primary-foreground">
-            What did I save about React 19?
-          </Text>
-        </View>
-        <View className="max-w-[88%] self-start rounded-2xl rounded-bl-md bg-secondary px-3.5 py-2.5">
-          <Text className="font-sans text-[13px] text-foreground">
-            You have 3 resources: the official changelog, a thread on Server
-            Components and a video about use().
-          </Text>
-          <View className="mt-2 flex-row items-center gap-1.5">
-            <Ionicons
-              name="documents-outline"
-              size={12}
-              color={colors.mutedForeground}
-            />
-            <Text className="font-sans-semibold text-[11px] text-muted-foreground">
-              3 bookmarks · sources cited
-            </Text>
-          </View>
-        </View>
-      </View>
-    </SlideShell>
   );
 }

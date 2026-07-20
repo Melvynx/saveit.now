@@ -10,6 +10,15 @@
       ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=/Users/melvynx/.nvm/versions/node/v24.14.1/bin:$PATH && cd apps/mobile && pnpm exec expo start --web --port 8090"
+      ],
+      "port": 8090
     }
   ]
 }

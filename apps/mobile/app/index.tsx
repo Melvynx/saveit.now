@@ -89,9 +89,9 @@ export default function IndexPage() {
           transparent
           onRequestClose={closeSignIn}
         >
-          <View className="flex-1 justify-end bg-black/50">
+          <View className="flex-1 justify-end bg-black/60">
             <View
-              className="overflow-hidden rounded-t-[28px] bg-background"
+              className="overflow-hidden rounded-t-[28px] bg-dusk"
               style={{
                 height: signInSheetHeight,
               }}
