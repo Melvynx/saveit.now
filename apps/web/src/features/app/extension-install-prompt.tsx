@@ -9,7 +9,6 @@ const CHROME_EXTENSION_ID = "mpjdmcmkgmeijijjecpffckjgjgdcfpi";
 const DISMISSED_AT_KEY = "saveit:extension-prompt-dismissed-at";
 const DISMISS_FOR_MS = 14 * 24 * 60 * 60 * 1000;
 const INSTALL_CLICK_DISMISS_FOR_MS = 90 * 24 * 60 * 60 * 1000;
-const FONT_LINK_ID = "saveit-instrument-serif";
 
 function isChromiumDesktop(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -30,7 +29,10 @@ function isDismissed(): boolean {
 
 function dismissFor(durationMs: number): void {
   try {
-    window.localStorage.setItem(DISMISSED_AT_KEY, String(Date.now() + durationMs));
+    window.localStorage.setItem(
+      DISMISSED_AT_KEY,
+      String(Date.now() + durationMs),
+    );
   } catch {
     // Ignore storage failures; the prompt simply reappears next visit.
   }
@@ -62,17 +64,6 @@ function useExtensionInstalled(): boolean | null {
   return installed;
 }
 
-function ensureSerifFontLoaded(): void {
-  if (document.getElementById(FONT_LINK_ID)) return;
-
-  const link = document.createElement("link");
-  link.id = FONT_LINK_ID;
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap";
-  document.head.appendChild(link);
-}
-
 export function ExtensionInstallPrompt() {
   const installed = useExtensionInstalled();
   const [visible, setVisible] = useState(false);
@@ -80,7 +71,6 @@ export function ExtensionInstallPrompt() {
   useEffect(() => {
     if (installed !== false || isDismissed()) return;
 
-    ensureSerifFontLoaded();
     const timer = window.setTimeout(() => setVisible(true), 1500);
     return () => window.clearTimeout(timer);
   }, [installed]);

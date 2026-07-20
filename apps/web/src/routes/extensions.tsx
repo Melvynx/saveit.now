@@ -76,11 +76,7 @@ const SAVEABLE = [
   "Landing pages",
 ];
 
-const InstallButtons = ({
-  surface,
-}: {
-  surface: "hero" | "closing";
-}) => {
+const InstallButtons = ({ surface }: { surface: "hero" | "closing" }) => {
   return (
     <div className="flex flex-wrap items-center justify-center gap-3">
       {BROWSERS.map((browser, i) => (
@@ -107,7 +103,10 @@ const InstallButtons = ({
 
 const BrowserMockup = () => {
   return (
-    <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-white/[0.1] bg-[#1d1017] shadow-2xl shadow-black/50">
+    <div
+      aria-hidden="true"
+      className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-white/[0.1] bg-[#1d1017] shadow-2xl shadow-black/50"
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-3 border-b border-white/[0.07] bg-[#241219] px-4 py-3">
         <div className="flex gap-1.5">

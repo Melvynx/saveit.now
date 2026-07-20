@@ -3,6 +3,9 @@ import { UpgradePage } from "@/features/upgrade/upgrade-page";
 import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/upgrade")({
+  head: () => ({
+    meta: [{ title: "Upgrade to SaveIt Pro | SaveIt.now" }],
+  }),
   component: UpgradeRoute,
 });
 
@@ -14,7 +17,10 @@ function UpgradeRoute() {
   }
 
   return (
-    <AccountShell>
+    <AccountShell
+      title="Upgrade to SaveIt Pro"
+      description="Choose a billing plan and unlock Pro on every signed-in device."
+    >
       <UpgradePage />
     </AccountShell>
   );

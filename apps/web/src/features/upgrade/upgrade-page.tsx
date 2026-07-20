@@ -1,7 +1,6 @@
 "use client";
 
 import { LoadingButton } from "@/features/form/loading-button";
-import { FeaturesList } from "@/features/marketing/features-list";
 import { MaxWidthContainer } from "@/features/page/page";
 import { useSession } from "@/lib/auth-client";
 import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
@@ -18,24 +17,47 @@ import { Badge } from "@workspace/ui/components/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
-import { Typography } from "@workspace/ui/components/typography";
 import {
   AlertTriangle,
+  Check,
   CircleAlert,
-  FileUp,
-  Heart,
-  Infinity as InfinityIcon,
-  Phone,
+  CreditCard,
+  MonitorSmartphone,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const PRO_FEATURES = [
+  "Up to 50,000 bookmarks",
+  "AI summaries for articles and videos",
+  "Agentic search across your library",
+  "Unlimited exports",
+  "API access",
+  "Priority support",
+];
+
+const TRUST_POINTS = [
+  {
+    label: "Secure checkout with Stripe",
+    Icon: ShieldCheck,
+  },
+  {
+    label: "Pro on every signed-in device",
+    Icon: MonitorSmartphone,
+  },
+  {
+    label: "Manage or cancel anytime",
+    Icon: CreditCard,
+  },
+];
 
 export function UpgradePage() {
   const [monthly, setMonthly] = useState(false);
@@ -89,11 +111,10 @@ export function UpgradePage() {
   }
 
   return (
-    <MaxWidthContainer className="my-8 flex w-full min-w-0 flex-col gap-12 lg:my-12 lg:flex-row">
-      <FeaturesList />
-      <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
+    <MaxWidthContainer className="py-4 sm:py-8">
+      <div className="mx-auto w-full max-w-3xl">
         {canceled ? (
-          <Alert className="flex min-w-0 flex-col gap-2">
+          <Alert className="mb-5 flex min-w-0 flex-col gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <CircleAlert className="size-4" />
               <AlertTitle>Checkout canceled</AlertTitle>
@@ -104,143 +125,153 @@ export function UpgradePage() {
             </AlertDescription>
           </Alert>
         ) : error ? (
-          <Alert variant="destructive" className="flex min-w-0 flex-col gap-2">
+          <Alert
+            variant="destructive"
+            className="mb-5 flex min-w-0 flex-col gap-2"
+          >
             <div className="flex min-w-0 items-center gap-2">
               <AlertTriangle className="size-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>Checkout unavailable</AlertTitle>
             </div>
             <AlertDescription>
-              An error occurred while upgrading your subscription. Please try
-              again.
+              We couldn&apos;t open checkout. Please try again in a moment.
             </AlertDescription>
           </Alert>
         ) : null}
-        <Tabs
-          value={monthly ? "monthly" : "yearly"}
-          onValueChange={(value) => setMonthly(value === "monthly")}
-          className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-fit">
-            <TabsTrigger value="monthly" className="w-full">
-              Monthly
-            </TabsTrigger>
-            <div className="relative min-w-0">
-              <TabsTrigger value="yearly" className="w-full pr-10 sm:pr-1.5">
-                Yearly
-              </TabsTrigger>
-              <Badge
-                className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 bg-card text-[10px] sm:-right-5 sm:-top-4 sm:translate-y-0 sm:text-xs"
-                variant="outline"
-              >
-                Best value
-              </Badge>
+
+        <div className="mb-6 max-w-2xl sm:mb-8">
+          <Badge variant="secondary" className="mb-3 gap-1.5">
+            <Sparkles className="size-3.5" />
+            SaveIt Pro
+          </Badge>
+          <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
+            Everything you need to find what you saved.
+          </h2>
+          <p className="text-muted-foreground mt-2 max-w-xl text-pretty text-sm leading-relaxed sm:text-base">
+            More room, smarter retrieval, and the tools to move your knowledge
+            wherever you need it.
+          </p>
+        </div>
+
+        <Card className="gap-0 py-0 ring-primary/25">
+          <CardHeader className="gap-5 border-b px-5 py-5 sm:px-7 sm:py-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Choose your billing plan
+                </CardTitle>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Annual billing gives you the lowest monthly price.
+                </p>
+              </div>
+              {!monthly ? (
+                <Badge className="bg-primary/10 text-primary border-primary/20">
+                  Save $48/year
+                </Badge>
+              ) : null}
             </div>
-          </TabsList>
-        </Tabs>
-        <Card className="h-fit w-full min-w-0">
-          <CardHeader>
-            <CardTitle>
-              SaveIt<span className="text-primary font-bold">.pro</span>
-            </CardTitle>
-            <CardDescription>
-              Become a SaveIt.pro member with one simple subscription.
-            </CardDescription>
+
+            <Tabs
+              value={monthly ? "monthly" : "yearly"}
+              onValueChange={(value) => setMonthly(value === "monthly")}
+              className="w-full"
+            >
+              <TabsList className="grid h-auto min-h-14 w-full grid-cols-2 p-1">
+                <TabsTrigger
+                  value="monthly"
+                  className="min-h-12 w-full flex-col gap-0 px-3 py-2"
+                >
+                  <span>Monthly</span>
+                  <span className="text-xs font-normal opacity-75">
+                    $9/month
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="yearly"
+                  className="min-h-12 w-full flex-col gap-0 px-3 py-2"
+                >
+                  <span>Yearly</span>
+                  <span className="text-xs font-normal opacity-75">
+                    $60/year
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
-          <CardContent>
-            <div className="flex min-w-0 flex-wrap items-baseline gap-0.5">
-              <Typography className="text-2xl font-bold">
-                ${monthly ? "9" : "5"}
-              </Typography>
-              <Typography variant="muted">/month</Typography>
-              {!monthly && (
-                <Typography variant="muted" className="text-green-500 ml-2">
-                  Best value
-                </Typography>
-              )}
+
+          <CardContent className="px-5 py-6 sm:px-7 sm:py-7">
+            <div aria-live="polite">
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                  ${monthly ? "9" : "60"}
+                </span>
+                <span className="text-muted-foreground text-base">
+                  /{monthly ? "month" : "year"}
+                </span>
+              </div>
+              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                {monthly
+                  ? "Billed monthly. Switch or cancel from Billing."
+                  : "Equivalent to $5/month. Billed once per year."}
+              </p>
             </div>
-            <Typography variant="muted">
-              {monthly ? "Billed monthly." : "Billed annually."}
-            </Typography>
+
+            <div className="mt-7 border-t pt-6">
+              <h3 className="text-sm font-semibold">Everything in Pro</h3>
+              <ul className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                {PRO_FEATURES.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex min-w-0 items-start gap-2.5"
+                  >
+                    <span className="bg-primary/10 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full">
+                      <Check className="text-primary size-3.5" />
+                    </span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </CardContent>
-          <CardFooter className="border-t flex flex-col gap-2 items-start">
-            <Typography variant="muted">
-              Simple and transparent pricing. No hidden fees.
-            </Typography>
-            <ul className="flex flex-2 min-w-0 flex-col gap-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <InfinityIcon className="text-primary size-4" />
-                <span>Up to 50,000 bookmarks</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <FileUp className="text-primary size-4" />
-                <span>Unlimited exports</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="text-primary size-4" />
-                <span>Priority support</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Heart className="text-primary size-4" />
-                <span>Support of a creator</span>
-              </li>
-            </ul>
+
+          <CardFooter className="bg-muted/35 flex-col items-stretch gap-3 border-t p-5 sm:p-7">
             {plan.name === "free" ? (
               <LoadingButton
                 loading={checkoutTask.isPending || plan.isLoading}
                 disabled={plan.isLoading || session.isPending}
                 onClick={() => void checkoutTask.run()}
-                className="w-full"
+                className="h-11 w-full"
               >
-                Upgrade to Pro
+                Continue to secure checkout
               </LoadingButton>
             ) : (
               <Alert variant="default">
                 <CircleAlert className="size-4" />
-                <AlertTitle>You are already a member of SaveIt.pro</AlertTitle>
+                <AlertTitle>You already have SaveIt Pro</AlertTitle>
                 <AlertDescription>
-                  You are already a member of SaveIt.pro. You can manage your
-                  subscription in the <a href="/app/settings">settings</a>
+                  Manage or cancel your subscription from the{" "}
+                  <a href="/billing">billing portal</a>.
                 </AlertDescription>
               </Alert>
             )}
+            {plan.name === "free" ? (
+              <p className="text-muted-foreground text-center text-xs leading-relaxed">
+                Review your order in Stripe before paying. Your subscription
+                renews automatically until canceled.
+              </p>
+            ) : null}
           </CardFooter>
         </Card>
-        <div className="min-w-0 rounded-lg border bg-card p-4">
-          <Typography variant="large" className="font-medium">
-            Upgrade on the web
-          </Typography>
-          <Typography variant="muted" className="mt-1">
-            You can buy SaveIt Pro here or in the iOS app. Pro follows the
-            SaveIt account you use at checkout and unlocks on every signed-in
-            device.
-          </Typography>
-          <ol className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">1.</span>
-              <span>
-                Sign in to your SaveIt.now account (you&apos;ll be brought back
-                to this page automatically).
+
+        <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-3">
+          {TRUST_POINTS.map(({ label, Icon }) => (
+            <div key={label} className="flex items-center gap-2.5">
+              <Icon className="text-primary size-4 shrink-0" />
+              <span className="text-muted-foreground text-xs leading-snug">
+                {label}
               </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">2.</span>
-              <span>Pick a monthly or yearly plan above.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">3.</span>
-              <span>
-                Click <span className="text-foreground">Upgrade to Pro</span> to
-                complete a secure checkout with Stripe.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">4.</span>
-              <span>
-                Pro unlocks everywhere instantly — including the mobile app and
-                browser extensions.
-              </span>
-            </li>
-          </ol>
+            </div>
+          ))}
         </div>
       </div>
     </MaxWidthContainer>
