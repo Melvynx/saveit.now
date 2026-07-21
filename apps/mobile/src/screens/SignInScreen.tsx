@@ -157,7 +157,9 @@ export default function SignInScreen({
     }
 
     const updateFromMetrics = () => {
-      const metrics = Keyboard.metrics();
+      // Keyboard.metrics is unavailable on react-native-web.
+      const metrics =
+        typeof Keyboard.metrics === "function" ? Keyboard.metrics() : undefined;
       setObservedKeyboardInset(metrics?.height ? metrics.height + 16 : 0);
     };
     const handleKeyboardShow = (event: KeyboardEvent) => {
@@ -245,7 +247,10 @@ export default function SignInScreen({
             </View>
 
             <View className="gap-3">
+              {/* key: never let React recycle this TextInput as the email one —
+                  the OTP letter-spacing style leaks across the reconciliation. */}
               <Input
+                key="otp-input"
                 placeholder="000000"
                 placeholderTextColor={duskColors.muted}
                 selectionColor={duskColors.primary}
@@ -306,7 +311,11 @@ export default function SignInScreen({
             </View>
 
             <View className="gap-3">
+              {/* No autoFocus: opening the keyboard immediately (with its
+                  QuickType bar) hides the Apple/Google/GitHub options below.
+                  Let the user see the whole menu, focus on tap. */}
               <Input
+                key="email-input"
                 placeholder="you@example.com"
                 placeholderTextColor={duskColors.muted}
                 selectionColor={duskColors.primary}
@@ -317,9 +326,8 @@ export default function SignInScreen({
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoComplete="email"
-                autoFocus
                 inputSize="pill"
-                className="border-white/10 bg-white/10 text-dusk-fg"
+                className="border-white/10 bg-white/10 tracking-normal text-dusk-fg"
               />
 
               <DuskButton

@@ -29,16 +29,18 @@ export function DuskScene({
   return (
     <View
       className={cn(
-        "overflow-hidden rounded-[28px] border border-white/10 bg-dusk-card",
+        "overflow-hidden rounded-3xl border border-white/10 bg-dusk-card",
         className,
       )}
       style={style}
     >
+      {/* The image clips itself to the same radius: relying on the parent's
+          overflow alone leaves ragged corners against the hairline border. */}
       <Image
         source={source}
         contentFit="cover"
         contentPosition={imagePosition}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { borderRadius: 23 }]}
         transition={220}
         accessible={false}
       />

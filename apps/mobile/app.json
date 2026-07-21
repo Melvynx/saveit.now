@@ -2,7 +2,7 @@
   "expo": {
     "name": "SaveIt",
     "slug": "saveit-mobile",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "saveit",
@@ -12,8 +12,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026070602",
-      "usesAppleSignIn": true
+      "buildNumber": "2026072002",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +28,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

@@ -33,9 +33,20 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isConvexTokenReady, setIsConvexTokenReady] = useState(false);
+  const [hasResolvedSession, setHasResolvedSession] = useState(false);
   const session = authClient.useSession();
   const sessionId = session.data?.session?.id ?? null;
   const baUser = session.data?.user ?? null;
+
+  // Better Auth re-enters `isPending` on every app-foreground refetch when the
+  // user is signed out (its query only keeps isPending=false while data is
+  // non-null). Only the FIRST resolution should gate the UI — later refetches
+  // must not unmount screens into a loader (e.g. leaving to grab an OTP code).
+  useEffect(() => {
+    if (!session.isPending) {
+      setHasResolvedSession(true);
+    }
+  }, [session.isPending]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasBetterAuthSession = !!user;
   const isAuthenticated = hasBetterAuthSession && isConvexTokenReady;
   const isLoading =
-    session.isPending || (hasBetterAuthSession && !isConvexTokenReady);
+    (session.isPending && !hasResolvedSession) ||
+    (hasBetterAuthSession && !isConvexTokenReady);
 
   const sendOTP = async (email: string) => {
     const result = await authClient.emailOtp.sendVerificationOtp({

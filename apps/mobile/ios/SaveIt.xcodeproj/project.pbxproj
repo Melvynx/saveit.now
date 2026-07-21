@@ -7,52 +7,35 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		134F811A5D234EFCAC2DAFAC /* ShareExtensionPreprocessor.js in Resources */ = {isa = PBXBuildFile; fileRef = 05DC07A2F2284FCB9EDEAD34 /* ShareExtensionPreprocessor.js */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		61D3A5F40D2A4954BE8824A7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 564A638F12EE433EAB7F5438 /* PrivacyInfo.xcprivacy */; };
-		98737E121ECCE5CB870CF82F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F8482F1212D27272F85AF0 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		BCC73C3CD0102054F12081DF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 564A638F12EE433EAB7F5438 /* PrivacyInfo.xcprivacy */; };
-		BD81225A2BD245738D167F40 /* ShareExtension.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = 87B8EE3055714AC6BD78288B /* ShareExtension.appex */; };
-		DA78482236614CF9B3E0A3F0 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FF1B27EF0B4C399E89DC2B /* ShareViewController.swift */; };
-		ECFA41BBB5DA11AA6CA722A0 /* libPods-SaveIt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F85E9F6795A38D9B83D11333 /* libPods-SaveIt.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F1BFC44878504D2D95EDC141 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 820798E92202480F8BFA6F3B /* MainInterface.storyboard */; };
+		29274BAF7A604760AA2DA99B /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E308EE6F1E4775AB54CEFA /* ShareViewController.swift */; };
+		656EA162FAE84E6BB6788C80 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EAD23B6FDEB64DCD88646EC0 /* MainInterface.storyboard */; };
+		5A67F704FF6742F2B263991F /* ShareExtensionPreprocessor.js in Resources */ = {isa = PBXBuildFile; fileRef = C35644B7D6C841BF9A01DB12 /* ShareExtensionPreprocessor.js */; };
+		D49C8E4DDA10463E8B21DF91 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2C915FC9B2DB42EF8E09A12A /* PrivacyInfo.xcprivacy */; };
+		0F253CD9565145B8A433AB30 /* ShareExtension-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 30AFF5D67BDC492596D544E9 /* ShareExtension-Info.plist */; };
+		884C19FFE3E34630A4C15476 /* ShareExtension.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = EDB68BF5F2E24458A0532CC9 /* ShareExtension.entitlements */; };
+		E1704A176B054FD282262ADB /* ShareExtension.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = 98F483940B9643279F315031 /* ShareExtension.appex */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		71B7A58969B64DC5860F146F /* Copy Files */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				BD81225A2BD245738D167F40 /* ShareExtension.appex in Copy Files */,
-			);
-			name = "Copy Files";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		05DC07A2F2284FCB9EDEAD34 /* ShareExtensionPreprocessor.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = sourcecode.javascript; name = ShareExtensionPreprocessor.js; path = ShareExtension/ShareExtensionPreprocessor.js; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* SaveIt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SaveIt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = SaveIt/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SaveIt/Info.plist; sourceTree = "<group>"; };
-		564A638F12EE433EAB7F5438 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ShareExtension/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		820798E92202480F8BFA6F3B /* MainInterface.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = file.storyboard; name = MainInterface.storyboard; path = ShareExtension/MainInterface.storyboard; sourceTree = "<group>"; };
-		84609FF9F148A9DE7685F585 /* Pods-SaveIt.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SaveIt.debug.xcconfig"; path = "Target Support Files/Pods-SaveIt/Pods-SaveIt.debug.xcconfig"; sourceTree = "<group>"; };
-		87B8EE3055714AC6BD78288B /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 9; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		95F8482F1212D27272F85AF0 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SaveIt/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = SaveIt/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B5DD96B0605ACC9BA7E8A38B /* Pods-SaveIt.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SaveIt.release.xcconfig"; path = "Target Support Files/Pods-SaveIt/Pods-SaveIt.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E5FF1B27EF0B4C399E89DC2B /* ShareViewController.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ShareViewController.swift; path = ShareExtension/ShareViewController.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = SaveIt/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* SaveIt-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SaveIt-Bridging-Header.h"; path = "SaveIt/SaveIt-Bridging-Header.h"; sourceTree = "<group>"; };
-		F85E9F6795A38D9B83D11333 /* libPods-SaveIt.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SaveIt.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0E308EE6F1E4775AB54CEFA /* ShareViewController.swift */ = {isa = PBXFileReference; name = "ShareViewController.swift"; path = "ShareViewController.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		EAD23B6FDEB64DCD88646EC0 /* MainInterface.storyboard */ = {isa = PBXFileReference; name = "MainInterface.storyboard"; path = "MainInterface.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		C35644B7D6C841BF9A01DB12 /* ShareExtensionPreprocessor.js */ = {isa = PBXFileReference; name = "ShareExtensionPreprocessor.js"; path = "ShareExtensionPreprocessor.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2C915FC9B2DB42EF8E09A12A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; name = "PrivacyInfo.xcprivacy"; path = "PrivacyInfo.xcprivacy"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		30AFF5D67BDC492596D544E9 /* ShareExtension-Info.plist */ = {isa = PBXFileReference; name = "ShareExtension-Info.plist"; path = "ShareExtension-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
+		EDB68BF5F2E24458A0532CC9 /* ShareExtension.entitlements */ = {isa = PBXFileReference; name = "ShareExtension.entitlements"; path = "ShareExtension.entitlements"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		98F483940B9643279F315031 /* ShareExtension.appex */ = {isa = PBXFileReference; name = "ShareExtension.appex"; path = "ShareExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = undefined; lastKnownFileType = undefined; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,7 +43,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ECFA41BBB5DA11AA6CA722A0 /* libPods-SaveIt.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9871D577ECD041318EC040BE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,29 +73,8 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				F85E9F6795A38D9B83D11333 /* libPods-SaveIt.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		35151AFFB0EDEA7B731A2057 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				84609FF9F148A9DE7685F585 /* Pods-SaveIt.debug.xcconfig */,
-				B5DD96B0605ACC9BA7E8A38B /* Pods-SaveIt.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		744670C62E39B894009A9AE0 /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				564A638F12EE433EAB7F5438 /* PrivacyInfo.xcprivacy */,
-				E5FF1B27EF0B4C399E89DC2B /* ShareViewController.swift */,
-				05DC07A2F2284FCB9EDEAD34 /* ShareExtensionPreprocessor.js */,
-				820798E92202480F8BFA6F3B /* MainInterface.storyboard */,
-			);
-			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -123,9 +91,7 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				35151AFFB0EDEA7B731A2057 /* Pods */,
-				BFEA173E0A6BEE8DD97BEBC7 /* ExpoModulesProviders */,
-				744670C62E39B894009A9AE0 /* Recovered References */,
+				E7129D486DAD439B954F7F32 /* ShareExtension */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -136,7 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* SaveIt.app */,
-				87B8EE3055714AC6BD78288B /* ShareExtension.appex */,
+				98F483940B9643279F315031 /* ShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -150,20 +116,18 @@
 			path = SaveIt/Supporting;
 			sourceTree = "<group>";
 		};
-		BFEA173E0A6BEE8DD97BEBC7 /* ExpoModulesProviders */ = {
+		E7129D486DAD439B954F7F32 /* ShareExtension */ = {
 			isa = PBXGroup;
 			children = (
-				DC136B18FEB18EA610416AA6 /* SaveIt */,
+				D0E308EE6F1E4775AB54CEFA /* ShareViewController.swift */,
+				EAD23B6FDEB64DCD88646EC0 /* MainInterface.storyboard */,
+				C35644B7D6C841BF9A01DB12 /* ShareExtensionPreprocessor.js */,
+				2C915FC9B2DB42EF8E09A12A /* PrivacyInfo.xcprivacy */,
+				30AFF5D67BDC492596D544E9 /* ShareExtension-Info.plist */,
+				EDB68BF5F2E24458A0532CC9 /* ShareExtension.entitlements */,
 			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		DC136B18FEB18EA610416AA6 /* SaveIt */ = {
-			isa = PBXGroup;
-			children = (
-				95F8482F1212D27272F85AF0 /* ExpoModulesProvider.swift */,
-			);
-			name = SaveIt;
+			name = ShareExtension;
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -174,39 +138,39 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SaveIt" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				8E86397A3AA63C84780B88C3 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				71B7A58969B64DC5860F146F /* Copy Files */,
-				38883F948A8FED0F2FAFD431 /* [CP] Embed Pods Frameworks */,
+				4B81614C3E394C7193DA6B21 /* Copy Files */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F987562E7C0E4D5E8475D881 /* PBXTargetDependency */,
 			);
 			name = SaveIt;
 			productName = SaveIt;
 			productReference = 13B07F961A680F5B00A75B9A /* SaveIt.app */;
 			productType = "com.apple.product-type.application";
 		};
-		F90C2A2DC2DC431EA3160876 /* ShareExtension */ = {
+		F13EB6E41D34442D929F7400 /* "ShareExtension" */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7163F13350C54250ADDE5992 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
+			name = "ShareExtension";
+			productName = "ShareExtension";
+			productReference = 98F483940B9643279F315031;
+			productType = "com.apple.product-type.app-extension";
+			buildConfigurationList = 97C852A53FCD4676A93BCD42;
 			buildPhases = (
-				0014F060CE734735A142929A /* Sources */,
-				3F7437B2538640208C962FE4 /* Resources */,
+				5D628BE42537490396E69FF3 /* Sources */,
+				2E3802E79FF8493B98DC05A5 /* Resources */,
+				9871D577ECD041318EC040BE /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = ShareExtension;
-			productName = ShareExtension;
-			productReference = 87B8EE3055714AC6BD78288B /* ShareExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -235,7 +199,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* SaveIt */,
-				F90C2A2DC2DC431EA3160876 /* ShareExtension */,
+				F13EB6E41D34442D929F7400 /* "ShareExtension" */,
 			);
 		};
 /* End PBXProject section */
@@ -248,17 +212,16 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				BCC73C3CD0102054F12081DF /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		3F7437B2538640208C962FE4 /* Resources */ = {
+		2E3802E79FF8493B98DC05A5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				134F811A5D234EFCAC2DAFAC /* ShareExtensionPreprocessor.js in Resources */,
-				F1BFC44878504D2D95EDC141 /* MainInterface.storyboard in Resources */,
-				61D3A5F40D2A4954BE8824A7 /* PrivacyInfo.xcprivacy in Resources */,
+				656EA162FAE84E6BB6788C80 /* "MainInterface.storyboard" in Resources */,
+				5A67F704FF6742F2B263991F /* "ShareExtensionPreprocessor.js" in Resources */,
+				D49C8E4DDA10463E8B21DF91 /* "PrivacyInfo.xcprivacy" in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +235,8 @@
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
 			);
 			name = "Bundle React Native code and images";
 			outputPaths = (
@@ -302,24 +267,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		38883F948A8FED0F2FAFD431 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SaveIt/Pods-SaveIt-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SaveIt/Pods-SaveIt-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -327,86 +274,37 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SaveIt/Pods-SaveIt-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXUpdates/EXUpdates.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/RCTI18nStrings.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXUpdates.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCTI18nStrings.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SaveIt/Pods-SaveIt-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8E86397A3AA63C84780B88C3 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/SaveIt/SaveIt.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-SaveIt/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-SaveIt/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SaveIt/expo-configure-project.sh\"\n";
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0014F060CE734735A142929A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				DA78482236614CF9B3E0A3F0 /* ShareViewController.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				98737E121ECCE5CB870CF82F /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D628BE42537490396E69FF3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				29274BAF7A604760AA2DA99B /* "ShareViewController.swift" in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -415,13 +313,10 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 84609FF9F148A9DE7685F585 /* Pods-SaveIt.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
-				CURRENT_PROJECT_VERSION = 2026070602;
-				DEVELOPMENT_TEAM = UUFHFWGCU4;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -433,114 +328,48 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.0;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = now.saveit.saveitapp;
-				PRODUCT_NAME = SaveIt;
+				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp";
+				PRODUCT_NAME = "SaveIt";
 				SWIFT_OBJC_BRIDGING_HEADER = "SaveIt/SaveIt-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B5DD96B0605ACC9BA7E8A38B /* Pods-SaveIt.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2026070602;
-				DEVELOPMENT_TEAM = UUFHFWGCU4;
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = SaveIt/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.0;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = now.saveit.saveitapp;
-				PRODUCT_NAME = SaveIt;
-				PROVISIONING_PROFILE = "57cf39e1-3fa8-4dd9-9fd0-a4b0efd5aa7b";
-				PROVISIONING_PROFILE_SPECIFIER = "SaveIt AppStore 2026062301 Apple Distribution";
+				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp";
+				PRODUCT_NAME = "SaveIt";
 				SWIFT_OBJC_BRIDGING_HEADER = "SaveIt/SaveIt-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Release;
-		};
-		414C617714FC41E59FC64067 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2026070602;
-				DEVELOPMENT_TEAM = UUFHFWGCU4;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ShareExtension/ShareExtension-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 3.1.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
-				PRODUCT_NAME = ShareExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		43E57BFDA3FB48CA974E5A16 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2026070602;
-				DEVELOPMENT_TEAM = UUFHFWGCU4;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ShareExtension/ShareExtension-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 3.1.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
-				PRODUCT_NAME = ShareExtension;
-				PROVISIONING_PROFILE = "5af0a723-0697-4c27-85b5-b75caa2d76cd";
-				PROVISIONING_PROFILE_SPECIFIER = "SaveIt ShareExtension AppStore 2026062301 Apple Distribution";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = SaveIt/SaveIt.entitlements;
 			};
 			name = Release;
 		};
@@ -596,17 +425,10 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
+				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.2.0_typescript@5._ba7d0916330f1bbefb1569be42c3cfd5/node_modules/react-native";
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
-				USE_HERMES = true;
 			};
 			name = Debug;
 		};
@@ -638,7 +460,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: Melvyn Malherbe (UUFHFWGCU4)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -655,18 +477,56 @@
 					/usr/lib/swift,
 					"$(inherited)",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
+				LIBRARY_SEARCH_PATHS = "\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/.pnpm/react-native@0.81.5_@babel+core@7.28.0_@react-native-community+cli@20.2.0_typescript@5._ba7d0916330f1bbefb1569be42c3cfd5/node_modules/react-native";
 				SDKROOT = iphoneos;
-				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		40291DEC21BE4B55A1982009 /* Debug */ = {
+			name = Debug;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "ShareExtension/ShareExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_NAME = "ShareExtension";
+				SKIP_INSTALL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "2026072002";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = "3.2.0";
+				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+		};
+		A97A85A133CE4DB19698C979 /* Release */ = {
+			name = Release;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "ShareExtension/ShareExtension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_NAME = "ShareExtension";
+				SKIP_INSTALL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "2026072002";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = "3.2.0";
+				PRODUCT_BUNDLE_IDENTIFIER = "now.saveit.saveitapp.share-extension";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
 		};
 /* End XCBuildConfiguration section */
 
@@ -680,15 +540,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7163F13350C54250ADDE5992 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				414C617714FC41E59FC64067 /* Debug */,
-				43E57BFDA3FB48CA974E5A16 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "SaveIt" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -698,7 +549,48 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		97C852A53FCD4676A93BCD42 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40291DEC21BE4B55A1982009 /* Debug */,
+				A97A85A133CE4DB19698C979 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXTargetDependency section */
+		F987562E7C0E4D5E8475D881 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F13EB6E41D34442D929F7400 /* "ShareExtension" */;
+			targetProxy = 1DDF81F9CF3C46F5B1F99CAB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		1DDF81F9CF3C46F5B1F99CAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F13EB6E41D34442D929F7400;
+			remoteInfo = "ShareExtension";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4B81614C3E394C7193DA6B21 /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1704A176B054FD282262ADB /* ShareExtension.appex in Copy Files */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Copy Files";
+			dstPath = "";
+			dstSubfolderSpec = 13;
+		};
+/* End PBXCopyFilesBuildPhase section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

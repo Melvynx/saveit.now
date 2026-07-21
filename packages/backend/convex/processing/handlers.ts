@@ -294,6 +294,7 @@ ${tweetImageDescription}
     imageDescription: tweetImageDescription,
     metadata: {
       tweetId,
+      text: tweetRecord.text,
       id_str: tweetRecord.id_str,
       created_at: tweetRecord.created_at,
       favorite_count: tweetRecord.favorite_count,

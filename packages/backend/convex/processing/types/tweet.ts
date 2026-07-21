@@ -1,5 +1,6 @@
 export type TweetMetadata = {
   tweetId?: string;
+  text?: string;
   user?: {
     name: string;
     screen_name: string;

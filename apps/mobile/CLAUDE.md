@@ -38,9 +38,19 @@ The app uses **NativeWind v4** (Tailwind CSS for React Native) with a shadcn-sty
 
 `Button` (big rounded-full CTA, `min-h-[52px]`), `Text` (variants: title, subtitle, section-label, body, caption, label, cta-label), `Card`, `Input`, `ListItem`, `Screen`, `Header`, `LoadingScreen`/`LoadingSpinner`.
 
+### Dusk surfaces (marketing/auth)
+
+Onboarding (`src/screens/OnboardingScreen.tsx`), sign-in, welcome, paywall, and goodbye use the fixed-dark **"dusk"** theme mirroring the web landing v2 (always dark, independent of the color scheme — same split as the web app, where marketing + auth are dusk and the signed-in app is not):
+
+- Tokens: `bg-dusk`, `bg-dusk-card`, `bg-dusk-raised`, `text-dusk-fg`, `text-dusk-muted`, `text-dusk-cream`, `text-dusk-peach`, `bg-dusk-primary`, `text-dusk-primary-fg`, `text-dusk-destructive` (tailwind.config.js); raw values in `duskColors` (`src/lib/theme.ts`) for icon/spinner props. Borders: `border-white/10`.
+- Display type: Instrument Serif via `font-serif` / `font-serif-italic`; accent words are italic serif in `text-dusk-primary` (never gradient text).
+- Primitives in `src/components/dusk/`: `DuskButton` (variants primary/white/glass/ghost), `DuskScene` (scenic webp + gradient scrim card), `DuskWordmark`.
+- Imagery: optimized landing photos in `assets/images/landing/` (`home.webp`, `lake.webp`, `portal-arch.webp`).
+- These screens set `<StatusBar style="light" />`.
+
 ### Conventions
 
-- **Colors**: ALWAYS use semantic token classes (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-secondary`, `border-border`, `bg-card`, `text-destructive`). Never hardcode hex colors in classNames — they break dark mode.
+- **Colors**: ALWAYS use semantic token classes (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-secondary`, `border-border`, `bg-card`, `text-destructive`). Never hardcode hex colors in classNames — they break dark mode. (Dusk surfaces use the fixed `dusk-*` tokens above instead.)
 - **Typography**: DM Sans via `font-sans`, `font-sans-medium`, `font-sans-semibold`, `font-sans-bold`.
 - **Radius**: `rounded-full` for buttons/pills, `rounded-2xl` for cards/list items, `rounded-xl` for inputs/icon containers.
 - **Screen padding**: `px-4` (16px, iOS HIG layout margin) for all content surfaces; `px-6` only on centered hero surfaces (onboarding, sign-in, status screens). Safe areas via `useSafeAreaInsets()` (never `SafeAreaView`); top: `insets.top + 8`.
