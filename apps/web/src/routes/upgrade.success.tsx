@@ -57,7 +57,9 @@ function UpgradeSuccessPage() {
 
   useEffect(() => {
     if (!isPro || !search.session_id) return;
-    trackAnalyticsEvent(ANALYTICS_EVENTS.SUBSCRIPTION_ACTIVATED);
+    trackAnalyticsEvent(ANALYTICS_EVENTS.SUBSCRIPTION_ACTIVATED, {
+      transaction_id: search.session_id,
+    });
   }, [isPro, search.session_id]);
 
   useEffect(() => {

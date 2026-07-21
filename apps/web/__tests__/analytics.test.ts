@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 describe("trackAnalyticsEvent", () => {
   afterEach(() => {
     delete window.umami;
+    delete window.gtag;
   });
 
   it("forwards SaveIt events and aggregate properties to Umami", () => {
@@ -25,5 +26,26 @@ describe("trackAnalyticsEvent", () => {
         surface: "bookmark_card",
       }),
     ).not.toThrow();
+  });
+
+  it("maps acquisition and revenue events to Google Analytics standard events", () => {
+    const gtag = vi.fn();
+    window.gtag = gtag;
+
+    trackAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, {
+      path: "import",
+    });
+    trackAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_CHECKOUT_STARTED, {
+      billing_interval: "yearly",
+    });
+    trackAnalyticsEvent(ANALYTICS_EVENTS.SUBSCRIPTION_ACTIVATED);
+
+    expect(gtag).toHaveBeenNthCalledWith(1, "event", "generate_lead", {
+      path: "import",
+    });
+    expect(gtag).toHaveBeenNthCalledWith(2, "event", "begin_checkout", {
+      billing_interval: "yearly",
+    });
+    expect(gtag).toHaveBeenNthCalledWith(3, "event", "purchase", undefined);
   });
 });

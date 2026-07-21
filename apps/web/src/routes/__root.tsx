@@ -1,4 +1,5 @@
 import { Providers } from "@/providers";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import "@workspace/ui/globals.css";
 import {
   createRootRoute,
@@ -10,6 +11,10 @@ import { cn } from "@workspace/ui/lib/utils";
 
 const UMAMI_SCRIPT_URL = "/api/insights/script";
 const UMAMI_WEBSITE_ID = "c077f623-0462-459b-a3fe-9ba279dabc82";
+// This is a public GA4 measurement ID. An environment override keeps preview
+// deployments separable without risking the production tag being omitted.
+const GOOGLE_ANALYTICS_MEASUREMENT_ID =
+  import.meta.env.VITE_GA_MEASUREMENT_ID ?? "G-8G3YJR4N7T";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -57,6 +62,7 @@ function RootComponent() {
           <Providers>
             <Outlet />
           </Providers>
+          <GoogleAnalytics measurementId={GOOGLE_ANALYTICS_MEASUREMENT_ID} />
         </div>
         <Scripts />
       </body>

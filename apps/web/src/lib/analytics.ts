@@ -20,11 +20,19 @@ export type AnalyticsEvent =
 
 export type AnalyticsProperties = Record<string, string | number | boolean>;
 
+const GOOGLE_ANALYTICS_EVENTS: Partial<Record<AnalyticsEvent, string>> = {
+  [ANALYTICS_EVENTS.ONBOARDING_COMPLETED]: "generate_lead",
+  [ANALYTICS_EVENTS.UPGRADE_CHECKOUT_STARTED]: "begin_checkout",
+  [ANALYTICS_EVENTS.SUBSCRIPTION_ACTIVATED]: "purchase",
+};
+
 declare global {
   interface Window {
+    dataLayer?: unknown[][];
     umami?: {
       track: (event: string, properties?: AnalyticsProperties) => void;
     };
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -35,4 +43,9 @@ export function trackAnalyticsEvent(
   if (typeof window === "undefined") return;
 
   window.umami?.track(event, properties);
+
+  const googleEvent = GOOGLE_ANALYTICS_EVENTS[event];
+  if (googleEvent) {
+    window.gtag?.("event", googleEvent, properties);
+  }
 }

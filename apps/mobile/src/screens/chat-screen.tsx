@@ -524,46 +524,72 @@ export default function ChatScreen() {
             </Text>
           ) : null}
 
-          <View className="flex-row items-end gap-2 rounded-[22px] border border-border bg-card p-1.5 pl-4">
-            <TextInput
-              accessibilityLabel="Ask about your bookmarks"
-              value={input}
-              onChangeText={setInput}
-              placeholder="Ask about your bookmarks…"
-              placeholderTextColor={colors.mutedForeground}
-              multiline
-              editable={!hasReachedLimit && !isLoadingConversation}
-              maxLength={4000}
-              className="max-h-28 min-h-[40px] flex-1 py-2 font-sans text-[15px] leading-5 text-foreground"
-              selectionColor={colors.primary}
-            />
+          <View className="flex-row items-end gap-2">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={
-                isGenerating ? "Stop response" : "Send message"
-              }
-              accessibilityState={{ disabled: !isGenerating && !canSubmit }}
-              disabled={!isGenerating && !canSubmit}
-              onPress={() => {
-                if (isGenerating) {
-                  hapticSelection();
-                  void stop();
-                } else {
-                  handleSubmit();
-                }
+              accessibilityLabel="Start a new conversation"
+              accessibilityState={{
+                disabled:
+                  isLoadingConversation ||
+                  (messages.length === 0 && !conversationId),
               }}
-              className="h-10 w-10 items-center justify-center rounded-2xl bg-primary active:opacity-80 disabled:opacity-40"
+              disabled={
+                isLoadingConversation ||
+                (messages.length === 0 && !conversationId)
+              }
+              onPress={() => {
+                hapticSelection();
+                handleNewConversation();
+              }}
+              className="h-12 w-9 items-center justify-center active:opacity-60 disabled:opacity-40"
             >
-              {status === "submitted" ? (
-                <LoadingSpinner size="small" color={colors.primaryForeground} />
-              ) : (
-                <Ionicons
-                  name={isGenerating ? "stop" : "arrow-up"}
-                  size={18}
-                  color={colors.primaryForeground}
-                />
-              )}
+              <Ionicons name="add" size={28} color={colors.mutedForeground} />
             </Pressable>
+
+            <View className="min-h-12 flex-1 flex-row items-end gap-2 rounded-full border border-border bg-card py-1.5 pl-4 pr-1.5">
+              <TextInput
+                accessibilityLabel="Ask about your bookmarks"
+                value={input}
+                onChangeText={setInput}
+                placeholder="Ask about your bookmarks…"
+                placeholderTextColor={colors.mutedForeground}
+                multiline
+                editable={!hasReachedLimit && !isLoadingConversation}
+                maxLength={4000}
+                className="max-h-28 min-h-[36px] flex-1 py-1.5 font-sans text-[15px] leading-5 text-foreground"
+                selectionColor={colors.primary}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isGenerating ? "Stop response" : "Send message"
+                }
+                accessibilityState={{ disabled: !isGenerating && !canSubmit }}
+                disabled={!isGenerating && !canSubmit}
+                onPress={() => {
+                  if (isGenerating) {
+                    hapticSelection();
+                    void stop();
+                  } else {
+                    handleSubmit();
+                  }
+                }}
+                className="h-9 w-9 items-center justify-center rounded-full bg-primary active:opacity-80 disabled:opacity-40"
+              >
+                {status === "submitted" ? (
+                  <LoadingSpinner
+                    size="small"
+                    color={colors.primaryForeground}
+                  />
+                ) : (
+                  <Ionicons
+                    name={isGenerating ? "stop" : "arrow-up"}
+                    size={17}
+                    color={colors.primaryForeground}
+                  />
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
 
