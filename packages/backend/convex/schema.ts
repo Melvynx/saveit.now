@@ -175,7 +175,13 @@ export default defineSchema({
   subscriptions: defineTable({
     userId: v.string(), // referenceId == userId
     plan: v.string(), // "free" | "pro"
-    provider: v.optional(v.union(v.literal("stripe"), v.literal("appstore"))),
+    provider: v.optional(
+      v.union(
+        v.literal("stripe"),
+        v.literal("appstore"),
+        v.literal("manual"),
+      ),
+    ),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     appstoreOriginalTransactionId: v.optional(v.string()),

@@ -3,7 +3,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
-import { deriveEffectivePlan } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  isLifetimeSubscription,
+} from "../billing/plans";
 import { throwValidationError } from "../utils/errors";
 import { startPlanSync } from "../integrations/workflows";
 
@@ -105,6 +108,14 @@ export const upsertFromApple = internalMutation({
       .first();
 
     const existing = existingByOriginalTransaction ?? existingByUser;
+
+    if (isLifetimeSubscription(existing)) {
+      return {
+        applied: false,
+        plan: "pro" as const,
+        status: "lifetime",
+      };
+    }
 
     if (hasActiveStripeSubscription(existing)) {
       console.info(

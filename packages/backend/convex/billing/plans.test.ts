@@ -33,6 +33,16 @@ describe("deriveEffectivePlan", () => {
     ).toBe("free");
   });
 
+  it("grants Pro for manual lifetime access", () => {
+    expect(
+      deriveEffectivePlan({
+        plan: "pro",
+        provider: "manual",
+        status: "lifetime",
+      }),
+    ).toBe("pro");
+  });
+
   it.each([
     { plan: "free", status: "active" },
     { plan: "pro", status: "canceled" },

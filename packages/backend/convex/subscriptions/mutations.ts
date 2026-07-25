@@ -7,7 +7,9 @@
  */
 
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { isLifetimeSubscription } from "../billing/plans";
 
 const planValidator = v.union(v.literal("free"), v.literal("pro"));
 
@@ -34,6 +36,10 @@ export const upsertFromWebhook = internalMutation({
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
+
+    if (isLifetimeSubscription(existing)) {
+      return null;
+    }
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -108,6 +114,10 @@ export const updateFromWebhook = internalMutation({
       return null;
     }
 
+    if (isLifetimeSubscription(existing)) {
+      return existing.userId;
+    }
+
     await ctx.db.patch(existing._id, {
       plan: args.plan,
       provider: "stripe",
@@ -122,5 +132,59 @@ export const updateFromWebhook = internalMutation({
     });
 
     return existing.userId;
+  },
+});
+
+/** Grant permanent Pro access without creating a billing-provider identity. */
+export const grantLifetimeProByEmail = internalMutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const user = await ctx.runQuery(components.betterAuth.data.getUserByEmail, {
+      email,
+    });
+
+    if (!user) {
+      throw new Error(`User not found: ${email}`);
+    }
+
+    const userId = user._id as string;
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    const lifetimeAccess = {
+      plan: "pro" as const,
+      provider: "manual" as const,
+      status: "lifetime",
+      periodStart: now,
+      periodEnd: undefined,
+      cancelAtPeriodEnd: false,
+      stripeCustomerId: undefined,
+      stripeSubscriptionId: undefined,
+      appstoreOriginalTransactionId: undefined,
+      appstoreProductId: undefined,
+      appstoreLastVerifiedAt: undefined,
+      updatedAt: now,
+    };
+
+    const subscriptionId = existing
+      ? (await ctx.db.patch(existing._id, lifetimeAccess), existing._id)
+      : await ctx.db.insert("subscriptions", {
+          userId,
+          ...lifetimeAccess,
+          createdAt: now,
+        });
+
+    return {
+      email,
+      userId,
+      subscriptionId,
+      plan: "pro" as const,
+      provider: "manual" as const,
+      status: "lifetime" as const,
+    };
   },
 });

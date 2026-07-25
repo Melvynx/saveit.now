@@ -20,7 +20,7 @@ type SubscriptionDTO = {
   id: string;
   userId: string;
   plan: "free" | "pro";
-  provider: "stripe" | "appstore" | null;
+  provider: "stripe" | "appstore" | "manual" | null;
   status: string | null;
   appstoreProductId: string | null;
   periodStart: number | null;
@@ -52,7 +52,7 @@ type UserLimits = {
   subscription: {
     id: string;
     status: string;
-    provider: "stripe" | "appstore" | null;
+    provider: "stripe" | "appstore" | "manual" | null;
     appstoreProductId: string | null;
     periodEnd: number | null;
   } | null;

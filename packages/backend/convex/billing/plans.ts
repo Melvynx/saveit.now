@@ -37,7 +37,7 @@ export const PLANS = {
 export type PlanName = keyof typeof PLANS;
 export type SubscriptionPlanState = {
   plan?: string | null;
-  provider?: "stripe" | "appstore" | null;
+  provider?: "stripe" | "appstore" | "manual" | null;
   status?: string | null;
 };
 // Plain numeric shape (NOT the `as const` literal union) so merged/custom
@@ -50,15 +50,26 @@ export type PlanLimits = {
   apiAccess: number;
 };
 
-// isActiveSubscriptionStatus — returns true if status is "active" or "trialing" (= pro).
+// Recognizes billing-provider access plus explicit manual lifetime grants.
 export function isActiveSubscriptionStatus(
   status: string | null | undefined,
-  provider?: "stripe" | "appstore" | null,
+  provider?: "stripe" | "appstore" | "manual" | null,
 ): boolean {
   return (
     status === "active" ||
     status === "trialing" ||
-    (provider === "appstore" && status === "past_due")
+    (provider === "appstore" && status === "past_due") ||
+    (provider === "manual" && status === "lifetime")
+  );
+}
+
+export function isLifetimeSubscription(
+  subscription: SubscriptionPlanState | null | undefined,
+): boolean {
+  return (
+    subscription?.plan === "pro" &&
+    subscription.provider === "manual" &&
+    subscription.status === "lifetime"
   );
 }
 
