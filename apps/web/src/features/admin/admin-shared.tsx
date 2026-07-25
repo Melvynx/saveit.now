@@ -337,7 +337,9 @@ const AVATAR_TONES = [
 ];
 
 const initialsOf = (name?: string | null, email?: string | null) => {
-  const source = (name ?? email ?? "?").trim();
+  // `||`, not `??`: most accounts carry `name: ""` rather than null, and `??`
+  // let the empty string through — which rendered "?" on every single row.
+  const source = (name || email || "?").trim();
   const parts = source.split(/[\s@._-]+/u).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
@@ -374,7 +376,7 @@ export function AdminAvatar({
         size === "sm" && "size-7 text-[10px]",
         size === "md" && "size-9 text-xs",
         size === "lg" && "size-14 text-lg",
-        toneOf(seed ?? email ?? name ?? "?"),
+        toneOf(seed || email || name || "?"),
         className,
       )}
     >
@@ -484,37 +486,6 @@ export function AdminSearchInput({
         </div>
       ) : null}
     </div>
-  );
-}
-
-export function AdminNativeSelect({
-  label,
-  value,
-  onValueChange,
-  options,
-  className,
-}: {
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  className?: string;
-}) {
-  return (
-    <label className={cn("flex min-w-32 flex-col gap-1", className)}>
-      <span className="text-muted-foreground text-xs font-medium">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onValueChange(event.target.value)}
-        className="border-input bg-background focus:border-ring focus:ring-ring/50 h-9 cursor-pointer rounded-lg border px-2.5 text-sm outline-none transition-colors focus:ring-3"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
