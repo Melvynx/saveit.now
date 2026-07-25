@@ -1,4 +1,5 @@
 import { AlertExtensions } from "@/features/extensions/alert-extensions";
+import { BookmarkLimitUpgradeCard } from "@/features/upgrade/bookmark-limit-upgrade-card";
 import type { BookmarkCardData } from "./bookmark-card/bookmark.types";
 import { useSession } from "@/lib/auth-client";
 import { logger } from "@/lib/logger";
@@ -18,7 +19,6 @@ import {
   BookmarkCard,
   BookmarkCardInput,
   BookmarkCardLoadMore,
-  BookmarkCardPricing,
 } from "./bookmark-card";
 import { AddBookmarkCard } from "./add-bookmark-card";
 import { BookmarkHeader } from "./bookmark-header";
@@ -48,6 +48,7 @@ export function BookmarksPage() {
     types,
     tags,
     special,
+    bookmarkCount,
   } = useBookmarks({ enabled: Boolean(session.data?.user) });
   const searchInputRef = useRef<SearchInputRef>(null);
   const hasActiveFilters =
@@ -101,6 +102,7 @@ export function BookmarksPage() {
 
       <BookmarkHeader />
       <SearchInput ref={searchInputRef} />
+      <BookmarkLimitUpgradeCard bookmarkCount={bookmarkCount} />
       <div
         className="grid gap-4 lg:gap-6 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] [&>*]:w-full place-items-start"
         style={
@@ -149,7 +151,6 @@ export function BookmarksPage() {
                 },
               )
             )}
-            {!query && bookmarks.length > 10 && <BookmarkCardPricing />}
             {query && <MoreResultsButton />}
             {bookmarks.length > 10 && (
               <BookmarkCardLoadMore

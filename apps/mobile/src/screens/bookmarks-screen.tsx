@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BookmarkItem } from "../components/bookmark-item";
+import { BookmarkLimitListHeader } from "../components/bookmark-limit-card";
 import { TagSuggestions } from "../components/tag-suggestions";
 import { TypeFilterBadges } from "../components/type-filter-badges";
 import { LoadingSpinner } from "../components/ui/loading";
@@ -224,6 +225,9 @@ export default function BookmarksScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <BookmarkLimitListHeader isAuthenticated={isAuthenticated} />
+          }
           refreshControl={
             <RefreshControl
               refreshing={false}

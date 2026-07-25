@@ -10,10 +10,10 @@ import { api } from "@convex/_generated/api";
 import { BlurHeaderScreen } from "../../src/components/ui/blur-header-screen";
 import { Text } from "../../src/components/ui/text";
 import { useAuth } from "../../src/contexts/AuthContext";
-import { authClient } from "../../src/lib/auth-client";
-import { mobileConfig } from "../../src/lib/config";
+import { useOpenUpgrade } from "../../src/hooks/use-open-upgrade";
 import { hapticSelection } from "../../src/lib/haptics";
 import { useAppTheme, useThemeColors } from "../../src/lib/theme";
+import { getWebUrl } from "../../src/lib/web-url";
 
 type SettingsRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -36,12 +36,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     </View>
   );
 }
-
-const getWebUrl = (path: string) => {
-  const baseUrl = mobileConfig.apiUrl.replace(/\/+$/, "");
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${baseUrl}${normalizedPath}`;
-};
 
 function SettingsRow({
   icon,
@@ -121,40 +115,13 @@ export default function TabTwoScreen() {
   const { currentTheme, toggleTheme } = useAppTheme();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const openUpgrade = useOpenUpgrade();
   const userPlan = useQuery(api.subscriptions.queries.getUserPlan);
   const isPro = userPlan?.plan === "pro";
   const isAppStorePro =
     Platform.OS === "ios" &&
     isPro &&
     userPlan.subscription?.provider === "appstore";
-
-  const openUpgrade = async () => {
-    hapticSelection();
-
-    if (Platform.OS === "ios") {
-      router.push("/paywall");
-      return;
-    }
-
-    const upgradeUrl = getWebUrl("/upgrade");
-
-    try {
-      const result = await authClient.oneTimeToken.generate();
-      const token = result.data?.token;
-
-      if (token) {
-        const loginUrl = new URL("/auth/mobile-login", mobileConfig.apiUrl);
-        loginUrl.searchParams.set("token", token);
-        loginUrl.searchParams.set("redirect", "/upgrade");
-        await WebBrowser.openBrowserAsync(loginUrl.toString());
-        return;
-      }
-    } catch {
-      // Fall back to the plain web upgrade page if token generation fails.
-    }
-
-    await WebBrowser.openBrowserAsync(upgradeUrl);
-  };
 
   const openAppleSubscriptionManagement = async () => {
     hapticSelection();
