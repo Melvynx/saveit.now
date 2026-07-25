@@ -373,21 +373,23 @@ export function ChatMessage({
         markerColor: colors.primary,
         gapWidth: 8,
       },
+      // Code/quote surfaces use `card`, not `secondary`: the assistant bubble
+      // is already `secondary` and they would otherwise disappear into it.
       blockquote: {
         color: colors.mutedForeground,
         borderColor: colors.primary,
         borderWidth: 3,
         gapWidth: 10,
-        backgroundColor: colors.secondary,
+        backgroundColor: colors.card,
       },
       code: {
         color: colors.foreground,
-        backgroundColor: colors.secondary,
+        backgroundColor: colors.card,
         borderColor: colors.border,
       },
       codeBlock: {
         color: colors.foreground,
-        backgroundColor: colors.secondary,
+        backgroundColor: colors.card,
         borderColor: colors.border,
         borderRadius: 12,
         borderWidth: 1,
@@ -396,10 +398,10 @@ export function ChatMessage({
     }),
     [
       colors.border,
+      colors.card,
       colors.foreground,
       colors.mutedForeground,
       colors.primary,
-      colors.secondary,
     ],
   );
 
@@ -423,15 +425,21 @@ export function ChatMessage({
                 {part.text}
               </Text>
             ) : (
-              <EnrichedMarkdownText
+              // Incoming bubble. No bottom padding: the markdown's trailing
+              // block margin already provides it.
+              <View
                 key={`${message.id}-text-${index}`}
-                markdown={safeMarkdown}
-                markdownStyle={markdownStyle}
-                enableLinkPreview={false}
-                onLinkPress={({ url }) => void openSafeExternalUrl(url)}
-                selectable
-                streamingAnimation={isLast && isStreaming}
-              />
+                className="max-w-[92%] self-start rounded-2xl rounded-bl-md bg-secondary px-4 pb-0.5 pt-2.5"
+              >
+                <EnrichedMarkdownText
+                  markdown={safeMarkdown}
+                  markdownStyle={markdownStyle}
+                  enableLinkPreview={false}
+                  onLinkPress={({ url }) => void openSafeExternalUrl(url)}
+                  selectable
+                  streamingAnimation={isLast && isStreaming}
+                />
+              </View>
             );
           }
 

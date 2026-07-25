@@ -15,8 +15,6 @@ import {
   TextInput,
   View,
   type KeyboardEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -100,11 +98,9 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const convex = useConvex();
-  const listRef = useRef<FlatList<UIMessage>>(null);
   const conversationIdRef = useRef<string | null>(null);
   const conversationCreationPromiseRef = useRef<Promise<string> | null>(null);
   const conversationVersionRef = useRef(0);
-  const shouldAutoScrollRef = useRef(true);
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -189,14 +185,13 @@ export default function ChatScreen() {
     id: chatInstanceId,
     messages: seedMessages,
     transport,
-    onFinish: () => {
-      if (shouldAutoScrollRef.current) {
-        requestAnimationFrame(() =>
-          listRef.current?.scrollToEnd({ animated: true }),
-        );
-      }
-    },
   });
+
+  // The list is inverted, so index 0 is the newest message and sits at the
+  // bottom of the screen. That keeps the end of the conversation pinned above
+  // the composer while the keyboard opens or a response streams in, without
+  // any imperative scrolling.
+  const invertedMessages = useMemo(() => [...messages].reverse(), [messages]);
 
   const isGenerating = status === "submitted" || status === "streaming";
   const hasReachedLimit = usage?.remaining === 0;
@@ -214,23 +209,6 @@ export default function ChatScreen() {
     clearError();
   }, [clearError]);
 
-  const scrollToBottom = useCallback((animated: boolean) => {
-    if (shouldAutoScrollRef.current) {
-      listRef.current?.scrollToEnd({ animated });
-    }
-  }, []);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } =
-        event.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - layoutMeasurement.height - contentOffset.y;
-      shouldAutoScrollRef.current = distanceFromBottom < 120;
-    },
-    [],
-  );
-
   const handleSubmit = useCallback(
     (text = input) => {
       const messageText = text.trim();
@@ -246,7 +224,6 @@ export default function ChatScreen() {
       hapticLight();
       clearAllErrors();
       setInput("");
-      shouldAutoScrollRef.current = true;
       void sendMessage({ text: messageText }).catch(() => undefined);
     },
     [
@@ -272,7 +249,6 @@ export default function ChatScreen() {
     clearAllErrors();
     setIsLoadingConversation(false);
     setHistoryVisible(false);
-    shouldAutoScrollRef.current = true;
   }, [clearAllErrors, isGenerating, stop]);
 
   const handleSelectConversation = useCallback(
@@ -300,10 +276,6 @@ export default function ChatScreen() {
         setConversationId(conversation._id);
         setSeedMessages(conversation.messages as UIMessage[]);
         setChatInstanceId(`mobile-chat-${operationVersion}`);
-        shouldAutoScrollRef.current = true;
-        requestAnimationFrame(() =>
-          listRef.current?.scrollToEnd({ animated: false }),
-        );
       } catch (loadError) {
         if (conversationVersionRef.current !== operationVersion) return;
         console.error("[MobileChat] Failed to load conversation", loadError);
@@ -332,12 +304,12 @@ export default function ChatScreen() {
     ({ item, index }: { item: UIMessage; index: number }) => (
       <ChatMessage
         message={item}
-        isLast={index === messages.length - 1}
+        isLast={index === 0}
         isStreaming={isGenerating}
         onBookmarkPress={(bookmarkId) => router.push(`/bookmark/${bookmarkId}`)}
       />
     ),
-    [isGenerating, messages.length, router],
+    [isGenerating, router],
   );
 
   const emptyState = (
@@ -457,22 +429,27 @@ export default function ChatScreen() {
           </View>
         ) : (
           <FlatList
-            ref={listRef}
-            data={messages}
+            // `inverted` only when there is something to invert: the empty
+            // state is a normal top-down layout and would be flipped upside
+            // down otherwise.
+            inverted={messages.length > 0}
+            data={invertedMessages}
             keyExtractor={(message) => message.id}
             renderItem={renderMessage}
-            contentInsetAdjustmentBehavior="automatic"
+            contentInsetAdjustmentBehavior="never"
             contentContainerStyle={{
               paddingHorizontal: 16,
-              paddingVertical: messages.length > 0 ? 18 : 0,
-              gap: 18,
+              paddingVertical: messages.length > 0 ? 14 : 0,
+              gap: 10,
               flexGrow: messages.length === 0 ? 1 : undefined,
             }}
             scrollEnabled={messages.length > 0}
             alwaysBounceVertical={messages.length > 0}
-            ListHeaderComponent={
+            // Footer, not header: inverted flips the list, so this renders at
+            // the very top of the conversation.
+            ListFooterComponent={
               messages.length > 0 && usage ? (
-                <View className="items-start pb-1">
+                <View className="items-start pt-1">
                   <Text
                     variant="caption"
                     className={
@@ -488,15 +465,11 @@ export default function ChatScreen() {
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
-            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-            onScroll={handleScroll}
-            onContentSizeChange={() => scrollToBottom(false)}
-            scrollEventThrottle={16}
           />
         )}
 
         <View
-          className="border-t border-border bg-background px-3 pt-2"
+          className="bg-background px-3 pt-1.5"
           style={{ paddingBottom: composerBottomInset }}
         >
           {errorMessage ? (
@@ -525,28 +498,41 @@ export default function ChatScreen() {
           ) : null}
 
           <View className="flex-row items-end gap-2">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Start a new conversation"
-              accessibilityState={{
-                disabled:
+            {/*
+              Mirrors the pill's box exactly — same transparent 1pt border and
+              same py-1 — so the `+` circle lands on the same baseline as the
+              send circle at the other end, at every input height.
+            */}
+            <View className="border border-transparent py-1">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Start a new conversation"
+                accessibilityState={{
+                  disabled:
+                    isLoadingConversation ||
+                    (messages.length === 0 && !conversationId),
+                }}
+                disabled={
                   isLoadingConversation ||
-                  (messages.length === 0 && !conversationId),
-              }}
-              disabled={
-                isLoadingConversation ||
-                (messages.length === 0 && !conversationId)
-              }
-              onPress={() => {
-                hapticSelection();
-                handleNewConversation();
-              }}
-              className="h-12 w-9 items-center justify-center active:opacity-60 disabled:opacity-40"
-            >
-              <Ionicons name="add" size={28} color={colors.mutedForeground} />
-            </Pressable>
+                  (messages.length === 0 && !conversationId)
+                }
+                onPress={() => {
+                  hapticSelection();
+                  handleNewConversation();
+                }}
+                className="h-8 w-8 items-center justify-center rounded-full bg-secondary active:opacity-60 disabled:opacity-40"
+              >
+                <Ionicons name="add" size={20} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
 
-            <View className="min-h-12 flex-1 flex-row items-end gap-2 rounded-full border border-border bg-card py-1.5 pl-4 pr-1.5">
+            {/*
+              Fixed 21pt radius, not `rounded-full`: at the collapsed 42pt
+              height it still reads as a perfect pill, but once the input
+              wraps, `rounded-full` clamps to half the taller box and the
+              corners balloon into a lopsided stadium.
+            */}
+            <View className="flex-1 flex-row items-end gap-2 rounded-[21px] border border-border bg-card py-1 pl-4 pr-1">
               <TextInput
                 accessibilityLabel="Ask about your bookmarks"
                 value={input}
@@ -556,7 +542,7 @@ export default function ChatScreen() {
                 multiline
                 editable={!hasReachedLimit && !isLoadingConversation}
                 maxLength={4000}
-                className="max-h-28 min-h-[36px] flex-1 py-1.5 font-sans text-[15px] leading-5 text-foreground"
+                className="max-h-28 min-h-8 flex-1 py-1.5 font-sans text-[15px] leading-5 text-foreground"
                 selectionColor={colors.primary}
               />
               <Pressable
@@ -574,7 +560,7 @@ export default function ChatScreen() {
                     handleSubmit();
                   }
                 }}
-                className="h-9 w-9 items-center justify-center rounded-full bg-primary active:opacity-80 disabled:opacity-40"
+                className="h-8 w-8 items-center justify-center rounded-full bg-primary active:opacity-80 disabled:opacity-40"
               >
                 {status === "submitted" ? (
                   <LoadingSpinner
