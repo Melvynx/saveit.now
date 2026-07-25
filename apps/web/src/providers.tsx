@@ -7,10 +7,11 @@ import { api } from "@convex/_generated/api";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ClientOnly } from "@tanstack/react-router";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
-import { ConvexReactClient } from "convex/react";
+import { ConvexReactClient, useConvex, useConvexAuth } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
-import { TchaoProvider } from "tchao/react";
-import { useEffect } from "react";
+import { useTchao } from "tchao/react";
+import type { VisitorInfo } from "tchao/react";
+import { useEffect, useState } from "react";
 
 const convexClient = new ConvexReactClient(getConvexUrl());
 
@@ -81,16 +82,78 @@ export const ChatSnippet = () => {
   const user = session.data?.user;
   const impersonatedBy = session.data?.session.impersonatedBy;
 
-  return (
-    <TchaoProvider
-      websiteId="kd7ctwnpfvvrjxegjtmz7t3q018061ad"
-      visitorEmail={user?.email ?? undefined}
-      visitorName={user?.name ?? "Anonymous"}
-      visitorAvatar={user?.image ?? undefined}
-      visitorId={user?.id}
-      visitorRole={(user as { role?: string } | undefined)?.role ?? "user"}
-      visitorMetadata={impersonatedBy ? { impersonatedBy } : undefined}
-      impersonate={Boolean(impersonatedBy)}
-    />
-  );
+  const convex = useConvex();
+  const { isAuthenticated } = useConvexAuth();
+  const [userHash, setUserHash] = useState<string | null>();
+
+  const { isReady, identify } = useTchao({
+    websiteId: "kd7ctwnpfvvrjxegjtmz7t3q018061ad",
+    impersonate: Boolean(impersonatedBy),
+  });
+
+  // Signed identity for Tchao identity verification. One-shot fetch (the
+  // hash is stable per email); on failure we fall back to unsigned identify.
+  // https://tchao.app/docs/identity-verification
+  useEffect(() => {
+    setUserHash(undefined);
+    if (!user?.email || !isAuthenticated || impersonatedBy) return;
+
+    let cancelled = false;
+    convex
+      .query(api.tchao.getUserHash, {})
+      .then((hash) => {
+        if (!cancelled) setUserHash(hash);
+      })
+      .catch(() => {
+        if (!cancelled) setUserHash(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [convex, user?.email, isAuthenticated, impersonatedBy]);
+
+  const userRole = (user as { role?: string } | undefined)?.role ?? "user";
+  const userEmail = user?.email;
+  const userName = user?.name;
+  const userImage = user?.image;
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (!isReady || impersonatedBy) return;
+
+    if (!userEmail) {
+      identify({ name: "Anonymous", metadata: { role: "user" } });
+      return;
+    }
+
+    // Wait for the signed hash before identifying a logged-in user. A null
+    // hash means signing is unavailable: identify unsigned (legacy mode).
+    if (userHash === undefined) return;
+
+    const info: SignedVisitorInfo = {
+      email: userEmail,
+      name: userName ?? "Anonymous",
+      avatar: userImage ?? undefined,
+      userHash: userHash ?? undefined,
+      metadata: {
+        userId: userId,
+        role: userRole,
+      },
+    };
+    identify(info);
+  }, [
+    isReady,
+    identify,
+    userEmail,
+    userName,
+    userImage,
+    userId,
+    userRole,
+    userHash,
+    impersonatedBy,
+  ]);
+
+  return null;
 };
+
+type SignedVisitorInfo = VisitorInfo & { userHash?: string };

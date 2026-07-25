@@ -91,6 +91,7 @@ import type * as subscriptions_queries from "../subscriptions/queries.js";
 import type * as tags_actions from "../tags/actions.js";
 import type * as tags_mutations from "../tags/mutations.js";
 import type * as tags_queries from "../tags/queries.js";
+import type * as tchao from "../tchao.js";
 import type * as tools_actions from "../tools/actions.js";
 import type * as tools_node_fetch from "../tools/node_fetch.js";
 import type * as users_actions from "../users/actions.js";
@@ -192,6 +193,7 @@ declare const fullApi: ApiFromModules<{
   "tags/actions": typeof tags_actions;
   "tags/mutations": typeof tags_mutations;
   "tags/queries": typeof tags_queries;
+  tchao: typeof tchao;
   "tools/actions": typeof tools_actions;
   "tools/node_fetch": typeof tools_node_fetch;
   "users/actions": typeof users_actions;
