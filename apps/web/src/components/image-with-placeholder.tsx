@@ -13,23 +13,34 @@ function useIsClient() {
   return isClient;
 }
 
-interface ImageWithPlaceholderProps
-  extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "onError"> {
+interface ImageWithPlaceholderProps extends Omit<
+  React.ImgHTMLAttributes<HTMLImageElement>,
+  "onError"
+> {
   className?: string;
   fallbackImage?: string | null;
   onError?: (error: Error) => void;
 }
 
 export const ImageWithPlaceholder = ({
+  alt = "",
   className,
   fallbackImage,
   onError,
   width,
   ...props
 }: ImageWithPlaceholderProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const requestedSrc = (props.src as string | undefined) || fallbackImage || "";
+  const [activeSrc, setActiveSrc] = useState(requestedSrc);
+  const [isLoading, setIsLoading] = useState(Boolean(requestedSrc));
+  const [hasError, setHasError] = useState(false);
   const isClient = useIsClient();
+
+  useEffect(() => {
+    setActiveSrc(requestedSrc);
+    setIsLoading(Boolean(requestedSrc));
+    setHasError(false);
+  }, [requestedSrc]);
 
   if (!isClient) {
     return (
@@ -43,21 +54,21 @@ export const ImageWithPlaceholder = ({
     );
   }
 
-  if (!props.src) {
-    props.src = fallbackImage ?? "";
-  }
-
   const handleError = () => {
+    if (fallbackImage && activeSrc !== fallbackImage) {
+      setActiveSrc(fallbackImage);
+      setIsLoading(true);
+      return;
+    }
+
     setIsLoading(false);
-    setError(true);
+    setHasError(true);
     if (onError) {
       onError(new Error("Failed to load image"));
     }
   };
 
-  const src = error && fallbackImage ? fallbackImage : (props.src as string | undefined);
-
-  if (!src) {
+  if (!activeSrc || hasError) {
     return (
       <div
         style={{
@@ -79,13 +90,14 @@ export const ImageWithPlaceholder = ({
         {...props}
         width={width ? Number(width) : 380}
         height={(width ? Number(width) : 380) * 0.5625}
-        alt="image"
-        src={src}
+        alt={alt}
+        src={activeSrc}
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
           "transition-opacity duration-200",
           className,
         )}
+        onError={handleError}
       />
     );
   }
@@ -100,8 +112,8 @@ export const ImageWithPlaceholder = ({
         {...props}
         width={width ? Number(width) : 380}
         height={(width ? Number(width) : 380) * 0.5625}
-        alt="image"
-        src={src}
+        alt={alt}
+        src={activeSrc}
         className={cn(
           isLoading ? "opacity-0" : "opacity-100",
           "transition-opacity duration-200 relative z-10",
