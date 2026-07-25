@@ -1,153 +1,67 @@
 "use client";
 
-import { AdminStatusBadge } from "@/features/admin/admin-shared";
+import {
+  AdminAvatar,
+  AdminRelativeTime,
+  AdminStatusBadge,
+} from "@/features/admin/admin-shared";
 import type { AdminUserListItem } from "@/features/admin/types";
-import { authClient } from "@/lib/auth-client";
-import { unwrapSafePromise } from "@/lib/promises";
-import { useAsyncTask } from "@/lib/use-async-task";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  AdminUserActionsMenu,
+  AdminUserConfirmDialog,
+  useAdminUserActions,
+} from "@/features/admin/user-actions";
+import { Link } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
 import { TableCell, TableRow } from "@workspace/ui/components/table";
-import {
-  Ban,
-  Crown,
-  Eye,
-  MoreHorizontal,
-  UserCheck,
-  UserCog,
-} from "lucide-react";
-import { toast } from "sonner";
+import { cn } from "@workspace/ui/lib/utils";
+import { Bookmark, ChevronRight, MousePointerClick, Sliders } from "lucide-react";
 
 type UserRowProps = {
   user: AdminUserListItem;
 };
 
 export const UserRow = ({ user }: UserRowProps) => {
-  const router = useRouter();
-  const navigate = useNavigate();
-
-  const refreshAdminData = () => {
-    void router.invalidate();
-  };
-
-  const banUserTask = useAsyncTask(
-    async ({
-      userId,
-      reason,
-    }: {
-      userId: string;
-      reason?: string;
-    }) => {
-      return unwrapSafePromise(
-        authClient.admin.banUser({
-          userId,
-          banReason: reason || "Banned by admin",
-        }),
-      );
-    },
-    {
-      onSuccess: () => {
-        toast.success("User banned successfully");
-        refreshAdminData();
-      },
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Failed to ban user: ${error.message}`);
-        }
-      },
-    },
-  );
-
-  const unbanUserTask = useAsyncTask(
-    async (userId: string) => {
-      return unwrapSafePromise(authClient.admin.unbanUser({ userId }));
-    },
-    {
-      onSuccess: () => {
-        toast.success("User unbanned successfully");
-        refreshAdminData();
-      },
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Failed to unban user: ${error.message}`);
-        }
-      },
-    },
-  );
-
-  const impersonateTask = useAsyncTask(
-    async (userId: string) => {
-      return unwrapSafePromise(authClient.admin.impersonateUser({ userId }));
-    },
-    {
-      onSuccess: () => {
-        toast.success("Impersonation started");
-        void router.invalidate();
-        void navigate({ to: "/app" });
-      },
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Failed to impersonate user: ${error.message}`);
-        }
-      },
-    },
-  );
-
-  const setRoleTask = useAsyncTask(
-    async ({
-      userId,
-      role,
-    }: {
-      userId: string;
-      role: "admin" | "user";
-    }) => {
-      return unwrapSafePromise(authClient.admin.setRole({ userId, role }));
-    },
-    {
-      onSuccess: () => {
-        toast.success("User role updated successfully");
-        refreshAdminData();
-      },
-      onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(`Failed to update user role: ${error.message}`);
-        }
-      },
-    },
-  );
-
-  const isPremium = user.subscriptions.some((subscription) =>
-    ["active", "trialing"].includes(subscription.status ?? ""),
-  );
+  const actions = useAdminUserActions(user);
   const primarySubscription = user.subscriptions[0];
+  const isPremium = user.subscriptions.length > 0;
 
   return (
-    <TableRow key={user.id}>
+    <TableRow className="group hover:bg-muted/50 relative transition-colors">
       <TableCell>
-        <a href={`/admin/users/${user.id}`} className="block min-w-0">
-          <div className="font-medium">{user.name || user.email}</div>
-          <div className="text-muted-foreground text-sm">{user.email}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-1">
-            {!user.emailVerified && (
-              <Badge variant="outline" className="text-xs">
-                Unverified
-              </Badge>
-            )}
-            {isPremium && (
-              <Badge variant="default" className="text-xs">
-                Premium
-              </Badge>
-            )}
+        <div className="flex min-w-0 items-center gap-3">
+          <AdminAvatar name={user.name} email={user.email} seed={user.id} />
+          <div className="min-w-0">
+            {/* The whole row is a link target: ::after stretches over the row so
+                every cell is clickable, while the action menu stays on top. */}
+            <Link
+              to="/admin/users/$userId"
+              params={{ userId: user.id }}
+              preload="intent"
+              className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+            >
+              <span className="block truncate font-medium group-hover:underline">
+                {user.name || user.email || user.id}
+              </span>
+            </Link>
+            <span className="text-muted-foreground block truncate text-sm">
+              {user.email}
+            </span>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              {!user.emailVerified ? (
+                <Badge variant="outline" className="text-xs">
+                  Unverified
+                </Badge>
+              ) : null}
+              {user.hasCustomLimits ? (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Sliders className="size-3" />
+                  Custom limits
+                </Badge>
+              ) : null}
+            </div>
           </div>
-        </a>
+        </div>
       </TableCell>
       <TableCell>
         <Badge variant={user.role === "admin" ? "default" : "outline"}>
@@ -166,86 +80,50 @@ export const UserRow = ({ user }: UserRowProps) => {
       </TableCell>
       <TableCell>
         <div className="space-y-1">
-          <div className="text-sm font-medium">
-            {isPremium ? primarySubscription?.plan || "Premium" : "Regular"}
+          <div
+            className={cn(
+              "text-sm font-medium",
+              isPremium ? "text-primary" : "text-muted-foreground",
+            )}
+          >
+            {isPremium ? "Pro" : "Free"}
           </div>
           <div className="text-muted-foreground text-xs">
-            {primarySubscription?.status ?? "No subscription"}
+            {primarySubscription
+              ? [primarySubscription.provider, primarySubscription.status]
+                  .filter(Boolean)
+                  .join(" · ")
+              : "No subscription"}
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <div className="text-sm">
-          <span className="font-medium">{user._count.bookmarks}</span> bookmarks
+        <div className="flex items-center gap-1.5 text-sm tabular-nums">
+          <Bookmark className="text-muted-foreground size-3.5" />
+          <span className="font-medium">
+            {user._count.bookmarks.toLocaleString()}
+          </span>
         </div>
-        <div className="text-muted-foreground text-xs">
-          {user._count.bookmarkOpens} clicks
+        <div className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums">
+          <MousePointerClick className="size-3" />
+          {user._count.bookmarkOpens.toLocaleString()} recent clicks
         </div>
       </TableCell>
-      <TableCell>
-        <div className="text-muted-foreground text-sm">
-          {new Date(user.createdAt).toLocaleDateString()}
-        </div>
+      {/* Above the row-wide ::after overlay, otherwise the overlay eats the
+          pointer-enter and the tooltip holding the absolute timestamp — the
+          only way to read an exact date in this table — never opens. */}
+      <TableCell className="relative z-10">
+        <AdminRelativeTime
+          timestamp={user.createdAt}
+          className="text-muted-foreground text-sm"
+        />
       </TableCell>
       <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={`Open actions for ${user.email}`}
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-48">
-            <DropdownMenuItem asChild>
-              <a href={`/admin/users/${user.id}`}>
-                <Eye className="size-4" />
-                View details
-              </a>
-            </DropdownMenuItem>
-            {!user.banned ? (
-              <DropdownMenuItem
-                onClick={() => void impersonateTask.run(user.id)}
-              >
-                <UserCog className="size-4" />
-                Impersonate
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuSeparator />
-            {user.banned ? (
-              <DropdownMenuItem
-                onClick={() => void unbanUserTask.run(user.id)}
-              >
-                <UserCheck className="size-4" />
-                Unban
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => void banUserTask.run({ userId: user.id })}
-              >
-                <Ban className="size-4" />
-                Ban
-              </DropdownMenuItem>
-            )}
-            {user.role !== "admin" ? (
-              <DropdownMenuItem
-                onClick={() =>
-                  void setRoleTask.run({
-                    userId: user.id,
-                    role: "admin",
-                  })
-                }
-              >
-                <Crown className="size-4" />
-                Make admin
-              </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="relative z-10 flex items-center justify-end gap-1">
+          <AdminUserActionsMenu user={user} actions={actions} />
+          <ChevronRight className="text-muted-foreground/50 size-4 shrink-0" />
+        </div>
+        <AdminUserConfirmDialog user={user} actions={actions} />
       </TableCell>
     </TableRow>
   );

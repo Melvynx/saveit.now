@@ -118,9 +118,22 @@ export const CustomLimitsForm = ({
                 placeholder={String(baseLimits[field.key])}
                 defaultValue={hasCustomValue ? customValue : ""}
               />
+              {/* Lead with whether this field is overridden at all — that is the
+                  question an admin opens this form to answer. Restating
+                  "Effective: X - Base: X" on every untouched field buried the
+                  one row that actually differs. */}
               <p className="text-muted-foreground text-xs">
-                Effective: {effectiveLimits[field.key]} - Base:{" "}
-                {baseLimits[field.key]}
+                {hasCustomValue ? (
+                  <>
+                    <span className="text-primary font-medium">
+                      Overridden to{" "}
+                      {effectiveLimits[field.key].toLocaleString()}
+                    </span>{" "}
+                    · plan default {baseLimits[field.key].toLocaleString()}
+                  </>
+                ) : (
+                  <>Plan default: {baseLimits[field.key].toLocaleString()}</>
+                )}
               </p>
               <p className="text-muted-foreground text-xs">
                 {field.description}

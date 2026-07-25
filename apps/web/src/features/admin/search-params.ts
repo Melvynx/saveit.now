@@ -1,3 +1,4 @@
+import type { SearchSchemaInput } from "@tanstack/react-router";
 import { z } from "zod";
 
 const sortOptions = ["createdAt", "name", "bookmarks", "clicks"] as const;
@@ -5,6 +6,8 @@ const orderOptions = ["asc", "desc"] as const;
 const filterOptions = ["all", "premium", "regular"] as const;
 const statusOptions = ["all", "active", "banned"] as const;
 const roleOptions = ["all", "admin", "user"] as const;
+
+export const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 export type SortBy = (typeof sortOptions)[number];
 export type Order = (typeof orderOptions)[number];
@@ -14,6 +17,7 @@ export type UserRoleFilter = (typeof roleOptions)[number];
 
 export type AdminSearchParams = {
   page: number;
+  pageSize: number;
   search: string;
   sortBy: SortBy;
   order: Order;
@@ -24,6 +28,13 @@ export type AdminSearchParams = {
 
 const searchParamsSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .refine((value) =>
+      (PAGE_SIZE_OPTIONS as readonly number[]).includes(value),
+    )
+    .catch(25),
   search: z.string().catch(""),
   sortBy: z.enum(sortOptions).catch("createdAt"),
   order: z.enum(orderOptions).catch("desc"),
@@ -32,25 +43,42 @@ const searchParamsSchema = z.object({
   role: z.enum(roleOptions).catch("all"),
 });
 
+/**
+ * Declared as a plain function (not a bare zod schema) on purpose. The
+ * `& SearchSchemaInput` marker tells the router that the *input* schema is
+ * different from the *output* one, so `<Link to="/admin/users">` accepts a
+ * partial search object — or none at all — while the route component still
+ * reads a fully-defaulted `AdminSearchParams`.
+ *
+ * The declared input lies slightly (the URL hands us strings, not numbers);
+ * that is by design and why every field is coerced + `.catch()`-ed below.
+ */
 export const parseAdminSearchParams = (
-  search: Partial<Record<string, unknown>>,
+  search: Partial<AdminSearchParams> & SearchSchemaInput,
 ): AdminSearchParams => searchParamsSchema.parse(search);
 
-export const getAdminSearchHref = (
-  next: Partial<AdminSearchParams>,
+/** Parsed off the schema itself — `parseAdminSearchParams` no longer takes a
+ * bare `{}` now that its parameter carries the router's input marker. */
+export const ADMIN_SEARCH_DEFAULTS: AdminSearchParams =
+  searchParamsSchema.parse({});
+
+/**
+ * Strips defaults so the URL only carries what the admin actually changed.
+ * Used as the `search` updater for every filter `<Link>` / `navigate` call.
+ */
+export const nextAdminSearch = (
   current: AdminSearchParams,
-) => {
-  const params = new URLSearchParams();
-  const values = { ...current, ...next };
+  next: Partial<AdminSearchParams>,
+): Partial<AdminSearchParams> => {
+  const merged = { ...current, ...next };
+  const result: Partial<AdminSearchParams> = {};
 
-  if (values.page > 1) params.set("page", String(values.page));
-  if (values.search) params.set("search", values.search);
-  if (values.sortBy !== "createdAt") params.set("sortBy", values.sortBy);
-  if (values.order !== "desc") params.set("order", values.order);
-  if (values.filter !== "all") params.set("filter", values.filter);
-  if (values.status !== "all") params.set("status", values.status);
-  if (values.role !== "all") params.set("role", values.role);
+  for (const key of Object.keys(merged) as (keyof AdminSearchParams)[]) {
+    if (merged[key] !== ADMIN_SEARCH_DEFAULTS[key]) {
+      // Assigning through a union-keyed record needs the widened value type.
+      (result as Record<string, unknown>)[key] = merged[key];
+    }
+  }
 
-  const query = params.toString();
-  return query ? `/admin/users?${query}` : "/admin/users";
+  return result;
 };

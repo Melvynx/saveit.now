@@ -40,6 +40,7 @@ import { Route as AccountRouteImport } from "./routes/account";
 import { Route as AboutRouteImport } from "./routes/about";
 import { Route as SplatRouteImport } from "./routes/$";
 import { Route as IndexRouteImport } from "./routes/index";
+import { Route as AdminIndexRouteImport } from "./routes/admin.index";
 import { Route as UpgradeSuccessRouteImport } from "./routes/upgrade.success";
 import { Route as UpgradeNewPricingRouteImport } from "./routes/upgrade.new-pricing";
 import { Route as UnsubscribeUserIdRouteImport } from "./routes/unsubscribe.$userId";
@@ -73,8 +74,8 @@ import { Route as ApiMobileCheckoutRouteImport } from "./routes/api.mobile.check
 import { Route as ApiInsightsSplatRouteImport } from "./routes/api.insights.$";
 import { Route as ApiBookmarksBookmarkIdRouteImport } from "./routes/api.bookmarks.$bookmarkId";
 import { Route as ApiAuthSplatRouteImport } from "./routes/api.auth.$";
-import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users.$userId";
-import { Route as AdminConversationsIdRouteImport } from "./routes/admin.conversations.$id";
+import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users_.$userId";
+import { Route as AdminConversationsIdRouteImport } from "./routes/admin.conversations_.$id";
 import { Route as ApiBookmarksBookmarkIdUploadScreenshotRouteImport } from "./routes/api.bookmarks.$bookmarkId.upload-screenshot";
 
 const VerifyRoute = VerifyRouteImport.update({
@@ -231,6 +232,11 @@ const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
+} as any);
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => AdminRoute,
 } as any);
 const UpgradeSuccessRoute = UpgradeSuccessRouteImport.update({
   id: "/success",
@@ -398,14 +404,14 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any);
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
-  id: "/$userId",
-  path: "/$userId",
-  getParentRoute: () => AdminUsersRoute,
+  id: "/users_/$userId",
+  path: "/users/$userId",
+  getParentRoute: () => AdminRoute,
 } as any);
 const AdminConversationsIdRoute = AdminConversationsIdRouteImport.update({
-  id: "/$id",
-  path: "/$id",
-  getParentRoute: () => AdminConversationsRoute,
+  id: "/conversations_/$id",
+  path: "/conversations/$id",
+  getParentRoute: () => AdminRoute,
 } as any);
 const ApiBookmarksBookmarkIdUploadScreenshotRoute =
   ApiBookmarksBookmarkIdUploadScreenshotRouteImport.update({
@@ -448,8 +454,8 @@ export interface FileRoutesByFullPath {
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
-  "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/users": typeof AdminUsersRouteWithChildren;
+  "/admin/conversations": typeof AdminConversationsRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
@@ -470,6 +476,7 @@ export interface FileRoutesByFullPath {
   "/unsubscribe/$userId": typeof UnsubscribeUserIdRoute;
   "/upgrade/new-pricing": typeof UpgradeNewPricingRoute;
   "/upgrade/success": typeof UpgradeSuccessRoute;
+  "/admin/": typeof AdminIndexRoute;
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
@@ -488,7 +495,6 @@ export interface FileRoutesByTo {
   "/$": typeof SplatRoute;
   "/about": typeof AboutRoute;
   "/account": typeof AccountRouteWithChildren;
-  "/admin": typeof AdminRouteWithChildren;
   "/app": typeof AppRouteWithChildren;
   "/billing": typeof BillingRoute;
   "/changelog": typeof ChangelogRouteWithChildren;
@@ -517,8 +523,8 @@ export interface FileRoutesByTo {
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
-  "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/users": typeof AdminUsersRouteWithChildren;
+  "/admin/conversations": typeof AdminConversationsRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
@@ -539,6 +545,7 @@ export interface FileRoutesByTo {
   "/unsubscribe/$userId": typeof UnsubscribeUserIdRoute;
   "/upgrade/new-pricing": typeof UpgradeNewPricingRoute;
   "/upgrade/success": typeof UpgradeSuccessRoute;
+  "/admin": typeof AdminIndexRoute;
   "/admin/conversations/$id": typeof AdminConversationsIdRoute;
   "/admin/users/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
@@ -587,8 +594,8 @@ export interface FileRoutesById {
   "/verify": typeof VerifyRoute;
   "/account/keys": typeof AccountKeysRoute;
   "/account/public-link": typeof AccountPublicLinkRoute;
-  "/admin/conversations": typeof AdminConversationsRouteWithChildren;
-  "/admin/users": typeof AdminUsersRouteWithChildren;
+  "/admin/conversations": typeof AdminConversationsRoute;
+  "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
   "/api/tags": typeof ApiTagsRoute;
@@ -609,8 +616,9 @@ export interface FileRoutesById {
   "/unsubscribe/$userId": typeof UnsubscribeUserIdRoute;
   "/upgrade/new-pricing": typeof UpgradeNewPricingRoute;
   "/upgrade/success": typeof UpgradeSuccessRoute;
-  "/admin/conversations/$id": typeof AdminConversationsIdRoute;
-  "/admin/users/$userId": typeof AdminUsersUserIdRoute;
+  "/admin/": typeof AdminIndexRoute;
+  "/admin/conversations_/$id": typeof AdminConversationsIdRoute;
+  "/admin/users_/$userId": typeof AdminUsersUserIdRoute;
   "/api/auth/$": typeof ApiAuthSplatRoute;
   "/api/bookmarks/$bookmarkId": typeof ApiBookmarksBookmarkIdRouteWithChildren;
   "/api/insights/$": typeof ApiInsightsSplatRoute;
@@ -680,6 +688,7 @@ export interface FileRouteTypes {
     | "/unsubscribe/$userId"
     | "/upgrade/new-pricing"
     | "/upgrade/success"
+    | "/admin/"
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
     | "/api/auth/$"
@@ -698,7 +707,6 @@ export interface FileRouteTypes {
     | "/$"
     | "/about"
     | "/account"
-    | "/admin"
     | "/app"
     | "/billing"
     | "/changelog"
@@ -749,6 +757,7 @@ export interface FileRouteTypes {
     | "/unsubscribe/$userId"
     | "/upgrade/new-pricing"
     | "/upgrade/success"
+    | "/admin"
     | "/admin/conversations/$id"
     | "/admin/users/$userId"
     | "/api/auth/$"
@@ -818,8 +827,9 @@ export interface FileRouteTypes {
     | "/unsubscribe/$userId"
     | "/upgrade/new-pricing"
     | "/upgrade/success"
-    | "/admin/conversations/$id"
-    | "/admin/users/$userId"
+    | "/admin/"
+    | "/admin/conversations_/$id"
+    | "/admin/users_/$userId"
     | "/api/auth/$"
     | "/api/bookmarks/$bookmarkId"
     | "/api/insights/$"
@@ -1100,6 +1110,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/admin/": {
+      id: "/admin/";
+      path: "/";
+      fullPath: "/admin/";
+      preLoaderRoute: typeof AdminIndexRouteImport;
+      parentRoute: typeof AdminRoute;
+    };
     "/upgrade/success": {
       id: "/upgrade/success";
       path: "/success";
@@ -1331,19 +1348,19 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/admin/users/$userId": {
-      id: "/admin/users/$userId";
-      path: "/$userId";
+    "/admin/users_/$userId": {
+      id: "/admin/users_/$userId";
+      path: "/users/$userId";
       fullPath: "/admin/users/$userId";
       preLoaderRoute: typeof AdminUsersUserIdRouteImport;
-      parentRoute: typeof AdminUsersRoute;
+      parentRoute: typeof AdminRoute;
     };
-    "/admin/conversations/$id": {
-      id: "/admin/conversations/$id";
-      path: "/$id";
+    "/admin/conversations_/$id": {
+      id: "/admin/conversations_/$id";
+      path: "/conversations/$id";
       fullPath: "/admin/conversations/$id";
       preLoaderRoute: typeof AdminConversationsIdRouteImport;
-      parentRoute: typeof AdminConversationsRoute;
+      parentRoute: typeof AdminRoute;
     };
     "/api/bookmarks/$bookmarkId/upload-screenshot": {
       id: "/api/bookmarks/$bookmarkId/upload-screenshot";
@@ -1368,37 +1385,20 @@ const AccountRouteChildren: AccountRouteChildren = {
 const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren);
 
-interface AdminConversationsRouteChildren {
+interface AdminRouteChildren {
+  AdminConversationsRoute: typeof AdminConversationsRoute;
+  AdminUsersRoute: typeof AdminUsersRoute;
+  AdminIndexRoute: typeof AdminIndexRoute;
   AdminConversationsIdRoute: typeof AdminConversationsIdRoute;
-}
-
-const AdminConversationsRouteChildren: AdminConversationsRouteChildren = {
-  AdminConversationsIdRoute: AdminConversationsIdRoute,
-};
-
-const AdminConversationsRouteWithChildren =
-  AdminConversationsRoute._addFileChildren(AdminConversationsRouteChildren);
-
-interface AdminUsersRouteChildren {
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute;
 }
 
-const AdminUsersRouteChildren: AdminUsersRouteChildren = {
-  AdminUsersUserIdRoute: AdminUsersUserIdRoute,
-};
-
-const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
-  AdminUsersRouteChildren,
-);
-
-interface AdminRouteChildren {
-  AdminConversationsRoute: typeof AdminConversationsRouteWithChildren;
-  AdminUsersRoute: typeof AdminUsersRouteWithChildren;
-}
-
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminConversationsRoute: AdminConversationsRouteWithChildren,
-  AdminUsersRoute: AdminUsersRouteWithChildren,
+  AdminConversationsRoute: AdminConversationsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminConversationsIdRoute: AdminConversationsIdRoute,
+  AdminUsersUserIdRoute: AdminUsersUserIdRoute,
 };
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren);

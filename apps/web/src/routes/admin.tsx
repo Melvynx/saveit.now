@@ -1,60 +1,61 @@
 import { AdminShell } from "@/features/admin/admin-shell";
-import { AdminPageHeader, AdminStatCard } from "@/features/admin/admin-shared";
-import { SearchRepairPanel } from "@/features/admin/search-repair-panel";
-import { parseAdminSearchParams } from "@/features/admin/search-params";
 import { useSession } from "@/lib/auth-client";
-import { api } from "@convex/_generated/api";
 import {
   createFileRoute,
   Navigate,
   Outlet,
   useLocation,
 } from "@tanstack/react-router";
-import { Button } from "@workspace/ui/components/button";
-import { useAuthedQuery } from "@/hooks/use-authed-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
-import {
-  Ban,
-  Bookmark,
-  Crown,
-  MessageSquareText,
-  MousePointerClick,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { ShieldAlert } from "lucide-react";
 
+/**
+ * `/admin` is a pure layout: auth gate + shell + <Outlet />.
+ *
+ * It deliberately declares no `validateSearch`. The previous version validated
+ * the users-list search params here, which leaked `?page=1&search=&sortBy=...`
+ * onto every child URL — including user detail pages.
+ */
 export const Route = createFileRoute("/admin")({
-  validateSearch: parseAdminSearchParams,
-  component: AdminPage,
+  component: AdminLayout,
 });
 
-function AdminPage() {
+function AdminLayout() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const session = useSession();
   const role = (session.data?.user as { role?: string } | undefined)?.role;
-  const isAdmin = role === "admin";
-  const overview = useAuthedQuery(
-    api.admin.queries.getOverview,
-    isAdmin && pathname === "/admin" ? {} : "skip",
-  );
 
-  if (session.isPending) return null;
+  // The shell is static chrome, so it can paint before the session resolves.
+  // Rendering `null` here (the old behaviour) blanked the whole page on every
+  // hard load.
+  if (session.isPending) {
+    return (
+      <AdminShell pathname={pathname}>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-80" />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-28 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      </AdminShell>
+    );
+  }
 
   if (!session.data?.user) {
     return <Navigate to="/signin" />;
   }
 
-  if (!isAdmin) {
+  if (role !== "admin") {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="max-w-sm text-center">
+          <div className="bg-muted text-muted-foreground mx-auto mb-4 flex size-12 items-center justify-center rounded-full">
+            <ShieldAlert className="size-6" />
+          </div>
           <h1 className="text-xl font-semibold">Admin access required</h1>
           <p className="text-muted-foreground mt-2 text-sm">
             This area is only available to SaveIt.now administrators.
@@ -64,169 +65,9 @@ function AdminPage() {
     );
   }
 
-  if (pathname !== "/admin") {
-    return (
-      <AdminShell pathname={pathname}>
-        <Outlet />
-      </AdminShell>
-    );
-  }
-
-  if (!overview) return null;
-
   return (
     <AdminShell pathname={pathname}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <AdminPageHeader
-          title="Dashboard"
-          description="Operational view for users, subscriptions, limits, and conversations."
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" asChild>
-                <a href="/admin/users">
-                  <Users className="size-4" />
-                  Users
-                </a>
-              </Button>
-              <Button asChild>
-                <a href="/admin/conversations">
-                  <MessageSquareText className="size-4" />
-                  Feedback
-                </a>
-              </Button>
-            </div>
-          }
-        />
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminStatCard
-            title="Users"
-            value={overview.totalUsers.toLocaleString()}
-            description={`${overview.activeUsers.toLocaleString()} active accounts`}
-            icon={Users}
-          />
-          <AdminStatCard
-            title="Premium"
-            value={overview.premiumUsers.toLocaleString()}
-            description={`${overview.regularUsers.toLocaleString()} regular users`}
-            icon={Crown}
-          />
-          <AdminStatCard
-            title="Bookmarks"
-            value={overview.totalBookmarks.toLocaleString()}
-            description="Total saved links"
-            icon={Bookmark}
-          />
-          <AdminStatCard
-            title="Clicks"
-            value={overview.totalClicks.toLocaleString()}
-            description="Total bookmark opens"
-            icon={MousePointerClick}
-          />
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2">
-          <AdminStatCard
-            title="Admins"
-            value={overview.adminUsers.toLocaleString()}
-            description="Users with admin role"
-            icon={ShieldCheck}
-          />
-          <AdminStatCard
-            title="Banned"
-            value={overview.bannedUsers.toLocaleString()}
-            description="Restricted accounts"
-            icon={Ban}
-          />
-        </section>
-
-        <SearchRepairPanel />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin workflow</CardTitle>
-              <CardDescription>
-                Jump to the operational queues that need human handling.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <AdminWorkflowLink
-                href="/admin/users"
-                icon={Users}
-                title="User management"
-                description="Search users, inspect plans, manage access, and open custom limits."
-              />
-              <AdminWorkflowLink
-                href="/admin/conversations"
-                icon={MessageSquareText}
-                title="Conversation feedback"
-                description="Review liked and disliked AI conversations."
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick checks</CardTitle>
-              <CardDescription>
-                High-level account signals before opening a queue.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <DashboardSignal
-                label="Active accounts"
-                value={overview.activeUsers}
-              />
-              <DashboardSignal
-                label="Premium users"
-                value={overview.premiumUsers}
-              />
-              <DashboardSignal
-                label="Banned users"
-                value={overview.bannedUsers}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Outlet />
     </AdminShell>
-  );
-}
-
-function DashboardSignal({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value.toLocaleString()}</span>
-    </div>
-  );
-}
-
-function AdminWorkflowLink({
-  href,
-  icon: Icon,
-  title,
-  description,
-}: {
-  href: string;
-  icon: LucideIcon;
-  title: string;
-  description: string;
-}) {
-  return (
-    <a
-      href={href}
-      className="hover:bg-muted flex items-start gap-3 rounded-lg border p-3 transition-colors"
-    >
-      <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg">
-        <Icon className="size-4" />
-      </div>
-      <span className="min-w-0">
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="text-muted-foreground block text-xs">
-          {description}
-        </span>
-      </span>
-    </a>
   );
 }

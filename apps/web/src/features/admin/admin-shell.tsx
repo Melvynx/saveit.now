@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -16,7 +17,14 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import { ArrowLeft, BarChart3, MessageSquareText, Users } from "lucide-react";
+import { cn } from "@workspace/ui/lib/utils";
+import {
+  ArrowLeft,
+  BarChart3,
+  ChevronRight,
+  MessageSquareText,
+  Users,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -25,14 +33,16 @@ type AdminShellProps = {
   pathname: string;
 };
 
+type AdminNavigationLink = {
+  href: "/admin" | "/admin/users" | "/admin/conversations";
+  label: string;
+  description: string;
+  Icon: LucideIcon;
+};
+
 type AdminNavigationGroup = {
   title: string;
-  links: {
-    href: string;
-    label: string;
-    description: string;
-    Icon: LucideIcon;
-  }[];
+  links: AdminNavigationLink[];
 };
 
 const adminNavigation: AdminNavigationGroup[] = [
@@ -42,13 +52,13 @@ const adminNavigation: AdminNavigationGroup[] = [
       {
         href: "/admin",
         label: "Dashboard",
-        description: "Platform health and users",
+        description: "Platform health, growth and activity",
         Icon: BarChart3,
       },
       {
         href: "/admin/users",
         label: "Users",
-        description: "Roles, plans, bans, limits",
+        description: "Roles, plans, bans and custom limits",
         Icon: Users,
       },
     ],
@@ -59,7 +69,7 @@ const adminNavigation: AdminNavigationGroup[] = [
       {
         href: "/admin/conversations",
         label: "Feedback",
-        description: "Liked and disliked chats",
+        description: "Liked and disliked AI conversations",
         Icon: MessageSquareText,
       },
     ],
@@ -68,6 +78,8 @@ const adminNavigation: AdminNavigationGroup[] = [
 
 export function AdminShell({ children, pathname }: AdminShellProps) {
   const currentPage = getCurrentPage(pathname);
+  const isDetailPage =
+    pathname !== currentPage.href && pathname.startsWith(`${currentPage.href}/`);
 
   return (
     <SidebarProvider
@@ -80,23 +92,41 @@ export function AdminShell({ children, pathname }: AdminShellProps) {
     >
       <AdminSidebar pathname={pathname} />
       <SidebarInset className="bg-background min-w-0 border-0">
-        <header className="flex h-16 shrink-0 items-center gap-2">
+        <header className="bg-background/80 sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 backdrop-blur">
           <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
             <SidebarTrigger
               variant="outline"
               className="size-8 cursor-pointer"
             />
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-normal">
-                {currentPage.label}
-              </h1>
-              <p className="text-muted-foreground hidden text-sm sm:block">
-                {currentPage.description}
-              </p>
-            </div>
+            <nav
+              aria-label="Breadcrumb"
+              className="flex min-w-0 items-center gap-1.5 text-sm"
+            >
+              <Link
+                to="/admin"
+                className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+              >
+                Admin
+              </Link>
+              <ChevronRight className="text-muted-foreground/60 size-3.5 shrink-0" />
+              {isDetailPage ? (
+                <>
+                  <Link
+                    to={currentPage.href}
+                    className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+                  >
+                    {currentPage.label}
+                  </Link>
+                  <ChevronRight className="text-muted-foreground/60 size-3.5 shrink-0" />
+                  <span className="truncate font-medium">Detail</span>
+                </>
+              ) : (
+                <span className="truncate font-medium">{currentPage.label}</span>
+              )}
+            </nav>
           </div>
         </header>
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 pt-0 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 pt-2 sm:px-6 lg:px-8">
           {children}
         </div>
       </SidebarInset>
@@ -113,7 +143,7 @@ function AdminSidebar({ pathname }: { pathname: string }) {
             <SidebarMenuButton
               size="lg"
               variant="outline"
-              render={<a href="/admin" />}
+              render={<Link to="/admin" />}
             >
               <span className="flex min-w-0 items-center gap-2 font-semibold">
                 SaveIt.now
@@ -133,8 +163,8 @@ function AdminSidebar({ pathname }: { pathname: string }) {
                   <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
                       isActive={isActiveAdminLink(pathname, link.href)}
-                      tooltip={link.label}
-                      render={<a href={link.href} />}
+                      tooltip={link.description}
+                      render={<Link to={link.href} preload="intent" />}
                     >
                       <link.Icon />
                       <span>{link.label}</span>
@@ -147,11 +177,14 @@ function AdminSidebar({ pathname }: { pathname: string }) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <Button variant="outline" className="justify-start" asChild>
-          <a href="/app">
-            <ArrowLeft className="size-4" />
-            Back to app
-          </a>
+        <Button
+          variant="outline"
+          className={cn("justify-start")}
+          nativeButton={false}
+          render={<Link to="/app" />}
+        >
+          <ArrowLeft className="size-4" />
+          Back to app
         </Button>
       </SidebarFooter>
       <SidebarRail />
@@ -159,14 +192,13 @@ function AdminSidebar({ pathname }: { pathname: string }) {
   );
 }
 
-function getCurrentPage(pathname: string) {
+function getCurrentPage(pathname: string): AdminNavigationLink {
   const allLinks = adminNavigation.flatMap((group) => group.links);
-  const match =
+  return (
     allLinks
       .filter((link) => isActiveAdminLink(pathname, link.href))
-      .sort((a, b) => b.href.length - a.href.length)[0] ?? allLinks[0]!;
-
-  return match;
+      .sort((a, b) => b.href.length - a.href.length)[0] ?? allLinks[0]!
+  );
 }
 
 function isActiveAdminLink(pathname: string, href: string) {
