@@ -497,35 +497,7 @@ export default function ChatScreen() {
             </Text>
           ) : null}
 
-          <View className="flex-row items-end gap-2">
-            {/*
-              Mirrors the pill's box exactly — same transparent 1pt border and
-              same py-1 — so the `+` circle lands on the same baseline as the
-              send circle at the other end, at every input height.
-            */}
-            <View className="border border-transparent py-1">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Start a new conversation"
-                accessibilityState={{
-                  disabled:
-                    isLoadingConversation ||
-                    (messages.length === 0 && !conversationId),
-                }}
-                disabled={
-                  isLoadingConversation ||
-                  (messages.length === 0 && !conversationId)
-                }
-                onPress={() => {
-                  hapticSelection();
-                  handleNewConversation();
-                }}
-                className="h-8 w-8 items-center justify-center rounded-full bg-secondary active:opacity-60 disabled:opacity-40"
-              >
-                <Ionicons name="add" size={20} color={colors.mutedForeground} />
-              </Pressable>
-            </View>
-
+          <View className="flex-row items-end">
             {/*
               Fixed 21pt radius, not `rounded-full`: at the collapsed 42pt
               height it still reads as a perfect pill, but once the input
