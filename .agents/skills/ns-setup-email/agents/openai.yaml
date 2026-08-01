@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Setup Email"
+  short_description: "Configure and prove transactional email delivery"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#4F46E5"
+  default_prompt: "Use $ns-setup-email to configure and prove transactional email delivery."
+
+policy:
+  allow_implicit_invocation: false

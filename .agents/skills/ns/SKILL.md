@@ -1,7 +1,7 @@
 ---
 name: ns
-description: "NowStack Mobile product CLI. Use for `/ns` goals: onboard, setup, ios local-setup/setup/testflight/audit/distribute/verification/deeplink/notification, android setup/beta/distribute, setup-expo, dev, check, release, web deploy/landing-page, status."
-argument-hint: "[onboard|create-app|prd|architecture|tasks|doctor|accounts|setup|setup-ios|setup-android|setup-expo|check|set-admin|dev|stripe|r2|notification|screenshots|icon|images|docs|optimize|release|ios local-setup|ios setup|ios testflight|ios audit|ios distribute|ios verification|ios deeplink|ios notification|android setup|android beta|android distribute|web deploy|web landing-page|status] or a goal in natural language"
+description: "Route NowStack Mobile lifecycle goals across setup, product planning, verification, live Simulator preview, security, analytics, email, web, iOS, Android, production audits, and release. Use for `/ns` commands or natural-language product goals."
+argument-hint: "[onboard|app-onboarding|create-app|prd|architecture|tasks|doctor|accounts|setup|check|verify|preview|security|launch-audit|analytics|email|google-auth|apple-auth|set-admin|dev|setup-expo|stripe|r2|notification|screenshots|icon|images|docs|optimize|release|ios ...|android ...|web ...|status] or a goal in natural language"
 ---
 
 # NowStack - Product CLI
@@ -33,8 +33,17 @@ Parse `$ARGUMENTS`:
 | `onboard` | **First-run wizard.** Chains the whole initial setup: tools → accounts → Convex → your own clean Git repo → product brief → rebrand → finish | `.agents/skills/ns-onboard/SKILL.md` |
 | `doctor` | Install the developer CLIs this machine needs (eas, vercel, gpc, asc, fastlane, bun, gcloud) via brew/npm; offer Xcode/Android Studio. Run before `accounts` | `.agents/skills/ns-doctor/SKILL.md` |
 | `accounts` | Create + connect external accounts (Convex, Expo/EAS, Apple, Vercel, Stripe, Play). Verifies, logs in, writes credentials. Skippable per account | `.agents/skills/ns-setup-accounts/SKILL.md` |
+| `google-auth` (alias `setup-google-auth`) | Create and verify deployment-specific Google OAuth credentials; pass `--prod` for production | `.agents/skills/ns-setup-google-auth/SKILL.md` |
+| `apple-auth` (alias `setup-apple-auth`) | Configure Apple Services ID + signed client-secret JWT; pass `--prod` for production rotation | `.agents/skills/ns-setup-apple-auth/SKILL.md` |
 | `setup` | Initialize/rebrand the boilerplate as a real product (site-config, copy, Convex env) | `.agents/skills/ns-init-project/SKILL.md` |
-| `check` | Validate configuration | inline: run `npm run check-setup`, explain and fix failures (see SETUP.md) |
+| `check` | Strict read-only configuration/account/production readiness contract with JSON output | `.agents/skills/ns-check-setup/SKILL.md` |
+| `verify` | Cross-surface runtime proof for web, iOS, Android, and Convex | `.agents/skills/ns-verify/SKILL.md` |
+| `preview` (alias `show`) | Mirror one explicit iOS Simulator into a live browser preview through `serve-sim`, then drive the app from that browser | `.agents/skills/ns-preview/SKILL.md` |
+| `security` (alias `security-audit`) | Audit and remediate auth, payment, data, native-client, upload, and abuse boundaries | `.agents/skills/ns-security-audit/SKILL.md` |
+| `launch-audit` (alias `audit-launch`) | Read-only fail-closed GO/NO-GO audit across every launch surface | `.agents/skills/ns-launch-audit/SKILL.md` |
+| `app-onboarding` (alias `setup-app-onboard`) | Design and verify the end-user activation journey; distinct from first-clone `onboard` | `.agents/skills/ns-setup-app-onboard/SKILL.md` |
+| `analytics` | Privacy-safe PostHog event, consent, identity, and environment ownership across mobile/web | `.agents/skills/ns-analytics/SKILL.md` |
+| `email` (alias `setup-email`) | Configure and prove Resend/Convex transactional email for the selected deployment | `.agents/skills/ns-setup-email/SKILL.md` |
 | `set-admin` | Grant admin access to a user by email (Convex `isAdmin`). Fixes `/admin` denial / infinite loader | `.agents/skills/ns-set-admin/SKILL.md` |
 | `dev` | Run the app locally | inline, see Dev below |
 | `stripe` | Configure Stripe payments (web/Android) | `.agents/skills/ns-setup-stripe/SKILL.md` |
@@ -72,10 +81,11 @@ Parse `$ARGUMENTS`:
 | `ios testflight` | OS-aware production build + TestFlight upload: macOS defaults to local `eas build --local`; Windows/Linux must run `ns-setup-expo` then use EAS cloud | `.agents/skills/ns-ios-testflight/SKILL.md` end to end |
 | `ios distribute` | TestFlight build → screenshots, metadata, IAP, compliance, review submission | `.agents/skills/ns-ios-distribute/SKILL.md` |
 | `ios verification` (alias `verify`) | Verify a `mobile-app/**` change in the Simulator via `xcrun simctl` — single-agent (one Metro on 8081) or parallel multi-agent (dedicated Simulator + Metro port per agent), deep-link nav, temp preview route, programmatic OTP test login (`appstoretest@email.com` / `123456`) | `.agents/skills/ns-ios-verification/SKILL.md` |
+| `ios preview` | Open the current iOS Simulator as a live local browser mirror through `serve-sim` | `.agents/skills/ns-preview/SKILL.md` |
 | `ios deeplink` (alias `deeplink`, `universal-links`) | Fix and verify iOS Universal Links, TestFlight deeplinks, AASA, associated domains, and auth return flows | `.agents/skills/ns-ios-deeplink/SKILL.md` |
 | `ios notification` (alias `notifications`, `push`) | Set up iOS/APNs-oriented Expo push notifications and verify delivery with EAS/TestFlight constraints | `.agents/skills/ns-ios-notification/SKILL.md` |
 
-`testflight` alone = `ios testflight` (`ns-ios-testflight`). `distribute` alone = `ios distribute` (`ns-ios-distribute`). `audit` alone = `ios audit` (`ns-ios-audit`) — run it before `distribute` to clear predictable App Store rejections. For asc-level store details: `.agents/skills/ns-ios-deploy-app/SKILL.md`.
+`testflight` alone = `ios testflight` (`ns-ios-testflight`). `distribute` alone = `ios distribute` (`ns-ios-distribute`). `audit` alone = `ios audit` (`ns-ios-audit`) — run it before `distribute` to clear predictable App Store rejections. `preview` alone = `ios preview` (`ns-preview`). For asc-level store details: `.agents/skills/ns-ios-deploy-app/SKILL.md`.
 
 > **`ios setup` (signing) vs `ios local-setup` (local dev) — don't confuse them.** `ios setup` wires EAS project metadata, production Convex URLs, and Apple **signing** credentials for TestFlight. `ios testflight` chooses the build path from the OS: local on macOS, EAS cloud on Windows/Linux after `ns-setup-expo`. `ios local-setup` sets up Xcode, Simulator, and CocoaPods so `npm run ios` previews the dev build on this Mac. `setup-ios` remains a legacy alias.
 

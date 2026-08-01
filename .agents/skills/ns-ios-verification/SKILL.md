@@ -12,6 +12,8 @@ See a `mobile-app/**` change actually rendered and behaving correctly in the App
 - **Multi-agent / parallel** — each agent gets its OWN Simulator device AND its OWN Metro port, so navigation, reloads, and screenshots never cross-talk. This is what makes it safe to verify several screens/flows at the same time.
 
 **NEVER** drive the Simulator (or a browser) with the computer-use / control-the-computer tools. `simctl` for mobile, `dev-browser` for web. Computer-use is a last resort only when explicitly requested.
+
+For a live browser-visible mirror, pair this workflow with `.agents/skills/ns-preview/SKILL.md`. The preview is a transport layer; this skill still owns navigation, app-state proof, and the verification verdict.
 </objective>
 
 <platform_guard>

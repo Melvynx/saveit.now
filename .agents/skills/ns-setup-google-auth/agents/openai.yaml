@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Setup Google Auth"
+  short_description: "Set up and verify Google OAuth for NowStack Mobile web and"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#2563EB"
+  default_prompt: "Use $ns-setup-google-auth to set up and verify Google OAuth for NowStack Mobile web and."
+
+policy:
+  allow_implicit_invocation: false

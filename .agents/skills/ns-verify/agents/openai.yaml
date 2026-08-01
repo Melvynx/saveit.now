@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Verify"
+  short_description: "Prove real journeys across every changed surface"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#059669"
+  default_prompt: "Use $ns-verify to prove real journeys across every changed surface."
+
+policy:
+  allow_implicit_invocation: false

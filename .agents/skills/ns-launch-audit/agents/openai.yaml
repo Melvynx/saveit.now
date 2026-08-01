@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Launch Audit"
+  short_description: "Issue an evidence-backed launch readiness verdict"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#059669"
+  default_prompt: "Use $ns-launch-audit to issue an evidence-backed launch readiness verdict."
+
+policy:
+  allow_implicit_invocation: true

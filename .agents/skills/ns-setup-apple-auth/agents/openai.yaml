@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Setup Apple Auth"
+  short_description: "Set up and verify Sign in with Apple for NowStack Mobile web"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#2563EB"
+  default_prompt: "Use $ns-setup-apple-auth to set up and verify Sign in with Apple for NowStack Mobile web."
+
+policy:
+  allow_implicit_invocation: false

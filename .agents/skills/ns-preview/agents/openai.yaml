@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Preview"
+  short_description: "Mirror the iOS Simulator into a live browser"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#DB2777"
+  default_prompt: "Use $ns-preview to mirror the iOS Simulator into a live browser."
+
+policy:
+  allow_implicit_invocation: true

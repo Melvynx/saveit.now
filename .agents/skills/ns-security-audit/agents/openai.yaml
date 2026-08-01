@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Security Audit"
+  short_description: "Audit and remediate NowStack Mobile security flaws"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#059669"
+  default_prompt: "Use $ns-security-audit to audit and remediate NowStack Mobile security flaws."
+
+policy:
+  allow_implicit_invocation: false

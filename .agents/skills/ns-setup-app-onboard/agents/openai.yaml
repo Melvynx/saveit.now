@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Setup App Onboard"
+  short_description: "Design or improve the in-product NowStack Mobile onboarding"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#4F46E5"
+  default_prompt: "Use $ns-setup-app-onboard to design or improve the in-product NowStack Mobile onboarding."
+
+policy:
+  allow_implicit_invocation: false

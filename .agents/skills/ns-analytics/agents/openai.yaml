@@ -1,0 +1,10 @@
+interface:
+  display_name: "NS Analytics"
+  short_description: "Build privacy-safe analytics across mobile and web"
+  icon_small: "./assets/codex-icon.svg"
+  icon_large: "./assets/codex-icon.svg"
+  brand_color: "#4F46E5"
+  default_prompt: "Use $ns-analytics to build privacy-safe analytics across mobile and web."
+
+policy:
+  allow_implicit_invocation: false
