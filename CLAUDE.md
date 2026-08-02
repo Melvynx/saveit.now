@@ -69,12 +69,22 @@ The application requires extensive environment variables (35+ variables) for var
 
 ## Deployment and Logs
 
-- To get the latest deployment logs, use `flyctl logs` command for the specific app
-- Vercel CLI deployment commands:
-  - `vercel` - Deploy the current project
-  - `vercel --prod` - Deploy to production
-  - `vercel logs` - View latest deployment logs
-  - `vercel inspect` - Get detailed deployment information and verify everything is working correctly
+Production (`saveit.now`) runs on the Dokploy host (`ssh dokploy`, Hetzner) as the
+`saveit-dokploy-11gbp3` Swarm service, built from `apps/web/Dockerfile`. Auto-deploy is on:
+every push to `main` rebuilds the image.
+
+- **Convex deploys with the web app.** The build stage mounts a `CONVEX_DEPLOY_KEY` build
+  secret (Dokploy → application → Build Secrets, passed as `--secret type=env,id=…`).
+  `scripts/vercel-build.mjs` then runs `convex deploy` and injects the deployed URL as
+  `VITE_CONVEX_URL`, so the bundle can never ship against a stale backend. Without the
+  secret the build falls back to the `VITE_CONVEX_URL` build arg and skips the deploy.
+- Manual backend deploy (when not going through a push): `npx convex deploy` from
+  `packages/backend`.
+- Container logs: `ssh dokploy 'docker service logs -f saveit-dokploy-11gbp3'`.
+- Convex logs: `npx convex logs --prod`.
+
+Vercel is legacy; `apps/web/vercel.json` and the `vercel-build` script name are kept because
+the same script drives both paths.
 
 ## Workflow
 

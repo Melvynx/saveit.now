@@ -10,4 +10,6 @@ test-results
 coverage
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example

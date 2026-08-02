@@ -54,7 +54,21 @@ ENV AWS_ACCESS_KEY_ID="build-placeholder" \
   VITE_STRIPE_PUBLISHABLE_KEY="${VITE_STRIPE_PUBLISHABLE_KEY}"
 
 COPY . .
-RUN NITRO_PRESET=node_server pnpm vercel-build
+
+# Convex deploys from inside the image build when the host provides a
+# CONVEX_DEPLOY_KEY build secret (Dokploy: application -> Advanced -> Build
+# Secrets, passed as `--secret type=env,id=CONVEX_DEPLOY_KEY`). vercel-build
+# then runs `convex deploy` and injects the deployed URL as VITE_CONVEX_URL, so
+# the bundle can never ship against a stale backend.
+#
+# The mount is optional: without the secret the file is absent, SKIP_CONVEX_DEPLOY
+# stays "1" and the build falls back to the VITE_CONVEX_URL build arg — which is
+# what local builds and preview environments do.
+RUN --mount=type=secret,id=CONVEX_DEPLOY_KEY \
+  if [ -s /run/secrets/CONVEX_DEPLOY_KEY ]; then \
+    export CONVEX_DEPLOY_KEY="$(cat /run/secrets/CONVEX_DEPLOY_KEY)" SKIP_CONVEX_DEPLOY=""; \
+  fi; \
+  NITRO_PRESET=node_server pnpm vercel-build
 
 FROM base AS runner
 
