@@ -11,7 +11,7 @@ import {
   writeSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { TOKEN_PATH, APP_BIN } from "./config.js";
+import { TOKEN_PATH, APP_BIN, LEGACY_TOKEN_PATHS } from "./config.js";
 import { SaveitConfigError } from "../errors.js";
 
 const CONTROL_CHAR_REGEX = /[\r\n -]/;
@@ -21,23 +21,29 @@ function envToken(): string | undefined {
   return v && v.length > 0 ? v : undefined;
 }
 
+/** Current token file first, then files written by earlier releases. */
+function tokenFile(): string | undefined {
+  return [TOKEN_PATH, ...LEGACY_TOKEN_PATHS].find((path) => existsSync(path));
+}
+
 export function hasToken(): boolean {
   if (envToken()) return true;
-  return existsSync(TOKEN_PATH);
+  return tokenFile() !== undefined;
 }
 
 export function getToken(): string {
   const env = envToken();
   if (env) return env;
-  if (!existsSync(TOKEN_PATH)) {
+  const path = tokenFile();
+  if (!path) {
     throw new SaveitConfigError(
       `No SaveIt API key configured. Run: ${APP_BIN} auth set <token>`,
     );
   }
-  const value = readFileSync(TOKEN_PATH, "utf-8").trim();
+  const value = readFileSync(path, "utf-8").trim();
   if (!value) {
     throw new SaveitConfigError(
-      `Saved SaveIt token at ${TOKEN_PATH} is empty. Re-run: ${APP_BIN} auth set <token>`,
+      `Saved SaveIt token at ${path} is empty. Re-run: ${APP_BIN} auth set <token>`,
     );
   }
   return value;
@@ -113,8 +119,10 @@ export function setToken(token: string): void {
 }
 
 export function removeToken(): void {
-  if (existsSync(TOKEN_PATH)) {
-    unlinkSync(TOKEN_PATH);
+  for (const path of [TOKEN_PATH, ...LEGACY_TOKEN_PATHS]) {
+    if (existsSync(path)) {
+      unlinkSync(path);
+    }
   }
 }
 
@@ -123,8 +131,13 @@ export function maskToken(token: string): string {
   return `${token.slice(0, 4)}...${token.slice(-4)}`;
 }
 
+/** Path the token is actually being read from (may be a legacy location). */
+export function activeTokenPath(): string {
+  return tokenFile() ?? TOKEN_PATH;
+}
+
 export function tokenSource(): "env" | "file" | "none" {
   if (envToken()) return "env";
-  if (existsSync(TOKEN_PATH)) return "file";
+  if (tokenFile()) return "file";
   return "none";
 }

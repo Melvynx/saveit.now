@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "pnpm build:web",
-    "build:web": "vite build && node scripts/verify-crawler-routes.mjs --build-output",
+    "build:web": "node scripts/sync-agent-skills.mjs && vite build && node scripts/verify-crawler-routes.mjs --build-output",
+    "sync:agent-skills": "node scripts/sync-agent-skills.mjs",
     "start": "node .output/server/index.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

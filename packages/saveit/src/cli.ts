@@ -3,17 +3,17 @@ import { Command } from "commander";
 import { authCommand } from "./cli/commands/auth.js";
 import { bookmarksCommand } from "./cli/commands/bookmarks.js";
 import { tagsCommand } from "./cli/commands/tags.js";
-import { globalFlags } from "./cli/config.js";
+import { APP_BIN, globalFlags } from "./cli/config.js";
 import { handleError } from "./cli/error-handling.js";
 
 const program = new Command();
 
 program
-  .name("saveit")
+  .name(APP_BIN)
   .description(
     "Official CLI for the SaveIt.now API (https://saveit.now/docs/cli)",
   )
-  .version("0.1.0")
+  .version("1.0.0")
   .option("--json", "Output as JSON", false)
   .option("--format <fmt>", "Output format: text, json, csv, yaml", "text")
   .option("--verbose", "Enable debug logging", false)

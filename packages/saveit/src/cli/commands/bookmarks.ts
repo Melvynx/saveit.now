@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { APP_BIN } from "../config.js";
 import { handleError } from "../error-handling.js";
 import { getClient } from "../sdk-factory.js";
 import { isJsonOutput, output } from "../output.js";
@@ -60,7 +61,7 @@ bookmarksCommand
   .option("--format <fmt>", "Output format: text, json, csv, yaml")
   .addHelpText(
     "after",
-    `\nExamples:\n  saveit bookmarks list\n  saveit bookmarks list --query "next.js" --json\n  saveit bookmarks list --tags design,ux --limit 5\n  saveit bookmarks list --types ARTICLE,VIDEO\n  saveit bookmarks list --special UNREAD --limit 10`,
+    `\nExamples:\n  ${APP_BIN} bookmarks list\n  ${APP_BIN} bookmarks list --query "next.js" --json\n  ${APP_BIN} bookmarks list --tags design,ux --limit 5\n  ${APP_BIN} bookmarks list --types ARTICLE,VIDEO\n  ${APP_BIN} bookmarks list --special UNREAD --limit 10`,
   )
   .action(
     async (opts: {

@@ -1,14 +1,14 @@
-# saveit
+# saveitnow
 
 Official **SDK + CLI** for the [SaveIt.now](https://saveit.now) API. One npm package, two ways to use it:
 
 ```bash
 # Use it as a CLI
-npx saveit auth set <your-api-key>
-npx saveit bookmarks list --tags dev,ai --limit 10
+npx saveitnow auth set <your-api-key>
+npx saveitnow bookmarks list --tags dev,ai --limit 10
 
 # Or import it as an SDK
-import { Saveit } from "saveit";
+import { Saveit } from "saveitnow";
 const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
 const { bookmarks } = await saveit.bookmarks.list({ tags: ["dev"] });
 ```
@@ -16,23 +16,23 @@ const { bookmarks } = await saveit.bookmarks.list({ tags: ["dev"] });
 ## Install
 
 ```bash
-npm install saveit       # for SDK use
+npm install saveitnow       # for SDK use
 # or
-npx saveit --help        # for one-off CLI use, no install needed
+npx saveitnow --help        # for one-off CLI use, no install needed
 ```
 
 ## Get an API key
 
 1. Go to [saveit.now/account/keys](https://saveit.now/account/keys)
 2. Click **Create API Key**, name it, copy the value (you won't see it again)
-3. Either set the env var `SAVEIT_API_KEY=...` or run `npx saveit auth set <token>`
+3. Either set the env var `SAVEIT_API_KEY=...` or run `npx saveitnow auth set <token>`
 
 API keys require a paid plan. Free plans get an `403 Pro plan required` response.
 
 ## SDK
 
 ```ts
-import { Saveit } from "saveit";
+import { Saveit } from "saveitnow";
 
 const saveit = new Saveit({
   apiKey: process.env.SAVEIT_API_KEY,
@@ -72,7 +72,7 @@ Bookmark statuses: `PENDING`, `PROCESSING`, `READY`, `ERROR`.
 The SDK throws `SaveitApiError` on non-2xx responses (with `.status`, `.code`, `.response`) and `SaveitConfigError` for missing API keys.
 
 ```ts
-import { SaveitApiError } from "saveit";
+import { SaveitApiError } from "saveitnow";
 
 try {
   await saveit.bookmarks.create({ url: "not a url" });
@@ -86,17 +86,17 @@ try {
 ## CLI
 
 ```bash
-saveit auth set <token>          # save the API key (chmod 600)
-saveit auth show [--raw]         # masked / full
-saveit auth test                 # verify against the API
-saveit auth remove
+saveitnow auth set <token>          # save the API key (chmod 600)
+saveitnow auth show [--raw]         # masked / full
+saveitnow auth test                 # verify against the API
+saveitnow auth remove
 
-saveit bookmarks list [--query <q>] [--tags a,b] [--types ARTICLE,VIDEO] [--special UNREAD] [--limit 20] [--cursor <c>]
-saveit bookmarks create --url <url> [--transcript <text>] [--metadata '{"k":"v"}']
-saveit bookmarks delete <id>
-saveit bookmarks random
+saveitnow bookmarks list [--query <q>] [--tags a,b] [--types ARTICLE,VIDEO] [--special UNREAD] [--limit 20] [--cursor <c>]
+saveitnow bookmarks create --url <url> [--transcript <text>] [--metadata '{"k":"v"}']
+saveitnow bookmarks delete <id>
+saveitnow bookmarks random
 
-saveit tags list [--limit 50] [--cursor <c>]
+saveitnow tags list [--limit 50] [--cursor <c>]
 ```
 
 ### Global flags

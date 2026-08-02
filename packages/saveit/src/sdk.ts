@@ -122,7 +122,7 @@ class TagsResource {
  *
  * @example
  * ```ts
- * import { Saveit } from "saveit";
+ * import { Saveit } from "saveitnow";
  *
  * const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
  * const { bookmarks } = await saveit.bookmarks.list({ tags: ["dev"] });

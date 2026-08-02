@@ -133,19 +133,19 @@ function DocsIndexPage() {
                       href="/docs/sdk"
                       icon="Package"
                       title="SaveIt SDK"
-                      description="Typed Node.js client - import { Saveit } from 'saveit'."
+                      description="Typed Node.js client - import { Saveit } from 'saveitnow'."
                     />
                     <DocCard
                       href="/docs/cli"
                       icon="Terminal"
                       title="SaveIt CLI"
-                      description="npx saveit ... - same operations from any terminal."
+                      description="npx saveitnow ... - same operations from any terminal."
                     />
                     <DocCard
                       href="/docs/ai-integration"
                       icon="Sparkles"
                       title="AI Integration"
-                      description="Drop-in prompt for Claude, Cursor, GPT, and friends."
+                      description="npx skills add https://saveit.now - one command for Claude, Cursor, Codex."
                     />
                   </DocCardGrid>
                 </DocSection>

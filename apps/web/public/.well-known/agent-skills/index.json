@@ -1,0 +1,11 @@
+{
+  "skills": [
+    {
+      "name": "saveit",
+      "description": "Read and write the user's SaveIt.now bookmarks from the terminal or from JS/TS code, via the official `saveitnow` npm package (CLI + SDK). Handles its own install and API-key setup on first use. Use whenever the user mentions SaveIt, saveit.now, \"my bookmarks\", \"my saved links\", \"my reading list\", asks to save/bookmark a URL, to search what they saved, or to pick something to read.",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 title: SaveIt SDK
-description: Use the official `saveit` npm package to manage bookmarks from any Node.js, Bun, or Deno application.
+description: Use the official `saveitnow` npm package to manage bookmarks from any Node.js, Bun, or Deno application.
 order: 10
 category: SDK & CLI
 tags: [sdk, npm, typescript, javascript]
@@ -10,16 +10,16 @@ published: true
 
 # SaveIt SDK
 
-The official [`saveit`](https://www.npmjs.com/package/saveit) npm package gives you a typed client for the SaveIt.now REST API. The same package also ships an executable CLI - see the [CLI guide](/docs/cli).
+The official [`saveitnow`](https://www.npmjs.com/package/saveitnow) npm package gives you a typed client for the SaveIt.now REST API. The same package also ships an executable CLI - see the [CLI guide](/docs/cli).
 
 ## Install
 
 ```bash
-npm install saveit
+npm install saveitnow
 # or
-pnpm add saveit
+pnpm add saveitnow
 # or
-bun add saveit
+bun add saveitnow
 ```
 
 Requires Node.js 18+ (or any runtime with global `fetch`).
@@ -31,7 +31,7 @@ Create one at [saveit.now/account/keys](/account/keys). API keys require a **Pro
 Pass it explicitly or set `SAVEIT_API_KEY` in your environment:
 
 ```ts
-import { Saveit } from "saveit";
+import { Saveit } from "saveitnow";
 
 const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
 ```
@@ -39,7 +39,7 @@ const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
 ## Quickstart
 
 ```ts
-import { Saveit } from "saveit";
+import { Saveit } from "saveitnow";
 
 const saveit = new Saveit({ apiKey: process.env.SAVEIT_API_KEY });
 
@@ -123,7 +123,7 @@ Returns `{ tags: Tag[], hasMore, nextCursor }`. Each tag includes a `bookmarkCou
 ## Error handling
 
 ```ts
-import { Saveit, SaveitApiError, SaveitConfigError } from "saveit";
+import { Saveit, SaveitApiError, SaveitConfigError } from "saveitnow";
 
 try {
   await saveit.bookmarks.create({ url: "not a url" });
@@ -159,7 +159,7 @@ import type {
   ListBookmarksResult,
   Tag,
   SaveitOptions,
-} from "saveit";
+} from "saveitnow";
 ```
 
 ## Next steps

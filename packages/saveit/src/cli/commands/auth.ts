@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { Saveit } from "../../sdk.js";
 import { SaveitApiError } from "../../errors.js";
 import {
+  activeTokenPath,
   getToken,
   hasToken,
   maskToken,
@@ -12,7 +13,7 @@ import {
 } from "../auth-store.js";
 import { handleError } from "../error-handling.js";
 import { output } from "../output.js";
-import { TOKEN_PATH } from "../config.js";
+import { APP_NAME, TOKEN_PATH } from "../config.js";
 
 export const authCommand = new Command("auth").description(
   "Manage your SaveIt API key",
@@ -20,7 +21,7 @@ export const authCommand = new Command("auth").description(
 
 authCommand
   .command("set")
-  .description("Save an API key to ~/.config/tokens/saveit.txt")
+  .description(`Save an API key to ~/.config/tokens/${APP_NAME}.txt`)
   .argument("<token>", "API key generated at https://saveit.now/account/keys")
   .action((token: string) => {
     try {
@@ -87,7 +88,7 @@ authCommand
           tagCount: result.tags.length,
           hasMore: result.hasMore,
           source: tokenSource(),
-          tokenPath: TOKEN_PATH,
+          tokenPath: activeTokenPath(),
         },
         { json: opts.json },
       );

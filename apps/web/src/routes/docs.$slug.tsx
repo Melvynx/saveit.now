@@ -1,7 +1,7 @@
 import { DocsApiExamples } from "@/components/docs/docs-api-examples";
 import { DocsCopyButton } from "@/components/docs/docs-copy-button";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
-import { DocsTableOfContents, type TocItem } from "@/components/docs/docs-toc";
+import { DocsTableOfContents } from "@/components/docs/docs-toc";
 import { LandingHeader } from "@/features/marketing/landing/header";
 import {
   LANDING_HEAD_LINKS,
@@ -13,33 +13,11 @@ import {
   getDocBySlug,
   getGroupedDocs,
 } from "@/lib/mdx/docs-manager";
+import { renderDoc } from "@/lib/mdx/render-doc";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
 import { Typography } from "@workspace/ui/components/typography";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { marked } from "marked";
-
-function extractToc(content: string): TocItem[] {
-  const headingRegex = /^(#{2,4})\s+(.+)$/gm;
-  const toc: TocItem[] = [];
-  let match: RegExpExecArray | null;
-
-  while ((match = headingRegex.exec(content)) !== null) {
-    const title = match[2]!.trim();
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-    toc.push({
-      title,
-      url: `#${slug}`,
-      depth: match[1]!.length,
-    });
-  }
-
-  return toc;
-}
 
 async function getDocData(data: { slug: string }) {
   const [doc, allDocs, groupedDocs] = await Promise.all([
@@ -50,12 +28,13 @@ async function getDocData(data: { slug: string }) {
   const currentIndex = doc
     ? allDocs.findIndex((item) => item.slug === doc.slug)
     : -1;
+  const rendered = doc ? renderDoc(doc.content) : { html: "", toc: [] };
 
   return {
     doc,
     groupedDocs,
-    html: doc ? await marked.parse(doc.content) : "",
-    toc: doc ? extractToc(doc.content) : [],
+    html: rendered.html,
+    toc: rendered.toc,
     neighbours: {
       previous: currentIndex > 0 ? allDocs[currentIndex - 1] : null,
       next:

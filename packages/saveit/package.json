@@ -1,14 +1,25 @@
 {
-  "name": "saveit",
-  "version": "0.1.0",
+  "name": "saveitnow",
+  "version": "1.0.0",
   "description": "Official SaveIt.now SDK and CLI for managing bookmarks, tags, and more.",
-  "keywords": ["saveit", "bookmarks", "cli", "sdk", "saveit.now"],
+  "keywords": [
+    "saveit",
+    "saveitnow",
+    "bookmarks",
+    "cli",
+    "sdk",
+    "saveit.now",
+    "agent-skill"
+  ],
   "license": "MIT",
   "homepage": "https://saveit.now/docs/sdk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Melvynx/saveit.now-mono",
+    "url": "git+https://github.com/Melvynx/saveit.now.git",
     "directory": "packages/saveit"
+  },
+  "bugs": {
+    "url": "https://github.com/Melvynx/saveit.now/issues"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,11 +33,10 @@
     }
   },
   "bin": {
-    "saveit": "./dist/cli.js"
+    "saveitnow": "./dist/cli.js"
   },
   "files": [
     "dist",
-    "skills",
     "README.md"
   ],
   "scripts": {

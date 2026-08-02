@@ -17,6 +17,7 @@ import { Route as ToolsRouteImport } from "./routes/tools";
 import { Route as TermsRouteImport } from "./routes/terms";
 import { Route as TagsRouteImport } from "./routes/tags";
 import { Route as StartRouteImport } from "./routes/start";
+import { Route as SkillRouteImport } from "./routes/skill";
 import { Route as SigninRouteImport } from "./routes/signin";
 import { Route as ProducthuntRouteImport } from "./routes/producthunt";
 import { Route as PrivacyRouteImport } from "./routes/privacy";
@@ -116,6 +117,11 @@ const TagsRoute = TagsRouteImport.update({
 const StartRoute = StartRouteImport.update({
   id: "/start",
   path: "/start",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const SkillRoute = SkillRouteImport.update({
+  id: "/skill",
+  path: "/skill",
   getParentRoute: () => rootRouteImport,
 } as any);
 const SigninRoute = SigninRouteImport.update({
@@ -444,6 +450,7 @@ export interface FileRoutesByFullPath {
   "/privacy": typeof PrivacyRoute;
   "/producthunt": typeof ProducthuntRoute;
   "/signin": typeof SigninRoute;
+  "/skill": typeof SkillRoute;
   "/start": typeof StartRoute;
   "/tags": typeof TagsRoute;
   "/terms": typeof TermsRoute;
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   "/privacy": typeof PrivacyRoute;
   "/producthunt": typeof ProducthuntRoute;
   "/signin": typeof SigninRoute;
+  "/skill": typeof SkillRoute;
   "/start": typeof StartRoute;
   "/tags": typeof TagsRoute;
   "/terms": typeof TermsRoute;
@@ -584,6 +592,7 @@ export interface FileRoutesById {
   "/privacy": typeof PrivacyRoute;
   "/producthunt": typeof ProducthuntRoute;
   "/signin": typeof SigninRoute;
+  "/skill": typeof SkillRoute;
   "/start": typeof StartRoute;
   "/tags": typeof TagsRoute;
   "/terms": typeof TermsRoute;
@@ -656,6 +665,7 @@ export interface FileRouteTypes {
     | "/privacy"
     | "/producthunt"
     | "/signin"
+    | "/skill"
     | "/start"
     | "/tags"
     | "/terms"
@@ -725,6 +735,7 @@ export interface FileRouteTypes {
     | "/privacy"
     | "/producthunt"
     | "/signin"
+    | "/skill"
     | "/start"
     | "/tags"
     | "/terms"
@@ -795,6 +806,7 @@ export interface FileRouteTypes {
     | "/privacy"
     | "/producthunt"
     | "/signin"
+    | "/skill"
     | "/start"
     | "/tags"
     | "/terms"
@@ -866,6 +878,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute;
   ProducthuntRoute: typeof ProducthuntRoute;
   SigninRoute: typeof SigninRoute;
+  SkillRoute: typeof SkillRoute;
   StartRoute: typeof StartRoute;
   TagsRoute: typeof TagsRoute;
   TermsRoute: typeof TermsRoute;
@@ -947,6 +960,13 @@ declare module "@tanstack/react-router" {
       path: "/start";
       fullPath: "/start";
       preLoaderRoute: typeof StartRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/skill": {
+      id: "/skill";
+      path: "/skill";
+      fullPath: "/skill";
+      preLoaderRoute: typeof SkillRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/signin": {
@@ -1541,6 +1561,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProducthuntRoute: ProducthuntRoute,
   SigninRoute: SigninRoute,
+  SkillRoute: SkillRoute,
   StartRoute: StartRoute,
   TagsRoute: TagsRoute,
   TermsRoute: TermsRoute,
