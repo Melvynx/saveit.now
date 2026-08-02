@@ -87,4 +87,30 @@ describe("bookmark DTO mappers", () => {
       width: 1200,
     });
   });
+
+  it("keeps the tweet body in metadata while still stripping generic text", () => {
+    const tweetMetadata = {
+      tweetId: "1943",
+      tweetText: "Here is the actual tweet body.",
+      text: "legacy raw dump",
+    };
+
+    expect(cleanMetadataForStorage(tweetMetadata)).toEqual({
+      tweetId: "1943",
+      tweetText: "Here is the actual tweet body.",
+    });
+
+    expect(cleanMetadata(tweetMetadata)).toEqual({
+      tweetId: "1943",
+      tweetText: "Here is the actual tweet body.",
+    });
+
+    expect(
+      buildPublicBookmarkDTO({ ...baseBookmark, metadata: tweetMetadata })
+        .metadata,
+    ).toEqual({
+      tweetId: "1943",
+      tweetText: "Here is the actual tweet body.",
+    });
+  });
 });

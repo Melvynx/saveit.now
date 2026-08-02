@@ -57,6 +57,8 @@ import type * as integrations_state from "../integrations/state.js";
 import type * as integrations_workflows from "../integrations/workflows.js";
 import type * as lib_gemini_provider from "../lib/gemini_provider.js";
 import type * as lib_safe_fetch from "../lib/safe_fetch.js";
+import type * as migration_backfill_tweet_text from "../migration/backfill_tweet_text.js";
+import type * as migration_backfill_tweet_text_helpers from "../migration/backfill_tweet_text_helpers.js";
 import type * as migration_import from "../migration/import.js";
 import type * as migration_reembed from "../migration/reembed.js";
 import type * as migration_reembed_helpers from "../migration/reembed_helpers.js";
@@ -159,6 +161,8 @@ declare const fullApi: ApiFromModules<{
   "integrations/workflows": typeof integrations_workflows;
   "lib/gemini_provider": typeof lib_gemini_provider;
   "lib/safe_fetch": typeof lib_safe_fetch;
+  "migration/backfill_tweet_text": typeof migration_backfill_tweet_text;
+  "migration/backfill_tweet_text_helpers": typeof migration_backfill_tweet_text_helpers;
   "migration/import": typeof migration_import;
   "migration/reembed": typeof migration_reembed;
   "migration/reembed_helpers": typeof migration_reembed_helpers;

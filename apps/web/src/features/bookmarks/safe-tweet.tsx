@@ -14,7 +14,7 @@ import type { MediaDetails, Tweet as TweetApiData } from "react-tweet/api";
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_SUMMARY_LENGTH = 360;
-const MAX_TWEET_TEXT_LENGTH = 500;
+const MAX_TWEET_TEXT_LENGTH = 4000;
 
 type SafeTweetProps = {
   tweetId?: unknown;
@@ -101,6 +101,7 @@ const getTweetData = (tweet: unknown) => {
 
   return tweet as Partial<TweetApiData> & {
     tweetId?: unknown;
+    tweetText?: unknown;
     reply_count?: unknown;
     retweet_count?: unknown;
   };
@@ -186,7 +187,10 @@ const buildTweetViewModel = ({
     getSafeString(user?.name, MAX_TITLE_LENGTH) ??
     getSafeString(title, MAX_TITLE_LENGTH) ??
     "Tweet";
+  // `tweetText` is the stored tweet body; `text` only survives on bookmarks that
+  // predate the rename. The summary is a last-resort fallback.
   const safeText =
+    getSafeString(tweetData?.tweetText, MAX_TWEET_TEXT_LENGTH) ??
     getSafeString(tweetData?.text, MAX_TWEET_TEXT_LENGTH) ??
     getSafeString(summary, MAX_SUMMARY_LENGTH);
 

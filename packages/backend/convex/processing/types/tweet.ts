@@ -1,6 +1,7 @@
 export type TweetMetadata = {
   tweetId?: string;
-  text?: string;
+  /** Full tweet body. Named `tweetText` because `text` is stripped as sensitive. */
+  tweetText?: string;
   user?: {
     name: string;
     screen_name: string;

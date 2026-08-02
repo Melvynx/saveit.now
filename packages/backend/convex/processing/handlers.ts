@@ -87,7 +87,7 @@ async function generateAndCreateTagNames(
   return (result.object as { tags?: string[] }).tags ?? [];
 }
 
-function getTweetId(url: string): string | undefined {
+export function getTweetId(url: string): string | undefined {
   const urlObj = new URL(url);
   return urlObj.pathname.split("/").pop();
 }
@@ -182,6 +182,21 @@ export type HandlerResult = Record<string, unknown>;
 // ---------------------------------------------------------------------------
 // processTweetBookmark
 // ---------------------------------------------------------------------------
+
+// Metadata strings longer than 4096 chars are dropped entirely at storage time
+// (see utils/metadata.ts), so long-form X posts must be truncated to survive.
+const MAX_STORED_TWEET_TEXT_LENGTH = 4000;
+
+export function toStoredTweetText(text: unknown): string | undefined {
+  if (typeof text !== "string") return undefined;
+
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+
+  return trimmed.length > MAX_STORED_TWEET_TEXT_LENGTH
+    ? `${trimmed.slice(0, MAX_STORED_TWEET_TEXT_LENGTH)}…`
+    : trimmed;
+}
 
 export async function processTweetBookmark(
   ctx: ActionCtx,
@@ -294,7 +309,7 @@ ${tweetImageDescription}
     imageDescription: tweetImageDescription,
     metadata: {
       tweetId,
-      text: tweetRecord.text,
+      tweetText: toStoredTweetText(tweetRecord.text),
       id_str: tweetRecord.id_str,
       created_at: tweetRecord.created_at,
       favorite_count: tweetRecord.favorite_count,

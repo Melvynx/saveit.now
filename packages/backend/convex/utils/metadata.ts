@@ -1,3 +1,6 @@
+// NOTE: "text" is blocked here (it is the generic dump key used by scrapers for
+// full page bodies). The tweet body is therefore stored under the dedicated,
+// length-bounded `tweetText` key — see processing/handlers.ts.
 const SENSITIVE_METADATA_KEYS = new Set([
   "transcript",
   "rawtranscript",
@@ -65,6 +68,7 @@ const PUBLIC_METADATA_KEYS = new Set([
   "transcriptCharacterCount",
   "transcriptExtractedAt",
   "tweetId",
+  "tweetText",
   "pdfUrl",
   "screenshotUrl",
   "width",
