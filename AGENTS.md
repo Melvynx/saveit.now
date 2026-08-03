@@ -115,3 +115,7 @@ Convex agent skills for common tasks can be installed by running
 `npx convex ai-files install`.
 
 <!-- convex-ai-end -->
+
+## Proudction
+
+Use the skill [$dokploy](/Users/melvynx/.agents/skills/dokploy/SKILL.md) to handle production issues.
