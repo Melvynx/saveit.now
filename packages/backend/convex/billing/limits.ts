@@ -12,7 +12,12 @@ import { components } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../functions";
 import { throwLimitReached } from "../utils/errors";
-import { deriveEffectivePlan, getLimits, PLANS } from "./plans";
+import {
+  deriveEffectivePlan,
+  getCanonicalSubscription,
+  getLimits,
+  PLANS,
+} from "./plans";
 
 /**
  * startOfMonth — UTC start-of-month in milliseconds.
@@ -39,14 +44,15 @@ export async function assertCanCreateBookmark(
   });
   const metadata = (user as { metadata?: unknown } | null)?.metadata;
 
-  // 2. Get active subscription for this user.
-  const subscription = await ctx.db
+  // 2. Get canonical subscription for this user.
+  const subscriptions = await ctx.db
     .query("subscriptions")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .first();
+    .order("desc")
+    .take(20);
 
   // 3. Derive plan.
-  const plan = deriveEffectivePlan(subscription);
+  const plan = deriveEffectivePlan(getCanonicalSubscription(subscriptions));
 
   // 4. Compute effective limits (custom overrides plan defaults).
   const limits = getLimits(plan as "free" | "pro", metadata);
@@ -95,12 +101,13 @@ export async function assertCanRunProcessing(
   });
   const metadata = (user as { metadata?: unknown } | null)?.metadata;
 
-  const subscription = await ctx.db
+  const subscriptions = await ctx.db
     .query("subscriptions")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .first();
+    .order("desc")
+    .take(20);
 
-  const plan = deriveEffectivePlan(subscription);
+  const plan = deriveEffectivePlan(getCanonicalSubscription(subscriptions));
 
   const limits = getLimits(plan as "free" | "pro", metadata);
 
@@ -160,13 +167,14 @@ export async function shouldSendLimitEmail(
     | undefined;
 
   // 2. Check subscription status.
-  const subscription = await ctx.db
+  const subscriptions = await ctx.db
     .query("subscriptions")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .first();
+    .order("desc")
+    .take(20);
 
   // Only applies to free plan users.
-  if (deriveEffectivePlan(subscription) === "pro") {
+  if (deriveEffectivePlan(getCanonicalSubscription(subscriptions)) === "pro") {
     return false;
   }
 
