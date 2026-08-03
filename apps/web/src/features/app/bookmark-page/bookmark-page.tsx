@@ -65,7 +65,7 @@ function BookmarkDetailSkeletonContent() {
     <div
       aria-busy="true"
       data-testid="bookmark-detail-skeleton"
-      className="flex h-full min-h-0 flex-col overflow-hidden md:grid md:grid-cols-[1.4fr_1fr]"
+      className="flex h-full min-h-0 flex-col overflow-hidden md:grid md:grid-cols-[1.4fr_1fr] xl:grid-cols-[1fr_minmax(24rem,32rem)]"
     >
       <span className="sr-only">Loading bookmark details</span>
 
@@ -135,7 +135,7 @@ function BookmarkDetailShell({
   if (renderMode === "page") {
     return (
       <main className="bg-muted/40 min-h-dvh p-4">
-        <section className="bg-background mx-auto h-[calc(100dvh-2rem)] max-w-6xl overflow-hidden rounded-lg border">
+        <section className="bg-background mx-auto h-[calc(100dvh-2rem)] w-full max-w-[min(96vw,1800px)] overflow-hidden rounded-lg border">
           <h1 className="sr-only">{title}</h1>
           {children}
         </section>
@@ -147,11 +147,7 @@ function BookmarkDetailShell({
     <InterceptDialog fallbackTo="/app" onClose={onClose}>
       <DialogContent
         disableClose
-        className="flex flex-col gap-0 overflow-hidden p-0"
-        style={{
-          maxWidth: "min(calc(100vw - 32px), 1100px)",
-          height: "min(calc(100dvh - 32px), 680px)",
-        }}
+        className="flex h-[min(92dvh,1100px)] w-[min(92vw,1800px)] max-w-[min(92vw,1800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(92vw,1800px)]"
         onEscapeKeyDown={onClose}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
@@ -245,7 +241,7 @@ function BookmarkDetail({
     renderMode === "dialog" ? handleClose : () => router.history.back();
 
   const content = (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto md:grid md:grid-cols-[1.4fr_1fr] md:overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto md:grid md:grid-cols-[1.4fr_1fr] md:overflow-hidden xl:grid-cols-[1fr_minmax(24rem,32rem)]">
       {/* Left pane — hero preview */}
       <div className="bg-muted/30 flex flex-col border-b md:min-h-0 md:border-r md:border-b-0">
         <div className="relative h-56 overflow-hidden md:h-auto md:min-h-0 md:flex-1">
