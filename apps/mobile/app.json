@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026072002",
+      "buildNumber": "2026080601",
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

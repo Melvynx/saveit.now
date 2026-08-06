@@ -18,18 +18,24 @@ import {
 } from "@react-navigation/native";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
-import { ShareIntentProvider } from "expo-share-intent";
-import { Stack } from "expo-router";
+import { ShareIntentProvider, useShareIntentContext } from "expo-share-intent";
+import {
+  Stack,
+  useRootNavigationState,
+  useRouter,
+  useSegments,
+} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
 import "../global.css";
 import { themeColors, useAppTheme } from "../src/lib/theme";
-import { AuthProvider } from "../src/contexts/AuthContext";
+import { AuthProvider, useAuth } from "../src/contexts/AuthContext";
 import { authClient } from "../src/lib/auth-client";
 import { mobileConfig } from "../src/lib/config";
 import { useIapRecovery } from "../src/lib/hooks/use-iap-recovery";
+import { deriveShareNavigationState } from "../src/lib/share-navigation-state";
 
 // Convex client — singleton outside component to avoid re-creation on re-renders.
 const convex = new ConvexReactClient(mobileConfig.convexUrl, {
@@ -123,6 +129,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <ShareIntentNavigator />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
@@ -154,7 +161,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="share-handler"
           options={{
-            presentation: "modal",
+            presentation: "transparentModal",
+            animation: "fade",
+            contentStyle: { backgroundColor: "transparent" },
+            gestureEnabled: false,
             headerShown: false,
           }}
         />
@@ -173,4 +183,60 @@ function RootLayoutNav() {
       </Stack>
     </ThemeProvider>
   );
+}
+
+function ShareIntentNavigator() {
+  const { hasShareIntent, isReady } = useShareIntentContext();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
+  const segments = useSegments();
+  const isPresentingRef = useRef(false);
+  const currentSegments: readonly string[] = segments;
+  const routeKey = currentSegments.join("/");
+  const navigationState = deriveShareNavigationState({
+    hasUser: Boolean(user),
+    onboarding: user?.onboarding,
+    segments: currentSegments,
+  });
+
+  useLayoutEffect(() => {
+    if (!hasShareIntent) {
+      isPresentingRef.current = false;
+      return;
+    }
+
+    if (!isReady || !rootNavigationState?.key) return;
+
+    if (navigationState.isShareRoute) {
+      if (isPresentingRef.current) return;
+      router.replace(isLoading ? "/" : navigationState.underlayRoute);
+      return;
+    }
+
+    if (isLoading) return;
+
+    if (!navigationState.hasValidUnderlay) {
+      router.replace(navigationState.underlayRoute);
+      return;
+    }
+
+    if (isPresentingRef.current) return;
+
+    isPresentingRef.current = true;
+    router.push({ pathname: "/share-handler", params: { presented: "1" } });
+  }, [
+    hasShareIntent,
+    isLoading,
+    isReady,
+    navigationState.hasValidUnderlay,
+    navigationState.isShareRoute,
+    navigationState.underlayRoute,
+    rootNavigationState?.key,
+    routeKey,
+    router,
+    user,
+  ]);
+
+  return null;
 }

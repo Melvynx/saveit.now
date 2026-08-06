@@ -1,5 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useShareIntentContext } from "expo-share-intent";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Modal, View, useWindowDimensions } from "react-native";
 
@@ -14,9 +13,6 @@ import SignInScreen, {
 export default function IndexPage() {
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
-  const params = useLocalSearchParams();
-  const { hasShareIntent, isReady: isShareIntentReady } =
-    useShareIntentContext();
   const { user, isLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -41,13 +37,10 @@ export default function IndexPage() {
 
   useFocusEffect(
     useCallback(() => {
-      if (isLoading || isNavigating || !isShareIntentReady) return;
+      if (isLoading || isNavigating) return;
 
       const handleNavigation = () => {
-        if (hasShareIntent || params.dataUrl) {
-          setIsNavigating(true);
-          router.replace("/share-handler");
-        } else if (user) {
+        if (user) {
           setIsNavigating(true);
           setShowSignIn(false);
           router.replace(user.onboarding === false ? "/welcome" : "/(tabs)");
@@ -56,15 +49,7 @@ export default function IndexPage() {
 
       const timer = setTimeout(handleNavigation, 100);
       return () => clearTimeout(timer);
-    }, [
-      hasShareIntent,
-      isNavigating,
-      isLoading,
-      isShareIntentReady,
-      params.dataUrl,
-      router,
-      user,
-    ]),
+    }, [isNavigating, isLoading, router, user]),
   );
 
   // Show onboarding/sign-in when user is not authenticated

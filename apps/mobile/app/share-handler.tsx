@@ -1,15 +1,17 @@
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ShareIntent, useShareIntentContext } from "expo-share-intent";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ShareSaveDialog,
   type ShareSaveError,
 } from "../src/components/share/share-save-dialog";
+import { LoadingScreen } from "../src/components/ui";
 import { useAuth } from "../src/contexts/AuthContext";
 import { hapticSuccess, hapticWarning } from "../src/lib/haptics";
+import { deriveShareSaveState } from "../src/lib/share-save-state";
 import {
   getShareIntentPayload,
   type ShareIntentPayload,
@@ -104,6 +106,8 @@ function getShareIntentSignature(shareIntent: ShareIntent) {
 }
 
 export default function ShareHandler() {
+  const { presented } = useLocalSearchParams<{ presented?: string }>();
+  const isPresentedOverApp = presented === "1";
   const {
     isReady,
     hasShareIntent,
@@ -126,6 +130,15 @@ export default function ShareHandler() {
   const emptyStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProcessedShareIntentRef = useRef<string | null>(null);
+  const activeSaveAttemptRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      activeSaveAttemptRef.current += 1;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;
@@ -155,6 +168,7 @@ export default function ShareHandler() {
     if (!hasNewShareIntent && (payload || payloadError)) return;
 
     if (hasNewShareIntent) {
+      activeSaveAttemptRef.current += 1;
       lastProcessedShareIntentRef.current = shareIntentSignature;
       setPayload(null);
       setPayloadError(null);
@@ -181,18 +195,32 @@ export default function ShareHandler() {
     setPayloadError(null);
   }, [hasShareIntent, payloadError?.code]);
 
-  const needsAuth = Boolean(payload && !isAuthLoading && !user);
   const destinationAfterShare = !user
     ? "/"
     : user.onboarding === false
       ? "/welcome"
       : "/(tabs)";
-  const isSavingPending = Boolean(
-    payload && !payloadError && !shareIntentError && !saveError && !needsAuth,
-  );
+  const shareSaveState = deriveShareSaveState({
+    hasPayload: isPresentedOverApp && Boolean(payload),
+    hasBlockingError: Boolean(payloadError || shareIntentError || saveError),
+    isAuthLoading,
+    hasUser: Boolean(user),
+    isAuthenticated,
+    hasStartedCreate,
+  });
+  const { needsAuth, isWaitingForAuth, isSaveAttemptInFlight } = shareSaveState;
+  const leaveShareFlow = useCallback(() => {
+    activeSaveAttemptRef.current += 1;
+    resetShareIntent();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(destinationAfterShare);
+    }
+  }, [destinationAfterShare, resetShareIntent, router]);
 
   useEffect(() => {
-    if (!isSavingPending) {
+    if (!isSaveAttemptInFlight) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = null;
@@ -201,6 +229,7 @@ export default function ShareHandler() {
     }
 
     saveTimeoutRef.current = setTimeout(() => {
+      activeSaveAttemptRef.current += 1;
       hapticWarning();
       setSaveError({
         title: "Something went wrong",
@@ -215,14 +244,13 @@ export default function ShareHandler() {
         saveTimeoutRef.current = null;
       }
     };
-  }, [isSavingPending]);
+  }, [isSaveAttemptInFlight]);
 
   useEffect(() => {
-    if (!payload || !isAuthenticated || hasStartedCreate || saveError) {
-      return;
-    }
+    if (!payload || !shareSaveState.canStartCreate) return;
 
-    let cancelled = false;
+    const attemptId = activeSaveAttemptRef.current + 1;
+    activeSaveAttemptRef.current = attemptId;
     setHasStartedCreate(true);
 
     void createBookmark({
@@ -230,37 +258,35 @@ export default function ShareHandler() {
       metadata: payload.metadata,
     })
       .then(() => {
-        if (cancelled) return;
+        if (
+          !isMountedRef.current ||
+          activeSaveAttemptRef.current !== attemptId
+        ) {
+          return;
+        }
         hapticSuccess();
-        resetShareIntent();
-        router.replace(destinationAfterShare);
+        leaveShareFlow();
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (
+          !isMountedRef.current ||
+          activeSaveAttemptRef.current !== attemptId
+        ) {
+          return;
+        }
+        const errorCopy = mutationErrorToCopy(err);
+        if (errorCopy.title === "Already saved") {
+          hapticSuccess();
+          leaveShareFlow();
+          return;
+        }
         hapticWarning();
-        setSaveError(mutationErrorToCopy(err));
+        setSaveError(errorCopy);
       });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    createBookmark,
-    destinationAfterShare,
-    hasStartedCreate,
-    isAuthenticated,
-    payload,
-    resetShareIntent,
-    router,
-    saveError,
-  ]);
-
-  const closeShareFlow = () => {
-    resetShareIntent();
-    router.replace(destinationAfterShare);
-  };
+  }, [createBookmark, leaveShareFlow, payload, shareSaveState.canStartCreate]);
 
   const retrySave = () => {
+    activeSaveAttemptRef.current += 1;
     setSaveError(null);
     setHasStartedCreate(false);
   };
@@ -283,13 +309,24 @@ export default function ShareHandler() {
     ? activeError.title
     : needsAuth
       ? "Sign in to save"
-      : "Saving to SaveIt";
+      : isWaitingForAuth
+        ? "Preparing SaveIt"
+        : "Saving to SaveIt";
 
   const message = activeError
     ? activeError.message
     : needsAuth
       ? "Use your SaveIt account and this share will continue automatically."
-      : "Adding the shared link to your library.";
+      : isWaitingForAuth
+        ? "Securing your session before saving this link."
+        : "Adding the shared link to your library.";
+
+  // Native share intents can cold-open this route directly. Keep that route
+  // inert while the root navigator restores the authenticated app underlay;
+  // only the coordinator-presented route may render or save.
+  if (!isPresentedOverApp) {
+    return <LoadingScreen />;
+  }
 
   return (
     <ShareSaveDialog
@@ -306,7 +343,7 @@ export default function ShareHandler() {
       onOtpChange={setOtp}
       onSignInStepChange={setSignInStep}
       saveError={saveError}
-      onClose={closeShareFlow}
+      onClose={leaveShareFlow}
       onRetry={retrySave}
     />
   );

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
+import { useConvexAuth } from "convex/react";
 import { authClient } from "../lib/auth-client";
+import { deriveAuthState } from "./auth-state";
 
 interface User {
   id: string;
@@ -32,11 +34,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isConvexTokenReady, setIsConvexTokenReady] = useState(false);
   const [hasResolvedSession, setHasResolvedSession] = useState(false);
   const session = authClient.useSession();
-  const sessionId = session.data?.session?.id ?? null;
   const baUser = session.data?.user ?? null;
+  const convexAuth = useConvexAuth();
 
   // Better Auth re-enters `isPending` on every app-foreground refetch when the
   // user is signed out (its query only keeps isPending=false while data is
@@ -48,50 +49,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session.isPending]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setIsConvexTokenReady(false);
+  const authState = deriveAuthState({
+    sessionPending: session.isPending,
+    hasResolvedSession,
+    hasSessionUser: Boolean(baUser),
+    convexAuthLoading: convexAuth.isLoading,
+    convexAuthenticated: convexAuth.isAuthenticated,
+  });
 
-    if (!sessionId) {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    void authClient.convex
-      .token({ fetchOptions: { throw: false } })
-      .then(({ data }) => {
-        if (!cancelled) {
-          setIsConvexTokenReady(Boolean(data?.token));
+  // A Better Auth session can resolve before Convex has installed its JWT.
+  // Do not expose that user to query consumers until the provider confirms it.
+  const user: User | null =
+    baUser && authState.canExposeUser
+      ? {
+          id: baUser.id,
+          email: baUser.email,
+          name: baUser.name ?? undefined,
+          image: (baUser as any).image ?? null,
+          onboarding: (baUser as any).onboarding ?? null,
         }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setIsConvexTokenReady(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId]);
-
-  // Build a User shape compatible with the existing consumers.
-  const user: User | null = baUser
-    ? {
-        id: baUser.id,
-        email: baUser.email,
-        name: baUser.name ?? undefined,
-        image: (baUser as any).image ?? null,
-        onboarding: (baUser as any).onboarding ?? null,
-      }
-    : null;
-
-  const hasBetterAuthSession = !!user;
-  const isAuthenticated = hasBetterAuthSession && isConvexTokenReady;
-  const isLoading =
-    (session.isPending && !hasResolvedSession) ||
-    (hasBetterAuthSession && !isConvexTokenReady);
+      : null;
+  const { isAuthenticated, isLoading } = authState;
 
   const sendOTP = async (email: string) => {
     const result = await authClient.emailOtp.sendVerificationOtp({
