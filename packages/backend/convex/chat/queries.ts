@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
-import { deriveEffectivePlan } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  getCanonicalSubscription,
+} from "../billing/plans";
 import { authQuery } from "../functions";
 import { startOfMonth } from "./usage";
 import type { Doc } from "../_generated/dataModel";
@@ -168,12 +171,9 @@ export const getChatUsage = authQuery({
     const allSubs = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .take(10);
-    const plan = allSubs.some(
-      (subscription) => deriveEffectivePlan(subscription) === "pro",
-    )
-      ? "pro"
-      : "free";
+      .order("desc")
+      .take(20);
+    const plan = deriveEffectivePlan(getCanonicalSubscription(allSubs));
 
     // Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {

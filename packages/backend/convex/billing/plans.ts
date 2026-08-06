@@ -39,6 +39,8 @@ export type SubscriptionPlanState = {
   plan?: string | null;
   provider?: "stripe" | "appstore" | "manual" | null;
   status?: string | null;
+  createdAt?: number | null;
+  updatedAt?: number | null;
 };
 // Plain numeric shape (NOT the `as const` literal union) so merged/custom
 // limits and runtime-computed values assign cleanly.
@@ -71,6 +73,39 @@ export function isLifetimeSubscription(
     subscription.provider === "manual" &&
     subscription.status === "lifetime"
   );
+}
+
+function subscriptionTimestamp(subscription: SubscriptionPlanState): number {
+  return subscription.updatedAt ?? subscription.createdAt ?? 0;
+}
+
+/**
+ * Pick the one subscription row that should drive entitlement/limits.
+ * Manual lifetime grants are durable and win over billing-provider rows;
+ * otherwise the newest row wins so an old active row cannot keep granting Pro
+ * after a later cancellation/downgrade row exists.
+ */
+export function getCanonicalSubscription<T extends SubscriptionPlanState>(
+  subscriptions: readonly T[],
+): T | null {
+  let best: T | null = null;
+
+  for (const subscription of subscriptions) {
+    if (isLifetimeSubscription(subscription)) {
+      if (!best || !isLifetimeSubscription(best)) {
+        best = subscription;
+        continue;
+      }
+    } else if (best && isLifetimeSubscription(best)) {
+      continue;
+    }
+
+    if (!best || subscriptionTimestamp(subscription) > subscriptionTimestamp(best)) {
+      best = subscription;
+    }
+  }
+
+  return best;
 }
 
 /**
