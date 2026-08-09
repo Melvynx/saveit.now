@@ -10,6 +10,16 @@ const forwardedRequestHeaders = [
   "x-real-ip",
 ] as const;
 
+function getClientIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  return (
+    request.headers.get("cf-connecting-ip") ??
+    forwardedFor?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip")
+  );
+}
+
 function getProxyHeaders(request: Request) {
   const headers = new Headers();
 
@@ -17,6 +27,9 @@ function getProxyHeaders(request: Request) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
+
+  const clientIp = getClientIp(request);
+  if (clientIp) headers.set("X-Umami-Real-IP", clientIp);
 
   return headers;
 }
