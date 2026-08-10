@@ -15,10 +15,11 @@ import {
   query,
 } from "../functions";
 import { throwForbidden } from "../utils/errors";
+import {
+  EMBEDDING_DIMENSIONS as CURRENT_EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL_KEY as CURRENT_EMBEDDING_MODEL_KEY,
+} from "../processing/embedding_format";
 
-// Keep in sync with processing/embeddings.ts (cannot import "use node" module here).
-const CURRENT_EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
-const CURRENT_EMBEDDING_DIMENSIONS = 1536;
 const DEFAULT_INSPECT_LIMIT = 100;
 const MAX_INSPECT_LIMIT = 500;
 const DEFAULT_BATCH_SIZE = 20;
