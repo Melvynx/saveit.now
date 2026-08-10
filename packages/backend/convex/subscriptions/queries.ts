@@ -8,9 +8,12 @@ import { authQuery } from "../functions";
 import {
   deriveEffectivePlan,
   getLimits,
+  pickCanonicalSubscription,
   parseCustomLimits,
 } from "../billing/plans";
 import type { Id } from "../_generated/dataModel";
+
+const SUBSCRIPTION_PER_USER_LIMIT = 20;
 
 /**
  * SubscriptionDTO shape.
@@ -67,10 +70,12 @@ export const getMine = authQuery({
   handler: async (ctx): Promise<SubscriptionDTO | null> => {
     const { user } = ctx;
 
-    const sub = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", user.id))
-      .first();
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const sub = pickCanonicalSubscription(subscriptions);
 
     if (!sub) return null;
 
@@ -101,10 +106,12 @@ export const getUserPlan = authQuery({
     const { user } = ctx;
 
     // 1. Fetch subscription (may be null → free).
-    const sub = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", user.id))
-      .first();
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const sub = pickCanonicalSubscription(subscriptions);
 
     // 2. Derive plan from subscription status.
     const plan = deriveEffectivePlan(sub);
