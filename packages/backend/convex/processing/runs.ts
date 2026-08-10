@@ -3,9 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { cleanMetadataForStorage } from "../utils/metadata";
-
-// Embedding model key constant (duplicated here to avoid importing from "use node" module)
-const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
+import { EMBEDDING_MODEL_KEY } from "./embedding_format";
 
 /**
  * getForProcessing — minimal lookup for the workflow's get-bookmark step.

@@ -22,19 +22,36 @@ describe("Gemini model configuration", () => {
   });
 
   it("keeps Gemini embeddings on the 1536-dimension Convex vector index", () => {
-    const embeddings = readProjectFile("../../packages/backend/convex/processing/embeddings.ts");
+    const format = readProjectFile(
+      "../../packages/backend/convex/processing/embedding_format.ts",
+    );
     const schema = readProjectFile("../../packages/backend/convex/schema.ts");
 
-    expect(embeddings).toContain('EMBEDDING_MODEL = "gemini-embedding-2"');
-    expect(embeddings).toContain("EMBEDDING_DIMENSIONS = 1536");
-    expect(embeddings).toContain('EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536"');
+    expect(format).toContain('EMBEDDING_MODEL = "gemini-embedding-2"');
+    expect(format).toContain("EMBEDDING_DIMENSIONS = 1536");
+    expect(format).toContain(
+      "EMBEDDING_MODEL_KEY = `${EMBEDDING_MODEL}:${EMBEDDING_DIMENSIONS}:${EMBEDDING_PROMPT_VERSION}`",
+    );
+    expect(format).toContain('EMBEDDING_PROMPT_VERSION = "search-result-v1"');
     expect(schema).toContain("dimensions: 1536");
   });
 
-  it("sets distinct Gemini task types for document and query embeddings", () => {
-    const content = readProjectFile("../../packages/backend/convex/processing/embeddings.ts");
+  it("uses matched Gemini Embeddings 2 prompt formats without unsupported taskType options", () => {
+    const embeddings = readProjectFile(
+      "../../packages/backend/convex/processing/embeddings.ts",
+    );
+    const format = readProjectFile(
+      "../../packages/backend/convex/processing/embedding_format.ts",
+    );
+    const search = readProjectFile(
+      "../../packages/backend/convex/search/actions.ts",
+    );
 
-    expect(content).toContain('taskType: "RETRIEVAL_DOCUMENT"');
-    expect(content).toContain('taskType: "RETRIEVAL_QUERY"');
+    expect(format).toContain("task: search result | query: ${text}");
+    expect(format).toContain(
+      'title: ${title?.trim() || "none"} | text: ${text}',
+    );
+    expect(embeddings).not.toContain("taskType");
+    expect(search).not.toContain("taskType");
   });
 });

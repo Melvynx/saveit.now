@@ -27,13 +27,17 @@ function readProjectFile(relativePath: string) {
 describe("AI model migration", () => {
   it("uses the active Gemini generation and embedding defaults", () => {
     const gemini = readProjectFile("../../packages/backend/convex/processing/gemini.ts");
-    const embeddings = readProjectFile("../../packages/backend/convex/processing/embeddings.ts");
+    const embeddingFormat = readProjectFile(
+      "../../packages/backend/convex/processing/embedding_format.ts",
+    );
 
     expect(gemini).toContain('cheap: "gemini-3.1-flash-lite"');
     expect(gemini).toContain('normal: "gemini-3.1-pro-preview"');
     expect(gemini).toContain('embedding: "gemini-embedding-2"');
-    expect(embeddings).toContain('EMBEDDING_MODEL = "gemini-embedding-2"');
-    expect(embeddings).toContain('EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536"');
+    expect(embeddingFormat).toContain('EMBEDDING_MODEL = "gemini-embedding-2"');
+    expect(embeddingFormat).toContain(
+      'EMBEDDING_PROMPT_VERSION = "search-result-v1"',
+    );
   });
 
   it("keeps bookmark processing and search off OpenAI generation and embedding models", () => {

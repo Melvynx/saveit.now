@@ -16,6 +16,12 @@ import { internalAction } from "../_generated/server";
 import { authAction } from "../functions";
 import { bookmarkType } from "../schema";
 import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MODEL_KEY,
+  EMBEDDING_PROVIDER_OPTIONS,
+  formatSearchQuery,
+} from "../processing/embedding_format";
+import {
   applyOpenFrequencyBoost,
   bookmarkToSearchResult,
   extractDomain,
@@ -31,7 +37,6 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
 const VECTOR_SEARCH_DEFAULT_CANDIDATE_LIMIT = 50;
 const VECTOR_SEARCH_FILTERED_CANDIDATE_LIMIT = 256;
 
@@ -46,14 +51,9 @@ async function embedQueryLocal(text: string): Promise<number[]> {
   const google = createGoogleGenerativeAI({});
 
   const result = await embed({
-    model: google.embeddingModel("gemini-embedding-2"),
-    value: text,
-    providerOptions: {
-      google: {
-        outputDimensionality: 1536,
-        taskType: "RETRIEVAL_QUERY",
-      },
-    },
+    model: google.embeddingModel(EMBEDDING_MODEL),
+    value: formatSearchQuery(text),
+    providerOptions: EMBEDDING_PROVIDER_OPTIONS,
   });
 
   return result.embedding;

@@ -54,7 +54,7 @@ export default defineSchema({
     read: v.boolean(),
     // search — single combined embedding (1536-d) is the indexed field
     searchEmbedding: v.optional(v.array(v.float64())),
-    embeddingModel: v.optional(v.string()), // e.g. "gemini-embedding-001:1536"
+    embeddingModel: v.optional(v.string()), // e.g. "gemini-embedding-2:1536:search-result-v1"
     // processing progress (drives reactive UI; replaces Inngest realtime)
     processingStep: v.optional(v.number()),
     processingError: v.optional(v.string()),

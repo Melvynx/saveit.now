@@ -5,26 +5,21 @@ import { embed, embedMany } from "ai";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MODEL_KEY,
+  EMBEDDING_PROVIDER_OPTIONS,
+  formatSearchDocument,
+  formatSearchQuery,
+} from "./embedding_format";
 
 const google = createGoogleGenerativeAI({});
 
-export const EMBEDDING_MODEL = "gemini-embedding-2";
-export const EMBEDDING_DIMENSIONS = 1536;
-export const EMBEDDING_MODEL_KEY = "gemini-embedding-2:1536";
-
-const DOCUMENT_PROVIDER_OPTIONS = {
-  google: {
-    outputDimensionality: EMBEDDING_DIMENSIONS,
-    taskType: "RETRIEVAL_DOCUMENT",
-  },
-} as const;
-
-const QUERY_PROVIDER_OPTIONS = {
-  google: {
-    outputDimensionality: EMBEDDING_DIMENSIONS,
-    taskType: "RETRIEVAL_QUERY",
-  },
-} as const;
+export {
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+  EMBEDDING_MODEL_KEY,
+} from "./embedding_format";
 
 function getEmbeddingModel() {
   return google.embeddingModel(EMBEDDING_MODEL);
@@ -38,8 +33,8 @@ export async function embedDocument(text: string): Promise<number[]> {
   const model = getEmbeddingModel();
   const result = await embed({
     model,
-    value: text,
-    providerOptions: DOCUMENT_PROVIDER_OPTIONS,
+    value: formatSearchDocument(text),
+    providerOptions: EMBEDDING_PROVIDER_OPTIONS,
   });
   return result.embedding;
 }
@@ -51,8 +46,8 @@ export async function embedQuery(text: string): Promise<number[]> {
   const model = getEmbeddingModel();
   const result = await embed({
     model,
-    value: text,
-    providerOptions: QUERY_PROVIDER_OPTIONS,
+    value: formatSearchQuery(text),
+    providerOptions: EMBEDDING_PROVIDER_OPTIONS,
   });
   return result.embedding;
 }
@@ -66,8 +61,8 @@ export async function embedGeminiDocuments(
   const model = getEmbeddingModel();
   const result = await embedMany({
     model,
-    values,
-    providerOptions: DOCUMENT_PROVIDER_OPTIONS,
+    values: values.map((value) => formatSearchDocument(value)),
+    providerOptions: EMBEDDING_PROVIDER_OPTIONS,
   });
   return { embeddings: result.embeddings };
 }
