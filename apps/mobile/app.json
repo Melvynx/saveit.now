@@ -2,7 +2,7 @@
   "expo": {
     "name": "SaveIt",
     "slug": "saveit-mobile",
-    "version": "3.2.0",
+    "version": "3.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "saveit",
@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "now.saveit.saveitapp",
       "icon": "./assets/images/icon.png",
-      "buildNumber": "2026080601",
+      "buildNumber": "2026081101",
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

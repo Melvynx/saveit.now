@@ -38,7 +38,7 @@ jest.mock("../src/components/share/share-save-dialog", () => ({
 
 const React = require("react");
 const TestRenderer = require("react-test-renderer");
-const ShareHandler = require("./share-handler").default;
+const ShareHandler = require("../app/share-handler").default;
 const { act } = TestRenderer;
 
 function deferred() {
