@@ -49,7 +49,12 @@ export const safeToolFetch = internalAction({
 
     if (method === "HEAD" || !args.readBody) {
       await response.body?.cancel();
-      return { ok: response.ok, status: response.status, contentType, body: "" };
+      return {
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        body: "",
+      };
     }
 
     const declaredLength = Number(response.headers.get("content-length") ?? 0);
@@ -58,11 +63,40 @@ export const safeToolFetch = internalAction({
       throw new Error("Response is too large");
     }
 
-    const text = await response.text();
-    if (new TextEncoder().encode(text).byteLength > maxBytes) {
-      throw new Error("Response is too large");
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return {
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        body: "",
+      };
     }
 
-    return { ok: response.ok, status: response.status, contentType, body: text };
+    const decoder = new TextDecoder();
+    let body = "";
+    let receivedBytes = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        receivedBytes += value.byteLength;
+        if (receivedBytes > maxBytes) {
+          throw new Error("Response is too large");
+        }
+
+        body += decoder.decode(value, { stream: true });
+      }
+      body += decoder.decode();
+    } catch (error) {
+      await reader.cancel().catch(() => undefined);
+      throw error;
+    } finally {
+      reader.releaseLock();
+    }
+
+    return { ok: response.ok, status: response.status, contentType, body };
   },
 });

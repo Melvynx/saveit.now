@@ -32,6 +32,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { useState } from "react";
+import { Streamdown } from "streamdown";
 import { extractContentResponseSchema } from "@/lib/tools/schemas/extract-content";
 
 export function ExtractContentTool() {
@@ -269,16 +270,11 @@ export function ExtractContentTool() {
                       {mutation.data.content.title}
                     </Typography>
                     <hr className="mb-4 border-border" />
-                    <div
-                      className="whitespace-pre-wrap leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: mutation.data.content.markdown
-                          .replace(/^# .*/gm, "") // Remove h1 headers
-                          .replace(/\n/g, "<br/>")
-                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                          .replace(/\*(.*?)\*/g, "<em>$1</em>"),
-                      }}
-                    />
+                    <div className="whitespace-pre-wrap leading-relaxed">
+                      <Streamdown mode="static">
+                        {mutation.data.content.markdown.replace(/^# .*/gm, "")}
+                      </Streamdown>
+                    </div>
                   </div>
                 </TabsContent>
 

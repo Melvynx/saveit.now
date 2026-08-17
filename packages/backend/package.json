@@ -30,6 +30,7 @@
     "convex": "^1.40.0",
     "convex-helpers": "^0.1.116",
     "image-size": "^2.0.2",
+    "ipaddr.js": "^2.5.0",
     "lumail": "^0.1.5",
     "mime-types": "^3.0.2",
     "react": "^19.2.4",
@@ -38,6 +39,7 @@
     "stripe": "17.7.0",
     "turndown": "^7.2.2",
     "ulid": "^3.0.1",
+    "undici": "6.24.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

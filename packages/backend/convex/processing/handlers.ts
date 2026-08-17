@@ -13,7 +13,6 @@ import { z } from "zod";
 import * as cheerio from "cheerio";
 // @ts-ignore — turndown has no official TS types in this runtime
 import TurndownService from "turndown";
-import { imageSize } from "image-size";
 import { getTweet } from "react-tweet/api";
 import {
   generateSummary,
@@ -39,11 +38,17 @@ import {
   analyzeScreenshot,
   analyzeScreenshotWithPrompt,
   analyzeScreenshotBuffer,
+  fetchScreenshotImage,
   isScreenshotUrlValid,
 } from "./screenshot";
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
 import { withGeminiFallback } from "../lib/gemini_provider";
 import { safeFetch } from "../lib/safe_fetch";
+import { readBoundedResponseBytes } from "../lib/bounded_response";
+import { parseSafeImageDimensions } from "./safe_image_size";
+
+const MAX_PROCESSING_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_PROCESSING_PDF_BYTES = 20 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -292,9 +297,7 @@ ${tweetImageDescription}
   // Embed
   let searchEmbedding: number[] | undefined;
   if (vectorSummary || summary) {
-    const text = vectorSummary
-      ? data.title + "\n" + vectorSummary
-      : data.title;
+    const text = vectorSummary ? data.title + "\n" + vectorSummary : data.title;
     searchEmbedding = await embedDocument(text);
   }
 
@@ -349,10 +352,10 @@ export async function processYouTubeBookmark(
   const youtubeId = getVideoId(bookmark.url);
 
   // Fetch metadata via internal action
-  const videoInfo = await ctx.runAction(
+  const videoInfo = (await ctx.runAction(
     internal.processing.youtube.fetchYouTubeMetadata,
     { videoId: youtubeId },
-  ) as { title: string; thumbnail: string; transcript?: string };
+  )) as { title: string; thumbnail: string; transcript?: string };
 
   const transcript = videoInfo.transcript;
   const transcriptSource = videoInfo.transcript ? "api" : "none";
@@ -415,8 +418,12 @@ export async function processYouTubeBookmark(
   if (videoInfo.thumbnail) {
     try {
       const response = await fetch(videoInfo.thumbnail);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      const buffer = Buffer.from(
+        await readBoundedResponseBytes(response, {
+          maxBytes: MAX_PROCESSING_IMAGE_BYTES,
+          resourceName: "Image",
+        }),
+      );
       ogImageUrl = await uploadBuffer(
         ctx,
         buffer,
@@ -518,15 +525,13 @@ export async function processArticleBookmark(
     screenshotUrl = bookmark.preview;
   } else {
     try {
-      const screenshotCdnUrl = await ctx.runAction(
+      const screenshotCdnUrl = (await ctx.runAction(
         internal.processing.screenshot.captureAndUploadScreenshot,
         { url: bookmark.url, userId, bookmarkId: bookmark._id as never },
-      ) as string | null;
+      )) as string | null;
       if (screenshotCdnUrl) {
         // Analyze via Gemini to check validity
-        const response = await fetch(screenshotCdnUrl);
-        const ab = await response.arrayBuffer();
-        const buf = Buffer.from(ab);
+        const buf = await fetchScreenshotImage(screenshotCdnUrl);
         if (buf.length >= 1000) {
           screenshotAnalysis = await analyzeScreenshotBuffer(buf);
           if (!screenshotAnalysis.isInvalid) {
@@ -983,8 +988,7 @@ export async function processProductBookmark(
     if (/^!\[.*\]\(.*\)$/.test(trimmed)) return false;
     if (/^\[.*\]\(.*\)$/.test(trimmed)) return false;
     if (/^[-•*\s#]{3,}$/.test(trimmed)) return false;
-    if (/^(Home|Back|Next|Previous|←|→|»|«)(\s|$)/i.test(trimmed))
-      return false;
+    if (/^(Home|Back|Next|Previous|←|→|»|«)(\s|$)/i.test(trimmed)) return false;
     if (/^(https?:\/\/|\/\/|\.\/|\/)/.test(trimmed)) return false;
     if (/^\d+"\s*(x\s*\d+")?\s*(Black|White|Silver)?\s*$/.test(trimmed))
       return false;
@@ -1070,11 +1074,17 @@ ${markdown.substring(0, 2500)}
 </website-content>`;
 
   const displaySummary = contentForSummary
-    ? await generateContentSummary(PRODUCT_DISPLAY_SUMMARY_PROMPT, contentForSummary)
+    ? await generateContentSummary(
+        PRODUCT_DISPLAY_SUMMARY_PROMPT,
+        contentForSummary,
+      )
     : "";
 
   const searchSummary = contentForSummary
-    ? await generateContentSummary(PRODUCT_SEARCH_SUMMARY_PROMPT, contentForSummary)
+    ? await generateContentSummary(
+        PRODUCT_SEARCH_SUMMARY_PROMPT,
+        contentForSummary,
+      )
     : "";
 
   const tagNames = contentForSummary
@@ -1130,11 +1140,18 @@ export async function processImageBookmark(
   const bookmarkId = bookmark._id;
 
   const response = await safeFetch(bookmark.url);
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const buffer = Buffer.from(
+    await readBoundedResponseBytes(response, {
+      maxBytes: MAX_PROCESSING_IMAGE_BYTES,
+      resourceName: "Image",
+    }),
+  );
 
-  // image-size is pure-JS (no native binary) → works on the Convex runtime.
-  const meta = imageSize(buffer);
+  // Restrict attacker-controlled bytes before image-size dispatches to a parser.
+  const meta = parseSafeImageDimensions(
+    buffer,
+    response.headers.get("content-type"),
+  );
   const { width, height } = meta;
 
   const base64Content = buffer.toString("base64");
@@ -1182,8 +1199,8 @@ export async function processImageBookmark(
   );
 
   // Upload image to R2
-  const contentType = response.headers.get("content-type") || "image/jpeg";
-  const ext = contentType.split("/")[1] || "jpg";
+  const contentType = meta.contentType;
+  const ext = meta.extension;
   const saveImage = await uploadBuffer(
     ctx,
     buffer,
@@ -1225,9 +1242,13 @@ export async function processPdfBookmark(
   // Download PDF once — reuse for both upload and analysis
   const response = await safeFetch(bookmark.url);
   if (!response.ok) {
+    await response.body?.cancel();
     throw new Error(`Failed to download PDF: ${response.statusText}`);
   }
-  const pdfContent = await response.arrayBuffer();
+  const pdfContent = await readBoundedResponseBytes(response, {
+    maxBytes: MAX_PROCESSING_PDF_BYTES,
+    resourceName: "PDF",
+  });
   const pdfBuffer = Buffer.from(pdfContent);
   const fileSize = pdfContent.byteLength;
 
@@ -1252,7 +1273,7 @@ export async function processPdfBookmark(
             { type: "text", text: "Here is the PDF file" },
             {
               type: "file",
-              data: new Uint8Array(pdfContent),
+              data: pdfContent,
               mediaType: "application/pdf",
             },
           ],
@@ -1265,10 +1286,13 @@ export async function processPdfBookmark(
 
   // Title, summary, detailed summary
   const title = pdfAnalysis
-    ? await generateContentSummary(PDF_TITLE_PROMPT, pdfAnalysis) ||
+    ? (await generateContentSummary(PDF_TITLE_PROMPT, pdfAnalysis)) ||
       "PDF Document"
     : "PDF Document";
-  const summary = await generateContentSummary(USER_SUMMARY_PROMPT, pdfAnalysis);
+  const summary = await generateContentSummary(
+    USER_SUMMARY_PROMPT,
+    pdfAnalysis,
+  );
   const detailedSummary = await generateContentSummary(
     VECTOR_SUMMARY_PROMPT,
     pdfAnalysis,
@@ -1285,10 +1309,10 @@ export async function processPdfBookmark(
   // PDF screenshot
   let screenshotUrl: string | null = null;
   try {
-    screenshotUrl = await ctx.runAction(
+    screenshotUrl = (await ctx.runAction(
       internal.processing.screenshot.captureAndUploadPDFScreenshot,
       { url: bookmark.url, userId, bookmarkId: bookmark._id as never },
-    ) as string | null;
+    )) as string | null;
   } catch {
     screenshotUrl = null;
   }
@@ -1356,14 +1380,12 @@ export async function processPageBookmark(
     screenshotUrl = bookmark.preview;
   } else {
     try {
-      const screenshotCdnUrl = await ctx.runAction(
+      const screenshotCdnUrl = (await ctx.runAction(
         internal.processing.screenshot.captureAndUploadScreenshot,
         { url: bookmark.url, userId, bookmarkId: bookmark._id as never },
-      ) as string | null;
+      )) as string | null;
       if (screenshotCdnUrl) {
-        const response = await fetch(screenshotCdnUrl);
-        const ab = await response.arrayBuffer();
-        const buf = Buffer.from(ab);
+        const buf = await fetchScreenshotImage(screenshotCdnUrl);
         if (buf.length >= 1000) {
           screenshotAnalysis = await analyzeScreenshotBuffer(buf);
           if (!screenshotAnalysis.isInvalid) {

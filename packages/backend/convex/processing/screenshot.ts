@@ -2,11 +2,14 @@
 
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
-import { internal } from "../_generated/api";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { IMAGE_ANALYSIS_PROMPT } from "./gemini";
 import { withGeminiFallback } from "../lib/gemini_provider";
+import { safeFetch } from "../lib/safe_fetch";
+
+const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+const SCREENSHOT_FETCH_TIMEOUT_MS = 10_000;
 
 export interface ScreenshotAnalysisResult {
   description: string | null;
@@ -18,7 +21,7 @@ const SCREENSHOT_ANALYSIS_SCHEMA = z.object({
   isInvalid: z
     .boolean()
     .describe(
-      "true if the image is black/blank, a browser error page (e.g. \"This page couldn't load\"), a captcha, a Cloudflare/bot protection page, or otherwise not a real screenshot of the website content.",
+      'true if the image is black/blank, a browser error page (e.g. "This page couldn\'t load"), a captcha, a Cloudflare/bot protection page, or otherwise not a real screenshot of the website content.',
     ),
   invalidReason: z
     .string()
@@ -32,59 +35,60 @@ const SCREENSHOT_ANALYSIS_SCHEMA = z.object({
     ),
 });
 
-async function callCloudflareScreenshot(url: string): Promise<Buffer> {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+function isImageContentType(contentType: string | null): boolean {
+  return (
+    contentType?.split(";", 1)[0]?.trim().toLowerCase().startsWith("image/") ??
+    false
+  );
+}
 
-  if (!accountId || !apiToken) {
-    throw new Error(
-      "CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN env vars not set",
-    );
+export async function fetchScreenshotImage(url: string): Promise<Buffer> {
+  const response = await safeFetch(url, {
+    signal: AbortSignal.timeout(SCREENSHOT_FETCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`Image fetch failed (${response.status})`);
   }
 
-  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/screenshot`;
+  if (!isImageContentType(response.headers.get("content-type"))) {
+    await response.body?.cancel();
+    throw new Error("Remote resource is not an image");
+  }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 35000);
+  const declaredLength = Number(response.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_SCREENSHOT_BYTES) {
+    await response.body?.cancel();
+    throw new Error("Remote image is too large");
+  }
+
+  if (!response.body) {
+    throw new Error("Remote image has no body");
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
 
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        gotoOptions: {
-          // "networkidle0" breaks on sites that keep connections open
-          // (e.g. anthropic.com): the navigation never settles and the API
-          // returns a screenshot of Chromium's "This page couldn't load"
-          // error page with HTTP 200.
-          waitUntil: "load",
-          timeout: 30000,
-        },
-        viewport: { width: 1920, height: 1080 },
-        screenshotOptions: {
-          fullPage: false,
-          type: "png",
-        },
-      }),
-      signal: controller.signal,
-    });
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error");
-      throw new Error(
-        `Screenshot failed (${response.status}): ${errorText || response.statusText}`,
-      );
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_SCREENSHOT_BYTES) {
+        await reader.cancel();
+        throw new Error("Remote image is too large");
+      }
+      chunks.push(Buffer.from(value));
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
   } finally {
-    clearTimeout(timeoutId);
+    reader.releaseLock();
   }
+
+  return Buffer.concat(chunks);
 }
 
 /**
@@ -99,9 +103,7 @@ export async function analyzeScreenshot(
   }
 
   try {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const base64 = (await fetchScreenshotImage(url)).toString("base64");
     return analyzeImageBase64(base64, IMAGE_ANALYSIS_PROMPT);
   } catch {
     return {
@@ -121,9 +123,7 @@ export async function analyzeScreenshotWithPrompt(
   }
 
   try {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const base64 = (await fetchScreenshotImage(url)).toString("base64");
     return analyzeImageBase64(base64, customPrompt);
   } catch {
     return {
@@ -189,31 +189,33 @@ async function analyzeImageBase64(
  * isScreenshotUrlValid — HEAD request to verify image URL is accessible and ≥ 1000 bytes.
  */
 export async function isScreenshotUrlValid(url: string): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
   try {
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       method: "HEAD",
-      signal: controller.signal,
+      signal: AbortSignal.timeout(5000),
     });
-    clearTimeout(timeoutId);
 
     if (!response.ok) return false;
+    if (!isImageContentType(response.headers.get("content-type"))) return false;
 
     const contentLength = response.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) < 1000) return false;
+    if (contentLength && parseInt(contentLength, 10) > MAX_SCREENSHOT_BYTES) {
+      return false;
+    }
 
     return true;
   } catch {
-    clearTimeout(timeoutId);
     return false;
   }
 }
 
 /**
  * captureAndUploadScreenshot — Convex internalAction.
- * Calls Cloudflare Browser Rendering API, uploads PNG to R2.
+ * Remote navigation is disabled because Cloudflare Browser Rendering resolves
+ * URLs independently, so this service cannot pin validated addresses or
+ * enforce redirect destinations. Fail closed until the provider offers an
+ * enforceable SSRF boundary.
  */
 export const captureAndUploadScreenshot = internalAction({
   args: {
@@ -222,30 +224,12 @@ export const captureAndUploadScreenshot = internalAction({
     bookmarkId: v.id("bookmarks"),
   },
   returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { url, userId, bookmarkId }): Promise<string | null> => {
-    try {
-      const buffer = await callCloudflareScreenshot(url);
-      // Timestamped key: re-captures must not reuse the previous key, the
-      // CDN keeps serving the stale cached image for the old URL.
-      const key = `users/${userId}/bookmarks/${bookmarkId}/screenshot-${Date.now()}.png`;
-      const cdnUrl: string = await ctx.runAction(
-        internal.files.actions.uploadBuffer,
-        {
-          buffer: buffer.buffer as ArrayBuffer,
-          key,
-          contentType: "image/png",
-        },
-      );
-      return cdnUrl;
-    } catch {
-      return null;
-    }
-  },
+  handler: async (): Promise<null> => null,
 });
 
 /**
  * captureAndUploadPDFScreenshot — Convex internalAction.
- * Appends PDF hash params, captures screenshot, uploads to R2.
+ * Remote PDF navigation is disabled for the same unpinnable SSRF boundary.
  */
 export const captureAndUploadPDFScreenshot = internalAction({
   args: {
@@ -254,22 +238,5 @@ export const captureAndUploadPDFScreenshot = internalAction({
     bookmarkId: v.id("bookmarks"),
   },
   returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { url, userId, bookmarkId }): Promise<string | null> => {
-    try {
-      const pdfUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
-      const buffer = await callCloudflareScreenshot(pdfUrl);
-      const key = `users/${userId}/bookmarks/${bookmarkId}/pdf-screenshot-${Date.now()}.png`;
-      const cdnUrl: string = await ctx.runAction(
-        internal.files.actions.uploadBuffer,
-        {
-          buffer: buffer.buffer as ArrayBuffer,
-          key,
-          contentType: "image/png",
-        },
-      );
-      return cdnUrl;
-    } catch {
-      return null;
-    }
-  },
+  handler: async (): Promise<null> => null,
 });
