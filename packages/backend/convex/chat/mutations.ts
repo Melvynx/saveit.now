@@ -3,10 +3,15 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { authMutation } from "../functions";
-import { deriveEffectivePlan } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  pickCanonicalSubscription,
+} from "../billing/plans";
 import { throwNotFound } from "../utils/errors";
 import { startOfMonth } from "./usage";
 import type { Id } from "../_generated/dataModel";
+
+const SUBSCRIPTION_PER_USER_LIMIT = 20;
 
 function getFallbackConversationTitle(firstMessage: string) {
   const normalized = firstMessage.replace(/\s+/g, " ").trim();
@@ -35,17 +40,15 @@ export const checkAndIncrementUsage = internalMutation({
       .collect();
     const used = usages.length;
 
-    // 2. Fetch active subscription for userId.
-    // No combined by_user+status index; fetch by user and check status in JS.
+    // 2. Fetch canonical subscription for userId.
+    // Never let an older active row preserve Pro access after a newer
+    // cancellation/downgrade row exists.
     const allSubs = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .take(10);
-    const plan = allSubs.some(
-      (subscription) => deriveEffectivePlan(subscription) === "pro",
-    )
-      ? "pro"
-      : "free";
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const plan = deriveEffectivePlan(pickCanonicalSubscription(allSubs));
 
     // 3. Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {

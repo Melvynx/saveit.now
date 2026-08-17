@@ -64,6 +64,7 @@ import type * as migration_reembed from "../migration/reembed.js";
 import type * as migration_reembed_helpers from "../migration/reembed_helpers.js";
 import type * as migration_repair_subscriptions from "../migration/repair_subscriptions.js";
 import type * as processing_detect from "../processing/detect.js";
+import type * as processing_embedding_format from "../processing/embedding_format.js";
 import type * as processing_embeddings from "../processing/embeddings.js";
 import type * as processing_gemini from "../processing/gemini.js";
 import type * as processing_handlers from "../processing/handlers.js";
@@ -168,6 +169,7 @@ declare const fullApi: ApiFromModules<{
   "migration/reembed_helpers": typeof migration_reembed_helpers;
   "migration/repair_subscriptions": typeof migration_repair_subscriptions;
   "processing/detect": typeof processing_detect;
+  "processing/embedding_format": typeof processing_embedding_format;
   "processing/embeddings": typeof processing_embeddings;
   "processing/gemini": typeof processing_gemini;
   "processing/handlers": typeof processing_handlers;
