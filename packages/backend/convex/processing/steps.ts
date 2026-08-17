@@ -24,8 +24,10 @@ import {
   processYouTubeBookmark,
 } from "./handlers";
 import { safeFetch } from "../lib/safe_fetch";
+import { readBoundedResponseText } from "../lib/bounded_response";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+const MAX_PROCESSING_HTML_BYTES = 5 * 1024 * 1024;
 
 export const vRoute = v.union(
   v.literal("PAGE"),
@@ -56,17 +58,29 @@ export const analyzeUrl = internalAction({
       const response = await safeFetch(url, {
         headers: { "User-Agent": USER_AGENT },
       });
-      if (!response.ok) throw new Error("Non-OK response");
+      if (!response.ok) {
+        await response.body?.cancel();
+        throw new Error("Non-OK response");
+      }
 
       const contentType = response.headers.get("content-type") ?? "";
-      if (contentType.startsWith("image/")) return "IMAGE";
-      if (contentType.startsWith("application/pdf")) return "PDF";
+      if (contentType.startsWith("image/")) {
+        await response.body?.cancel();
+        return "IMAGE";
+      }
+      if (contentType.startsWith("application/pdf")) {
+        await response.body?.cancel();
+        return "PDF";
+      }
 
       if (
         contentType.startsWith("text/") ||
         contentType.startsWith("application/json")
       ) {
-        const html = await response.text();
+        const html = await readBoundedResponseText(response, {
+          maxBytes: MAX_PROCESSING_HTML_BYTES,
+          resourceName: "HTML",
+        });
         if (isProductPage(url, html)) return "PRODUCT";
         if (
           html.includes("<article") ||
@@ -78,6 +92,7 @@ export const analyzeUrl = internalAction({
       }
 
       // video/* and other content types use the default page handler
+      await response.body?.cancel();
       return "PAGE";
     } catch {
       return "FETCH_FAILED";
@@ -103,11 +118,7 @@ export const processYouTube = internalAction({
   handler: async (ctx, { bookmarkId, userId }) => {
     const bookmark = await loadBookmark(ctx, bookmarkId, userId);
     if (!bookmark) return null;
-    const result = await processYouTubeBookmark(
-      ctx,
-      bookmark as never,
-      userId,
-    );
+    const result = await processYouTubeBookmark(ctx, bookmark as never, userId);
     await persistHandlerResult(ctx, bookmarkId, userId, result);
     return null;
   },
@@ -187,9 +198,13 @@ async function fetchHtml(url: string): Promise<string> {
     headers: { "User-Agent": USER_AGENT },
   });
   if (!response.ok) {
+    await response.body?.cancel();
     throw new Error(`Failed to fetch URL content (${response.status})`);
   }
-  return await response.text();
+  return await readBoundedResponseText(response, {
+    maxBytes: MAX_PROCESSING_HTML_BYTES,
+    resourceName: "HTML",
+  });
 }
 
 /**

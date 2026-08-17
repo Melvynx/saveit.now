@@ -11,7 +11,7 @@ import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { authAction } from "../functions";
 import { throwNotFound, throwValidationError } from "../utils/errors";
-import { assertSafeRemoteUrl } from "../lib/safe_fetch";
+import { safeFetch } from "../lib/safe_fetch";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2097152 bytes
 
@@ -55,7 +55,9 @@ function getCdnUrl(key: string): string {
   return `${r2Url}/${key}`;
 }
 
-function normalizeContentType(contentType: string | null | undefined): string | null {
+function normalizeContentType(
+  contentType: string | null | undefined,
+): string | null {
   if (!contentType) return null;
   const normalized = contentType.split(";")[0]?.trim().toLowerCase();
   return normalized || null;
@@ -87,7 +89,7 @@ async function readResponseBodyWithLimit(
 
       totalBytes += value.byteLength;
       if (totalBytes > maxBytes) {
-        void reader.cancel();
+        await reader.cancel();
         return null;
       }
 
@@ -100,63 +102,17 @@ async function readResponseBodyWithLimit(
   return Buffer.concat(chunks);
 }
 
-async function fetchSafeRemoteImage(url: string): Promise<Response | null> {
-  let currentUrl: string;
+async function cancelResponseBody(response: Response): Promise<void> {
+  await response.body?.cancel();
+}
 
+async function fetchSafeRemoteImage(url: string): Promise<Response | null> {
   try {
-    currentUrl = await assertSafeRemoteUrl(url);
+    return await safeFetch(url, { maxRedirects: MAX_REMOTE_REDIRECTS });
   } catch (err) {
-    console.error("[uploadFileFromURL] unsafe url", url, err);
+    console.error("[uploadFileFromURL] fetch error", url, err);
     return null;
   }
-
-  const visited = new Set<string>();
-
-  for (let redirectCount = 0; redirectCount <= MAX_REMOTE_REDIRECTS; redirectCount++) {
-    if (visited.has(currentUrl)) {
-      console.error("[uploadFileFromURL] redirect loop", currentUrl);
-      return null;
-    }
-    visited.add(currentUrl);
-
-    let response: Response;
-    try {
-      response = await fetch(currentUrl, { redirect: "manual" });
-    } catch (err) {
-      console.error("[uploadFileFromURL] fetch error", err);
-      return null;
-    }
-
-    if (
-      response.status === 301 ||
-      response.status === 302 ||
-      response.status === 303 ||
-      response.status === 307 ||
-      response.status === 308
-    ) {
-      const location = response.headers.get("location");
-      if (!location) {
-        console.error("[uploadFileFromURL] redirect missing location", currentUrl);
-        return null;
-      }
-
-      try {
-        currentUrl = await assertSafeRemoteUrl(
-          new URL(location, currentUrl).toString(),
-        );
-      } catch (err) {
-        console.error("[uploadFileFromURL] unsafe redirect target", location, err);
-        return null;
-      }
-
-      continue;
-    }
-
-    return response;
-  }
-
-  console.error("[uploadFileFromURL] too many redirects", url);
-  return null;
 }
 
 /**
@@ -218,6 +174,7 @@ export const uploadFileFromURL = internalAction({
           response.status,
           args.url,
         );
+        await cancelResponseBody(response);
       }
       return null;
     }
@@ -226,29 +183,43 @@ export const uploadFileFromURL = internalAction({
       response.headers.get("content-type") ?? args.contentType ?? null,
     );
     if (!isAllowedRemoteImageContentType(contentType)) {
-      console.error("[uploadFileFromURL] unsupported content type", contentType, args.url);
+      console.error(
+        "[uploadFileFromURL] unsupported content type",
+        contentType,
+        args.url,
+      );
+      await cancelResponseBody(response);
       return null;
     }
 
     const contentLength = response.headers.get("content-length");
     if (contentLength) {
       const parsedLength = Number.parseInt(contentLength, 10);
-      if (Number.isFinite(parsedLength) && parsedLength > MAX_REMOTE_IMAGE_SIZE) {
-        console.error("[uploadFileFromURL] response too large", parsedLength, args.url);
+      if (
+        Number.isFinite(parsedLength) &&
+        parsedLength > MAX_REMOTE_IMAGE_SIZE
+      ) {
+        console.error(
+          "[uploadFileFromURL] response too large",
+          parsedLength,
+          args.url,
+        );
+        await cancelResponseBody(response);
         return null;
       }
     }
 
-    const body = await readResponseBodyWithLimit(response, MAX_REMOTE_IMAGE_SIZE);
+    const body = await readResponseBodyWithLimit(
+      response,
+      MAX_REMOTE_IMAGE_SIZE,
+    );
     if (!body || body.length === 0) {
       console.error("[uploadFileFromURL] empty response body", args.url);
       return null;
     }
 
     const ext = mime.extension(contentType) || "bin";
-    const fullKey = args.key.includes(".")
-      ? args.key
-      : `${args.key}.${ext}`;
+    const fullKey = args.key.includes(".") ? args.key : `${args.key}.${ext}`;
 
     const s3 = getS3Client();
     const bucket = process.env.AWS_S3_BUCKET_NAME!;
@@ -337,7 +308,9 @@ export const uploadBookmarkScreenshot = authAction({
     }
 
     // 3. MIME type allowlist check
-    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(args.contentType)) {
+    if (
+      !(ALLOWED_IMAGE_TYPES as readonly string[]).includes(args.contentType)
+    ) {
       throwValidationError(
         "Only image files (JPEG, PNG, WebP, GIF) are allowed",
       );

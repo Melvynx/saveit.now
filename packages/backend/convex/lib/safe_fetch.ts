@@ -10,19 +10,22 @@
  *
  * `assertSafeRemoteUrl` validates the protocol + hostname and resolves DNS,
  * rejecting the URL if ANY resolved address is private/link-local/reserved.
- * `safeFetch` wraps `fetch`, re-validating every redirect hop (redirects are
- * followed manually so a public URL cannot 30x-redirect to an internal host).
+ * `safeFetch` pins each connection to an address from that validation while
+ * preserving the original hostname for HTTP Host and TLS SNI. Redirects are
+ * followed manually and independently validated/pinned.
  *
  * Node runtime only — `node:dns`/`node:net` require `"use node";`.
  *
- * Residual risk: DNS rebinding (the kernel re-resolves the hostname when
- * `fetch` opens the socket, so a fast-flipping record can still differ from
- * the validated address). Matching the codebase's existing bar; full closure
- * would require pinning the connection to the validated IP.
  */
 
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import ipaddr from "ipaddr.js";
+import {
+  Agent,
+  fetch as undiciFetch,
+  type RequestInit as UndiciRequestInit,
+} from "undici";
 import { assertSafeHttpUrl } from "../utils/url";
 
 const DEFAULT_MAX_REDIRECTS = 5;
@@ -30,47 +33,28 @@ const DEFAULT_MAX_REDIRECTS = 5;
 const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
 
 export function isPrivateIpv4Address(address: string): boolean {
-  const parts = address.split(".").map((part) => Number(part));
-  if (
-    parts.length !== 4 ||
-    parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
-  ) {
-    // Not a well-formed IPv4 literal — treat as unsafe rather than allow.
+  try {
+    const parsed = ipaddr.parse(address);
+    // ipaddr.js maintains the canonical special-purpose registry. Permit only
+    // ordinary global IPv4 unicast and fail closed for every special range.
+    return parsed.kind() !== "ipv4" || parsed.range() !== "unicast";
+  } catch {
     return true;
   }
-
-  const [a, b] = parts as [number, number, number, number];
-  return (
-    a === 0 || // 0.0.0.0/8 "this host"
-    a === 10 || // 10.0.0.0/8 private
-    a === 127 || // 127.0.0.0/8 loopback
-    (a === 100 && b >= 64 && b <= 127) || // 100.64.0.0/10 CGNAT
-    (a === 169 && b === 254) || // 169.254.0.0/16 link-local (incl. cloud metadata)
-    (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12 private
-    (a === 192 && b === 0) || // 192.0.0.0/24 + 192.0.2.0/24 reserved/TEST-NET-1
-    (a === 192 && b === 168) || // 192.168.0.0/16 private
-    (a === 198 && (b === 18 || b === 19 || b === 51)) || // benchmarking + TEST-NET-2
-    (a === 203 && b === 0) || // 203.0.113.0/24 TEST-NET-3
-    a >= 224 // multicast + reserved
-  );
 }
 
 export function isPrivateIpv6Address(address: string): boolean {
   const normalized = address.toLowerCase().replace(/^\[|\]$/g, "");
 
-  return (
-    normalized === "::" ||
-    normalized === "::1" || // loopback
-    normalized.startsWith("fc") || // fc00::/7 unique local
-    normalized.startsWith("fd") ||
-    normalized.startsWith("fe8") || // fe80::/10 link-local
-    normalized.startsWith("fe9") ||
-    normalized.startsWith("fea") ||
-    normalized.startsWith("feb") ||
-    normalized.startsWith("2001:db8") || // documentation range
-    (normalized.startsWith("::ffff:") &&
-      isPrivateIpv4Address(normalized.slice("::ffff:".length)))
-  );
+  try {
+    const parsed = ipaddr.parse(normalized);
+    // Fail closed for every IANA special-use IPv6 range. This includes IPv4
+    // mapped/translated addresses and transition mechanisms such as NAT64,
+    // 6to4, and Teredo, so embedded private IPv4 cannot bypass classification.
+    return parsed.kind() !== "ipv6" || parsed.range() !== "unicast";
+  } catch {
+    return true;
+  }
 }
 
 export function isPrivateIpAddress(address: string): boolean {
@@ -86,19 +70,53 @@ export function isPrivateIpAddress(address: string): boolean {
  * missing, unresolvable, or maps to any private/reserved address. Returns the
  * normalized URL string on success.
  */
-export async function assertSafeRemoteUrl(url: string): Promise<string> {
+type ResolvedAddress = { address: string; family: number };
+type SafeRemoteTarget = { url: string; addresses: ResolvedAddress[] };
+
+function abortReason(signal: AbortSignal): unknown {
+  return (
+    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
+  );
+}
+
+async function lookupWithSignal(
+  hostname: string,
+  signal?: AbortSignal | null,
+): Promise<ResolvedAddress[]> {
+  if (signal?.aborted) throw abortReason(signal);
+
+  const pendingLookup = lookup(hostname, { all: true, verbatim: true });
+  if (!signal) return pendingLookup;
+
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(abortReason(signal));
+    signal.addEventListener("abort", onAbort, { once: true });
+    pendingLookup.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", onAbort);
+    });
+  });
+}
+
+async function resolveSafeRemoteUrl(
+  url: string,
+  signal?: AbortSignal | null,
+): Promise<SafeRemoteTarget> {
   const normalizedUrl = assertSafeHttpUrl(url);
   const parsed = new URL(normalizedUrl);
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
 
-  if (isIP(hostname)) {
+  const literalFamily = isIP(hostname);
+  if (literalFamily) {
     if (isPrivateIpAddress(hostname)) {
       throw new Error("This URL resolves to a private address");
     }
-    return normalizedUrl;
+    return {
+      url: normalizedUrl,
+      addresses: [{ address: hostname, family: literalFamily }],
+    };
   }
 
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  const addresses = await lookupWithSignal(hostname, signal);
   if (addresses.length === 0) {
     throw new Error("This URL host could not be resolved");
   }
@@ -106,7 +124,14 @@ export async function assertSafeRemoteUrl(url: string): Promise<string> {
     throw new Error("This URL resolves to a private address");
   }
 
-  return normalizedUrl;
+  return { url: normalizedUrl, addresses };
+}
+
+export async function assertSafeRemoteUrl(
+  url: string,
+  signal?: AbortSignal | null,
+): Promise<string> {
+  return (await resolveSafeRemoteUrl(url, signal)).url;
 }
 
 export type SafeFetchInit = RequestInit & { maxRedirects?: number };
@@ -123,19 +148,59 @@ export async function safeFetch(
 ): Promise<Response> {
   const { maxRedirects = DEFAULT_MAX_REDIRECTS, ...fetchInit } = init;
 
-  let currentUrl = await assertSafeRemoteUrl(url);
+  let currentTarget = await resolveSafeRemoteUrl(url, fetchInit.signal);
   const visited = new Set<string>();
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount++) {
+    const currentUrl = currentTarget.url;
     if (visited.has(currentUrl)) {
       throw new Error("Redirect loop detected");
     }
     visited.add(currentUrl);
 
-    const response = await fetch(currentUrl, {
-      ...fetchInit,
-      redirect: "manual",
+    const dispatcher = new Agent({
+      connect: {
+        lookup: (_hostname, options, callback) => {
+          const requestedFamily =
+            typeof options === "number" ? options : options.family;
+          const matchingAddresses = currentTarget.addresses.filter(
+            ({ family }) => !requestedFamily || family === requestedFamily,
+          );
+
+          if (typeof options !== "number" && options.all) {
+            if (matchingAddresses.length === 0) {
+              callback(new Error("Validated host has no usable address"), []);
+              return;
+            }
+            callback(null, matchingAddresses);
+            return;
+          }
+
+          const selected = matchingAddresses[0] ?? currentTarget.addresses[0];
+          if (!selected) {
+            callback(new Error("Validated host has no usable address"), "", 0);
+            return;
+          }
+          callback(null, selected.address, selected.family);
+        },
+      },
     });
+    let response: Response;
+    try {
+      const requestInit = {
+        ...fetchInit,
+        dispatcher,
+        redirect: "manual",
+      } as unknown as UndiciRequestInit;
+      response = (await undiciFetch(
+        currentUrl,
+        requestInit,
+      )) as unknown as Response;
+      void dispatcher.close().catch(() => undefined);
+    } catch (error) {
+      await dispatcher.destroy();
+      throw error;
+    }
 
     if (!REDIRECT_STATUS.has(response.status)) {
       return response;
@@ -148,8 +213,9 @@ export async function safeFetch(
       return response;
     }
 
-    currentUrl = await assertSafeRemoteUrl(
+    currentTarget = await resolveSafeRemoteUrl(
       new URL(location, currentUrl).toString(),
+      fetchInit.signal,
     );
   }
 

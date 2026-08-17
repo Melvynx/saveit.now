@@ -96,6 +96,7 @@ export async function uploadFromURL(opts: {
       response.status,
       opts.url,
     );
+    await response.body?.cancel();
     return null;
   }
 
