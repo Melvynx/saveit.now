@@ -15,14 +15,30 @@ import { Link } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { TableCell, TableRow } from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
-import { Bookmark, ChevronRight, MousePointerClick, Sliders } from "lucide-react";
+import {
+  Bookmark,
+  ChevronRight,
+  MousePointerClick,
+  Sliders,
+} from "lucide-react";
 
 type UserRowProps = {
   user: AdminUserListItem;
 };
 
 export const UserRow = ({ user }: UserRowProps) => {
-  const actions = useAdminUserActions(user);
+  const isLifetimePro = user.subscriptions.some(
+    (subscription) =>
+      subscription.provider === "manual" && subscription.status === "lifetime",
+  );
+  const actions = useAdminUserActions({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    banned: user.banned,
+    isLifetimePro,
+  });
   const primarySubscription = user.subscriptions[0];
   const isPremium = user.subscriptions.length > 0;
 
@@ -86,7 +102,7 @@ export const UserRow = ({ user }: UserRowProps) => {
               isPremium ? "text-primary" : "text-muted-foreground",
             )}
           >
-            {isPremium ? "Pro" : "Free"}
+            {isLifetimePro ? "Pro forever" : isPremium ? "Pro" : "Free"}
           </div>
           <div className="text-muted-foreground text-xs">
             {primarySubscription

@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { isLifetimeSubscription } from "../billing/plans";
+import { grantLifetimeProForUser } from "./lifetime";
 
 const planValidator = v.union(v.literal("free"), v.literal("pro"));
 
@@ -148,43 +149,7 @@ export const grantLifetimeProByEmail = internalMutation({
       throw new Error(`User not found: ${email}`);
     }
 
-    const userId = user._id as string;
-    const now = Date.now();
-    const existing = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-
-    const lifetimeAccess = {
-      plan: "pro" as const,
-      provider: "manual" as const,
-      status: "lifetime",
-      periodStart: now,
-      periodEnd: undefined,
-      cancelAtPeriodEnd: false,
-      stripeCustomerId: undefined,
-      stripeSubscriptionId: undefined,
-      appstoreOriginalTransactionId: undefined,
-      appstoreProductId: undefined,
-      appstoreLastVerifiedAt: undefined,
-      updatedAt: now,
-    };
-
-    const subscriptionId = existing
-      ? (await ctx.db.patch(existing._id, lifetimeAccess), existing._id)
-      : await ctx.db.insert("subscriptions", {
-          userId,
-          ...lifetimeAccess,
-          createdAt: now,
-        });
-
-    return {
-      email,
-      userId,
-      subscriptionId,
-      plan: "pro" as const,
-      provider: "manual" as const,
-      status: "lifetime" as const,
-    };
+    const granted = await grantLifetimeProForUser(ctx, user._id as string);
+    return { email, ...granted };
   },
 });

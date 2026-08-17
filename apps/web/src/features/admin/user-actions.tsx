@@ -3,7 +3,9 @@
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useAsyncTask } from "@/lib/use-async-task";
+import { api } from "@convex/_generated/api";
 import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useMutation } from "convex/react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -30,6 +32,7 @@ import { Loader } from "@workspace/ui/components/loader";
 import {
   Ban,
   Crown,
+  Gem,
   MoreHorizontal,
   ShieldOff,
   TriangleAlert,
@@ -45,12 +48,18 @@ export type AdminActionUser = {
   email?: string | null;
   role?: string | null;
   banned?: boolean | null;
+  isLifetimePro?: boolean;
 };
 
-type ConfirmKind = "ban" | "unban" | "promote" | "demote" | "impersonate";
+type ConfirmKind =
+  | "ban"
+  | "unban"
+  | "promote"
+  | "demote"
+  | "impersonate"
+  | "grantPro";
 
-const labelOf = (user: AdminActionUser) =>
-  user.name || user.email || user.id;
+const labelOf = (user: AdminActionUser) => user.name || user.email || user.id;
 
 /**
  * Every destructive Better Auth admin call in one place, each behind an
@@ -89,7 +98,8 @@ export function useAdminUserActions(user: AdminActionUser) {
   );
 
   const unbanTask = useAsyncTask(
-    async () => unwrapSafePromise(authClient.admin.unbanUser({ userId: user.id })),
+    async () =>
+      unwrapSafePromise(authClient.admin.unbanUser({ userId: user.id })),
     {
       onSuccess: () => {
         toast.success(`${labelOf(user)} is unbanned`);
@@ -137,11 +147,31 @@ export function useAdminUserActions(user: AdminActionUser) {
     },
   );
 
+  const grantLifetimePro = useMutation(api.admin.mutations.grantLifetimePro);
+  const grantProTask = useAsyncTask(
+    async () => grantLifetimePro({ userId: user.id }),
+    {
+      onSuccess: (result) => {
+        toast.success(
+          result.alreadyGranted
+            ? `${labelOf(user)} already has Pro forever`
+            : `${labelOf(user)} now has Pro forever (100% off)`,
+        );
+        refresh();
+      },
+      onError: (error) =>
+        toast.error(
+          `Failed to grant Pro: ${error instanceof Error ? error.message : "unknown error"}`,
+        ),
+    },
+  );
+
   const isPending =
     banTask.isPending ||
     unbanTask.isPending ||
     setRoleTask.isPending ||
-    impersonateTask.isPending;
+    impersonateTask.isPending ||
+    grantProTask.isPending;
 
   const runConfirmed = () => {
     const swallow = () => undefined;
@@ -160,6 +190,9 @@ export function useAdminUserActions(user: AdminActionUser) {
         break;
       case "impersonate":
         void impersonateTask.run().then(() => setConfirm(null), swallow);
+        break;
+      case "grantPro":
+        void grantProTask.run().then(() => setConfirm(null), swallow);
         break;
       default:
         break;
@@ -216,6 +249,13 @@ const CONFIRM_COPY: Record<
     action: "Start impersonation",
     destructive: false,
   },
+  grantPro: {
+    title: "Grant Pro forever?",
+    description:
+      "Complimentary 100% off, no expiry. This is an in-app lifetime grant — it does not create or cancel a Stripe subscription. If they already pay, cancel that separately.",
+    action: "Grant Pro forever",
+    destructive: false,
+  },
 };
 
 export function AdminUserConfirmDialog({
@@ -225,8 +265,14 @@ export function AdminUserConfirmDialog({
   user: AdminActionUser;
   actions: AdminUserActions;
 }) {
-  const { confirm, setConfirm, isPending, runConfirmed, banReason, setBanReason } =
-    actions;
+  const {
+    confirm,
+    setConfirm,
+    isPending,
+    runConfirmed,
+    banReason,
+    setBanReason,
+  } = actions;
   const copy = confirm ? CONFIRM_COPY[confirm] : null;
 
   return (
@@ -327,6 +373,12 @@ export function AdminUserActionsMenu({
               Impersonate
             </DropdownMenuItem>
           ) : null}
+          {!user.isLifetimePro ? (
+            <DropdownMenuItem onClick={() => setConfirm("grantPro")}>
+              <Gem className="size-4" />
+              Grant Pro forever
+            </DropdownMenuItem>
+          ) : null}
           {isAdmin ? (
             <DropdownMenuItem onClick={() => setConfirm("demote")}>
               <ShieldOff className="size-4" />
@@ -382,6 +434,18 @@ export function AdminUserActionBar({
         >
           <UserCog className="size-4" />
           Impersonate
+        </Button>
+      ) : null}
+      {!user.isLifetimePro ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isPending}
+          onClick={() => setConfirm("grantPro")}
+        >
+          <Gem className="size-4" />
+          Grant Pro forever
         </Button>
       ) : null}
       <Button

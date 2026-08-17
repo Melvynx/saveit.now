@@ -113,8 +113,18 @@ function UserDetail({
   user: AdminUserDetail;
   activity: AdminActivityEvent[] | undefined;
 }) {
-  const actions = useAdminUserActions(user);
   const isPro = user.plan === "pro";
+  const isLifetimePro =
+    user.subscription?.provider === "manual" &&
+    user.subscription?.status === "lifetime";
+  const actions = useAdminUserActions({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    banned: user.banned,
+    isLifetimePro,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -146,7 +156,7 @@ function UserDetail({
                 <AdminStatusBadge value={user.banned ? "banned" : "active"} />
                 {user.role === "admin" ? <Badge>admin</Badge> : null}
                 <Badge variant={isPro ? "default" : "outline"}>
-                  {isPro ? "pro" : "free"}
+                  {isLifetimePro ? "pro forever" : isPro ? "pro" : "free"}
                 </Badge>
               </h1>
               <p className="text-muted-foreground mt-1 truncate text-sm">
@@ -271,25 +281,25 @@ function UserDetail({
             >
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {(
-                    ["READY", "PENDING", "PROCESSING", "ERROR"] as const
-                  ).map((status) => (
-                    <div key={status} className="rounded-lg border px-3 py-2">
-                      <div className="text-muted-foreground text-[11px] uppercase tracking-wide">
-                        {status.toLowerCase()}
+                  {(["READY", "PENDING", "PROCESSING", "ERROR"] as const).map(
+                    (status) => (
+                      <div key={status} className="rounded-lg border px-3 py-2">
+                        <div className="text-muted-foreground text-[11px] uppercase tracking-wide">
+                          {status.toLowerCase()}
+                        </div>
+                        <div
+                          className={cn(
+                            "text-lg font-semibold tabular-nums",
+                            status === "ERROR" &&
+                              user.statusBreakdown.ERROR > 0 &&
+                              "text-destructive",
+                          )}
+                        >
+                          {user.statusBreakdown[status].toLocaleString()}
+                        </div>
                       </div>
-                      <div
-                        className={cn(
-                          "text-lg font-semibold tabular-nums",
-                          status === "ERROR" &&
-                            user.statusBreakdown.ERROR > 0 &&
-                            "text-destructive",
-                        )}
-                      >
-                        {user.statusBreakdown[status].toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
                 <AdminScanNotice
                   capped={user.sampleCapped}
@@ -432,7 +442,11 @@ function UserDetail({
         <TabsContent value="billing" className="pt-4">
           <AdminSectionCard
             title="Subscription"
-            description="Read-only view of the billing record."
+            description={
+              isLifetimePro
+                ? "Complimentary Pro forever — 100% off, no expiry."
+                : "Billing record. Grant Pro forever from the header for a 100% lifetime grant."
+            }
             icon={CreditCard}
           >
             {!user.subscription ? (

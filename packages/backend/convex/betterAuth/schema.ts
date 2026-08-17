@@ -45,7 +45,15 @@ export const tables = {
     .index("banned_role", ["banned", "role"])
     .index("createdAt", ["createdAt"])
     .index("userId", ["userId"])
-    .index("publicLinkSlug", ["publicLinkSlug"]),
+    .index("publicLinkSlug", ["publicLinkSlug"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["role", "banned"],
+    })
+    .searchIndex("search_email", {
+      searchField: "email",
+      filterFields: ["role", "banned"],
+    }),
 
   session: defineTable({
     expiresAt: v.number(),

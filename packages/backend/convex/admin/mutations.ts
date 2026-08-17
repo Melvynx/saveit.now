@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { adminMutation } from "../functions";
 import { AUTH_LIMIT_KEYS } from "../billing/plans";
+import { grantLifetimeProForUser } from "../subscriptions/lifetime";
 
 // ---------------------------------------------------------------------------
 // Custom limits
@@ -69,6 +70,31 @@ export const setCustomLimits = adminMutation({
     });
 
     return { customLimits: newCustomLimits };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Complimentary Pro
+// ---------------------------------------------------------------------------
+
+/**
+ * grantLifetimePro — 100% forever in-app Pro. Does not create or cancel a
+ * Stripe subscription; it inserts a manual lifetime row the billing helpers
+ * already treat as entitled.
+ */
+export const grantLifetimePro = adminMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const existingUser = await ctx.runQuery(
+      components.betterAuth.data.getUserById,
+      { userId: args.userId },
+    );
+
+    if (!existingUser) {
+      throw new Error("User not found");
+    }
+
+    return grantLifetimeProForUser(ctx, args.userId);
   },
 });
 

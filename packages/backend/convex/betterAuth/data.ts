@@ -1,6 +1,14 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import {
+  matchesAdminRoleStatus,
+  matchesAdminSearch,
+  prefixEnd,
+  searchCaseVariants,
+  searchIndexQuery,
+  uniqueById,
+} from "./adminSearch";
 import { preserveFirstOnboardingUpgradeChoice } from "./onboarding";
 
 /**
@@ -14,11 +22,6 @@ const onboardingUpgradeChoiceValidator = v.union(
   v.literal("free"),
   v.literal("upgrade"),
 );
-
-const includesSearch = (value: unknown, search: string) =>
-  String(value ?? "")
-    .toLowerCase()
-    .includes(search.toLowerCase());
 
 const boundedLimit = (limit: number) =>
   Math.max(1, Math.min(Math.trunc(limit), MAX_AUTH_ROWS));
@@ -74,22 +77,76 @@ export const listUsersForAdmin = queryGeneric({
   },
   handler: async (ctx, args) => {
     const limit = boundedLimit(args.limit);
-    const rows = await ctx.db
-      .query("user")
-      .withIndex("createdAt")
-      .order(args.sort)
-      .take(limit);
-
     const search = args.search?.trim();
-    return rows.filter((row) => {
-      if (args.role && row.role !== args.role) return false;
-      if (args.status === "banned" && row.banned !== true) return false;
-      if (args.status === "active" && row.banned === true) return false;
-      if (!search) return true;
-      return (
-        includesSearch(row.email, search) || includesSearch(row.name, search)
-      );
-    });
+
+    const finish = (rows: Array<Doc<"user"> | null | undefined>) =>
+      uniqueById(rows)
+        .filter(
+          (row) =>
+            matchesAdminRoleStatus(row, args) &&
+            (!search || matchesAdminSearch(row, search)),
+        )
+        .slice(0, limit);
+
+    // Recency window is only for the unfiltered list. Search used to run
+    // *after* `.take(500)`, so older accounts never matched.
+    if (!search) {
+      const rows = await ctx.db
+        .query("user")
+        .withIndex("createdAt")
+        .order(args.sort)
+        .take(limit);
+      return finish(rows);
+    }
+
+    const collected: Doc<"user">[] = [];
+
+    const id = ctx.db.normalizeId("user", search);
+    if (id) {
+      const row = await ctx.db.get(id);
+      if (row) collected.push(row);
+    }
+
+    for (const variant of searchCaseVariants(search)) {
+      const exactEmail = await ctx.db
+        .query("user")
+        .withIndex("email", (q) => q.eq("email", variant))
+        .first();
+      if (exactEmail) collected.push(exactEmail);
+
+      const namePrefix = await ctx.db
+        .query("user")
+        .withIndex("name", (q) =>
+          q.gte("name", variant).lt("name", prefixEnd(variant)),
+        )
+        .take(limit);
+      collected.push(...namePrefix);
+
+      const emailPrefix = await ctx.db
+        .query("user")
+        .withIndex("email", (q) =>
+          q.gte("email", variant).lt("email", prefixEnd(variant)),
+        )
+        .take(limit);
+      collected.push(...emailPrefix);
+    }
+
+    const indexedQuery = searchIndexQuery(search);
+    if (indexedQuery) {
+      const nameHits = await ctx.db
+        .query("user")
+        .withSearchIndex("search_name", (q) => q.search("name", indexedQuery))
+        .take(limit);
+      collected.push(...nameHits);
+
+      const emailHits = await ctx.db
+        .query("user")
+        .withSearchIndex("search_email", (q) => q.search("email", indexedQuery))
+        .take(limit);
+      collected.push(...emailHits);
+    }
+
+    return finish(collected);
   },
 });
 

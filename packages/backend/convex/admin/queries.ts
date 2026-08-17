@@ -242,10 +242,88 @@ async function fetchUsersByIds(
   return new Map(rows.map((row) => [row._id, row]));
 }
 
+const PREMIUM_STATUS_SCAN = [
+  "active",
+  "trialing",
+  "lifetime",
+  "past_due",
+] as const;
+
+/**
+ * Premium list starts from subscription rows, not the newest 500 users.
+ * The previous intersection (newest users ∩ newest subscriptions) dropped
+ * anyone whose account or billing row fell outside those windows.
+ */
+async function fetchPremiumAdminUsers(
+  ctx: QueryCtx,
+  args: {
+    limit: number;
+    role?: "admin" | "user";
+    status?: "active" | "banned";
+  },
+): Promise<{ users: AuthUser[]; capped: boolean }> {
+  const batches = await Promise.all(
+    PREMIUM_STATUS_SCAN.map((status) =>
+      ctx.db
+        .query("subscriptions")
+        .withIndex("by_status", (q) => q.eq("status", status))
+        .order("desc")
+        .take(USER_SCAN_LIMIT),
+    ),
+  );
+
+  const proUserIds = Array.from(
+    new Set(
+      batches
+        .flat()
+        .filter((subscription) => deriveEffectivePlan(subscription) === "pro")
+        .map((subscription) => subscription.userId),
+    ),
+  );
+
+  const usersById = await fetchUsersByIds(ctx, proUserIds);
+  const users = proUserIds.flatMap((userId) => {
+    const user = usersById.get(userId);
+    if (!user) return [];
+    if (args.role && user.role !== args.role) return [];
+    if (args.status === "banned" && user.banned !== true) return [];
+    if (args.status === "active" && user.banned === true) return [];
+    return [user];
+  });
+
+  return {
+    users: users.slice(0, args.limit),
+    capped: batches.some((batch) => batch.length >= USER_SCAN_LIMIT),
+  };
+}
+
+async function fetchCanonicalSubscriptionsByUser(
+  ctx: QueryCtx,
+  userIds: string[],
+) {
+  const batches = await Promise.all(
+    userIds.map((userId) =>
+      ctx.db
+        .query("subscriptions")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .order("desc")
+        .take(SUBSCRIPTION_PER_USER_LIMIT),
+    ),
+  );
+
+  return new Map(
+    userIds.map((userId, index) => [
+      userId,
+      pickCanonicalSubscription(batches[index] ?? []),
+    ]),
+  );
+}
+
 const displayName = (user: AuthUser | undefined, fallback: string) =>
   user?.name || user?.email || fallback;
 
-const currentMonthKey = (now: number) => new Date(now).toISOString().slice(0, 7);
+const currentMonthKey = (now: number) =>
+  new Date(now).toISOString().slice(0, 7);
 
 // ---------------------------------------------------------------------------
 // Overview (dashboard)
@@ -282,7 +360,9 @@ export const getOverview = adminQuery({
       (subscription) => subscription.provider === "manual",
     ).length;
 
-    const counters = await ctx.db.query("userCounters").take(COUNTER_SCAN_LIMIT);
+    const counters = await ctx.db
+      .query("userCounters")
+      .take(COUNTER_SCAN_LIMIT);
     const monthKey = currentMonthKey(now);
     const monthCounters = counters.filter(
       (counter) => counter.monthKey === monthKey,
@@ -304,7 +384,8 @@ export const getOverview = adminQuery({
       0,
     );
     const activeThisMonth = monthCounters.filter(
-      (counter) => (counter.monthlyRuns ?? 0) + (counter.monthlyChatQueries ?? 0) > 0,
+      (counter) =>
+        (counter.monthlyRuns ?? 0) + (counter.monthlyChatQueries ?? 0) > 0,
     ).length;
 
     // Newest-first so this is genuinely "recent activity", not an arbitrary
@@ -541,7 +622,10 @@ export const getRecentActivity = adminQuery({
         subtitle: user?.email ?? null,
         userId: conversation.userId,
         userName: displayName(user, conversation.userId),
-        meta: conversation.likes > 0 ? `+${conversation.likes}` : `${conversation.likes}`,
+        meta:
+          conversation.likes > 0
+            ? `+${conversation.likes}`
+            : `${conversation.likes}`,
       });
     }
 
@@ -563,7 +647,9 @@ export const getTopUsers = adminQuery({
   handler: async (ctx, args) => {
     const limit = Math.min(Math.max(Math.trunc(args.limit ?? 8), 1), 25);
 
-    const counters = await ctx.db.query("userCounters").take(COUNTER_SCAN_LIMIT);
+    const counters = await ctx.db
+      .query("userCounters")
+      .take(COUNTER_SCAN_LIMIT);
     const ranked = counters
       .filter((counter) => (counter.bookmarkCount ?? 0) > 0)
       .sort((a, b) => (b.bookmarkCount ?? 0) - (a.bookmarkCount ?? 0))
@@ -637,33 +723,58 @@ export const listUsers = adminQuery({
     const page = Math.max(args.page ?? 1, 1);
     const order = args.order ?? "desc";
     const sortBy = args.sortBy ?? "createdAt";
+    const search = args.search?.trim() || undefined;
+    const role = args.role && args.role !== "all" ? args.role : undefined;
+    const status =
+      args.status && args.status !== "all" ? args.status : undefined;
 
-    // Always take the newest USER_SCAN_LIMIT rows so the candidate set does not
-    // change when the user flips sort direction.
-    let users = await fetchAdminUsers(ctx, {
-      limit: USER_SCAN_LIMIT,
-      sort: "desc",
-      search: args.search || undefined,
-      role: args.role && args.role !== "all" ? args.role : undefined,
-      status: args.status && args.status !== "all" ? args.status : undefined,
-    });
+    let users: AuthUser[];
+    let usersCapped: boolean;
 
-    const subscriptions = await fetchRecentSubscriptions(ctx);
-    const proSubscriptionsByUser = new Map<
-      string,
-      (typeof subscriptions)[number][]
-    >();
-    for (const subscription of subscriptions) {
-      if (deriveEffectivePlan(subscription) !== "pro") continue;
-      const existing = proSubscriptionsByUser.get(subscription.userId) ?? [];
-      existing.push(subscription);
-      proSubscriptionsByUser.set(subscription.userId, existing);
+    if (search) {
+      users = await fetchAdminUsers(ctx, {
+        limit: USER_SCAN_LIMIT,
+        sort: "desc",
+        search,
+        role,
+        status,
+      });
+      usersCapped = users.length >= USER_SCAN_LIMIT;
+    } else if (args.filter === "premium") {
+      const premium = await fetchPremiumAdminUsers(ctx, {
+        limit: USER_SCAN_LIMIT,
+        role,
+        status,
+      });
+      users = premium.users;
+      usersCapped = premium.capped;
+    } else {
+      // Always take the newest USER_SCAN_LIMIT rows so the candidate set does
+      // not change when the user flips sort direction.
+      users = await fetchAdminUsers(ctx, {
+        limit: USER_SCAN_LIMIT,
+        sort: "desc",
+        role,
+        status,
+      });
+      usersCapped = users.length >= USER_SCAN_LIMIT;
     }
 
+    const canonicalByUser = await fetchCanonicalSubscriptionsByUser(
+      ctx,
+      users.map((user) => user._id),
+    );
+
     if (args.filter === "premium") {
-      users = users.filter((user) => proSubscriptionsByUser.has(user._id));
+      users = users.filter(
+        (user) =>
+          deriveEffectivePlan(canonicalByUser.get(user._id) ?? null) === "pro",
+      );
     } else if (args.filter === "regular") {
-      users = users.filter((user) => !proSubscriptionsByUser.has(user._id));
+      users = users.filter(
+        (user) =>
+          deriveEffectivePlan(canonicalByUser.get(user._id) ?? null) !== "pro",
+      );
     }
 
     // One indexed point lookup per candidate rather than a table scan. The scan
@@ -698,7 +809,8 @@ export const listUsers = adminQuery({
 
     const enriched = users.map((user) => {
       const counter = countersByUser.get(user._id);
-      const userSubscriptions = proSubscriptionsByUser.get(user._id) ?? [];
+      const subscription = canonicalByUser.get(user._id) ?? null;
+      const isPro = deriveEffectivePlan(subscription) === "pro";
       return {
         id: user._id,
         name: user.name ?? null,
@@ -712,12 +824,17 @@ export const listUsers = adminQuery({
         publicLinkEnabled: user.publicLinkEnabled ?? false,
         hasCustomLimits:
           Object.keys(parseCustomLimits(user.metadata)).length > 0,
-        subscriptions: userSubscriptions.map((subscription) => ({
-          plan: subscription.plan,
-          provider: subscription.provider ?? null,
-          status: subscription.status ?? null,
-          periodEnd: subscription.periodEnd ?? null,
-        })),
+        subscriptions:
+          isPro && subscription
+            ? [
+                {
+                  plan: subscription.plan,
+                  provider: subscription.provider ?? null,
+                  status: subscription.status ?? null,
+                  periodEnd: subscription.periodEnd ?? null,
+                },
+              ]
+            : [],
         _count: {
           bookmarks: counter?.bookmarkCount ?? 0,
           bookmarkOpens: clicksByUser.get(user._id) ?? 0,
@@ -758,7 +875,7 @@ export const listUsers = adminQuery({
       page: safePage,
       pageSize,
       scan: {
-        capped: users.length >= USER_SCAN_LIMIT,
+        capped: usersCapped,
         limit: USER_SCAN_LIMIT,
         clicksSince:
           recentOpens.length > 0
@@ -980,7 +1097,8 @@ export const getUserActivity = adminQuery({
         subtitle: null,
         userId: args.userId,
         userName: null,
-        meta: conversation.likes === 0 ? "chat" : `feedback ${conversation.likes}`,
+        meta:
+          conversation.likes === 0 ? "chat" : `feedback ${conversation.likes}`,
       });
     }
 
