@@ -7,6 +7,7 @@ import { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
 import { authAction } from "../functions";
 import { withGeminiFallback } from "../lib/gemini_provider";
+import { GEMINI_MODEL_IDS } from "../processing/gemini";
 
 function cleanTitle(title: string, fallback: string) {
   const cleaned = title.trim().replace(/^["']|["']$/g, "");
@@ -26,7 +27,7 @@ export const createConversationWithTitle = authAction({
   handler: async (ctx, args): Promise<{ id: string; title: string }> => {
     const userId = ctx.user.id;
 
-    // Generate a short title using the same model as chat.
+    // Generate a short title.
     const prompt = `Generate a short title (3-5 words max) for a chat about: "${args.firstMessage}"
 
 Reply with ONLY the title. No quotes, no punctuation.`;
@@ -35,7 +36,7 @@ Reply with ONLY the title. No quotes, no punctuation.`;
     try {
       const result = await withGeminiFallback((google) =>
         generateText({
-          model: google("gemini-3.1-pro-preview"),
+          model: google(GEMINI_MODEL_IDS.cheap),
           prompt,
         }),
       );
@@ -69,7 +70,7 @@ Reply with ONLY the title. No quotes, no punctuation.`;
     try {
       const result = await withGeminiFallback((google) =>
         generateText({
-          model: google("gemini-3.1-pro-preview"),
+          model: google(GEMINI_MODEL_IDS.cheap),
           prompt,
         }),
       );
