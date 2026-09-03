@@ -11,6 +11,10 @@ import type { DataModel } from "../_generated/dataModel";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import authConfig from "../auth.config";
 import betterAuthSchema from "../betterAuth/schema";
+import {
+  buildAccountDeletedEmail,
+  buildDeleteAccountVerificationEmail,
+} from "./delete-account";
 import { throwForbidden, throwUnauthorized } from "../utils/errors";
 
 const APP_NAME = "SaveIt";
@@ -243,6 +247,22 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
     },
     deleteUser: {
       enabled: true,
+      // Without this callback Better Auth 1.6 treats deleteUser as an immediate
+      // delete and rejects sessions older than freshAge (1 day). Every OAuth /
+      // OTP user then gets a generic "An error occurred" toast.
+      sendDeleteAccountVerification: async ({
+        user,
+        url,
+      }: {
+        user: { email: string };
+        url: string;
+      }) => {
+        const mctx = requireRunMutationCtx(ctx);
+        await mctx.scheduler.runAfter(0, internal.email.actions.sendAuthEmail, {
+          to: user.email,
+          ...buildDeleteAccountVerificationEmail(url),
+        });
+      },
       beforeDelete: async (user: { id: string; email: string }) => {
         try {
           const mctx = requireRunMutationCtx(ctx);
@@ -252,7 +272,19 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
             { userId: user.id },
           );
         } catch (error) {
-          console.warn("[auth] beforeDelete hook skipped", error);
+          console.warn("[auth] beforeDelete stripe hook skipped", error);
+        }
+        try {
+          const mctx = requireRunMutationCtx(ctx);
+          await mctx.scheduler.runAfter(
+            0,
+            internal.auth.hooks.wipeDeletedUserData,
+            {
+              userId: user.id,
+            },
+          );
+        } catch (error) {
+          console.warn("[auth] beforeDelete data wipe skipped", error);
         }
         try {
           const mctx = requireRunMutationCtx(ctx);
@@ -262,6 +294,12 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
         } catch (error) {
           console.warn("[auth] Lumail deletion hook skipped", error);
         }
+      },
+      afterDelete: async (user: { email: string }) => {
+        await scheduleEmail(ctx, {
+          to: user.email,
+          ...buildAccountDeletedEmail(),
+        });
       },
     },
   },
