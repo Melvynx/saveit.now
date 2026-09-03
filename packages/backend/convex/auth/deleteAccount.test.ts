@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAccountDeletedEmail,
   buildDeleteAccountVerificationEmail,
-} from "./delete-account";
+} from "./deleteAccount";
 
 describe("delete account emails", () => {
   it("puts the Better Auth confirmation URL in the verification email", () => {

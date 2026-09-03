@@ -14,7 +14,7 @@ import betterAuthSchema from "../betterAuth/schema";
 import {
   buildAccountDeletedEmail,
   buildDeleteAccountVerificationEmail,
-} from "./delete-account";
+} from "./deleteAccount";
 import { throwForbidden, throwUnauthorized } from "../utils/errors";
 
 const APP_NAME = "SaveIt";
