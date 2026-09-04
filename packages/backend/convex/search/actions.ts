@@ -17,9 +17,9 @@ import { authAction } from "../functions";
 import { bookmarkType } from "../schema";
 import {
   EMBEDDING_MODEL,
-  EMBEDDING_MODEL_KEY,
   EMBEDDING_PROVIDER_OPTIONS,
   formatSearchQuery,
+  isCompatibleSearchEmbeddingModel,
 } from "../processing/embedding_format";
 import {
   applyOpenFrequencyBoost,
@@ -28,6 +28,7 @@ import {
   isDomainQuery,
   isSearchQuery,
   matchesSearchFilters,
+  mergeSearchResults,
   paginateResults,
   sortSearchResults,
   type SearchResultDTO,
@@ -71,6 +72,44 @@ type SearchResponse = {
   fromCache: false;
 };
 
+async function mergeTitleMatches(
+  ctx: any,
+  vectorResults: SearchResultDTO[],
+  args: {
+    userId: string;
+    query: string;
+    types: string[];
+    specialFilters: ("READ" | "UNREAD" | "STAR")[];
+    tags: string[];
+    cursor: string | undefined;
+    limit: number;
+    startTime: number;
+  },
+): Promise<SearchResponse> {
+  const titleResults: SearchResultDTO[] = await ctx.runQuery(
+    internal.search.queries.searchByTitle,
+    {
+      userId: args.userId,
+      query: args.query,
+      types: args.types.length > 0 ? (args.types as any[]) : undefined,
+      specialFilters:
+        args.specialFilters.length > 0 ? args.specialFilters : undefined,
+      tags: args.tags.length > 0 ? args.tags : undefined,
+      limit: args.limit,
+    },
+  );
+
+  const merged = mergeSearchResults(vectorResults, titleResults);
+  const paginated = paginateResults(merged, args.cursor, args.limit);
+  return {
+    bookmarks: paginated.bookmarks,
+    nextCursor: paginated.nextCursor,
+    hasMore: paginated.hasMore,
+    fromCache: false,
+    queryTime: Date.now() - args.startTime,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Vector search core (shared between `search` and `searchForChat`)
 // ---------------------------------------------------------------------------
@@ -87,9 +126,25 @@ async function runVectorSearch(
   specialFilters: ("READ" | "UNREAD" | "STAR")[],
 ): Promise<SearchResponse> {
   const startTime = Date.now();
+  const titleFallbackArgs = {
+    userId,
+    query,
+    types,
+    specialFilters,
+    tags,
+    cursor,
+    limit,
+    startTime,
+  };
 
-  // 1. Embed the query
-  const vector = await embedQueryLocal(query.trim());
+  let vector: number[];
+  try {
+    vector = await embedQueryLocal(query.trim());
+  } catch (error) {
+    console.error("[search] query embedding failed, falling back to title", error);
+    return mergeTitleMatches(ctx, [], titleFallbackArgs);
+  }
+
   const hasPostFilters =
     tags.length > 0 || types.length > 0 || specialFilters.length > 0;
   const candidateLimit = hasPostFilters
@@ -111,12 +166,7 @@ async function runVectorSearch(
   const filteredResults = rawResults.filter((r: any) => r._score !== undefined);
 
   if (filteredResults.length === 0) {
-    return {
-      bookmarks: [],
-      hasMore: false,
-      fromCache: false,
-      queryTime: Date.now() - startTime,
-    };
+    return mergeTitleMatches(ctx, [], titleFallbackArgs);
   }
 
   // Helper: apply matchingDistance spread filter
@@ -147,7 +197,7 @@ async function runVectorSearch(
   );
 
   const eligibleDocs = docs
-    .filter((doc) => doc.embeddingModel === EMBEDDING_MODEL_KEY)
+    .filter((doc) => isCompatibleSearchEmbeddingModel(doc.embeddingModel))
     .filter((doc) =>
       matchesSearchFilters(doc, {
         tags,
@@ -169,12 +219,7 @@ async function runVectorSearch(
   }
 
   if (spreadDocs.length === 0) {
-    return {
-      bookmarks: [],
-      hasMore: false,
-      fromCache: false,
-      queryTime: Date.now() - startTime,
-    };
+    return mergeTitleMatches(ctx, [], titleFallbackArgs);
   }
 
   // 7. Get open counts
@@ -225,17 +270,11 @@ async function runVectorSearch(
     );
   }
 
-  // 9. Sort + paginate
-  const sorted = sortSearchResults(results);
-  const paginated = paginateResults(sorted, cursor, limit);
-
-  return {
-    bookmarks: paginated.bookmarks,
-    nextCursor: paginated.nextCursor,
-    hasMore: paginated.hasMore,
-    fromCache: false,
-    queryTime: Date.now() - startTime,
-  };
+  return mergeTitleMatches(
+    ctx,
+    sortSearchResults(results),
+    titleFallbackArgs,
+  );
 }
 
 // ---------------------------------------------------------------------------

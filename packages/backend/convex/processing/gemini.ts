@@ -2,12 +2,14 @@
 
 import { generateObject, generateText } from "ai";
 import type { ZodSchema } from "zod";
+import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
+import { EMBEDDING_MODEL } from "./embedding_format";
 
 export const GEMINI_MODEL_IDS = {
-  cheap: "gemini-3.1-flash-lite",
-  normal: "gemini-3.1-pro-preview",
-  embedding: "gemini-embedding-2",
+  cheap: GEMINI_GENERATION_MODELS.cheap,
+  normal: GEMINI_GENERATION_MODELS.normal,
+  embedding: EMBEDDING_MODEL,
 } as const;
 
 /**

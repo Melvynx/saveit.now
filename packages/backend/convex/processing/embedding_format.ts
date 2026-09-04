@@ -8,6 +8,14 @@ export const EMBEDDING_DIMENSIONS = 1536;
 export const EMBEDDING_PROMPT_VERSION = "search-result-v1";
 export const EMBEDDING_MODEL_KEY = `${EMBEDDING_MODEL}:${EMBEDDING_DIMENSIONS}:${EMBEDDING_PROMPT_VERSION}`;
 
+/** Vectors written before the prompt-version suffix still live in the same space. */
+export function isCompatibleSearchEmbeddingModel(
+  model: string | null | undefined,
+): boolean {
+  if (!model) return false;
+  return model === EMBEDDING_MODEL || model.startsWith(`${EMBEDDING_MODEL}:`);
+}
+
 export const EMBEDDING_PROVIDER_OPTIONS = {
   google: {
     outputDimensionality: EMBEDDING_DIMENSIONS,

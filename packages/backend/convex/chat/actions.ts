@@ -6,6 +6,7 @@ import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
 import { authAction } from "../functions";
+import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 
 function cleanTitle(title: string, fallback: string) {
@@ -35,7 +36,7 @@ Reply with ONLY the title. No quotes, no punctuation.`;
     try {
       const result = await withGeminiFallback((google) =>
         generateText({
-          model: google("gemini-3.1-pro-preview"),
+          model: google(GEMINI_GENERATION_MODELS.normal),
           prompt,
         }),
       );
@@ -69,7 +70,7 @@ Reply with ONLY the title. No quotes, no punctuation.`;
     try {
       const result = await withGeminiFallback((google) =>
         generateText({
-          model: google("gemini-3.1-pro-preview"),
+          model: google(GEMINI_GENERATION_MODELS.normal),
           prompt,
         }),
       );

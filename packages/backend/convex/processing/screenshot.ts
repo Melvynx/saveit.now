@@ -6,6 +6,7 @@ import { internal } from "../_generated/api";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { IMAGE_ANALYSIS_PROMPT } from "./gemini";
+import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 
 export interface ScreenshotAnalysisResult {
@@ -155,7 +156,7 @@ async function analyzeImageBase64(
 ): Promise<ScreenshotAnalysisResult> {
   const result = await withGeminiFallback((google) =>
     generateObject({
-      model: google(process.env.GEMINI_CHEAP_MODEL ?? "gemini-3.1-flash-lite"),
+      model: google(process.env.GEMINI_CHEAP_MODEL ?? GEMINI_GENERATION_MODELS.cheap),
       messages: [
         {
           role: "user",

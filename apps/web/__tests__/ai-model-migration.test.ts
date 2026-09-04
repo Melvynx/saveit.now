@@ -31,9 +31,9 @@ describe("AI model migration", () => {
       "../../packages/backend/convex/processing/embedding_format.ts",
     );
 
-    expect(gemini).toContain('cheap: "gemini-3.1-flash-lite"');
-    expect(gemini).toContain('normal: "gemini-3.1-pro-preview"');
-    expect(gemini).toContain('embedding: "gemini-embedding-2"');
+    expect(gemini).toContain("GEMINI_GENERATION_MODELS.cheap");
+    expect(gemini).toContain("GEMINI_GENERATION_MODELS.normal");
+    expect(gemini).toContain("embedding: EMBEDDING_MODEL");
     expect(embeddingFormat).toContain('EMBEDDING_MODEL = "gemini-embedding-2"');
     expect(embeddingFormat).toContain(
       'EMBEDDING_PROMPT_VERSION = "search-result-v1"',
@@ -77,8 +77,11 @@ describe("AI model migration", () => {
     const offenders = searchAndReuseFiles.filter((relativePath) => {
       const content = readProjectFile(relativePath);
 
-      return !content.includes("EMBEDDING_MODEL_KEY") ||
-        !content.includes("embeddingModel");
+      return (
+        (!content.includes("EMBEDDING_MODEL_KEY") &&
+          !content.includes("isCompatibleSearchEmbeddingModel")) ||
+        !content.includes("embeddingModel")
+      );
     });
 
     expect(offenders).toEqual([]);

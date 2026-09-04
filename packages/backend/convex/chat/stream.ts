@@ -14,6 +14,7 @@ import { httpAction } from "../_generated/server";
 import { webCorsHeaders } from "../utils/cors";
 import { internal } from "../_generated/api";
 import { authComponent, createAuth } from "../auth/config";
+import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 
 // ---------------------------------------------------------------------------
@@ -99,7 +100,7 @@ function getThinkingConfig(enableThinking: boolean): ThinkingConfig {
     providerOptions: {
       google: {
         thinkingConfig: {
-          thinkingBudget: 8192,
+          thinkingLevel: "high",
           includeThoughts: true,
         },
       },
@@ -637,7 +638,7 @@ You can filter by:
 
   const result = await withGeminiFallback(async (google) =>
     streamText({
-      model: google("gemini-3.1-pro-preview"),
+      model: google(GEMINI_GENERATION_MODELS.normal),
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages as UIMessage[]),
       tools,

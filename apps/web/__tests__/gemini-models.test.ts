@@ -8,17 +8,17 @@ function readProjectFile(relativePath: string) {
 }
 
 describe("Gemini model configuration", () => {
-  it("uses Gemini Flash-Lite for cheap generation and Gemini 3.1 Pro for normal generation", () => {
-    const content = readProjectFile("../../packages/backend/convex/processing/gemini.ts");
+  it("uses Gemini 3.8 Flash for cheap and normal generation", () => {
+    const content = readProjectFile("../../packages/backend/convex/lib/gemini_models.ts");
 
-    expect(content).toContain('cheap: "gemini-3.1-flash-lite"');
-    expect(content).toContain('normal: "gemini-3.1-pro-preview"');
+    expect(content).toContain('cheap: "gemini-3.8-flash"');
+    expect(content).toContain('normal: "gemini-3.8-flash"');
   });
 
   it("uses the central normal Gemini model for chat", () => {
     const content = readProjectFile("../../packages/backend/convex/chat/stream.ts");
 
-    expect(content).toContain('google("gemini-3.1-pro-preview")');
+    expect(content).toContain("GEMINI_GENERATION_MODELS.normal");
   });
 
   it("keeps Gemini embeddings on the 1536-dimension Convex vector index", () => {

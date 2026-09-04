@@ -56,6 +56,7 @@ import type * as integrations_lumailDeletion from "../integrations/lumailDeletio
 import type * as integrations_lumailPolicy from "../integrations/lumailPolicy.js";
 import type * as integrations_state from "../integrations/state.js";
 import type * as integrations_workflows from "../integrations/workflows.js";
+import type * as lib_gemini_models from "../lib/gemini_models.js";
 import type * as lib_gemini_provider from "../lib/gemini_provider.js";
 import type * as lib_safe_fetch from "../lib/safe_fetch.js";
 import type * as migration_backfill_tweet_text from "../migration/backfill_tweet_text.js";
@@ -163,6 +164,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/lumailPolicy": typeof integrations_lumailPolicy;
   "integrations/state": typeof integrations_state;
   "integrations/workflows": typeof integrations_workflows;
+  "lib/gemini_models": typeof lib_gemini_models;
   "lib/gemini_provider": typeof lib_gemini_provider;
   "lib/safe_fetch": typeof lib_safe_fetch;
   "migration/backfill_tweet_text": typeof migration_backfill_tweet_text;

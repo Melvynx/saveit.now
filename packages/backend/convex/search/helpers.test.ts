@@ -6,7 +6,9 @@ import {
   isDomainQuery,
   matchesSearchFilters,
   matchesSpecialFilters,
+  mergeSearchResults,
   paginateResults,
+  searchIndexQuery,
   sortSearchResults,
   type SearchResultDTO,
 } from "./helpers";
@@ -143,5 +145,21 @@ describe("search helpers", () => {
         requireReady: true,
       }),
     ).toBe(false);
+  });
+
+  it("keeps alphanumeric tokens for title search and drops punctuation-only queries", () => {
+    expect(searchIndexQuery("shadcn component library")).toBe(
+      "shadcn component library",
+    );
+    expect(searchIndexQuery("@@@")).toBeNull();
+  });
+
+  it("merges search result groups by highest score", () => {
+    expect(
+      mergeSearchResults(
+        [result("a", 10), result("b", 20)],
+        [result("a", 40), result("c", 5)],
+      ).map((item) => item.id),
+    ).toEqual(["a", "b", "c"]);
   });
 });

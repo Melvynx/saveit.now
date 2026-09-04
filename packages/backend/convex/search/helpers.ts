@@ -11,7 +11,24 @@ export { cleanMetadata, cleanPublicMetadata };
 // Types (mirrored from Contract §C — SearchResultDTO = BookmarkDTO with score)
 // ---------------------------------------------------------------------------
 
-export type SearchResultMatchType = "tag" | "vector" | "combined" | "default";
+export type SearchResultMatchType =
+  | "tag"
+  | "vector"
+  | "combined"
+  | "text"
+  | "default";
+
+/** Convex searchIndex chokes on punctuation-only queries; keep tokens. */
+export function searchIndexQuery(value: string): string | null {
+  const cleaned = value
+    .trim()
+    .replace(/[^\p{L}\p{N}@._+\- ]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length < 2) return null;
+  if (!/[\p{L}\p{N}]/u.test(cleaned)) return null;
+  return cleaned;
+}
 
 export type SearchResultDTO = {
   _id: string;
@@ -203,6 +220,21 @@ export function sortSearchResults(
     if (a.score !== b.score) return b.score - a.score;
     return b.id.localeCompare(a.id);
   });
+}
+
+export function mergeSearchResults(
+  ...groups: SearchResultDTO[][]
+): SearchResultDTO[] {
+  const byId = new Map<string, SearchResultDTO>();
+  for (const group of groups) {
+    for (const result of group) {
+      const existing = byId.get(result.id);
+      if (!existing || result.score > existing.score) {
+        byId.set(result.id, result);
+      }
+    }
+  }
+  return sortSearchResults([...byId.values()]);
 }
 
 /**

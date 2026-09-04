@@ -14,6 +14,7 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { authAction } from "../functions";
+import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 
 // ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ export const suggestCleanup = authAction({
 
     const { object } = await withGeminiFallback((google) =>
       generateObject({
-        model: google("gemini-3.1-pro-preview"),
+        model: google(GEMINI_GENERATION_MODELS.normal),
         schema: TagCleanupResponseSchema,
         system: `You are a tag organization expert. Analyze the provided tags and identify consolidation opportunities to reduce redundancy while maintaining semantic meaning.
 

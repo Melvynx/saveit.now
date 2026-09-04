@@ -6,6 +6,7 @@ import {
   EMBEDDING_PROVIDER_OPTIONS,
   formatSearchDocument,
   formatSearchQuery,
+  isCompatibleSearchEmbeddingModel,
 } from "./embedding_format";
 
 describe("Gemini Embeddings 2 retrieval formatting", () => {
@@ -33,5 +34,19 @@ describe("Gemini Embeddings 2 retrieval formatting", () => {
     expect(EMBEDDING_MODEL_KEY).toBe(
       "gemini-embedding-2:1536:search-result-v1",
     );
+  });
+
+  it("accepts current and pre-version Gemini Embeddings 2 keys", () => {
+    expect(
+      isCompatibleSearchEmbeddingModel("gemini-embedding-2:1536:search-result-v1"),
+    ).toBe(true);
+    expect(isCompatibleSearchEmbeddingModel("gemini-embedding-2:1536")).toBe(
+      true,
+    );
+    expect(isCompatibleSearchEmbeddingModel("gemini-embedding-2")).toBe(true);
+    expect(isCompatibleSearchEmbeddingModel("text-embedding-3-small")).toBe(
+      false,
+    );
+    expect(isCompatibleSearchEmbeddingModel(undefined)).toBe(false);
   });
 });

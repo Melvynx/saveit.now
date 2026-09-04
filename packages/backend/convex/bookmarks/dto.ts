@@ -61,7 +61,7 @@ export type BookmarkDTO = {
   ogDescription: string | null;
   faviconUrl: string | null;
   score: number;
-  matchType: "tag" | "vector" | "combined" | "default";
+  matchType: "tag" | "vector" | "combined" | "text" | "default";
   matchedTags: string[];
   tags: TagInBookmark[];
   createdAt: number;

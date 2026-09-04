@@ -14,7 +14,9 @@ import {
   bookmarkToSearchResult,
   cleanMetadata,
   extractDomain,
+  matchesSearchFilters,
   matchesSpecialFilters,
+  searchIndexQuery,
   type SearchResultDTO,
 } from "./helpers";
 
@@ -287,6 +289,89 @@ export const searchByTags = internalQuery({
       if (a.score !== b.score) return b.score - a.score;
       return b.id.localeCompare(a.id);
     });
+
+    return results;
+  },
+});
+
+// ---------------------------------------------------------------------------
+// searchByTitle — lexical fallback via by_title_text
+// ---------------------------------------------------------------------------
+
+export const searchByTitle = internalQuery({
+  args: {
+    userId: v.string(),
+    query: v.string(),
+    types: v.optional(v.array(bookmarkType)),
+    tags: v.optional(v.array(v.string())),
+    specialFilters: v.optional(
+      v.array(
+        v.union(v.literal("READ"), v.literal("UNREAD"), v.literal("STAR")),
+      ),
+    ),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<SearchResultDTO[]> => {
+    const search = searchIndexQuery(args.query);
+    if (!search) return [];
+
+    const limit = Math.min(50, Math.max(1, args.limit ?? 20));
+    const rows = await ctx.db
+      .query("bookmarks")
+      .withSearchIndex("by_title_text", (q) =>
+        q.search("title", search).eq("userId", args.userId),
+      )
+      .take(limit);
+
+    const results: SearchResultDTO[] = [];
+    for (const row of rows) {
+      const tags = await loadTagsForBookmark(ctx, row._id as string);
+      if (
+        !matchesSearchFilters(
+          {
+            type: row.type,
+            status: row.status,
+            starred: row.starred,
+            read: row.read,
+            tags,
+          },
+          {
+            tags: args.tags,
+            types: args.types as string[] | undefined,
+            specialFilters: args.specialFilters,
+            requireReady: true,
+          },
+        )
+      ) {
+        continue;
+      }
+      results.push(
+        bookmarkToSearchResult(
+          {
+            _id: row._id as string,
+            userId: row.userId,
+            url: row.url,
+            title: row.title,
+            summary: row.summary,
+            preview: row.preview,
+            type: row.type ?? null,
+            status: row.status,
+            ogImageUrl: row.ogImageUrl,
+            ogDescription: row.ogDescription,
+            faviconUrl: row.faviconUrl,
+            createdAt: row.createdAt,
+            metadata: cleanMetadata(row.metadata),
+            starred: row.starred,
+            read: row.read,
+            tags,
+          },
+          70,
+          "text",
+          [],
+          0,
+        ),
+      );
+    }
 
     return results;
   },
