@@ -19,7 +19,11 @@ import {
   assertCanRunProcessing,
   shouldSendLimitEmail,
 } from "../billing/limits";
-import { deriveEffectivePlan, getLimits } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  getLimits,
+  pickCanonicalSubscription,
+} from "../billing/plans";
 import {
   buildBookmarkDetailDTO,
   type BookmarkDetailDTO,
@@ -43,6 +47,7 @@ const READABLE_BOOKMARK_TYPES = ["ARTICLE", "YOUTUBE"] as const;
 const MAX_BOOKMARK_NOTE_LENGTH = 2000;
 const MAX_BOOKMARK_TITLE_LENGTH = 500;
 const MAX_BOOKMARK_SUMMARY_LENGTH = 5000;
+const SUBSCRIPTION_PER_USER_LIMIT = 20;
 
 function assertValidBookmarkNote(note: string | null | undefined): void {
   if (typeof note === "string" && note.length > MAX_BOOKMARK_NOTE_LENGTH) {
@@ -574,12 +579,13 @@ export const exportCsv = authMutation({
     const userId = ctx.user.id;
 
     // Check export permission.
-    const subscription = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .first();
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
 
-    const plan = deriveEffectivePlan(subscription);
+    const plan = deriveEffectivePlan(pickCanonicalSubscription(subscriptions));
     const dbUser = await ctx.runQuery(components.betterAuth.data.getUserById, {
       userId,
     });

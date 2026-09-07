@@ -39,6 +39,9 @@ export type SubscriptionPlanState = {
   plan?: string | null;
   provider?: "stripe" | "appstore" | "manual" | null;
   status?: string | null;
+  createdAt?: number | null;
+  updatedAt?: number | null;
+  _creationTime?: number | null;
 };
 // Plain numeric shape (NOT the `as const` literal union) so merged/custom
 // limits and runtime-computed values assign cleanly.
@@ -71,6 +74,37 @@ export function isLifetimeSubscription(
     subscription.provider === "manual" &&
     subscription.status === "lifetime"
   );
+}
+
+/**
+ * Pick the single subscription row that should drive entitlements.
+ *
+ * Migration and provider-transition windows can leave more than one row per
+ * user. Never use the first row from the by_user index for authorization: it is
+ * usually the oldest row and can incorrectly preserve an old active Pro grant.
+ * Manual lifetime grants are intentionally durable; otherwise the most recently
+ * updated/created row is canonical.
+ */
+export function pickCanonicalSubscription<
+  T extends SubscriptionPlanState | null | undefined,
+>(subscriptions: readonly T[]): T | null {
+  const rows = subscriptions.filter(
+    (subscription): subscription is NonNullable<T> => Boolean(subscription),
+  );
+  if (rows.length === 0) return null;
+
+  const lifetime = rows.find((subscription) =>
+    isLifetimeSubscription(subscription),
+  );
+  if (lifetime) return lifetime;
+
+  return rows.reduce((newest, candidate) => {
+    const newestTimestamp =
+      newest.updatedAt ?? newest.createdAt ?? newest._creationTime ?? 0;
+    const candidateTimestamp =
+      candidate.updatedAt ?? candidate.createdAt ?? candidate._creationTime ?? 0;
+    return candidateTimestamp > newestTimestamp ? candidate : newest;
+  });
 }
 
 /**

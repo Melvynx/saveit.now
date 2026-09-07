@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
-import { deriveEffectivePlan } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  pickCanonicalSubscription,
+} from "../billing/plans";
 import { authQuery } from "../functions";
 import { startOfMonth } from "./usage";
 import type { Doc } from "../_generated/dataModel";
@@ -10,6 +13,7 @@ import type { UIMessage } from "ai";
 type ChatMessageRow = Doc<"chatMessages">;
 type ChatRole = UIMessage["role"];
 type TextPart = Extract<UIMessage["parts"][number], { type: "text" }>;
+const SUBSCRIPTION_PER_USER_LIMIT = 20;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -163,17 +167,14 @@ export const getChatUsage = authQuery({
     const userId = ctx.user.id;
     const monthStart = startOfMonth();
 
-    // Fetch active subscription.
-    // No combined by_user+status index; fetch by user and check status in JS.
+    // Fetch canonical subscription. Never let an older active row preserve Pro
+    // access after a newer cancellation/downgrade row exists.
     const allSubs = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .take(10);
-    const plan = allSubs.some(
-      (subscription) => deriveEffectivePlan(subscription) === "pro",
-    )
-      ? "pro"
-      : "free";
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const plan = deriveEffectivePlan(pickCanonicalSubscription(allSubs));
 
     // Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {

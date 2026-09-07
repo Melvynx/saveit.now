@@ -19,6 +19,7 @@ import {
   deriveEffectivePlan,
   getLimits,
   parseCustomLimits,
+  pickCanonicalSubscription,
   type SubscriptionPlanState,
 } from "../billing/plans";
 
@@ -162,38 +163,9 @@ const trendPercent = (current: number, previous: number) =>
 /**
  * A user can own several subscription rows: cancelling and re-subscribing
  * inserts a new one rather than mutating the old, so `.first()` on the
- * `by_user` index returns the *oldest* — usually a dead row. Reading one row
- * and handing it to `deriveEffectivePlan` would then report an actively paying
- * customer as "free", and `listUsers` (which scans every row) would disagree
- * with the detail page for exactly the accounts an admin is most likely to open.
- *
- * Pick the row that actually grants entitlement: a Pro-deriving row wins, and
- * newest wins among equals.
+ * `by_user` index returns the *oldest* — usually a dead row.
  */
 const SUBSCRIPTION_PER_USER_LIMIT = 20;
-
-function pickCanonicalSubscription<
-  T extends SubscriptionPlanState & { createdAt: number },
->(subscriptions: T[]): T | null {
-  let best: T | null = null;
-  let bestIsPro = false;
-
-  for (const subscription of subscriptions) {
-    const isPro = deriveEffectivePlan(subscription) === "pro";
-    if (best === null) {
-      best = subscription;
-      bestIsPro = isPro;
-      continue;
-    }
-    // Entitlement first, recency second.
-    if (isPro !== bestIsPro ? isPro : subscription.createdAt > best.createdAt) {
-      best = subscription;
-      bestIsPro = isPro;
-    }
-  }
-
-  return best;
-}
 
 /**
  * Newest-first on purpose. Convex's default order is oldest-first, so once the

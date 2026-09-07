@@ -1,11 +1,14 @@
 import {
   deriveEffectivePlan,
   getLimits as getPlansLimits,
+  pickCanonicalSubscription,
   parseCustomLimits,
 } from "../billing/plans";
 import { components } from "../_generated/api";
 import { authQuery } from "../functions";
 import { deriveOnboardingFlowState } from "./onboarding";
+
+const SUBSCRIPTION_PER_USER_LIMIT = 20;
 
 /**
  * getLimits — authQuery
@@ -22,10 +25,12 @@ export const getLimits = authQuery({
     const userId = ctx.user.id;
 
     // Fetch active subscription
-    const sub = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const sub = pickCanonicalSubscription(subscriptions);
 
     const plan = deriveEffectivePlan(sub);
 
@@ -69,10 +74,12 @@ export const getLimits = authQuery({
 export const getOnboardingFlowState = authQuery({
   args: {},
   handler: async (ctx) => {
-    const subscription = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", ctx.user.id))
-      .first();
+      .order("desc")
+      .take(SUBSCRIPTION_PER_USER_LIMIT);
+    const subscription = pickCanonicalSubscription(subscriptions);
 
     return deriveOnboardingFlowState({
       onboarding: ctx.user.onboarding,

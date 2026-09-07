@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveEffectivePlan, getLimits } from "./plans";
+import {
+  deriveEffectivePlan,
+  getLimits,
+  pickCanonicalSubscription,
+} from "./plans";
 
 describe("deriveEffectivePlan", () => {
   it("defaults missing subscriptions to free", () => {
@@ -66,5 +70,89 @@ describe("getLimits", () => {
       canExport: 1,
       apiAccess: 0,
     });
+  });
+});
+
+describe("pickCanonicalSubscription", () => {
+  it("uses the newest subscription row instead of an older active row", () => {
+    const olderActive = {
+      plan: "pro",
+      provider: "stripe" as const,
+      status: "active",
+      createdAt: 100,
+      updatedAt: 100,
+    };
+    const newerCanceled = {
+      plan: "free",
+      provider: "stripe" as const,
+      status: "canceled",
+      createdAt: 200,
+      updatedAt: 300,
+    };
+
+    expect(pickCanonicalSubscription([olderActive, newerCanceled])).toBe(
+      newerCanceled,
+    );
+    expect(
+      deriveEffectivePlan(pickCanonicalSubscription([olderActive, newerCanceled])),
+    ).toBe("free");
+  });
+
+  it("requires newest-first bounded scans so more than 20 historical rows cannot hide the latest downgrade", () => {
+    const olderActiveRows = Array.from({ length: 20 }, (_, index) => ({
+      plan: "pro",
+      provider: "stripe" as const,
+      status: "active",
+      createdAt: index + 1,
+      updatedAt: index + 1,
+    }));
+    const newestCanceled = {
+      plan: "free",
+      provider: "stripe" as const,
+      status: "canceled",
+      createdAt: 21,
+      updatedAt: 21,
+    };
+    const oldestFirstByUserRows = [...olderActiveRows, newestCanceled];
+
+    const defaultOldestFirstBoundedScan = oldestFirstByUserRows.slice(0, 20);
+    expect(
+      deriveEffectivePlan(
+        pickCanonicalSubscription(defaultOldestFirstBoundedScan),
+      ),
+    ).toBe("pro");
+
+    const newestFirstBoundedScan = [...oldestFirstByUserRows]
+      .sort((left, right) => right.createdAt - left.createdAt)
+      .slice(0, 20);
+
+    expect(pickCanonicalSubscription(newestFirstBoundedScan)).toBe(
+      newestCanceled,
+    );
+    expect(
+      deriveEffectivePlan(pickCanonicalSubscription(newestFirstBoundedScan)),
+    ).toBe("free");
+  });
+
+  it("keeps manual lifetime access canonical even when billing rows are newer", () => {
+    const lifetime = {
+      plan: "pro",
+      provider: "manual" as const,
+      status: "lifetime",
+      createdAt: 100,
+      updatedAt: 100,
+    };
+    const newerCanceled = {
+      plan: "free",
+      provider: "stripe" as const,
+      status: "canceled",
+      createdAt: 200,
+      updatedAt: 300,
+    };
+
+    expect(pickCanonicalSubscription([newerCanceled, lifetime])).toBe(lifetime);
+    expect(deriveEffectivePlan(pickCanonicalSubscription([newerCanceled, lifetime]))).toBe(
+      "pro",
+    );
   });
 });
