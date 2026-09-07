@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { deriveEffectivePlan } from "../billing/plans";
+import { deriveEffectivePlan, getCanonicalSubscription } from "../billing/plans";
 
 /**
  * getActiveSubscriptionForUser — internalQuery
@@ -12,10 +12,12 @@ import { deriveEffectivePlan } from "../billing/plans";
 export const getActiveSubscriptionForUser = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const sub = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
+      .order("desc")
+      .take(20);
+    const sub = getCanonicalSubscription(subscriptions);
     const plan = deriveEffectivePlan(sub);
     if (plan !== "pro") {
       return null;

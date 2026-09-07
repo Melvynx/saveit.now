@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { authMutation } from "../functions";
-import { deriveEffectivePlan } from "../billing/plans";
+import { deriveEffectivePlan, getCanonicalSubscription } from "../billing/plans";
 import { throwNotFound } from "../utils/errors";
 import { startOfMonth } from "./usage";
 import type { Id } from "../_generated/dataModel";
@@ -40,12 +40,9 @@ export const checkAndIncrementUsage = internalMutation({
     const allSubs = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .take(10);
-    const plan = allSubs.some(
-      (subscription) => deriveEffectivePlan(subscription) === "pro",
-    )
-      ? "pro"
-      : "free";
+      .order("desc")
+      .take(20);
+    const plan = deriveEffectivePlan(getCanonicalSubscription(allSubs));
 
     // 3. Fetch user metadata for custom limits.
     const user = await ctx.runQuery(components.betterAuth.data.getUserById, {

@@ -19,7 +19,11 @@ import {
   assertCanRunProcessing,
   shouldSendLimitEmail,
 } from "../billing/limits";
-import { deriveEffectivePlan, getLimits } from "../billing/plans";
+import {
+  deriveEffectivePlan,
+  getCanonicalSubscription,
+  getLimits,
+} from "../billing/plans";
 import {
   buildBookmarkDetailDTO,
   type BookmarkDetailDTO,
@@ -574,12 +578,13 @@ export const exportCsv = authMutation({
     const userId = ctx.user.id;
 
     // Check export permission.
-    const subscription = await ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .first();
+      .order("desc")
+      .take(20);
 
-    const plan = deriveEffectivePlan(subscription);
+    const plan = deriveEffectivePlan(getCanonicalSubscription(subscriptions));
     const dbUser = await ctx.runQuery(components.betterAuth.data.getUserById, {
       userId,
     });

@@ -1,5 +1,8 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { deriveEffectivePlan, getLimits } from "./plans";
+import { deriveEffectivePlan, getCanonicalSubscription, getLimits } from "./plans";
 
 describe("deriveEffectivePlan", () => {
   it("defaults missing subscriptions to free", () => {
@@ -49,6 +52,69 @@ describe("deriveEffectivePlan", () => {
     { plan: "enterprise", status: "active" },
   ])("requires both the Pro plan and an entitled status", (subscription) => {
     expect(deriveEffectivePlan(subscription)).toBe("free");
+  });
+});
+
+describe("getCanonicalSubscription", () => {
+  it("does not let an older active row grant Pro after a newer cancellation", () => {
+    const subscription = getCanonicalSubscription([
+      {
+        plan: "pro",
+        provider: "stripe",
+        status: "active",
+        createdAt: 100,
+      },
+      {
+        plan: "free",
+        provider: "stripe",
+        status: "canceled",
+        createdAt: 200,
+      },
+    ]);
+
+    expect(subscription?.status).toBe("canceled");
+    expect(deriveEffectivePlan(subscription)).toBe("free");
+  });
+
+  it("keeps a manual lifetime grant canonical regardless of later billing rows", () => {
+    const subscription = getCanonicalSubscription([
+      {
+        plan: "pro",
+        provider: "manual",
+        status: "lifetime",
+        createdAt: 100,
+      },
+      {
+        plan: "free",
+        provider: "stripe",
+        status: "canceled",
+        createdAt: 200,
+      },
+    ]);
+
+    expect(subscription?.provider).toBe("manual");
+    expect(deriveEffectivePlan(subscription)).toBe("pro");
+  });
+});
+
+describe("subscription entitlement call sites", () => {
+  it("uses canonical subscription selection for chat limit paths", () => {
+    for (const relativePath of [
+      "../chat/mutations.ts",
+      "../chat/queries.ts",
+      "../users/queries.ts",
+    ]) {
+      const source = readFileSync(
+        path.resolve(
+          path.dirname(fileURLToPath(import.meta.url)),
+          relativePath,
+        ),
+        "utf8",
+      );
+
+      expect(source).toContain("getCanonicalSubscription(");
+      expect(source).not.toMatch(/allSubs\.some\([\s\S]*deriveEffectivePlan/);
+    }
   });
 });
 
