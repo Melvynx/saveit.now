@@ -2,17 +2,42 @@
  * subscriptions/mutations.ts — Internal webhook-driven subscription writes.
  * Default runtime (no "use node").
  *
- * Both mutations are idempotent and called exclusively from stripe/actions.ts
- * processWebhook handler.
+ * Webhook writes are idempotent and called from stripe/actions.ts.
  */
 
 import { v } from "convex/values";
-import { components } from "../_generated/api";
-import { internalMutation } from "../_generated/server";
-import { isLifetimeSubscription } from "../billing/plans";
+import { components, internal } from "../_generated/api";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+import {
+  deriveEffectivePlan,
+  isLifetimeSubscription,
+  isPaidStripePeriod,
+  type SubscriptionPlanState,
+} from "../billing/plans";
+import { startPlanSync } from "../integrations/workflows";
 import { grantLifetimeProForUser } from "./lifetime";
 
 const planValidator = v.union(v.literal("free"), v.literal("pro"));
+
+/**
+ * Reset "Limit exceeded" bookmarks once per Free→Pro transition. Scheduling
+ * here, inside the transaction, keeps concurrent webhooks for the same upgrade
+ * from retrying twice.
+ */
+async function retryBookmarksOnActivation(
+  ctx: MutationCtx,
+  userId: string,
+  before: SubscriptionPlanState | null,
+  after: SubscriptionPlanState,
+) {
+  if (deriveEffectivePlan(before) === "pro") return;
+  if (deriveEffectivePlan(after) !== "pro") return;
+  await ctx.scheduler.runAfter(
+    0,
+    internal.stripe.actions.retryLimitExceededBookmarks,
+    { userId },
+  );
+}
 
 /**
  * upsertFromWebhook — find subscription by userId (by_user index); update if
@@ -80,6 +105,10 @@ export const upsertFromWebhook = internalMutation({
       });
     }
 
+    await retryBookmarksOnActivation(ctx, args.userId, existing, {
+      ...args,
+      provider: "stripe",
+    });
     return null;
   },
 });
@@ -87,7 +116,8 @@ export const upsertFromWebhook = internalMutation({
 /**
  * updateFromWebhook — find subscription by stripeSubscriptionId
  * (by_stripe_subscription index); update the found row.
- * Called from customer.subscription.updated and customer.subscription.deleted.
+ * Called from stripe/actions.ts syncStripeSubscription with state derived from
+ * a fresh Stripe retrieve.
  * No-op if subscription not found (log only).
  */
 export const updateFromWebhook = internalMutation({
@@ -119,20 +149,64 @@ export const updateFromWebhook = internalMutation({
       return existing.userId;
     }
 
-    await ctx.db.patch(existing._id, {
+    const next = {
       plan: args.plan,
-      provider: "stripe",
+      provider: "stripe" as const,
       status: args.status,
       periodStart: args.periodStart,
       periodEnd: args.periodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+    };
+    await ctx.db.patch(existing._id, {
+      ...next,
       appstoreOriginalTransactionId: undefined,
       appstoreProductId: undefined,
       appstoreLastVerifiedAt: undefined,
       updatedAt: Date.now(),
     });
 
+    const alreadyScheduled =
+      isPaidStripePeriod(existing) && existing.periodEnd === args.periodEnd;
+    if (isPaidStripePeriod(next) && !alreadyScheduled) {
+      await ctx.scheduler.runAt(
+        args.periodEnd,
+        internal.subscriptions.mutations.expirePaidStripePeriod,
+        { subscriptionId: existing._id },
+      );
+    }
+
+    await retryBookmarksOnActivation(ctx, existing.userId, existing, next);
     return existing.userId;
+  },
+});
+
+/**
+ * Flip a canceled Stripe row whose paid period is over back to free and
+ * resync the marketing plan. Entitlement already ends at `periodEnd` through
+ * `deriveEffectivePlan`; this keeps the stored row and Lumail in step.
+ * No-op if the row was resubscribed or re-synced in the meantime.
+ */
+export const expirePaidStripePeriod = internalMutation({
+  args: { subscriptionId: v.id("subscriptions") },
+  handler: async (ctx, { subscriptionId }) => {
+    const subscription = await ctx.db.get(subscriptionId);
+    if (
+      !subscription ||
+      subscription.provider !== "stripe" ||
+      subscription.status !== "canceled" ||
+      subscription.plan !== "pro" ||
+      isPaidStripePeriod(subscription)
+    ) {
+      return null;
+    }
+
+    await ctx.db.patch(subscriptionId, {
+      plan: "free",
+      cancelAtPeriodEnd: false,
+      updatedAt: Date.now(),
+    });
+    await startPlanSync(ctx, { userId: subscription.userId });
+    return null;
   },
 });
 

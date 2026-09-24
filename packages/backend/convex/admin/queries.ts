@@ -247,6 +247,7 @@ const PREMIUM_STATUS_SCAN = [
   "trialing",
   "lifetime",
   "past_due",
+  "canceled",
 ] as const;
 
 /**

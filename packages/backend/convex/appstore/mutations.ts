@@ -21,12 +21,12 @@ const appleStatusValidator = v.union(
   v.literal(5),
 );
 
-function hasActiveStripeSubscription(subscription: Subscription | null) {
+function hasEntitledStripeSubscription(subscription: Subscription | null) {
   return (
     subscription !== null &&
     subscription.provider !== "appstore" &&
     Boolean(subscription.stripeSubscriptionId) &&
-    (subscription.status === "active" || subscription.status === "trialing")
+    deriveEffectivePlan(subscription) === "pro"
   );
 }
 
@@ -117,9 +117,9 @@ export const upsertFromApple = internalMutation({
       };
     }
 
-    if (hasActiveStripeSubscription(existing)) {
+    if (hasEntitledStripeSubscription(existing)) {
       console.info(
-        "[appstore.upsertFromApple] ignoring App Store state for active Stripe subscription",
+        "[appstore.upsertFromApple] ignoring App Store state for entitled Stripe subscription",
         { userId: args.userId },
       );
       return {

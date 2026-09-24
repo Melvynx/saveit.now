@@ -50,6 +50,30 @@ describe("deriveEffectivePlan", () => {
   ])("requires both the Pro plan and an entitled status", (subscription) => {
     expect(deriveEffectivePlan(subscription)).toBe("free");
   });
+
+  describe("canceled Stripe subscription with a paid period", () => {
+    const now = 1_000_000;
+    const paidPeriod = {
+      plan: "pro",
+      provider: "stripe" as const,
+      status: "canceled",
+      periodEnd: now + 1,
+    };
+
+    it("stays Pro until the paid period ends", () => {
+      expect(deriveEffectivePlan(paidPeriod, now)).toBe("pro");
+      expect(deriveEffectivePlan(paidPeriod, now + 1)).toBe("free");
+    });
+
+    it.each([
+      { ...paidPeriod, plan: "free" },
+      { ...paidPeriod, provider: null },
+      { ...paidPeriod, provider: "appstore" as const },
+      { ...paidPeriod, periodEnd: null },
+    ])("only applies to Stripe Pro rows with a period end", (subscription) => {
+      expect(deriveEffectivePlan(subscription, now)).toBe("free");
+    });
+  });
 });
 
 describe("getLimits", () => {

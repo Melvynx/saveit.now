@@ -5,9 +5,15 @@ import Stripe from "stripe";
 import { components, internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
+import { deriveEffectivePlan, type PlanName } from "../billing/plans";
 import { authAction } from "../functions";
 import { throwConfigurationError, throwValidationError } from "../utils/errors";
 import { createOrReuseProCheckoutSession } from "./checkout";
+import {
+  deriveStripeSubscriptionState,
+  normalizeStripePlan,
+  type StripeSubscriptionState,
+} from "./entitlement";
 import { stripeCustomerIdempotencyKey } from "./idempotency";
 
 // ---------------------------------------------------------------------------
@@ -25,10 +31,8 @@ function getStripe(): Stripe {
 
 const getSiteUrl = () => process.env.SITE_URL ?? "http://localhost:3000";
 
-function normalizeStripePlan(plan: string | undefined): "free" | "pro" {
-  if (plan === undefined || plan === "pro") return "pro";
-  return "free";
-}
+const stripeId = (value: string | { id: string } | null | undefined) =>
+  typeof value === "string" ? value : (value?.id ?? null);
 
 // ---------------------------------------------------------------------------
 // ensureCustomer (internalAction)
@@ -268,18 +272,34 @@ export const processWebhook = internalAction({
           break;
 
         case "customer.subscription.updated":
-          await handleSubscriptionUpdated(
-            ctx,
-            event.data.object as Stripe.Subscription,
-          );
+        case "customer.subscription.deleted":
+          await syncStripeSubscription(ctx, stripe, event.data.object.id);
           break;
 
-        case "customer.subscription.deleted":
-          await handleSubscriptionDeleted(
-            ctx,
-            event.data.object as Stripe.Subscription,
-          );
+        // Stripe keeps a subscription canceled when its renewal invoice is
+        // paid after dunning gave up, so only invoice events reveal it.
+        // Links are re-read through the pinned SDK because event payloads
+        // follow the endpoint's API version.
+        case "invoice.paid": {
+          const invoice = await stripe.invoices.retrieve(event.data.object.id);
+          const subscriptionId = stripeId(invoice.subscription);
+          if (subscriptionId) {
+            await syncStripeSubscription(ctx, stripe, subscriptionId);
+          }
           break;
+        }
+
+        case "charge.refunded": {
+          const charge = await stripe.charges.retrieve(event.data.object.id);
+          const invoiceId = stripeId(charge.invoice);
+          if (!invoiceId) break;
+          const invoice = await stripe.invoices.retrieve(invoiceId);
+          const subscriptionId = stripeId(invoice.subscription);
+          if (subscriptionId) {
+            await syncStripeSubscription(ctx, stripe, subscriptionId);
+          }
+          break;
+        }
 
         default:
           // Unhandled event type — acknowledge without processing.
@@ -300,11 +320,25 @@ export const processWebhook = internalAction({
 });
 
 // ---------------------------------------------------------------------------
+// syncSubscription (internalAction)
+//
+// Support/reconciliation entry point: re-derives one row from Stripe's current
+// state exactly like the webhook does.
+//   npx convex run --prod stripe/actions:syncSubscription '{"stripeSubscriptionId":"sub_…"}'
+// ---------------------------------------------------------------------------
+
+export const syncSubscription = internalAction({
+  args: { stripeSubscriptionId: v.string() },
+  handler: async (ctx, { stripeSubscriptionId }): Promise<StripeSyncResult> =>
+    syncStripeSubscription(ctx, getStripe(), stripeSubscriptionId),
+});
+
+// ---------------------------------------------------------------------------
 // retryLimitExceededBookmarks (internalAction)
 //
 // Finds ERROR bookmarks for a user whose processingError contains
 // "Limit exceeded", resets them to PENDING, and schedules reprocessing.
-// Called from handleSubscriptionUpdated when a user upgrades from free to pro.
+// Scheduled by subscription mutations when a user upgrades from free to pro.
 //
 // Cross-module deps (Contract §B):
 //   - internal.bookmarks.mutations.updateProcessing  ({ id, patch }) — Phase 02
@@ -458,63 +492,35 @@ async function handleCheckoutSessionCompleted(
   });
 }
 
-async function handleSubscriptionUpdated(
-  ctx: WebhookCtx,
-  subscription: Stripe.Subscription,
-) {
-  // Plan name from subscription metadata; fall back to "pro" when absent.
-  const planName = normalizeStripePlan(subscription.metadata?.plan);
+type StripeSyncResult = StripeSubscriptionState & {
+  userId: string | null;
+  effectivePlan: PlanName;
+};
 
-  const storedUserId: string | null = await ctx.runMutation(
-    internal.subscriptions.mutations.updateFromWebhook,
-    {
-      stripeSubscriptionId: subscription.id,
-      plan: planName,
-      status: subscription.status,
-      periodStart: subscription.current_period_start * 1000,
-      periodEnd: subscription.current_period_end * 1000,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    },
+async function syncStripeSubscription(
+  ctx: WebhookCtx,
+  stripe: Stripe,
+  stripeSubscriptionId: string,
+): Promise<StripeSyncResult> {
+  const subscription = await stripe.subscriptions.retrieve(
+    stripeSubscriptionId,
+    { expand: ["latest_invoice.charge"] },
   );
+  const state = deriveStripeSubscriptionState(subscription);
 
-  // Upgrade-from-free retry: reset ERROR bookmarks blocked by "Limit exceeded".
-  // userId is in subscription metadata (set during checkout session creation).
-  const userId =
-    (subscription.metadata?.userId as string | undefined) ??
-    storedUserId ??
-    undefined;
-  if (userId) {
-    await ctx.runMutation(internal.integrations.workflows.queuePlan, {
-      userId,
-    });
-  }
-  if (userId && subscription.status === "active") {
-    await ctx.scheduler.runAfter(
-      0,
-      internal.stripe.actions.retryLimitExceededBookmarks,
-      { userId },
-    );
-  }
-}
-
-async function handleSubscriptionDeleted(
-  ctx: WebhookCtx,
-  subscription: Stripe.Subscription,
-) {
   const userId: string | null = await ctx.runMutation(
     internal.subscriptions.mutations.updateFromWebhook,
-    {
-      stripeSubscriptionId: subscription.id,
-      plan: "free",
-      status: "canceled",
-      periodStart: subscription.current_period_start * 1000,
-      periodEnd: Date.now(),
-      cancelAtPeriodEnd: false,
-    },
+    { stripeSubscriptionId, ...state },
   );
   if (userId) {
     await ctx.runMutation(internal.integrations.workflows.queuePlan, {
       userId,
     });
   }
+
+  return {
+    userId,
+    effectivePlan: deriveEffectivePlan({ ...state, provider: "stripe" }),
+    ...state,
+  };
 }

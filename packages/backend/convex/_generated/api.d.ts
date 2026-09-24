@@ -88,6 +88,7 @@ import type * as search_helpers from "../search/helpers.js";
 import type * as search_queries from "../search/queries.js";
 import type * as stripe_actions from "../stripe/actions.js";
 import type * as stripe_checkout from "../stripe/checkout.js";
+import type * as stripe_entitlement from "../stripe/entitlement.js";
 import type * as stripe_idempotency from "../stripe/idempotency.js";
 import type * as stripe_promotionCodes from "../stripe/promotionCodes.js";
 import type * as subscriptions_helpers from "../subscriptions/helpers.js";
@@ -196,6 +197,7 @@ declare const fullApi: ApiFromModules<{
   "search/queries": typeof search_queries;
   "stripe/actions": typeof stripe_actions;
   "stripe/checkout": typeof stripe_checkout;
+  "stripe/entitlement": typeof stripe_entitlement;
   "stripe/idempotency": typeof stripe_idempotency;
   "stripe/promotionCodes": typeof stripe_promotionCodes;
   "subscriptions/helpers": typeof subscriptions_helpers;

@@ -39,6 +39,7 @@ export type SubscriptionPlanState = {
   plan?: string | null;
   provider?: "stripe" | "appstore" | "manual" | null;
   status?: string | null;
+  periodEnd?: number | null;
 };
 // Plain numeric shape (NOT the `as const` literal union) so merged/custom
 // limits and runtime-computed values assign cleanly.
@@ -74,14 +75,36 @@ export function isLifetimeSubscription(
 }
 
 /**
+ * Stripe cancels a subscription whose renewal keeps failing and never revives
+ * it when the customer pays that invoice afterwards. Stripe sync stores such a
+ * row as canceled Pro whose `periodEnd` is the end of the paid period.
+ */
+export function isPaidStripePeriod(
+  subscription: SubscriptionPlanState | null | undefined,
+  now: number = Date.now(),
+): boolean {
+  return (
+    subscription?.plan === "pro" &&
+    subscription.provider === "stripe" &&
+    subscription.status === "canceled" &&
+    typeof subscription.periodEnd === "number" &&
+    subscription.periodEnd > now
+  );
+}
+
+/**
  * Derive the effective entitlement from the canonical subscription row.
  * A stored plan name or an active-looking status alone must never grant Pro.
  */
 export function deriveEffectivePlan(
   subscription: SubscriptionPlanState | null | undefined,
+  now: number = Date.now(),
 ): PlanName {
-  return subscription?.plan === "pro" &&
-    isActiveSubscriptionStatus(subscription.status, subscription.provider)
+  if (subscription?.plan !== "pro") return "free";
+  return isActiveSubscriptionStatus(
+    subscription.status,
+    subscription.provider,
+  ) || isPaidStripePeriod(subscription, now)
     ? "pro"
     : "free";
 }
