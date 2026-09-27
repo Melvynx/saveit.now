@@ -382,16 +382,35 @@ export const searchByTitle = internalQuery({
 // ---------------------------------------------------------------------------
 
 /**
- * Loads a set of bookmarks by their IDs and re-checks ownership (defense in
+ * Loads the bookmarks behind vector hits and re-checks ownership (defense in
  * depth, per Contract §E.12).  Returns the docs with their tags joined.
+ *
+ * `embeddingIds` are `bookmarkEmbeddings` hits, resolved through
+ * bookmarks.by_embedding_id so the vectors themselves are never read. `ids`
+ * are hits from the legacy inline index.
  */
 export const loadForSearch = internalQuery({
   args: {
     ids: v.array(v.id("bookmarks")),
+    embeddingIds: v.optional(v.array(v.id("bookmarkEmbeddings"))),
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    const { ids, userId } = args;
+    const { userId } = args;
+
+    const rows = new Map<string, Doc<"bookmarks">>();
+    for (const embeddingId of args.embeddingIds ?? []) {
+      const row = await ctx.db
+        .query("bookmarks")
+        .withIndex("by_embedding_id", (q) => q.eq("embeddingId", embeddingId))
+        .first();
+      if (row) rows.set(row._id, row);
+    }
+    for (const id of args.ids) {
+      if (rows.has(id)) continue;
+      const row = await ctx.db.get(id);
+      if (row) rows.set(row._id, row);
+    }
 
     const results: Array<{
       _id: string;
@@ -415,13 +434,11 @@ export const loadForSearch = internalQuery({
       processingStep?: number | null;
       processingError?: string | null;
       embeddingModel?: string | null;
+      embeddingId?: string | null;
       tags: Array<{ tag: { id: string; name: string; type: string } }>;
     }> = [];
 
-    for (const id of ids) {
-      const row = await ctx.db.get(id);
-      if (!row) continue;
-
+    for (const row of rows.values()) {
       // Re-check ownership (defense in depth — E.12)
       if (row.userId !== userId) continue;
 
@@ -449,6 +466,7 @@ export const loadForSearch = internalQuery({
         processingStep: row.processingStep ?? null,
         processingError: row.processingError ?? null,
         embeddingModel: row.embeddingModel ?? null,
+        embeddingId: row.embeddingId ?? null,
         tags,
       });
     }

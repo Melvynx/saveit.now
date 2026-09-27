@@ -1,7 +1,11 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
+import {
+  removeBookmarkEmbedding,
+  writeBookmarkEmbedding,
+} from "../bookmarks/embeddings";
 import { cleanMetadataForStorage } from "../utils/metadata";
 import { EMBEDDING_MODEL_KEY } from "./embedding_format";
 
@@ -69,10 +73,15 @@ export const applyRefreshedEmbedding = internalMutation({
       return false;
     }
 
-    await ctx.db.patch(args.bookmarkId, {
-      searchEmbedding: args.searchEmbedding,
-      embeddingModel: args.embeddingModel,
-    });
+    await ctx.db.patch(
+      args.bookmarkId,
+      await writeBookmarkEmbedding(
+        ctx,
+        bookmark,
+        args.searchEmbedding,
+        args.embeddingModel,
+      ),
+    );
     return true;
   },
 });
@@ -259,10 +268,23 @@ export const applyResult = internalMutation({
   returns: v.null(),
   handler: async (ctx, { bookmarkId, fields }) => {
     const existing = await ctx.db.get(bookmarkId);
+    const { searchEmbedding, embeddingModel, ...rest } = fields as Record<
+      string,
+      unknown
+    >;
     const patch: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(
-      fields as Record<string, unknown>,
-    )) {
+    if (existing && Array.isArray(searchEmbedding)) {
+      Object.assign(
+        patch,
+        await writeBookmarkEmbedding(
+          ctx,
+          existing,
+          searchEmbedding as number[],
+          embeddingModel as string,
+        ),
+      );
+    }
+    for (const [key, value] of Object.entries(rest)) {
       if (key === "preview" && (value === null || value === undefined)) {
         if (existing?.preview) continue;
       }
@@ -279,6 +301,27 @@ export const applyResult = internalMutation({
     return null;
   },
 });
+
+/** Gives `target` the same search vector as `source` (legacy or split). */
+async function copySourceEmbedding(
+  ctx: MutationCtx,
+  source: Doc<"bookmarks">,
+  target: Doc<"bookmarks"> | null,
+) {
+  if (!target) return {};
+  const embedding = source.embeddingId
+    ? (await ctx.db.get(source.embeddingId))?.embedding
+    : source.searchEmbedding;
+  if (!embedding || !source.embeddingModel) {
+    return await removeBookmarkEmbedding(ctx, target);
+  }
+  return await writeBookmarkEmbedding(
+    ctx,
+    target,
+    embedding,
+    source.embeddingModel,
+  );
+}
 
 /**
  * copyFromDuplicate — copy all relevant fields + tags from source to target bookmark.
@@ -318,8 +361,7 @@ export const copyFromDuplicate = internalMutation({
       ogImageUrl: source.ogImageUrl,
       ogDescription: source.ogDescription,
       imageDescription: source.imageDescription,
-      searchEmbedding: source.searchEmbedding,
-      embeddingModel: source.embeddingModel,
+      ...(await copySourceEmbedding(ctx, source, existingTarget)),
       status: "READY",
       metadata: {
         ...existingMetadata,

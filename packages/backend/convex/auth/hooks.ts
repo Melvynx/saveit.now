@@ -80,6 +80,13 @@ export const wipeDeletedUserData = internalMutation({
     hasMore =
       (await deleteRows(
         await ctx.db
+          .query("bookmarkEmbeddings")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .take(WIPE_BATCH_SIZE),
+      )) || hasMore;
+    hasMore =
+      (await deleteRows(
+        await ctx.db
           .query("bookmarks")
           .withIndex("by_user_created", (q) => q.eq("userId", userId))
           .take(WIPE_BATCH_SIZE),

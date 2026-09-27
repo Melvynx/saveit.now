@@ -15,6 +15,7 @@ import {
 } from "../_generated/server";
 import { internal, components } from "../_generated/api";
 import { throwNotFound } from "../utils/errors";
+import { removeBookmarkEmbedding } from "../bookmarks/embeddings";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
@@ -223,6 +224,8 @@ export const deleteBookmarkMutation = internalMutation({
     for (const open of opens) {
       await ctx.db.delete(open._id);
     }
+
+    await removeBookmarkEmbedding(ctx, bookmark);
 
     // Decrement counter
     const counters = await ctx.db

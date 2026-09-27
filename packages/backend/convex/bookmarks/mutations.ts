@@ -26,6 +26,7 @@ import {
   type TagInBookmark,
 } from "./dto";
 import { cleanMetadataForStorage } from "../utils/metadata";
+import { removeBookmarkEmbedding } from "./embeddings";
 import {
   extractUniqueImportUrls,
   summarizeBulkImport,
@@ -342,8 +343,7 @@ export const update = authMutation({
     if (args.patch.note !== undefined) patchData.note = args.patch.note;
     if (args.patch.title !== undefined) {
       patchData.title = args.patch.title;
-      patchData.searchEmbedding = undefined;
-      patchData.embeddingModel = undefined;
+      Object.assign(patchData, await removeBookmarkEmbedding(ctx, doc));
     }
     if (args.patch.summary !== undefined)
       patchData.summary = args.patch.summary;
@@ -415,6 +415,8 @@ export const remove = authMutation({
     for (const row of openRows) {
       await ctx.db.delete(row._id);
     }
+
+    await removeBookmarkEmbedding(ctx, doc);
 
     // Decrement counter (same mutation = atomic).
     await bumpBookmarkCount(ctx, userId, -1);
