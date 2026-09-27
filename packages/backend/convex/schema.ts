@@ -6,8 +6,9 @@ import { v } from "convex/values";
  * (see betterAuth/schema.ts). `userId` everywhere === betterAuth user id.
  *
  * Search strategy: Convex vector search is single-field, so we re-embed each
- * bookmark to ONE combined `searchEmbedding` (title + "\n" + vectorSummary)
- * and index that. See Phase 04/07.
+ * bookmark to ONE combined embedding (title + "\n" + vectorSummary) and index
+ * that. The 1536-float vector (~15 KB) lives in `bookmarkEmbeddings`, not on
+ * the bookmark, so list/search/reactive reads of `bookmarks` never pay for it.
  */
 
 export const bookmarkType = v.union(
@@ -52,8 +53,12 @@ export default defineSchema({
     status: bookmarkStatus,
     starred: v.boolean(),
     read: v.boolean(),
-    // search — single combined embedding (1536-d) is the indexed field
+    // LEGACY inline vector. Moved to `bookmarkEmbeddings` by
+    // migration/split_embeddings; kept optional until every row is migrated.
     searchEmbedding: v.optional(v.array(v.float64())),
+    // Current embedding row + the model key it was built with. The model key
+    // stays on the bookmark so staleness checks never read the vector.
+    embeddingId: v.optional(v.id("bookmarkEmbeddings")),
     embeddingModel: v.optional(v.string()), // e.g. "gemini-embedding-2:1536:search-result-v1"
     // processing progress (drives reactive UI; replaces Inngest realtime)
     processingStep: v.optional(v.number()),
@@ -73,6 +78,7 @@ export default defineSchema({
     .index("by_user_url", ["userId", "url"])
     .index("by_user_starred", ["userId", "starred"])
     .index("by_user_read", ["userId", "read"])
+    .index("by_embedding_id", ["embeddingId"])
     .searchIndex("by_title_text", {
       searchField: "title",
       filterFields: ["userId"],
@@ -81,6 +87,21 @@ export default defineSchema({
       vectorField: "searchEmbedding",
       dimensions: 1536,
       filterFields: ["userId", "type", "embeddingModel"],
+    }),
+
+  // One row per embedded bookmark. Vector search hits resolve back to the
+  // bookmark through bookmarks.by_embedding_id, so the vector is only ever
+  // read by the vector index itself.
+  bookmarkEmbeddings: defineTable({
+    bookmarkId: v.id("bookmarks"),
+    userId: v.string(),
+    embedding: v.array(v.float64()),
+  })
+    .index("by_user", ["userId"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["userId"],
     }),
 
   tags: defineTable({
@@ -176,11 +197,7 @@ export default defineSchema({
     userId: v.string(), // referenceId == userId
     plan: v.string(), // "free" | "pro"
     provider: v.optional(
-      v.union(
-        v.literal("stripe"),
-        v.literal("appstore"),
-        v.literal("manual"),
-      ),
+      v.union(v.literal("stripe"), v.literal("appstore"), v.literal("manual")),
     ),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),

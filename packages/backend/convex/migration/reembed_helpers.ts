@@ -15,6 +15,7 @@ import {
   query,
 } from "../functions";
 import { throwForbidden } from "../utils/errors";
+import { writeBookmarkEmbedding } from "../bookmarks/embeddings";
 import {
   EMBEDDING_DIMENSIONS as CURRENT_EMBEDDING_DIMENSIONS,
   EMBEDDING_MODEL_KEY as CURRENT_EMBEDDING_MODEL_KEY,
@@ -100,13 +101,21 @@ function clampBatchSize(batchSize: number | undefined): number {
 
 function getReembedReason(doc: {
   searchEmbedding?: number[];
+  embeddingId?: string;
   embeddingModel?: string;
 }): ReembedReason | null {
-  if (!Array.isArray(doc.searchEmbedding) || doc.searchEmbedding.length === 0) {
-    return "missingEmbedding";
-  }
-  if (doc.searchEmbedding.length !== CURRENT_EMBEDDING_DIMENSIONS) {
-    return "invalidDimensions";
+  // Split rows are only written by writeBookmarkEmbedding and their model key
+  // encodes the dimensions, so the bookmark alone answers this — no vector read.
+  if (!doc.embeddingId) {
+    if (
+      !Array.isArray(doc.searchEmbedding) ||
+      doc.searchEmbedding.length === 0
+    ) {
+      return "missingEmbedding";
+    }
+    if (doc.searchEmbedding.length !== CURRENT_EMBEDDING_DIMENSIONS) {
+      return "invalidDimensions";
+    }
   }
   if (doc.embeddingModel !== CURRENT_EMBEDDING_MODEL_KEY) {
     return "staleModel";
@@ -479,7 +488,7 @@ export const getBookmarksForReembed = internalQuery({
 // ---------------------------------------------------------------------------
 
 /**
- * patchEmbedding — patches searchEmbedding + embeddingModel on a single bookmark.
+ * patchEmbedding — stores a fresh embedding for a single bookmark.
  * Called from the "use node" reembedBatch action via ctx.runMutation.
  */
 export const patchEmbedding = internalMutation({
@@ -490,10 +499,12 @@ export const patchEmbedding = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, { id, embedding, model }) => {
-    await ctx.db.patch(id, {
-      searchEmbedding: embedding,
-      embeddingModel: model,
-    });
+    const bookmark = await ctx.db.get(id);
+    if (!bookmark) return null;
+    await ctx.db.patch(
+      id,
+      await writeBookmarkEmbedding(ctx, bookmark, embedding, model),
+    );
     return null;
   },
 });

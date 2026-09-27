@@ -141,7 +141,10 @@ async function runVectorSearch(
   try {
     vector = await embedQueryLocal(query.trim());
   } catch (error) {
-    console.error("[search] query embedding failed, falling back to title", error);
+    console.error(
+      "[search] query embedding failed, falling back to title",
+      error,
+    );
     return mergeTitleMatches(ctx, [], titleFallbackArgs);
   }
 
@@ -153,19 +156,28 @@ async function runVectorSearch(
 
   // 2. Vector search — Convex vector filters support eq/or, not AND, so keep
   // the ownership filter in the vector query and post-filter joined docs for
-  // model/type/tag/special-filter fidelity.
-  const rawResults: Array<{ _id: string; _score: number }> =
-    await ctx.vectorSearch("bookmarks", "by_search_embedding", {
-      vector,
-      limit: candidateLimit,
-      filter: (q: any) => q.eq("userId", userId),
-    });
+  // model/type/tag/special-filter fidelity. The legacy inline index still
+  // answers for bookmarks that migration/split_embeddings has not moved yet.
+  const vectorQuery = {
+    vector,
+    limit: candidateLimit,
+    filter: (q: any) => q.eq("userId", userId),
+  };
+  type VectorHit = { _id: string; _score: number };
+  const [embeddingHits, legacyHits]: [VectorHit[], VectorHit[]] =
+    await Promise.all([
+      ctx.vectorSearch("bookmarkEmbeddings", "by_embedding", vectorQuery),
+      ctx.vectorSearch("bookmarks", "by_search_embedding", vectorQuery),
+    ]);
 
   // 3. Keep score-bearing results. Embedding model is also re-checked after
   // loading docs so stale index entries cannot leak into results.
-  const filteredResults = rawResults.filter((r: any) => r._score !== undefined);
+  const scoredEmbeddingHits = embeddingHits.filter(
+    (r) => r._score !== undefined,
+  );
+  const scoredLegacyHits = legacyHits.filter((r) => r._score !== undefined);
 
-  if (filteredResults.length === 0) {
+  if (scoredEmbeddingHits.length === 0 && scoredLegacyHits.length === 0) {
     return mergeTitleMatches(ctx, [], titleFallbackArgs);
   }
 
@@ -182,19 +194,27 @@ async function runVectorSearch(
   // 4. Load bookmark docs (with ownership re-check). The tag/type/special
   // filters require joined docs, so apply the spread cutoff after post-filtering
   // to avoid a non-matching top result suppressing valid candidates.
-  const ids = filteredResults.map((r) => r._id) as any[];
   const docs: any[] = await ctx.runQuery(
     internal.search.queries.loadForSearch,
     {
-      ids,
+      ids: scoredLegacyHits.map((r) => r._id) as any[],
+      embeddingIds: scoredEmbeddingHits.map((r) => r._id) as any[],
       userId,
     },
   );
 
   // 6. Build a score map
-  const scoreMap = new Map<string, number>(
-    filteredResults.map((r) => [r._id, r._score]),
+  const embeddingScores = new Map<string, number>(
+    scoredEmbeddingHits.map((r) => [r._id, r._score]),
   );
+  const legacyScores = new Map<string, number>(
+    scoredLegacyHits.map((r) => [r._id, r._score]),
+  );
+  const scoreOf = (doc: any) =>
+    Math.max(
+      (doc.embeddingId && embeddingScores.get(doc.embeddingId)) || 0,
+      legacyScores.get(doc._id) ?? 0,
+    );
 
   const eligibleDocs = docs
     .filter((doc) => isCompatibleSearchEmbeddingModel(doc.embeddingModel))
@@ -206,7 +226,8 @@ async function runVectorSearch(
         requireReady: true,
       }),
     )
-    .map((doc) => ({ doc, _score: scoreMap.get(doc._id) ?? 0 }));
+    .map((doc) => ({ doc, _score: scoreOf(doc) }))
+    .sort((a, b) => b._score - a._score);
 
   let spreadDocs = applySpread(eligibleDocs, matchingDistance);
 
@@ -270,11 +291,7 @@ async function runVectorSearch(
     );
   }
 
-  return mergeTitleMatches(
-    ctx,
-    sortSearchResults(results),
-    titleFallbackArgs,
-  );
+  return mergeTitleMatches(ctx, sortSearchResults(results), titleFallbackArgs);
 }
 
 // ---------------------------------------------------------------------------
