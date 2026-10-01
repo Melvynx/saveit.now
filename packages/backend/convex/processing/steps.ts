@@ -24,7 +24,11 @@ import {
   processYouTubeBookmark,
 } from "./handlers";
 import { assertSafeRemoteUrl, safeFetch } from "../lib/safe_fetch";
-import { isUsableRenderedHtml } from "./detect";
+import {
+  buildRedditPostHtml,
+  getRedditPost,
+  isUsableRenderedHtml,
+} from "./detect";
 import { fetchRenderedHtml } from "./screenshot";
 
 // A truncated UA ("Mozilla/5.0 (Windows NT 10.0; Win64; x64)") is dropped or
@@ -192,23 +196,33 @@ export const processWithBrowser = internalAction({
 
     try {
       await assertSafeRemoteUrl(bookmark.url);
-      const rendered = await fetchRenderedHtml(bookmark.url);
-      const usable = rendered !== null && isUsableRenderedHtml(rendered);
       const { hostname, pathname } = new URL(bookmark.url);
+
+      let html = "";
+      let metadata: Record<string, unknown> = {
+        fetchFailed: true,
+        fetchError: "Could not retrieve content from URL",
+      };
+      const redditHtml = await fetchRedditPostHtml(bookmark.url);
+      if (redditHtml) {
+        html = redditHtml;
+        metadata = { source: "reddit-oembed" };
+      } else {
+        const rendered = await fetchRenderedHtml(bookmark.url);
+        if (rendered !== null && isUsableRenderedHtml(rendered)) {
+          html = rendered;
+          metadata = { renderedWithBrowser: true };
+        }
+      }
 
       const result = await processPageBookmark(
         ctx,
         bookmark as never,
         userId,
-        usable ? rendered : "",
+        html,
         {
           fallbackTitle: hostname + (pathname === "/" ? "" : pathname),
-          metadata: usable
-            ? { renderedWithBrowser: true }
-            : {
-                fetchFailed: true,
-                fetchError: "Could not retrieve content from URL",
-              },
+          metadata,
         },
       );
       await persistHandlerResult(ctx, bookmarkId, userId, result);
@@ -226,6 +240,43 @@ export const processWithBrowser = internalAction({
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+async function fetchRedditPostHtml(url: string): Promise<string | null> {
+  const post = getRedditPost(url);
+  if (!post) return null;
+  try {
+    const response = await fetch(post.oembedUrl, {
+      headers: {
+        "User-Agent": BROWSER_HEADERS["User-Agent"],
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      console.warn("[processing.reddit] oEmbed rejected", {
+        status: response.status,
+        url: post.oembedUrl,
+      });
+      return null;
+    }
+    const data = (await response.json()) as {
+      title?: unknown;
+      author_name?: unknown;
+    };
+    if (typeof data.title !== "string" || !data.title.trim()) return null;
+    return buildRedditPostHtml({
+      title: data.title,
+      author: typeof data.author_name === "string" ? data.author_name : undefined,
+      subreddit: post.subreddit,
+    });
+  } catch (err) {
+    console.warn("[processing.reddit] oEmbed failed", {
+      url: post.oembedUrl,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
 
 async function loadBookmark(
   ctx: ActionCtx,

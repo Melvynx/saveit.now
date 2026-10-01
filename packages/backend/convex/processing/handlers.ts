@@ -44,7 +44,7 @@ import {
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
 import { withGeminiFallback } from "../lib/gemini_provider";
 import { safeFetch } from "../lib/safe_fetch";
-import { getTweetId } from "./detect";
+import { getTweetId, resolveAssetUrl } from "./detect";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -127,24 +127,17 @@ function extractPageMetadata(
 
   let faviconUrl: string | null = null;
   for (const selector of faviconSelectors) {
-    const iconHref = $(selector).attr("href");
-    if (iconHref) {
-      faviconUrl = iconHref.startsWith("http")
-        ? iconHref
-        : `${new URL(url).origin}${iconHref}`;
-      break;
-    }
+    faviconUrl = resolveAssetUrl($(selector).attr("href"), url);
+    if (faviconUrl) break;
   }
   if (!faviconUrl) {
     faviconUrl = `${new URL(url).origin}/favicon.ico`;
   }
 
-  const ogImageHref = $("meta[property='og:image']").attr("content");
-  const ogImageUrl = ogImageHref
-    ? ogImageHref.startsWith("http")
-      ? ogImageHref
-      : `${new URL(url).origin}${ogImageHref}`
-    : null;
+  const ogImageUrl = resolveAssetUrl(
+    $("meta[property='og:image']").attr("content"),
+    url,
+  );
 
   const ogDescription =
     $("meta[property='og:description']").attr("content") || null;
@@ -718,18 +711,13 @@ function extractBasicMetadata(html: string, url: string): BasicMetadata {
     $('meta[name="description"]').attr("content") ||
     "";
 
-  let image =
-    $('meta[property="og:image"]').attr("content") ||
-    $('meta[name="twitter:image"]').attr("content") ||
-    $("img").first().attr("src") ||
-    "";
-
-  if (image && !image.startsWith("http")) {
-    const baseUrl = new URL(url);
-    image = image.startsWith("/")
-      ? `${baseUrl.origin}${image}`
-      : `${baseUrl.origin}/${image}`;
-  }
+  const image =
+    resolveAssetUrl(
+      $('meta[property="og:image"]').attr("content") ||
+        $('meta[name="twitter:image"]').attr("content") ||
+        $("img").first().attr("src"),
+      url,
+    ) ?? "";
 
   return { title: title.trim(), description: description.trim(), image, url };
 }

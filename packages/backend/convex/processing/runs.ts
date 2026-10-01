@@ -95,9 +95,10 @@ export const start = internalMutation({
   args: {
     bookmarkId: v.id("bookmarks"),
     userId: v.string(),
+    billable: v.optional(v.boolean()),
   },
   returns: v.id("bookmarkProcessingRuns"),
-  handler: async (ctx, { bookmarkId, userId }) => {
+  handler: async (ctx, { bookmarkId, userId, billable }) => {
     const bookmark = await ctx.db.get(bookmarkId);
     if (!bookmark) {
       throw new Error("Bookmark not found");
@@ -127,6 +128,7 @@ export const start = internalMutation({
       userId,
       status: "STARTED",
       startedAt: Date.now(),
+      ...(billable === false ? { billable } : {}),
     });
 
     return runId;

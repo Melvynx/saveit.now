@@ -24,6 +24,24 @@ export function startOfMonth(): number {
 
 type LimitCtx = MutationCtx;
 
+/** Billable runs this month, counted up to `max` (enough to compare to the quota). */
+async function countMonthlyBillableRuns(
+  ctx: LimitCtx,
+  userId: string,
+  max: number,
+): Promise<number> {
+  let count = 0;
+  for await (const run of ctx.db
+    .query("bookmarkProcessingRuns")
+    .withIndex("by_user_started", (q) =>
+      q.eq("userId", userId).gte("startedAt", startOfMonth()),
+    )) {
+    if (run.billable === false) continue;
+    if (++count >= max) break;
+  }
+  return count;
+}
+
 /**
  * assertCanCreateBookmark — checks total bookmark count + monthly runs.
  * Throws throwLimitReached when over limit.
@@ -64,15 +82,11 @@ export async function assertCanCreateBookmark(
   }
 
   // 6. Count monthly processing runs.
-  const monthStart = startOfMonth();
-  const runsPage = await ctx.db
-    .query("bookmarkProcessingRuns")
-    .withIndex("by_user_started", (q) =>
-      q.eq("userId", userId).gte("startedAt", monthStart),
-    )
-    .take(limits.monthlyBookmarkRuns + 1);
-
-  const monthlyRuns = runsPage.length;
+  const monthlyRuns = await countMonthlyBillableRuns(
+    ctx,
+    userId,
+    limits.monthlyBookmarkRuns,
+  );
 
   if (monthlyRuns >= limits.monthlyBookmarkRuns) {
     throwLimitReached(
@@ -105,15 +119,13 @@ export async function assertCanRunProcessing(
   const limits = getLimits(plan as "free" | "pro", metadata);
 
   // 2. Count monthly runs.
-  const monthStart = startOfMonth();
-  const runsPage = await ctx.db
-    .query("bookmarkProcessingRuns")
-    .withIndex("by_user_started", (q) =>
-      q.eq("userId", userId).gte("startedAt", monthStart),
-    )
-    .take(limits.monthlyBookmarkRuns + 1);
+  const monthlyRuns = await countMonthlyBillableRuns(
+    ctx,
+    userId,
+    limits.monthlyBookmarkRuns,
+  );
 
-  if (runsPage.length >= limits.monthlyBookmarkRuns) {
+  if (monthlyRuns >= limits.monthlyBookmarkRuns) {
     throwLimitReached(
       "You have reached the maximum number of bookmark processing runs for this month",
     );

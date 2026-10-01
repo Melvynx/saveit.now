@@ -29,7 +29,13 @@ import {
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
-import { STEP, errorMessage, getYouTubeVideoId, isTweetUrl } from "./detect";
+import {
+  STEP,
+  errorMessage,
+  getRedditPost,
+  getYouTubeVideoId,
+  isTweetUrl,
+} from "./detect";
 import { failProcessing } from "./runs";
 
 const RETRY = { maxAttempts: 3, initialBackoffMs: 1000, base: 2 };
@@ -38,29 +44,32 @@ export const processBookmark = defineWorkflow(components.workflow, {
   args: {
     bookmarkId: v.id("bookmarks"),
     userId: v.string(),
+    billable: v.optional(v.boolean()),
   },
   workpoolOptions: {
     retryActionsByDefault: true,
     defaultRetryBehavior: RETRY,
   },
-}).handler(async (step, { bookmarkId, userId }): Promise<null> => {
+}).handler(async (step, { bookmarkId, userId, billable }): Promise<null> => {
   // ── check-limits — enforce the plan's processing quota before any write ──
-  try {
-    await step.runMutation(
-      internal.billing.limits.assertCanRunProcessingMutation,
-      { userId },
-      { name: "check-limits" },
-    );
-  } catch (err) {
-    await step.runMutation(
-      internal.processing.runs.fail,
-      {
-        bookmarkId,
-        error: `Limit exceeded: ${errorMessage(err, "Processing limit exceeded")}`,
-      },
-      { name: "fail-limit" },
-    );
-    return null;
+  if (billable !== false) {
+    try {
+      await step.runMutation(
+        internal.billing.limits.assertCanRunProcessingMutation,
+        { userId },
+        { name: "check-limits" },
+      );
+    } catch (err) {
+      await step.runMutation(
+        internal.processing.runs.fail,
+        {
+          bookmarkId,
+          error: `Limit exceeded: ${errorMessage(err, "Processing limit exceeded")}`,
+        },
+        { name: "fail-limit" },
+      );
+      return null;
+    }
   }
 
   // ── get-bookmark — load the document and open a processing run ──
@@ -73,7 +82,7 @@ export const processBookmark = defineWorkflow(components.workflow, {
 
   await step.runMutation(
     internal.processing.runs.start,
-    { bookmarkId, userId },
+    { bookmarkId, userId, billable },
     { name: "start-run" },
   );
 
@@ -148,11 +157,15 @@ export const processBookmark = defineWorkflow(components.workflow, {
     { bookmarkId, step: STEP.scrapContent },
     { name: "step-scrap-content" },
   );
-  const route = await step.runAction(
-    internal.processing.steps.analyzeUrl,
-    { url: bookmark.url },
-    { name: "analyze-url" },
-  );
+  // Reddit answers server fetches with a 403 or an empty "Reddit" shell;
+  // processWithBrowser reads posts through oEmbed instead.
+  const route = getRedditPost(bookmark.url)
+    ? "FETCH_FAILED"
+    : await step.runAction(
+        internal.processing.steps.analyzeUrl,
+        { url: bookmark.url },
+        { name: "analyze-url" },
+      );
 
   if (route === "FETCH_FAILED") {
     const processed = await step.runAction(
@@ -200,9 +213,10 @@ export const kickoff = internalMutation({
   args: {
     bookmarkId: v.id("bookmarks"),
     userId: v.string(),
+    billable: v.optional(v.boolean()),
   },
   returns: v.null(),
-  handler: async (ctx, { bookmarkId, userId }) => {
+  handler: async (ctx, { bookmarkId, userId, billable }) => {
     const bookmark = await ctx.db.get(bookmarkId);
     if (!bookmark || bookmark.userId !== userId) return null;
 
@@ -224,7 +238,7 @@ export const kickoff = internalMutation({
     const workflowId: string = await start(
       ctx,
       internal.processing.workflow.processBookmark,
-      { bookmarkId, userId },
+      { bookmarkId, userId, ...(billable === false ? { billable } : {}) },
       {
         onComplete: internal.processing.workflow.onComplete,
         context: { bookmarkId },

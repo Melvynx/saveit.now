@@ -140,6 +140,8 @@ export default defineSchema({
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
     failureReason: v.optional(v.string()),
+    // false for support repairs: not counted against the monthly quota.
+    billable: v.optional(v.boolean()),
   })
     .index("by_user_started", ["userId", "startedAt"])
     .index("by_bookmark", ["bookmarkId"]),
