@@ -54,3 +54,6 @@ apps/web/e2e/test-config.json
 
 # Product Hunt launch source assets (large PNGs, kept local)
 product-hunt-launch/
+
+# Node V8 compile cache (NODE_COMPILE_CACHE)
+node-compile-cache/
