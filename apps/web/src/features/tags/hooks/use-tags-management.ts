@@ -1,5 +1,5 @@
 import { api } from "@convex/_generated/api";
-import { usePaginatedQuery } from "convex/react";
+import { useAuthedPaginatedQuery } from "@/hooks/use-authed-query";
 
 export type TagWithCount = {
   _id: string;
@@ -10,7 +10,7 @@ export type TagWithCount = {
 };
 
 export function useTagsManagement(searchQuery?: string) {
-  const { results, status, loadMore, isLoading } = usePaginatedQuery(
+  const { results, status, loadMore, isLoading } = useAuthedPaginatedQuery(
     api.tags.queries.listManagement,
     { query: searchQuery || undefined },
     { initialNumItems: 20 },

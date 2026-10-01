@@ -229,7 +229,8 @@ export const useBookmarks = ({
 
   return {
     data: { pages },
-    error,
+    error: isBrowsing ? null : error,
+    retrySearch: () => void fetchPage(),
     isPending,
     isLoading: isPending,
     hasNextPage,

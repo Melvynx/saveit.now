@@ -225,6 +225,22 @@ export const getByIdOrLegacyId = authQuery({
 });
 
 /**
+ * findByIdOrLegacyId — getByIdOrLegacyId for reactive UI: returns null for a
+ * deleted or foreign bookmark so an open dialog or stale link can render a
+ * "not found" state instead of throwing into the route error boundary.
+ */
+export const findByIdOrLegacyId = authQuery({
+  args: {
+    id: v.string(),
+  },
+  handler: async (ctx, args): Promise<BookmarkDetailDTO | null> => {
+    const doc = await resolveBookmarkByIdOrLegacyId(ctx, args.id);
+    if (!doc || doc.userId !== ctx.user.id) return null;
+    return buildBookmarkDetailForDoc(ctx, doc);
+  },
+});
+
+/**
  * count — reads denormalized bookmark count from userCounters.
  */
 export const count = authQuery({

@@ -10,8 +10,9 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { BookmarkX, Sparkles } from "lucide-react";
+import { BookmarkX, SearchX, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -49,6 +50,8 @@ export function BookmarksPage() {
     tags,
     special,
     bookmarkCount,
+    error: searchError,
+    retrySearch,
   } = useBookmarks({ enabled: Boolean(session.data?.user) });
   const searchInputRef = useRef<SearchInputRef>(null);
   const hasActiveFilters =
@@ -127,7 +130,9 @@ export function BookmarksPage() {
           <>
             {!query && <BookmarkCardInput />}
 
-            {bookmarks.length === 0 ? (
+            {searchError && bookmarks.length === 0 ? (
+              <SearchErrorState onRetry={retrySearch} />
+            ) : bookmarks.length === 0 ? (
               <BookmarksEmptyState hasActiveFilters={hasActiveFilters} />
             ) : (
               (bookmarks as unknown as BookmarkCardData[]).map(
@@ -152,7 +157,7 @@ export function BookmarksPage() {
               )
             )}
             {query && <MoreResultsButton />}
-            {bookmarks.length > 10 && (
+            {(hasNextPage || isFetchingNextPage || bookmarks.length > 10) && (
               <BookmarkCardLoadMore
                 loadNextPage={() => fetchNextPage()}
                 hasNextPage={hasNextPage}
@@ -169,6 +174,26 @@ export function BookmarksPage() {
           onClose={closeBookmarkDialog}
         />
       ) : null}
+    </div>
+  );
+}
+
+function SearchErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="col-span-full flex min-h-72 w-full flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border/80 bg-card/30 px-6 text-center"
+    >
+      <SearchX className="size-8 text-muted-foreground" aria-hidden="true" />
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-foreground">Search failed</p>
+        <p className="text-sm text-muted-foreground">
+          Something went wrong while searching your bookmarks.
+        </p>
+      </div>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        Try again
+      </Button>
     </div>
   );
 }

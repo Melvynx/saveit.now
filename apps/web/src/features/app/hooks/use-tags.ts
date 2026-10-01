@@ -1,9 +1,11 @@
 import { api } from "@convex/_generated/api";
 import { useDebounce } from "@/hooks/use-debounce";
-import { usePaginatedQuery } from "convex/react";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
-import { useAuthedQuery } from "@/hooks/use-authed-query";
+import {
+  useAuthedPaginatedQuery,
+  useAuthedQuery,
+} from "@/hooks/use-authed-query";
 
 export type Tag = {
   _id: string;
@@ -109,7 +111,7 @@ export const useInfiniteTags = (query?: string) => {
     status,
     loadMore,
     isLoading,
-  } = usePaginatedQuery(
+  } = useAuthedPaginatedQuery(
     api.tags.queries.list,
     { query: debouncedQuery || undefined },
     { initialNumItems: 10 },

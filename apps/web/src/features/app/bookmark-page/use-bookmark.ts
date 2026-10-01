@@ -3,7 +3,7 @@ import { useAuthedQuery } from "@/hooks/use-authed-query";
 
 export const useBookmark = (bookmarkId?: string | null) => {
   const bookmark = useAuthedQuery(
-    api.bookmarks.queries.getByIdOrLegacyId,
+    api.bookmarks.queries.findByIdOrLegacyId,
     bookmarkId ? { id: bookmarkId } : "skip",
   );
 

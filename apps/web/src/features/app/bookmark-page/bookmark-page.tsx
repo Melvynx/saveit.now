@@ -14,7 +14,9 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { Typography } from "@workspace/ui/components/typography";
 import { useMutation } from "convex/react";
-import { ExternalLink, X } from "lucide-react";
+import { toUserFacingProcessingError } from "@convex/processing/detect";
+import { AlertCircle, BookmarkX, ExternalLink, X } from "lucide-react";
+import { ReBookmarkButton } from "../bookmark-card/bookmark-card-error";
 import { type ReactNode, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -219,6 +221,34 @@ function BookmarkDetail({
     window.open(bookmark.url, "_blank");
   });
 
+  if (query.data === null) {
+    return (
+      <BookmarkDetailShell
+        renderMode={renderMode}
+        onClose={renderMode === "dialog" ? handleClose : undefined}
+        title="Bookmark not found"
+      >
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <BookmarkX className="text-muted-foreground size-8" aria-hidden="true" />
+          <Typography variant="large">Bookmark not found</Typography>
+          <Typography variant="muted" className="max-w-sm text-sm">
+            It was deleted or belongs to another account.
+          </Typography>
+          <Button
+            variant="outline"
+            onClick={
+              renderMode === "dialog"
+                ? handleClose
+                : () => void router.navigate({ to: "/app" })
+            }
+          >
+            Back to bookmarks
+          </Button>
+        </div>
+      </BookmarkDetailShell>
+    );
+  }
+
   if (!bookmark) {
     return (
       <BookmarkDetailSkeleton
@@ -229,6 +259,17 @@ function BookmarkDetail({
   }
 
   const metadata = bookmark.metadata as Record<string, unknown> | null;
+  const processingProblem =
+    bookmark.status === "ERROR"
+      ? toUserFacingProcessingError(
+          bookmark.processingError ||
+            (typeof metadata?.error === "string" ? metadata.error : undefined),
+        )
+      : bookmark.status === "READY" &&
+          metadata?.fetchFailed === true &&
+          !bookmark.summary
+        ? "We couldn't read this page, so it has no summary or tags yet."
+        : null;
   const transcript = metadata?.transcript as string | undefined;
   const embeddedText = isAdmin ? getEmbeddedText(bookmark) : null;
   const isContentEditable =
@@ -331,6 +372,19 @@ function BookmarkDetail({
           <ShareButton bookmarkId={bookmark.id} />
           <BookmarkMoreMenu bookmarkId={bookmark.id} readUrl={readUrl} />
         </div>
+
+        {processingProblem && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3"
+          >
+            <AlertCircle className="text-destructive mt-0.5 size-4 shrink-0" />
+            <Typography variant="muted" className="flex-1 text-sm">
+              {processingProblem}
+            </Typography>
+            <ReBookmarkButton bookmarkId={bookmark.id}>Retry</ReBookmarkButton>
+          </div>
+        )}
 
         <Separator />
 

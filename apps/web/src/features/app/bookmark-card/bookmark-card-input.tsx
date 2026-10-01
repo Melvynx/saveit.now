@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { URL_SCHEMA } from "../schema";
+import { normalizeBookmarkUrl } from "../schema";
 import { useCreateBookmarkAction } from "../use-create-bookmark";
 
 export const BookmarkCardInput = () => {
@@ -29,7 +29,15 @@ export const BookmarkCardInput = () => {
     },
   });
 
-  const isUrl = URL_SCHEMA.safeParse(url).success;
+  const normalizedUrl = normalizeBookmarkUrl(url);
+
+  const submit = () => {
+    if (!normalizedUrl) {
+      if (url.trim()) toast.error("Enter a valid URL, like example.com");
+      return;
+    }
+    action.execute({ url: normalizedUrl });
+  };
 
   return (
     <Card className="aspect-[384/290] overflow-hidden gap-0 p-0">
@@ -47,13 +55,11 @@ export const BookmarkCardInput = () => {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                action.execute({ url });
-              }
+              if (e.key === "Enter") submit();
             }}
           />
-          {isUrl ? (
-            <Button variant="outline" onClick={() => action.execute({ url })}>
+          {normalizedUrl ? (
+            <Button variant="outline" onClick={submit}>
               Add
             </Button>
           ) : null}

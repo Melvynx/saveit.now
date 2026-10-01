@@ -27,7 +27,7 @@ interface BookmarkCardErrorProps {
   bookmark: BookmarkCardData;
 }
 
-const ReBookmarkButton = ({
+export const ReBookmarkButton = ({
   bookmarkId,
   children,
 }: {

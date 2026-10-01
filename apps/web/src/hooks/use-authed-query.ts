@@ -1,4 +1,8 @@
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, usePaginatedQuery, useQuery } from "convex/react";
+import type {
+  PaginatedQueryArgs,
+  PaginatedQueryReference,
+} from "convex/react";
 import type { FunctionReference } from "convex/server";
 
 /**
@@ -18,4 +22,14 @@ export function useAuthedQuery<Query extends FunctionReference<"query">>(
     query,
     (isAuthenticated ? args : "skip") as Query["_args"],
   );
+}
+
+/** usePaginatedQuery counterpart of useAuthedQuery. */
+export function useAuthedPaginatedQuery<Query extends PaginatedQueryReference>(
+  query: Query,
+  args: PaginatedQueryArgs<Query> | "skip",
+  options: { initialNumItems: number },
+) {
+  const { isAuthenticated } = useConvexAuth();
+  return usePaginatedQuery(query, isAuthenticated ? args : "skip", options);
 }
