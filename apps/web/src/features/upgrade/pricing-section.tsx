@@ -15,6 +15,7 @@ import { useAction } from "convex/react";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const freeFeatures = [
   `${AUTH_LIMITS.free?.bookmarks ?? 20} bookmarks`,
@@ -63,9 +64,7 @@ export function PricingSection() {
     },
     {
       onError: (error) => {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to upgrade",
-        );
+        toast.error(getErrorMessage(error, "Failed to upgrade"));
       },
     },
   );

@@ -182,6 +182,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
         window: 60,
         max: 3,
       },
+      // Session reads run on every page load and already require a valid
+      // session cookie; database-backed limiting cost a read + write each.
+      "/get-session": false as const,
+      "/convex/token": false as const,
     },
   },
   hooks: {

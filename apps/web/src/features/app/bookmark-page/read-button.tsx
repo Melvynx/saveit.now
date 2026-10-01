@@ -8,6 +8,7 @@ import { useMutation } from "convex/react";
 import { BookOpen } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 import type { Id } from "@convex/_generated/dataModel";
 
 interface ReadButtonProps {
@@ -37,11 +38,7 @@ export const ReadButton = ({
         read: !read,
       })
       .catch((error) => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to update read state",
-        );
+        toast.error(getErrorMessage(error, "Failed to update read state"));
       })
       .finally(() => setIsPending(false));
   };

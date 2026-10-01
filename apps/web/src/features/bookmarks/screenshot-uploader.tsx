@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { useAction } from "convex/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 import type { Id } from "@convex/_generated/dataModel";
 
 interface ScreenshotUploaderProps {
@@ -49,7 +50,7 @@ export const ScreenshotUploader = ({
       toast.success("Screenshot updated successfully!");
       onUploadSuccess(data.previewUrl);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      toast.error(getErrorMessage(error, "Upload failed"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

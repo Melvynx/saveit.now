@@ -7,6 +7,7 @@ import {
   writeBookmarkEmbedding,
 } from "../bookmarks/embeddings";
 import { cleanMetadataForStorage } from "../utils/metadata";
+import { isTweetUrl, toUserFacingProcessingError } from "./detect";
 import { EMBEDDING_MODEL_KEY } from "./embedding_format";
 
 /**
@@ -177,7 +178,7 @@ export async function failProcessing(
   if (bookmark) {
     await ctx.db.patch(bookmarkId, {
       status: "ERROR",
-      processingError: error,
+      processingError: toUserFacingProcessingError(error),
     });
   }
 
@@ -430,8 +431,7 @@ export const findReadyByUrl = internalQuery({
   },
   returns: v.union(v.id("bookmarks"), v.null()),
   handler: async (ctx, { url, bookmarkId, userId, youtubeId }) => {
-    const isTweet =
-      url.includes("twitter.com") || url.startsWith("https://x.com/");
+    const isTweet = isTweetUrl(url);
     const isYouTube =
       youtubeId !== undefined &&
       (url.includes("youtube.com") || url.includes("youtu.be"));

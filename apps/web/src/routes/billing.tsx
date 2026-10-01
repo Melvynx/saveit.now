@@ -8,6 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAction, useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 export const Route = createFileRoute("/billing")({
   component: BillingPage,
@@ -33,9 +34,7 @@ function BillingPage() {
       } catch (err) {
         if (cancelled) return;
         setError(err);
-        toast.error(
-          err instanceof Error ? err.message : "Failed to open billing portal",
-        );
+        toast.error(getErrorMessage(err, "Failed to open billing portal"));
       }
     }
 

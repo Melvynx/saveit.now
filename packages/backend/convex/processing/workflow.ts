@@ -155,11 +155,18 @@ export const processBookmark = defineWorkflow(components.workflow, {
   );
 
   if (route === "FETCH_FAILED") {
-    await step.runMutation(
-      internal.processing.runs.markFetchFailed,
-      { bookmarkId },
-      { name: "mark-fetch-failed" },
+    const processed = await step.runAction(
+      internal.processing.steps.processWithBrowser,
+      { bookmarkId, userId },
+      { name: "process-with-browser" },
     );
+    if (!processed) {
+      await step.runMutation(
+        internal.processing.runs.markFetchFailed,
+        { bookmarkId },
+        { name: "mark-fetch-failed" },
+      );
+    }
     await step.runMutation(
       internal.processing.runs.finish,
       { bookmarkId },

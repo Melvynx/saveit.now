@@ -8,6 +8,7 @@ import { useMutation } from "convex/react";
 import { Star } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 import type { Id } from "@convex/_generated/dataModel";
 
 interface StarButtonProps {
@@ -37,9 +38,7 @@ export const StarButton = ({
         starred: !starred,
       })
       .catch((error) => {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update star",
-        );
+        toast.error(getErrorMessage(error, "Failed to update star"));
       })
       .finally(() => setIsPending(false));
   };

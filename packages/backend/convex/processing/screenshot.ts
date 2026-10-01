@@ -33,7 +33,7 @@ const SCREENSHOT_ANALYSIS_SCHEMA = z.object({
     ),
 });
 
-async function callCloudflareScreenshot(url: string): Promise<Buffer> {
+function getCloudflareBrowserEndpoint(action: "screenshot" | "content") {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
@@ -43,7 +43,53 @@ async function callCloudflareScreenshot(url: string): Promise<Buffer> {
     );
   }
 
-  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/screenshot`;
+  return {
+    endpoint: `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/${action}`,
+    apiToken,
+  };
+}
+
+/**
+ * fetchRenderedHtml — HTML after JavaScript execution, loaded by Cloudflare
+ * Browser Rendering. Reaches pages that reject plain server fetches (UA
+ * filtering, SPAs, some 4xx-on-bot sites). Returns null on any failure.
+ */
+export async function fetchRenderedHtml(url: string): Promise<string | null> {
+  const { endpoint, apiToken } = getCloudflareBrowserEndpoint("content");
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        gotoOptions: { waitUntil: "load", timeout: 30000 },
+        rejectResourceTypes: ["image", "media", "font", "stylesheet"],
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+
+    const body = (await response.json()) as {
+      success?: boolean;
+      result?: unknown;
+    };
+    return body.success && typeof body.result === "string" ? body.result : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function callCloudflareScreenshot(url: string): Promise<Buffer> {
+  const { endpoint, apiToken } = getCloudflareBrowserEndpoint("screenshot");
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 35000);

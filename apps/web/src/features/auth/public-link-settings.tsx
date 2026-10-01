@@ -31,6 +31,7 @@ import { useMutation } from "convex/react";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 type PublicLinkSettingsProps = {
   initialEnabled: boolean;
@@ -56,7 +57,7 @@ export function PublicLinkSettings({
       },
       onError: (error) => {
         setError(
-          error instanceof Error ? error.message : "Failed to update settings",
+          getErrorMessage(error, "Failed to update settings"),
         );
       },
     },

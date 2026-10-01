@@ -44,6 +44,7 @@ import {
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
 import { withGeminiFallback } from "../lib/gemini_provider";
 import { safeFetch } from "../lib/safe_fetch";
+import { getTweetId } from "./detect";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -87,10 +88,7 @@ async function generateAndCreateTagNames(
   return (result.object as { tags?: string[] }).tags ?? [];
 }
 
-export function getTweetId(url: string): string | undefined {
-  const urlObj = new URL(url);
-  return urlObj.pathname.split("/").pop();
-}
+export { getTweetId };
 
 export function getVideoId(url: string): string {
   const regex =
@@ -103,6 +101,7 @@ export function getVideoId(url: string): string {
 function extractPageMetadata(
   html: string,
   url: string,
+  fallbackTitle?: string,
 ): {
   title: string;
   faviconUrl: string | null;
@@ -115,6 +114,7 @@ function extractPageMetadata(
     $("meta[property='og:title']").attr("content") ||
     $("meta[name='twitter:title']").attr("content") ||
     $("title").text() ||
+    fallbackTitle ||
     new URL(url).hostname;
 
   const faviconSelectors = [
@@ -1329,6 +1329,7 @@ export async function processPageBookmark(
   },
   userId: string,
   htmlContent: string,
+  options: { fallbackTitle?: string; metadata?: Record<string, unknown> } = {},
 ): Promise<HandlerResult> {
   const bookmarkId = bookmark._id;
 
@@ -1342,7 +1343,11 @@ export async function processPageBookmark(
   });
   const markdown = turndown.turndown($("body").html() || "").trim();
 
-  const pageMetadata = extractPageMetadata(htmlContent, bookmark.url);
+  const pageMetadata = extractPageMetadata(
+    htmlContent,
+    bookmark.url,
+    options.fallbackTitle,
+  );
 
   // Screenshot (same logic as article but type=PAGE)
   let screenshotUrl: string | null = null;
@@ -1464,6 +1469,7 @@ ${screenshotAnalysis.description}
       typeof screenshotAnalysis.description === "string"
         ? screenshotAnalysis.description
         : null,
+    ...(options.metadata ? { metadata: options.metadata } : {}),
     tagNames,
     searchEmbedding,
     embeddingModel: searchEmbedding ? EMBEDDING_MODEL_KEY : undefined,

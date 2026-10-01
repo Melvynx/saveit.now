@@ -23,9 +23,19 @@ import {
   processTweetBookmark,
   processYouTubeBookmark,
 } from "./handlers";
-import { safeFetch } from "../lib/safe_fetch";
+import { assertSafeRemoteUrl, safeFetch } from "../lib/safe_fetch";
+import { isUsableRenderedHtml } from "./detect";
+import { fetchRenderedHtml } from "./screenshot";
 
-const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+// A truncated UA ("Mozilla/5.0 (Windows NT 10.0; Win64; x64)") is dropped or
+// stalled by several CDNs; send what a real browser sends.
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+};
 
 export const vRoute = v.union(
   v.literal("PAGE"),
@@ -53,9 +63,7 @@ export const analyzeUrl = internalAction({
   returns: vRoute,
   handler: async (_ctx, { url }): Promise<Route> => {
     try {
-      const response = await safeFetch(url, {
-        headers: { "User-Agent": USER_AGENT },
-      });
+      const response = await safeFetch(url, { headers: BROWSER_HEADERS });
       if (!response.ok) throw new Error("Non-OK response");
 
       const contentType = response.headers.get("content-type") ?? "";
@@ -167,6 +175,54 @@ export const processByRoute = internalAction({
   },
 });
 
+/**
+ * processWithBrowser — fallback for URLs the plain fetch could not read.
+ * Loads the page in Cloudflare's headless browser; when that only yields a
+ * bot wall, still runs the page handler on the screenshot so the bookmark
+ * gets a preview, favicon and search embedding. Returns false (caller marks
+ * the bookmark fetch-failed) when nothing could be processed; never throws,
+ * so a flaky render never turns a saved link into an ERROR bookmark.
+ */
+export const processWithBrowser = internalAction({
+  args: { bookmarkId: v.id("bookmarks"), userId: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, { bookmarkId, userId }) => {
+    const bookmark = await loadBookmark(ctx, bookmarkId, userId);
+    if (!bookmark) return true;
+
+    try {
+      await assertSafeRemoteUrl(bookmark.url);
+      const rendered = await fetchRenderedHtml(bookmark.url);
+      const usable = rendered !== null && isUsableRenderedHtml(rendered);
+      const { hostname, pathname } = new URL(bookmark.url);
+
+      const result = await processPageBookmark(
+        ctx,
+        bookmark as never,
+        userId,
+        usable ? rendered : "",
+        {
+          fallbackTitle: hostname + (pathname === "/" ? "" : pathname),
+          metadata: usable
+            ? { renderedWithBrowser: true }
+            : {
+                fetchFailed: true,
+                fetchError: "Could not retrieve content from URL",
+              },
+        },
+      );
+      await persistHandlerResult(ctx, bookmarkId, userId, result);
+      return true;
+    } catch (err) {
+      console.warn("[processing.processWithBrowser] fallback failed", {
+        bookmarkId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
+    }
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -183,9 +239,7 @@ async function loadBookmark(
 }
 
 async function fetchHtml(url: string): Promise<string> {
-  const response = await safeFetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
+  const response = await safeFetch(url, { headers: BROWSER_HEADERS });
   if (!response.ok) {
     throw new Error(`Failed to fetch URL content (${response.status})`);
   }

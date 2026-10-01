@@ -18,7 +18,10 @@ import {
 import { DeleteButtonAction } from "./bookmark-card-pending";
 import type { BookmarkCardData } from "./bookmark.types";
 import type { Id } from "@convex/_generated/dataModel";
+import { toUserFacingProcessingError } from "@convex/processing/detect";
 import { useState } from "react";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 interface BookmarkCardErrorProps {
   bookmark: BookmarkCardData;
@@ -36,9 +39,11 @@ const ReBookmarkButton = ({
 
   const handleReprocess = () => {
     setIsPending(true);
-    void reprocess({ id: bookmarkId as Id<"bookmarks"> }).finally(() =>
-      setIsPending(false),
-    );
+    void reprocess({ id: bookmarkId as Id<"bookmarks"> })
+      .catch((error: unknown) => {
+        toast.error(getErrorMessage(error, "Failed to reprocess bookmark"));
+      })
+      .finally(() => setIsPending(false));
   };
 
   return (
@@ -57,8 +62,9 @@ const ReBookmarkButton = ({
 
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
   const metadata = bookmark.metadata as { error?: string } | null | undefined;
-  const errorMessage =
-    bookmark.processingError ?? metadata?.error ?? "Processing failed";
+  const errorMessage = toUserFacingProcessingError(
+    bookmark.processingError || metadata?.error,
+  );
 
   return (
     <BookmarkCardContainer bookmark={bookmark}>

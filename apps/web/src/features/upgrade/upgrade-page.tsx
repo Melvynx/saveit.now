@@ -29,6 +29,7 @@ import {
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const PRO_BENEFITS = [
   {
@@ -88,9 +89,7 @@ export function UpgradePage() {
     },
     {
       onError: (error) => {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to upgrade",
-        );
+        toast.error(getErrorMessage(error, "Failed to upgrade"));
       },
     },
   );
