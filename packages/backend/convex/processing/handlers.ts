@@ -42,6 +42,7 @@ import {
   isScreenshotUrlValid,
 } from "./screenshot";
 import { embedDocument, EMBEDDING_MODEL_KEY } from "./embeddings";
+import { BOOKMARK_TEXT_PROCESSING_PROVIDER_OPTIONS } from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 import { safeFetch } from "../lib/safe_fetch";
 import { getTweetId, resolveAssetUrl } from "./detect";
@@ -82,6 +83,7 @@ async function generateAndCreateTagNames(
       system: enhancedSystemPrompt,
       prompt,
       schema: z.object({ tags: z.array(z.string()) }),
+      providerOptions: BOOKMARK_TEXT_PROCESSING_PROVIDER_OPTIONS,
     }),
   );
 
