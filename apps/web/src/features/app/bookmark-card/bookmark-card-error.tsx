@@ -1,20 +1,12 @@
 "use client";
 
-import { Input } from "@workspace/ui/components/input";
-import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
 import { LoadingButton } from "@/features/form/loading-button";
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { Typography } from "@workspace/ui/components/typography";
-import {
-  BookmarkCardContainer,
-  BookmarkCardContent,
-  BookmarkCardDescription,
-  BookmarkCardHeader,
-  BookmarkCardTitle,
-  HEADER_HEIGHT,
-} from "./bookmark-card-base";
+import { BookmarkCardContainer } from "./bookmark-card-container";
+import { CardFooter, getDomain } from "./bookmark-card-parts";
 import { DeleteButtonAction } from "./bookmark-card-pending";
 import type { BookmarkCardData } from "./bookmark.types";
 import type { Id } from "@convex/_generated/dataModel";
@@ -30,9 +22,11 @@ interface BookmarkCardErrorProps {
 export const ReBookmarkButton = ({
   bookmarkId,
   children,
+  className,
 }: {
   bookmarkId: string;
   children?: React.ReactNode;
+  className?: string;
 }) => {
   const reprocess = useMutation(api.bookmarks.mutations.reprocess);
   const [isPending, setIsPending] = useState(false);
@@ -52,51 +46,61 @@ export const ReBookmarkButton = ({
       loading={isPending}
       size={children ? "sm" : "icon"}
       variant="outline"
-      className={children ? "" : "size-8"}
-      onClick={handleReprocess}
+      className={className ?? (children ? "" : "size-8")}
+      onClick={(event) => {
+        event.stopPropagation();
+        handleReprocess();
+      }}
     >
       {children ?? <RefreshCcw className="text-muted-foreground size-4" />}
     </LoadingButton>
   );
 };
 
+/** Compact failure card: what broke, plus retry / delete. */
 export const BookmarkCardError = ({ bookmark }: BookmarkCardErrorProps) => {
   const metadata = bookmark.metadata as { error?: string } | null | undefined;
   const errorMessage = toUserFacingProcessingError(
     bookmark.processingError || metadata?.error,
   );
+  const domain = getDomain(bookmark.url);
 
   return (
-    <BookmarkCardContainer bookmark={bookmark}>
-      <BookmarkCardHeader
-        height={HEADER_HEIGHT}
-        className="flex items-center justify-center"
-      >
-        <div className="flex items-center justify-center flex-col gap-4 h-full p-4">
-          <div className="flex items-center gap-2 ">
-            <AlertCircle className="size-4" />
-            <Typography variant="small">Failed to Load</Typography>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ReBookmarkButton bookmarkId={bookmark.id}>
-              Rebookmark
-            </ReBookmarkButton>
-
-            <DeleteButtonAction bookmarkId={bookmark.id}>
-              <Trash2 className="size-4 mr-2" />
-              Delete
-            </DeleteButtonAction>
-          </div>
-
-          <Input type="text" value={bookmark.url} readOnly />
+    <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-error">
+      <div className="flex flex-col gap-2 px-3.5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-destructive/10 text-destructive">
+            <AlertCircle className="size-3.5" aria-hidden />
+          </span>
+          <p className="text-[13px] font-semibold text-foreground">
+            Couldn&apos;t save this page
+          </p>
         </div>
-      </BookmarkCardHeader>
-
-      <BookmarkCardContent bookmark={bookmark} href={null}>
-        <BookmarkCardTitle>Error Details</BookmarkCardTitle>
-        <BookmarkCardDescription>{errorMessage}</BookmarkCardDescription>
-      </BookmarkCardContent>
+        <p className="line-clamp-2 text-[12px] leading-normal text-muted-foreground">
+          {errorMessage}
+        </p>
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <ReBookmarkButton
+            bookmarkId={bookmark.id}
+            className="h-7 gap-1.5 px-2.5 text-[12px]"
+          >
+            <RefreshCcw className="size-3" aria-hidden />
+            Retry
+          </ReBookmarkButton>
+          <DeleteButtonAction
+            bookmarkId={bookmark.id}
+            className="h-7 px-2.5 text-[12px] text-muted-foreground"
+          >
+            Delete
+          </DeleteButtonAction>
+        </div>
+        <CardFooter
+          domain={domain}
+          faviconUrl={bookmark.faviconUrl}
+          type={bookmark.type}
+          className="mt-0.5 border-t border-border/60 pt-2.5"
+        />
+      </div>
     </BookmarkCardContainer>
   );
 };

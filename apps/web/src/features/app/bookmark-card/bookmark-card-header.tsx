@@ -30,7 +30,7 @@ export const BookmarkCardHeader = ({
 
   return (
     <CardHeader
-      className={`relative flex flex-col p-0 rounded-xl border flex-1 min-h-0 ${className}`}
+      className={`relative flex min-h-0 flex-col overflow-hidden bg-muted p-0 aspect-[16/10] ${className}`}
       style={{
         overflow: "hidden",
         ...style,

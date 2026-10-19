@@ -1,12 +1,9 @@
 "use client";
 
 import { SafeTweet } from "@/features/bookmarks/safe-tweet";
-import { Button } from "@workspace/ui/components/button";
-import {
-  BookmarkCardActions,
-  BookmarkCardContainer,
-} from "./bookmark-card-base";
-import { LinkWithQuery } from "./link-with-query";
+import { BookmarkCardActions } from "./bookmark-card-actions";
+import { BookmarkCardContainer } from "./bookmark-card-container";
+import { CardLink } from "./bookmark-card-parts";
 import { BookmarkCardData } from "./bookmark.types";
 
 interface BookmarkCardTweetProps {
@@ -17,33 +14,32 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
   const metadata = bookmark.metadata as { tweetId?: unknown } | null;
 
   return (
-    <BookmarkCardContainer
-      bookmark={bookmark}
-      className="py-0 tweet-container relative overflow-hidden"
-    >
-      <div className="overflow-hidden pointer-events-none">
-        <SafeTweet
-          tweetId={metadata?.tweetId}
-          tweet={metadata}
-          url={bookmark.url}
-          title={bookmark.title}
-          summary={bookmark.summary}
-          compact
-          showOpenButton={false}
-        />
-      </div>
+    <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-tweet">
+      <CardLink bookmarkId={bookmark.id} label={bookmark.title || "Tweet"}>
+        <div
+          className={
+            "pointer-events-none @container overflow-hidden @max-3xs:[&_article]:px-3 @max-3xs:[&_article_p]:text-[13px] @max-3xs:[&_footer>span]:hidden @max-3xs:[&_header_p+p]:hidden [&_article]:rounded-none [&_article]:border-0 [&_article]:bg-transparent [&_article]:px-3.5 [&_article]:py-3.5 [&_article]:shadow-none [&_article_p]:text-[14px] [&_article_p]:leading-[1.5]"
+          }
+        >
+          <SafeTweet
+            tweetId={metadata?.tweetId}
+            tweet={metadata}
+            url={bookmark.url}
+            title={bookmark.title}
+            summary={bookmark.summary}
+            compact
+            showOpenButton={false}
+          />
+        </div>
+      </CardLink>
       <BookmarkCardActions
         url={bookmark.url}
         bookmarkId={bookmark.id}
         starred={bookmark.starred || false}
         read={bookmark.read || false}
         bookmarkType={bookmark.type}
-        className="z-50"
-      >
-        <Button asChild variant="secondary" className="hover:bg-accent">
-          <LinkWithQuery to={`/app/b/${bookmark.id}`}>Open</LinkWithQuery>
-        </Button>
-      </BookmarkCardActions>
+        title={bookmark.title}
+      />
     </BookmarkCardContainer>
   );
 };

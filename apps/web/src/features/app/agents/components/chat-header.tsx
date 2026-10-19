@@ -1,50 +1,72 @@
-import { ModeToggle } from "@/features/dark-mode/mode-toggle";
-import { HeaderUser } from "@/features/page/header-user";
-import { Link } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
-import { ConversationHistory } from "./conversation-history";
+import { Kbd, KbdGroup } from "@workspace/ui/components/kbd";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
+import { HistoryIcon, PanelRightCloseIcon, SquarePenIcon } from "lucide-react";
+import { formatShortcutKey } from "../../shell/shortcuts";
+import { PageHeader } from "../../shell/page-header";
 
 type ChatHeaderProps = {
-  conversationId: string | null;
+  title: string;
+  historyOpen: boolean;
+  canStartNew: boolean;
   onNewConversation: () => void;
-  onSelectConversation: (id: string) => void;
+  onToggleHistory: () => void;
 };
 
 export function ChatHeader({
-  conversationId,
+  title,
+  historyOpen,
+  canStartNew,
   onNewConversation,
-  onSelectConversation,
+  onToggleHistory,
 }: ChatHeaderProps) {
   return (
-    <div className="bg-background flex items-center justify-center border-b">
-      <div className="flex w-full max-w-3xl items-center gap-2 px-4 py-2">
-        <Link to="/app" className="flex items-center gap-2">
-          <ArrowLeftIcon className="size-4" />
-          <span className="text-sm font-medium">Bookmarks</span>
-        </Link>
-
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-1">
+    <PageHeader
+      title={title}
+      className="shrink-0 border-border"
+      actions={
+        <>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onNewConversation}
+                  disabled={!canStartNew}
+                  className="text-muted-foreground hover:text-foreground"
+                />
+              }
+            >
+              <SquarePenIcon />
+              <span className="hidden sm:inline">New chat</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              New chat
+              <KbdGroup>
+                <Kbd>{formatShortcutKey("mod")}</Kbd>
+                <Kbd>{formatShortcutKey("shift")}</Kbd>
+                <Kbd>O</Kbd>
+              </KbdGroup>
+            </TooltipContent>
+          </Tooltip>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5"
-            onClick={onNewConversation}
+            onClick={onToggleHistory}
+            aria-pressed={historyOpen}
+            aria-label={historyOpen ? "Hide history" : "Show history"}
+            className="text-muted-foreground hover:text-foreground aria-pressed:bg-muted aria-pressed:text-foreground"
           >
-            <PlusIcon className="size-4" />
-            <span className="hidden sm:inline">New</span>
+            {historyOpen ? <PanelRightCloseIcon /> : <HistoryIcon />}
+            <span className="hidden sm:inline">History</span>
           </Button>
-          <ConversationHistory
-            currentConversationId={conversationId}
-            onSelect={onSelectConversation}
-          />
-        </div>
-
-        <ModeToggle />
-        <HeaderUser />
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

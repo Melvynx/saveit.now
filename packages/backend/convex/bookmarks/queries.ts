@@ -8,9 +8,11 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { internalQuery, query, authQuery } from "../functions";
 import { bookmarkType } from "../schema";
-import { throwNotFound } from "../utils/errors";
+import { throwNotFound, throwValidationError } from "../utils/errors";
+import { bookmarkDTOFields, bookmarkDTOValidator } from "./validators";
 import {
   buildBookmarkDTO,
   buildBookmarkDetailDTO,
@@ -64,10 +66,107 @@ async function resolveBookmarkByIdOrLegacyId(
 
   return (await (ctx.db as any)
     .query("bookmarks")
-    .withIndex("by_legacy_id", (q: any) =>
-      q.eq("legacyId", idOrLegacyId),
-    )
+    .withIndex("by_legacy_id", (q: any) => q.eq("legacyId", idOrLegacyId))
     .first()) as Doc<"bookmarks"> | null;
+}
+
+/** Card DTO with tags + open count — the same per-item shape `list` returns. */
+async function buildListItemDTO(
+  ctx: { db: { query: Function } },
+  doc: Doc<"bookmarks">,
+): Promise<BookmarkDTO> {
+  const tags = await resolveTagsForBookmark(ctx, doc._id);
+  const opens = await (ctx.db as any)
+    .query("bookmarkOpens")
+    .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", doc._id))
+    .take(10000);
+  return buildBookmarkDTO(doc as any, tags, opens.length);
+}
+
+/**
+ * Bookmarks of `userId` sharing a tag with the source bookmark; falls back to
+ * the user's most recent bookmarks when the source has no tags.
+ */
+async function findRelatedDocs(
+  ctx: QueryCtx,
+  userId: string,
+  excludeId: Id<"bookmarks">,
+  tagIds: Id<"tags">[],
+  limit: number,
+): Promise<Doc<"bookmarks">[]> {
+  if (tagIds.length === 0) {
+    const rows = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user_created", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(limit + 1);
+    return rows.filter((row) => row._id !== excludeId).slice(0, limit);
+  }
+
+  const seen = new Set<string>([excludeId]);
+  const related: Doc<"bookmarks">[] = [];
+  for (const tagId of tagIds) {
+    if (related.length >= limit) break;
+    const joinRows = await ctx.db
+      .query("bookmarkTags")
+      .withIndex("by_tag", (q) => q.eq("tagId", tagId))
+      .take(50);
+    for (const joinRow of joinRows) {
+      if (related.length >= limit) break;
+      if (seen.has(joinRow.bookmarkId)) continue;
+      seen.add(joinRow.bookmarkId);
+      const bDoc = await ctx.db.get(joinRow.bookmarkId);
+      if (!bDoc || bDoc.userId !== userId) continue;
+      related.push(bDoc);
+    }
+  }
+  return related;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REDISCOVER_MIN_AGE_MS = 14 * DAY_MS;
+const REDISCOVER_WINDOW = 300;
+
+/** cyrb53-style string hash -> 32-bit seed. */
+function hashSeed(input: string): number {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 =
+    Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^
+    Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  return h1 >>> 0;
+}
+
+function mulberry32(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Deterministic partial Fisher-Yates: same seed + items -> same picks. */
+export function seededPick<T>(items: T[], count: number, seed: string): T[] {
+  const pool = items.slice();
+  const random = mulberry32(hashSeed(seed));
+  const n = Math.min(count, pool.length);
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(random() * (pool.length - i));
+    [pool[i], pool[j]] = [pool[j]!, pool[i]!];
+  }
+  return pool.slice(0, n);
+}
+
+function clampInt(value: number | undefined, fallback: number, max: number) {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.max(1, Math.min(max, Math.floor(value)));
 }
 
 async function buildBookmarkDetailForDoc(
@@ -102,10 +201,12 @@ export const list = authQuery({
         tagIds: v.optional(v.array(v.id("tags"))),
       }),
     ),
+    order: v.optional(v.union(v.literal("newest"), v.literal("oldest"))),
   },
   handler: async (ctx, args): Promise<any> => {
     const userId = ctx.user.id;
     const filter = args.filter;
+    const direction = args.order === "oldest" ? "asc" : "desc";
 
     let paginatedResult: any;
 
@@ -120,7 +221,7 @@ export const list = authQuery({
         .withIndex("by_user_type_created", (q: any) =>
           q.eq("userId", userId).eq("type", filter.types![0]),
         )
-        .order("desc")
+        .order(direction)
         .paginate(args.paginationOpts);
     } else if (filter?.starred !== undefined) {
       paginatedResult = await ctx.db
@@ -128,7 +229,7 @@ export const list = authQuery({
         .withIndex("by_user_starred", (q: any) =>
           q.eq("userId", userId).eq("starred", filter.starred),
         )
-        .order("desc")
+        .order(direction)
         .paginate(args.paginationOpts);
     } else if (filter?.read !== undefined) {
       paginatedResult = await ctx.db
@@ -136,13 +237,13 @@ export const list = authQuery({
         .withIndex("by_user_read", (q: any) =>
           q.eq("userId", userId).eq("read", filter.read),
         )
-        .order("desc")
+        .order(direction)
         .paginate(args.paginationOpts);
     } else {
       paginatedResult = await ctx.db
         .query("bookmarks")
         .withIndex("by_user_created", (q: any) => q.eq("userId", userId))
-        .order("desc")
+        .order(direction)
         .paginate(args.paginationOpts);
     }
 
@@ -380,47 +481,178 @@ export const getRelated = query({
     });
     if (!user || !(user as any).publicLinkEnabled) return [];
 
-    if (args.tagIds.length === 0) {
-      // Fallback: just return recent bookmarks from the same user (excluding this one)
-      const rows = await ctx.db
-        .query("bookmarks")
-        .withIndex("by_user_created", (q: any) => q.eq("userId", userId))
-        .order("desc")
-        .take(limit + 1);
-      return rows
-        .filter((row) => row._id !== args.id)
-        .slice(0, limit)
-        .map((row) => buildPublicBookmarkDTO(row as any));
-    }
+    const related = await findRelatedDocs(
+      ctx,
+      userId,
+      args.id,
+      args.tagIds as Id<"tags">[],
+      limit,
+    );
+    return related.map((row) => buildPublicBookmarkDTO(row as any));
+  },
+});
 
-    // Collect bookmarks that share a tagId with this bookmark.
+const recentlyOpenedItemValidator = v.object({
+  ...bookmarkDTOFields,
+  lastOpenedAt: v.number(),
+});
+
+/**
+ * related — owner variant of getRelated for private bookmarks. Same tag-overlap
+ * logic, tags read server-side; returns list-shaped card DTOs.
+ */
+export const related = authQuery({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(bookmarkDTOValidator),
+  handler: async (ctx, args): Promise<BookmarkDTO[]> => {
+    const userId = ctx.user.id;
+    const doc = await ctx.db.get(args.bookmarkId);
+    if (!doc || doc.userId !== userId) return [];
+
+    const limit = clampInt(args.limit, 6, 20);
+    const joinRows = await ctx.db
+      .query("bookmarkTags")
+      .withIndex("by_bookmark", (q) => q.eq("bookmarkId", doc._id))
+      .take(200);
+    const docs = await findRelatedDocs(
+      ctx,
+      userId,
+      doc._id,
+      joinRows.map((row) => row.tagId),
+      limit,
+    );
+
+    const items: BookmarkDTO[] = [];
+    for (const related of docs) {
+      items.push(await buildListItemDTO(ctx, related));
+    }
+    return items;
+  },
+});
+
+/**
+ * rediscover — a few READY bookmarks older than 14 days, picked
+ * deterministically per UTC day + user from a bounded index window.
+ * Pass `day` (YYYY-MM-DD, UTC) from the client so the result is a pure
+ * function of args; defaults to today.
+ */
+export const rediscover = authQuery({
+  args: {
+    count: v.optional(v.number()),
+    day: v.optional(v.string()),
+  },
+  returns: v.array(bookmarkDTOValidator),
+  handler: async (ctx, args): Promise<BookmarkDTO[]> => {
+    const userId = ctx.user.id;
+    const count = clampInt(args.count, 4, 8);
+    const day = args.day ?? new Date().toISOString().slice(0, 10);
+    const dayStart = /^\d{4}-\d{2}-\d{2}$/.test(day)
+      ? Date.parse(`${day}T00:00:00Z`)
+      : NaN;
+    if (Number.isNaN(dayStart)) {
+      throwValidationError("day must be YYYY-MM-DD");
+    }
+    const cutoff = dayStart - REDISCOVER_MIN_AGE_MS;
+
+    const window = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user_created", (q) =>
+        q.eq("userId", userId).lt("createdAt", cutoff),
+      )
+      .order("desc")
+      .take(REDISCOVER_WINDOW);
+    const eligible = window.filter(
+      (doc) => doc.status === "READY" && doc.isExample !== true,
+    );
+
+    const picks = seededPick(eligible, count, `${day}:${userId}`);
+    const items: BookmarkDTO[] = [];
+    for (const doc of picks) {
+      items.push(await buildListItemDTO(ctx, doc));
+    }
+    return items;
+  },
+});
+
+const SIDEBAR_COUNT_CAP = 100;
+
+/**
+ * sidebarCounts — unread (read === false, same as list filter { read: false })
+ * and starred counts, capped at 100. `capped` is true when either exceeds it.
+ */
+export const sidebarCounts = authQuery({
+  args: {},
+  returns: v.object({
+    unread: v.number(),
+    starred: v.number(),
+    capped: v.boolean(),
+  }),
+  handler: async (
+    ctx,
+  ): Promise<{ unread: number; starred: number; capped: boolean }> => {
+    const userId = ctx.user.id;
+    const unreadRows = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user_read", (q) =>
+        q.eq("userId", userId).eq("read", false),
+      )
+      .take(SIDEBAR_COUNT_CAP + 1);
+    const starredRows = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user_starred", (q) =>
+        q.eq("userId", userId).eq("starred", true),
+      )
+      .take(SIDEBAR_COUNT_CAP + 1);
+
+    return {
+      unread: Math.min(unreadRows.length, SIDEBAR_COUNT_CAP),
+      starred: Math.min(starredRows.length, SIDEBAR_COUNT_CAP),
+      capped:
+        unreadRows.length > SIDEBAR_COUNT_CAP ||
+        starredRows.length > SIDEBAR_COUNT_CAP,
+    };
+  },
+});
+
+/**
+ * recentlyOpened — distinct bookmarks from the user's latest opens
+ * (bookmarkOpens.by_user_opened, desc), newest first. Missing bookmarks skipped.
+ */
+export const recentlyOpened = authQuery({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(recentlyOpenedItemValidator),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<Array<BookmarkDTO & { lastOpenedAt: number }>> => {
+    const userId = ctx.user.id;
+    const limit = clampInt(args.limit, 6, 20);
+
+    const opens = await ctx.db
+      .query("bookmarkOpens")
+      .withIndex("by_user_opened", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(limit * 10);
+
     const seen = new Set<string>();
-    seen.add(args.id as string);
-    const related: any[] = [];
-
-    for (const tagId of args.tagIds) {
-      if (related.length >= limit) break;
-      let typedTagId: Id<"tags">;
-      try {
-        typedTagId = tagId as Id<"tags">;
-      } catch {
-        continue;
-      }
-      const joinRows = await ctx.db
-        .query("bookmarkTags")
-        .withIndex("by_tag", (q: any) => q.eq("tagId", typedTagId))
-        .take(50);
-      for (const joinRow of joinRows) {
-        if (related.length >= limit) break;
-        const bid = joinRow.bookmarkId as string;
-        if (seen.has(bid)) continue;
-        seen.add(bid);
-        const bDoc = await ctx.db.get(joinRow.bookmarkId);
-        if (!bDoc || bDoc.userId !== userId) continue;
-        related.push(buildPublicBookmarkDTO(bDoc as any));
-      }
+    const items: Array<BookmarkDTO & { lastOpenedAt: number }> = [];
+    for (const open of opens) {
+      if (items.length >= limit) break;
+      if (seen.has(open.bookmarkId)) continue;
+      seen.add(open.bookmarkId);
+      const doc = await ctx.db.get(open.bookmarkId);
+      if (!doc || doc.userId !== userId) continue;
+      items.push({
+        ...(await buildListItemDTO(ctx, doc)),
+        lastOpenedAt: open.openedAt,
+      });
     }
-    return related;
+    return items;
   },
 });
 

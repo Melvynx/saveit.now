@@ -29,8 +29,12 @@ type BookmarkCardContainerProps = {
   };
   onMouseEnter?: () => void;
   testId?: string;
+  /** Kept for backward compatibility: cards always size to their content. */
   fitContent?: boolean;
 } & ComponentProps<"div">;
+
+export const bookmarkCardClassName =
+  "group/card relative isolate gap-0 overflow-hidden rounded-xl bg-card p-0 text-card-foreground ring-1 ring-foreground/7 transition-[box-shadow,translate] duration-200 ease-(--ease-out-soft) hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--foreground)_22%,transparent)] hover:ring-foreground/12 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 export const BookmarkCardContainer = ({
   bookmark,
@@ -39,7 +43,7 @@ export const BookmarkCardContainer = ({
   onMouseEnter,
   ref,
   testId,
-  fitContent = false,
+  fitContent,
   ...props
 }: BookmarkCardContainerProps) => {
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
@@ -62,13 +66,10 @@ export const BookmarkCardContainer = ({
         <ContextMenuTrigger asChild>
           <Card
             ref={ref}
-            className={cn(
-              "group/card overflow-hidden p-0",
-              fitContent ? "h-fit" : "aspect-[384/290]",
-              className,
-            )}
+            className={cn(bookmarkCardClassName, className)}
             onMouseEnter={handleMouseEnter}
             data-testid={testId}
+            data-fit-content={fitContent || undefined}
             {...props}
           >
             {children}
@@ -115,7 +116,7 @@ export const BookmarkCardContainer = ({
             ) : (
               <Copy className="size-4" />
             )}
-            <span>Copy Link</span>
+            <span>Copy link</span>
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>

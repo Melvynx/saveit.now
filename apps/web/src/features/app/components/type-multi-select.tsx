@@ -1,17 +1,11 @@
 "use client";
 
 import { BookmarkType } from "@/lib/bookmark-types";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import { Checkbox } from "@workspace/ui/components/checkbox";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@workspace/ui/components/command";
 import {
   Popover,
@@ -19,175 +13,83 @@ import {
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
 import { cn } from "@workspace/ui/lib/utils";
-import { ChevronDown, FileType, X } from "lucide-react";
-import { useMemo, useState } from "react";
-import { getTypeColor, getTypeDisplayName } from "../utils/type-filter-utils";
+import { ChevronDown, Shapes } from "lucide-react";
+import { useState } from "react";
+import { filterChipClassName } from "../search/filter-chip";
+import { getTypeDisplayName, getTypeIcon } from "../utils/type-filter-utils";
 
-const BOOKMARK_TYPES: BookmarkType[] = Object.values(BookmarkType);
-
-function TypeBadge({
-  type,
-  onRemove,
-}: {
-  type: BookmarkType;
-  onRemove: (type: BookmarkType) => void;
-}) {
-  return (
-    <Badge
-      variant="secondary"
-      className={cn("flex items-center gap-1 pr-1", getTypeColor(type))}
-    >
-      <span className="max-w-[80px] truncate">{getTypeDisplayName(type)}</span>
-      <button
-        type="button"
-        className="hover:bg-accent size-4 rounded-full p-0 transition"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(type);
-        }}
-      >
-        <X className="size-3" />
-      </button>
-    </Badge>
-  );
-}
+const ALL_TYPES = Object.values(BookmarkType) as BookmarkType[];
 
 type TypeMultiSelectProps = {
   selectedTypes: BookmarkType[];
   onTypesChange: (types: BookmarkType[]) => void;
+  /** Types listed in the popover. Defaults to every bookmark type. */
+  types?: BookmarkType[];
   placeholder?: string;
   className?: string;
 };
 
+/** Pill-shaped type filter that opens a checklist popover. */
 export function TypeMultiSelect({
   selectedTypes,
   onTypesChange,
+  types = ALL_TYPES,
   placeholder = "Types",
   className,
 }: TypeMultiSelectProps) {
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const selectedHere = selectedTypes.filter((type) => types.includes(type));
+  const active = selectedHere.length > 0;
 
-  const filteredTypes = useMemo(() => {
-    return BOOKMARK_TYPES.filter((type) =>
-      getTypeDisplayName(type)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()),
+  const toggleType = (type: BookmarkType) => {
+    onTypesChange(
+      selectedTypes.includes(type)
+        ? selectedTypes.filter((t) => t !== type)
+        : [...selectedTypes, type],
     );
-  }, [searchQuery]);
-
-  const availableTypes = useMemo(() => {
-    return filteredTypes.filter((type) => !selectedTypes.includes(type));
-  }, [filteredTypes, selectedTypes]);
-
-  const selectedTypesFiltered = useMemo(() => {
-    return filteredTypes.filter((type) => selectedTypes.includes(type));
-  }, [filteredTypes, selectedTypes]);
-
-  const handleTypeSelect = (type: BookmarkType) => {
-    const newTypes = selectedTypes.includes(type)
-      ? selectedTypes.filter((t) => t !== type)
-      : [...selectedTypes, type];
-    onTypesChange(newTypes);
-  };
-
-  const handleRemoveType = (type: BookmarkType) => {
-    onTypesChange(selectedTypes.filter((t) => t !== type));
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "h-10 min-w-[120px] justify-between gap-1 px-3",
-            className,
-          )}
-        >
-          {selectedTypes.length > 0 ? (
-            <div className="flex items-center gap-1 overflow-hidden">
-              {selectedTypes.length === 1 && selectedTypes[0] ? (
-                <TypeBadge
-                  type={selectedTypes[0]}
-                  onRemove={handleRemoveType}
-                />
-              ) : (
-                <Badge variant="secondary">
-                  <FileType className="mr-1 size-3" />
-                  {selectedTypes.length} types
-                </Badge>
-              )}
-            </div>
-          ) : (
-            <span className="text-muted-foreground flex items-center gap-1">
-              <FileType className="size-3" />
-              {placeholder}
-            </span>
-          )}
-          <ChevronDown className="size-4 shrink-0 opacity-50" />
-        </Button>
+      <PopoverTrigger
+        className={cn(filterChipClassName(active), className)}
+        aria-label="Filter by type"
+      >
+        <Shapes aria-hidden="true" />
+        {placeholder}
+        {active ? (
+          <span className="rounded-full bg-primary/15 px-1.5 text-[11px] leading-4 text-primary tabular-nums">
+            {selectedHere.length}
+          </span>
+        ) : null}
+        <ChevronDown className="size-3 opacity-60" aria-hidden="true" />
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0" align="start">
+      <PopoverContent
+        className="w-52 gap-0 overflow-hidden rounded-[14px] p-0"
+        align="start"
+      >
         <Command>
-          <CommandInput
-            placeholder="Search types..."
-            className="h-9"
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          <CommandList>
-            <CommandEmpty>
-              <p className="text-muted-foreground px-2 py-1.5 text-sm">
-                No types found
-              </p>
-            </CommandEmpty>
-
-            {selectedTypesFiltered.length > 0 && (
-              <CommandGroup heading="Selected">
-                {selectedTypesFiltered.map((type) => (
+          <CommandList className="p-1">
+            <CommandGroup>
+              {types.map((type) => {
+                const Icon = getTypeIcon(type);
+                return (
                   <CommandItem
                     key={type}
-                    className="flex items-center gap-2"
-                    onSelect={() => handleTypeSelect(type)}
+                    value={type}
+                    data-checked={selectedTypes.includes(type)}
+                    onSelect={() => toggleType(type)}
+                    className="gap-2 rounded-md px-2 py-1.5 text-[13px] [&>svg:last-child]:text-primary"
                   >
-                    <Checkbox checked={true} />
-                    <Badge
-                      variant="secondary"
-                      className={cn("text-xs", getTypeColor(type))}
-                    >
-                      {getTypeDisplayName(type)}
-                    </Badge>
+                    <Icon
+                      className="size-3.5 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1">{getTypeDisplayName(type)}</span>
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-
-            {availableTypes.length > 0 && (
-              <>
-                {selectedTypesFiltered.length > 0 && <CommandSeparator />}
-                <CommandGroup heading="Available">
-                  {availableTypes.map((type) => (
-                    <CommandItem
-                      key={type}
-                      className="flex items-center gap-2"
-                      value={getTypeDisplayName(type)}
-                      onSelect={() => handleTypeSelect(type)}
-                    >
-                      <Checkbox checked={false} />
-                      <Badge
-                        variant="secondary"
-                        className={cn("text-xs", getTypeColor(type))}
-                      >
-                        {getTypeDisplayName(type)}
-                      </Badge>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
-            )}
+                );
+              })}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>

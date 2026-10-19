@@ -9,6 +9,8 @@ import type { Id } from "../_generated/dataModel";
 import { authMutation, internalMutation } from "../functions";
 import { throwNotFound, throwValidationError } from "../utils/errors";
 import type { TagDTO } from "../bookmarks/dto";
+import { assertBulkIds } from "../bookmarks/mutations";
+import { tagDTOValidator } from "../bookmarks/validators";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -180,6 +182,53 @@ export const setBookmarkTagsByName = authMutation({
       }
     }
     return finalTags;
+  },
+});
+
+// ---------------------------------------------------------------------------
+// bulkAddTag — add one tag (by name, upserted) to many bookmarks
+// ---------------------------------------------------------------------------
+
+export const bulkAddTag = authMutation({
+  args: {
+    bookmarkIds: v.array(v.id("bookmarks")),
+    tagName: v.string(),
+  },
+  returns: v.object({ tagged: v.number(), tag: tagDTOValidator }),
+  handler: async (ctx, args): Promise<{ tagged: number; tag: TagDTO }> => {
+    const userId = ctx.user.id;
+    const ids = assertBulkIds(args.bookmarkIds);
+    const name = args.tagName.trim();
+    if (!name) {
+      throwValidationError("Tag name cannot be empty");
+    }
+
+    const owned = [];
+    for (const id of ids) {
+      const bookmark = await ctx.db.get(id);
+      if (bookmark && bookmark.userId === userId) owned.push(bookmark);
+    }
+    if (owned.length === 0) {
+      throwNotFound("Bookmark not found");
+    }
+
+    const tag = await upsertTagByName(ctx, userId, name);
+    let tagged = 0;
+    for (const bookmark of owned) {
+      const joinRows = await ctx.db
+        .query("bookmarkTags")
+        .withIndex("by_bookmark", (q) => q.eq("bookmarkId", bookmark._id))
+        .take(200);
+      if (joinRows.some((row) => row.tagId === tag._id)) continue;
+      await ctx.db.insert("bookmarkTags", {
+        bookmarkId: bookmark._id,
+        tagId: tag._id,
+        userId,
+      });
+      tagged += 1;
+    }
+
+    return { tagged, tag: await resolveTagDTO(tag) };
   },
 });
 

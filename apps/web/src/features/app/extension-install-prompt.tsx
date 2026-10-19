@@ -1,8 +1,7 @@
 import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@/lib/analytics";
 import { APP_LINKS } from "@/lib/app-links";
-import { LandingStyle } from "@/features/marketing/landing/theme";
+import { cn } from "@workspace/ui/lib/utils";
 import { X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 
 const CHROME_EXTENSION_ID = "mpjdmcmkgmeijijjecpffckjgjgdcfpi";
@@ -64,15 +63,14 @@ function useExtensionInstalled(): boolean | null {
   return installed;
 }
 
-export function ExtensionInstallPrompt() {
+/** Small dismissible "install the extension" card for the sidebar footer. */
+export function ExtensionInstallCard({ className }: { className?: string }) {
   const installed = useExtensionInstalled();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (installed !== false || isDismissed()) return;
-
-    const timer = window.setTimeout(() => setVisible(true), 1500);
-    return () => window.clearTimeout(timer);
+    setVisible(true);
   }, [installed]);
 
   const close = (durationMs: number) => {
@@ -80,83 +78,48 @@ export function ExtensionInstallPrompt() {
     setVisible(false);
   };
 
+  if (!visible) return null;
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.aside
-          initial={{ opacity: 0, y: 20, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.97 }}
-          transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-          aria-label="Install the SaveIt browser extension"
-          className="fixed bottom-24 right-6 z-40 hidden w-[320px] lg:block"
-        >
-          <LandingStyle />
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#1a0e15] shadow-[0_24px_70px_rgba(10,4,8,0.5),0_6px_22px_rgba(10,4,8,0.3)]">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[radial-gradient(110%_120%_at_88%_-20%,rgba(255,143,112,0.18),transparent_55%),radial-gradient(90%_110%_at_8%_-25%,rgba(201,163,232,0.13),transparent_52%)]"
-            />
-            <div aria-hidden className="landing-noise absolute inset-0" />
-            <div
-              aria-hidden
-              className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#ff8f70] to-transparent opacity-80"
-            />
-
-            <button
-              type="button"
-              aria-label="Dismiss"
-              onClick={() => close(DISMISS_FOR_MS)}
-              className="absolute right-3 top-3 z-10 flex size-7 items-center justify-center rounded-full text-[#f7ede8]/50 transition-colors hover:bg-white/10 hover:text-[#f7ede8]"
-            >
-              <X className="size-3.5" />
-            </button>
-
-            <div className="relative p-5">
-              <img
-                src="/icon.png"
-                alt=""
-                className="size-10 rounded-xl shadow-[0_4px_14px_rgba(255,143,112,0.35)]"
-              />
-
-              <p className="mt-4 text-[22px] leading-tight tracking-tight text-[#f7ede8]">
-                Save from{" "}
-                <em className="landing-display landing-gradient-text">
-                  anywhere.
-                </em>
-              </p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#a89099]">
-                The Chrome extension turns any page into a one-click save.
-              </p>
-
-              <div className="landing-press mt-5 flex items-center gap-2">
-                <a
-                  href={APP_LINKS.chrome}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => {
-                    trackAnalyticsEvent(
-                      ANALYTICS_EVENTS.EXTENSION_INSTALL_CLICKED,
-                      { source: "app_prompt", browser: "chrome" },
-                    );
-                    close(INSTALL_CLICK_DISMISS_FOR_MS);
-                  }}
-                  className="inline-flex h-9 items-center rounded-full bg-white px-4 text-[13px] font-semibold text-[#120a10] transition-transform hover:scale-[1.03] active:scale-[0.96]"
-                >
-                  Add to Chrome
-                </a>
-                <button
-                  type="button"
-                  onClick={() => close(DISMISS_FOR_MS)}
-                  className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-medium text-[#f7ede8]/60 transition-colors hover:text-[#f7ede8]"
-                >
-                  Not now
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.aside>
+    <aside
+      aria-label="Install the SaveIt browser extension"
+      className={cn(
+        "animate-rise-in relative rounded-xl bg-card p-3 shadow-xs ring-1 ring-foreground/6",
+        className,
       )}
-    </AnimatePresence>
+    >
+      <button
+        type="button"
+        aria-label="Dismiss"
+        onClick={() => close(DISMISS_FOR_MS)}
+        className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <X className="size-3.5" />
+      </button>
+      <div className="flex items-center gap-2 pr-6">
+        <img src="/icon.png" alt="" className="size-5 rounded-[5px]" />
+        <p className="text-[13px] font-medium text-foreground">
+          Save from any tab
+        </p>
+      </div>
+      <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+        The Chrome extension saves the page you are on in one click.
+      </p>
+      <a
+        href={APP_LINKS.chrome}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => {
+          trackAnalyticsEvent(ANALYTICS_EVENTS.EXTENSION_INSTALL_CLICKED, {
+            source: "app_prompt",
+            browser: "chrome",
+          });
+          close(INSTALL_CLICK_DISMISS_FOR_MS);
+        }}
+        className="mt-2.5 inline-flex h-7 items-center rounded-md bg-foreground px-2.5 text-[12px] font-medium text-background transition-opacity hover:opacity-90"
+      >
+        Add to Chrome
+      </a>
+    </aside>
   );
 }

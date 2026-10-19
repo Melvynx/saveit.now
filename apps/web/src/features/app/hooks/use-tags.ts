@@ -26,13 +26,11 @@ export const useTags = (query?: string) => {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const data = useAuthedQuery(
-    api.tags.queries.list,
-    {
-      paginationOpts: { numItems: 50, cursor: null },
-      query: debouncedQuery || undefined,
-    },
-  );
+  // legacySearch filters before slicing; `list` only filters its first page.
+  const data = useAuthedQuery(api.tags.queries.legacySearch, {
+    query: debouncedQuery ?? "",
+    limit: 50,
+  });
 
   const userTags: Tag[] = useMemo(
     () => (data?.page as Tag[] | undefined) ?? [],
@@ -92,6 +90,30 @@ export const useTags = (query?: string) => {
     error: null,
     retryFetch,
   };
+};
+
+/**
+ * Tag names matching a `#prefix` typed in the search field. Pass null to
+ * skip the query entirely.
+ */
+export const useTagSuggestions = (prefix: string | null, limit = 6) => {
+  const debouncedPrefix = useDebounce(prefix, 150);
+  const data = useAuthedQuery(
+    api.tags.queries.legacySearch,
+    prefix === null ? "skip" : { query: debouncedPrefix ?? "", limit: 20 },
+  );
+  return useMemo(() => {
+    if (prefix === null) return [] as Tag[];
+    const lower = prefix.toLowerCase();
+    return ((data?.page as Tag[] | undefined) ?? [])
+      .filter((tag) => tag.name.toLowerCase().includes(lower))
+      .sort(
+        (a, b) =>
+          Number(b.name.toLowerCase().startsWith(lower)) -
+          Number(a.name.toLowerCase().startsWith(lower)),
+      )
+      .slice(0, limit);
+  }, [data, prefix, limit]);
 };
 
 export const useInfiniteTags = (query?: string) => {

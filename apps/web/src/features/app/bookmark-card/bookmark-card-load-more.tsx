@@ -1,143 +1,73 @@
 "use client";
 
+import { Button } from "@workspace/ui/components/button";
 import { Loader } from "@workspace/ui/components/loader";
-import { Typography } from "@workspace/ui/components/typography";
-import { ChevronDown, Package } from "lucide-react";
+import { cn } from "@workspace/ui/lib/utils";
 import { useEffect, useRef } from "react";
-
-import { BookmarkStatus, BookmarkType } from "@/lib/bookmark-types";
-import {
-  BookmarkCardContainer,
-  BookmarkCardContent,
-  BookmarkCardDescription,
-  BookmarkCardHeader,
-  BookmarkCardTitle,
-} from "./bookmark-card-base";
 
 interface BookmarkCardLoadMoreProps {
   loadNextPage: () => void;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
+  className?: string;
 }
 
+/**
+ * Infinite-scroll sentinel placed after the results: loads the next page when
+ * it scrolls into view, with a manual fallback button and an end marker.
+ */
 export function BookmarkCardLoadMore({
   loadNextPage,
   hasNextPage,
   isFetchingNextPage,
+  className,
 }: BookmarkCardLoadMoreProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-        if (first?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
           loadNextPage();
         }
       },
-      { threshold: 0.1 },
+      { rootMargin: "600px 0px" },
     );
-
-    const currentElement = loadMoreRef.current;
-    if (currentElement) {
-      observer.observe(currentElement);
-    }
-
-    return () => {
-      if (currentElement) {
-        observer.unobserve(currentElement);
-      }
-    };
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, loadNextPage]);
 
-  // Mock bookmark object for the container
-  const mockBookmark = {
-    id: "load-more",
-    url: "https://example.com",
-    faviconUrl: null,
-    status: "READY" as BookmarkStatus,
-    type: "PAGE" as BookmarkType,
-  };
-
-  if (!hasNextPage && !isFetchingNextPage) {
-    return (
-      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
-        <BookmarkCardHeader className="flex items-center justify-center bg-muted/30">
-          <div className="flex flex-col items-center gap-4 text-center p-6">
-            <Package className="text-muted-foreground size-12" />
-            <div className="space-y-2">
-              <Typography
-                variant="large"
-                className="text-muted-foreground font-semibold"
-              >
-                All caught up! 🎉
-              </Typography>
-              <Typography variant="muted" className="text-sm">
-                No more bookmarks to load
-              </Typography>
-            </div>
-          </div>
-        </BookmarkCardHeader>
-
-        <BookmarkCardContent bookmark={mockBookmark} href={null}>
-          <BookmarkCardTitle className="text-muted-foreground">
-            End of collection
-          </BookmarkCardTitle>
-          <BookmarkCardDescription className="text-muted-foreground">
-            You've seen all your bookmarks
-          </BookmarkCardDescription>
-        </BookmarkCardContent>
-      </BookmarkCardContainer>
-    );
-  }
-
-  if (isFetchingNextPage) {
-    return (
-      <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
-        <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
-          <div className="flex flex-col items-center gap-4 text-center p-6">
-            <Loader className="text-primary" />
-            <Typography variant="muted">Loading more bookmarks...</Typography>
-          </div>
-        </BookmarkCardHeader>
-
-        <BookmarkCardContent bookmark={mockBookmark} href={null}>
-          <BookmarkCardTitle className="text-primary">
-            Loading...
-          </BookmarkCardTitle>
-          <BookmarkCardDescription>
-            Fetching your next bookmarks
-          </BookmarkCardDescription>
-        </BookmarkCardContent>
-      </BookmarkCardContainer>
-    );
-  }
-
-  // Default state - ready to load more
   return (
-    <BookmarkCardContainer bookmark={mockBookmark} ref={loadMoreRef}>
-      <BookmarkCardHeader className="flex items-center justify-center bg-primary/5">
-        <div className="flex flex-col items-center gap-4 text-center p-6">
-          <div className="animate-bounce">
-            <ChevronDown className="text-primary size-8" />
-          </div>
-          <Typography variant="large" className="text-primary font-semibold">
-            Load more bookmarks
-          </Typography>
-          <Typography variant="muted" className="text-sm">
-            Scroll down to load more automatically
-          </Typography>
-        </div>
-      </BookmarkCardHeader>
-
-      <BookmarkCardContent bookmark={mockBookmark} href={null}>
-        <BookmarkCardTitle className="text-primary">
-          Ready to load
-        </BookmarkCardTitle>
-        <BookmarkCardDescription>
-          More bookmarks available
-        </BookmarkCardDescription>
-      </BookmarkCardContent>
-    </BookmarkCardContainer>
+    <div
+      ref={loadMoreRef}
+      className={cn(
+        "col-span-full flex h-14 w-full items-center justify-center text-[13px] text-muted-foreground",
+        className,
+      )}
+    >
+      {isFetchingNextPage ? (
+        <span className="flex items-center gap-2">
+          <Loader className="size-3.5" />
+          Loading more…
+        </span>
+      ) : hasNextPage ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={loadNextPage}
+        >
+          Load more
+        </Button>
+      ) : (
+        <span className="flex items-center gap-3 text-muted-foreground/80">
+          <span className="h-px w-10 bg-border" aria-hidden />
+          That&apos;s everything
+          <span className="h-px w-10 bg-border" aria-hidden />
+        </span>
+      )}
+    </div>
   );
 }

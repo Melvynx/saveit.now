@@ -17,7 +17,7 @@ export const useBookmark = (bookmarkId?: string | null) => {
 };
 
 export const usePrefetchBookmark = () => {
-  return (_bookmarkId?: string | null) => {};
+  return (bookmarkId?: string | null) => void bookmarkId;
 };
 
 export const useRefreshBookmark = (bookmarkId?: string | null) => {

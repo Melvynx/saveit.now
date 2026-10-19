@@ -1,78 +1,66 @@
 "use client";
 
-import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
-import { cn } from "@workspace/ui/lib/utils";
-
+import { BookmarkCardActions } from "./bookmark-card-actions";
+import { BookmarkCardContainer } from "./bookmark-card-container";
 import {
-  BookmarkCardActions,
-  BookmarkCardContainer,
-} from "./bookmark-card-base";
+  CardFallbackTile,
+  CardLink,
+  CardMedia,
+  getDomain,
+  getMetadataRatio,
+} from "./bookmark-card-parts";
 import { BookmarkCardData } from "./bookmark.types";
-import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardImageProps {
   bookmark: BookmarkCardData;
 }
 
-const CARD_ASPECT_RATIO = 384 / 290;
-
-const shouldCoverImage = (metadata: unknown) => {
-  if (!metadata || typeof metadata !== "object") return true;
-
-  const width = Reflect.get(metadata, "width");
-  const height = Reflect.get(metadata, "height");
-
-  if (typeof width !== "number" || typeof height !== "number" || height <= 0) {
-    return true;
-  }
-
-  return width / height >= CARD_ASPECT_RATIO;
-};
-
+/** Image only, caption revealed on hover / focus (always on touch). */
 export const BookmarkCardImage = ({ bookmark }: BookmarkCardImageProps) => {
-  const domainName = new URL(bookmark.url).hostname.replace("www.", "");
-  const imageUrl = bookmark.preview ?? bookmark.url;
-  const coverImage = shouldCoverImage(bookmark.metadata);
+  const domain = getDomain(bookmark.url);
+  const title = bookmark.title || "Image";
 
   return (
     <BookmarkCardContainer
       bookmark={bookmark}
-      className="relative gap-0 break-inside-avoid-column bg-muted/40"
+      className="bg-muted"
       testId="bookmark-card-image"
     >
-      <LinkWithQuery
-        to={`/app/b/${bookmark.id}`}
-        className="relative flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden"
-      >
-        <ImageWithPlaceholder
-          src={imageUrl}
-          fallbackImage={bookmark.url}
-          alt={bookmark.title ?? "Image"}
-          className={cn(
-            "h-full w-full object-center",
-            coverImage ? "object-cover" : "object-contain",
-          )}
-        />
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end bg-gradient-to-t from-black/70 via-black/25 to-transparent px-3 pt-10 pb-3 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover/card:opacity-100 md:group-focus-within/card:opacity-100 motion-reduce:transition-none">
-          <div className="min-w-0">
-            <p className="line-clamp-1 text-sm leading-tight font-medium text-white drop-shadow-sm">
-              {bookmark.title || "Image"}
-            </p>
-            <p className="mt-1 hidden line-clamp-1 text-xs leading-none text-white/70 md:block">
-              {domainName}
-            </p>
+      <CardLink bookmarkId={bookmark.id} label={title}>
+        <CardMedia
+          src={bookmark.preview ?? bookmark.url}
+          fallbackSrc={bookmark.url}
+          alt={bookmark.imageDescription ?? title}
+          minRatio={3 / 4}
+          maxRatio={2}
+          initialRatio={getMetadataRatio(bookmark.metadata)}
+          fallback={
+            <CardFallbackTile
+              title={title}
+              faviconUrl={bookmark.faviconUrl}
+              type={bookmark.type}
+            />
+          }
+        >
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-linear-to-t from-black/65 via-black/20 to-transparent px-3 pt-12 pb-2.5 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-data-focused/item:opacity-100 motion-reduce:transition-none [@media(pointer:coarse)]:opacity-100">
+            <div className="min-w-0">
+              <p className="line-clamp-1 text-[13px] leading-tight font-medium text-white">
+                {title}
+              </p>
+              <p className="mt-0.5 line-clamp-1 text-[12px] text-white/70">
+                {domain}
+              </p>
+            </div>
           </div>
-        </div>
-      </LinkWithQuery>
-
+        </CardMedia>
+      </CardLink>
       <BookmarkCardActions
         url={bookmark.url}
         bookmarkId={bookmark.id}
         starred={bookmark.starred || false}
         read={bookmark.read || false}
         bookmarkType={bookmark.type}
-        className="z-20"
+        title={bookmark.title}
       />
     </BookmarkCardContainer>
   );

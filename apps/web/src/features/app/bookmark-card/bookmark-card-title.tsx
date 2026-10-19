@@ -13,5 +13,5 @@ export const BookmarkCardTitle = ({
   children,
   className = "",
 }: BookmarkCardTitleProps) => {
-  return <CardTitle className={cn("text-sm", className)}>{children}</CardTitle>;
+  return <CardTitle className={cn("line-clamp-2 text-[14px] leading-snug font-semibold", className)}>{children}</CardTitle>;
 };

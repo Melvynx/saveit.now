@@ -1,15 +1,17 @@
 import * as React from "react";
 
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system";
+export type ResolvedTheme = "dark" | "light";
 
 type ThemeContextValue = {
   theme: Theme;
+  resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
 };
 
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
-function resolveTheme(theme: Theme) {
+function resolveTheme(theme: Theme): ResolvedTheme {
   if (theme !== "system") return theme;
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -25,11 +27,17 @@ export function ThemeProvider({
     if (typeof window === "undefined") return defaultTheme;
     return (localStorage.getItem("theme") as Theme | null) ?? defaultTheme;
   });
+  const [resolvedTheme, setResolvedTheme] = React.useState<ResolvedTheme>(
+    () => (typeof window === "undefined" ? "light" : resolveTheme(theme)),
+  );
 
   React.useEffect(() => {
     const root = document.documentElement;
     const apply = () => {
-      root.classList.toggle("dark", resolveTheme(theme) === "dark");
+      const next = resolveTheme(theme);
+      root.classList.toggle("dark", next === "dark");
+      root.style.colorScheme = next;
+      setResolvedTheme(next);
     };
 
     apply();
@@ -46,19 +54,23 @@ export function ThemeProvider({
     setThemeState(nextTheme);
   }, []);
 
+  const value = React.useMemo(
+    () => ({ theme, resolvedTheme, setTheme }),
+    [theme, resolvedTheme, setTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const value = React.useContext(ThemeContext);
 
   if (!value) {
     return {
-      theme: "system" as Theme,
+      theme: "system",
+      resolvedTheme: "light",
       setTheme: () => {},
     };
   }

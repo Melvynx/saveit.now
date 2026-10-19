@@ -1,17 +1,16 @@
 "use client";
 
-import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
 import { formatPrice } from "@workspace/ui/lib/format";
+import { BookmarkCardActions } from "./bookmark-card-actions";
+import { BookmarkCardContainer } from "./bookmark-card-container";
 import {
-  BookmarkCardActions,
-  BookmarkCardContainer,
-  BookmarkCardContent,
-  BookmarkCardDescription,
-  BookmarkCardHeader,
-  BookmarkCardTitle,
-} from "./bookmark-card-base";
+  CardBody,
+  CardFallbackTile,
+  CardLink,
+  CardMedia,
+  getDomain,
+} from "./bookmark-card-parts";
 import { BookmarkCardData } from "./bookmark.types";
-import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardProductProps {
   bookmark: BookmarkCardData;
@@ -25,53 +24,54 @@ interface ProductMetadata {
 }
 
 export const BookmarkCardProduct = ({ bookmark }: BookmarkCardProductProps) => {
-  const domainName = new URL(bookmark.url).hostname;
-  const metadata = bookmark.metadata as ProductMetadata;
+  const domain = getDomain(bookmark.url);
+  const metadata = (bookmark.metadata ?? {}) as ProductMetadata;
+  const title = bookmark.title || domain;
+  const price =
+    typeof metadata.price === "number" && metadata.price > 0
+      ? formatPrice(metadata.price, metadata.currency)
+      : null;
 
   return (
     <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-product">
-      <BookmarkCardHeader>
-        <LinkWithQuery
-          to={`/app/b/${bookmark.id}`}
-          className="h-full w-full flex-1 relative"
+      <CardLink bookmarkId={bookmark.id} label={title}>
+        <CardMedia
+          src={bookmark.ogImageUrl}
+          fallbackSrc={bookmark.preview}
+          alt=""
+          minRatio={1}
+          maxRatio={4 / 3}
+          className="bg-card"
+          imgClassName="object-contain object-center p-3"
+          fallback={
+            <CardFallbackTile
+              title={title}
+              faviconUrl={bookmark.faviconUrl}
+              type={bookmark.type}
+            />
+          }
         >
-          <ImageWithPlaceholder
-            src={bookmark.preview ?? ""}
-            fallbackImage={bookmark.ogImageUrl ?? null}
-            className="h-full w-full object-cover object-center mx-auto"
-            alt={bookmark.title ?? "Product"}
-          />
-
-          {/* Price overlay - positioned like YouTube duration */}
-          {metadata?.price && metadata.price > 0 && (
-            <div className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm font-medium">
-              {formatPrice(metadata.price, metadata.currency)}
-            </div>
-          )}
-
-          {/* Brand badge - positioned in top left */}
-          {metadata?.brand && (
-            <div className="absolute top-2 left-2 bg-white/90 text-black px-2 py-1 rounded text-xs font-medium max-w-24 truncate">
-              {metadata.brand}
-            </div>
-          )}
-        </LinkWithQuery>
-
-        <BookmarkCardActions
-          url={bookmark.url}
-          bookmarkId={bookmark.id}
-          starred={bookmark.starred || false}
-          read={bookmark.read || false}
-          bookmarkType={bookmark.type}
+          {price ? (
+            <span className="absolute bottom-2.5 left-2.5 inline-flex h-6 items-center rounded-full bg-background/90 px-2.5 text-[12px] font-semibold text-foreground tabular-nums shadow-xs ring-1 ring-foreground/8 backdrop-blur-md">
+              {price}
+            </span>
+          ) : null}
+        </CardMedia>
+        <CardBody
+          title={title}
+          domain={metadata.brand ? `${metadata.brand} · ${domain}` : domain}
+          faviconUrl={bookmark.faviconUrl}
+          type={bookmark.type}
         />
-      </BookmarkCardHeader>
-
-      <BookmarkCardContent bookmark={bookmark}>
-        <BookmarkCardTitle className="line-clamp-1">
-          {bookmark.title}
-        </BookmarkCardTitle>
-        <BookmarkCardDescription>{domainName}</BookmarkCardDescription>
-      </BookmarkCardContent>
+      </CardLink>
+      <BookmarkCardActions
+        url={bookmark.url}
+        bookmarkId={bookmark.id}
+        starred={bookmark.starred || false}
+        read={bookmark.read || false}
+        bookmarkType={bookmark.type}
+        title={bookmark.title}
+      />
     </BookmarkCardContainer>
   );
 };

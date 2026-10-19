@@ -1,3 +1,4 @@
+import { useInAppShell } from "@/features/app/shell/use-app-shell";
 import { APP_LINKS } from "@/lib/app-links";
 import { logger } from "@/lib/logger";
 import { Link } from "@tanstack/react-router";
@@ -29,6 +30,8 @@ const useBooleanLocalStorage = (key: string, defaultValue: boolean) => {
 };
 
 export const AlertExtensions = () => {
+  // The /app shell shows ExtensionInstallCard in the sidebar instead.
+  const inAppShell = useInAppShell();
   const [state, setState] = useState<"loading" | "installed" | "not-installed">(
     "loading",
   );
@@ -38,7 +41,7 @@ export const AlertExtensions = () => {
   );
 
   useEffect(() => {
-    if (state === "installed") return;
+    if (inAppShell || state === "installed") return;
 
     setTimeout(() => {
       if (typeof window === "undefined") return;
@@ -47,7 +50,9 @@ export const AlertExtensions = () => {
       setState(!container ? "installed" : "not-installed");
       logger.debug("Extension container check:", { found: !!container });
     }, 2000);
-  }, [state]);
+  }, [inAppShell, state]);
+
+  if (inAppShell) return null;
 
   if (state === "loading") return;
 

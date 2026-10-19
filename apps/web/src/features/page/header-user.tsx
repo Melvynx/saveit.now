@@ -213,6 +213,45 @@ export function HeaderUserMenuContent({
   );
 }
 
+export function UserAvatar({
+  name,
+  email,
+  image,
+  className,
+}: {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  className?: string;
+}) {
+  const initial = (name || email || "?").trim().charAt(0).toUpperCase();
+
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt=""
+        className={cn(
+          "size-6 shrink-0 rounded-full object-cover ring-1 ring-foreground/8",
+          className,
+        )}
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/12 text-[11px] font-semibold text-primary ring-1 ring-primary/15",
+        className,
+      )}
+    >
+      {initial}
+    </span>
+  );
+}
+
 export const HeaderAppNameExtension = () => {
   const plan = useUserPlan();
 

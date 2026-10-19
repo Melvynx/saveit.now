@@ -27,16 +27,16 @@ export const BookmarkCardContent = ({
   href,
 }: BookmarkCardContentProps) => {
   const content = (
-    <CardContent className={`px-4 pb-4 ${className}`}>
+    <CardContent className={`px-3.5 py-3 ${className}`}>
       <div className="flex items-start gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded border">
+        <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
           <BookmarkFavicon
             faviconUrl={bookmark.faviconUrl}
             bookmarkType={bookmark.type ?? "PAGE"}
             status={bookmark.status}
           />
         </div>
-        <div className="flex flex-col gap-2 flex-1">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">{children}</div>
       </div>
     </CardContent>
   );

@@ -31,4 +31,6 @@ export type BookmarkCardData = {
   ogDescription?: string | null;
   createdAt?: Date | number;
   tags?: BookmarkTag[];
+  processingStep?: number | null;
+  openCount?: number;
 };

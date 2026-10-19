@@ -1,164 +1,161 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { Card } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { InlineTooltip } from "@workspace/ui/components/tooltip";
-import { Typography } from "@workspace/ui/components/typography";
-import { Book, Copy, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
-import { BookmarkSectionTitle } from "./bookmark-content-view";
+import { cn } from "@workspace/ui/lib/utils";
+import { Check, ChevronDown, Copy, Search } from "lucide-react";
+import { type ReactNode, useMemo, useState } from "react";
 
 interface TranscriptViewerProps {
   transcript: string;
 }
 
+const PREVIEW_LINES = 3;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlight(text: string, search: string): ReactNode {
+  if (!search) return text;
+  const regex = new RegExp(`(${escapeRegExp(search)})`, "gi");
+  return text.split(regex).map((part, index) =>
+    part.toLowerCase() === search.toLowerCase() ? (
+      <mark
+        key={index}
+        className="rounded-sm bg-primary/15 px-0.5 text-foreground"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
 export const TranscriptViewer = ({ transcript }: TranscriptViewerProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const formattedTranscript = useMemo(() => {
+  const lines = useMemo(() => {
     if (!transcript) return [];
-
-    // Split transcript by lines and format
-    const lines = transcript.split("\n").filter((line) => line.trim());
-
-    return lines.map((line, index) => {
-      // Extract timestamp if present (format: [MM:SS] text)
-      const timestampMatch = line.match(/^\[(\d{2}:\d{2})\]\s*(.+)$/);
-
-      if (timestampMatch) {
+    return transcript
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line, index) => {
+        const match = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*(.+)$/);
         return {
           id: index,
-          timestamp: timestampMatch[1],
-          text: timestampMatch[2] || "",
-          fullLine: line,
+          timestamp: match?.[1] ?? null,
+          text: match?.[2] ?? line,
         };
-      }
-
-      return {
-        id: index,
-        timestamp: null,
-        text: line || "",
-        fullLine: line,
-      };
-    });
+      });
   }, [transcript]);
 
-  const filteredTranscript = useMemo(() => {
-    if (!searchTerm) return formattedTranscript;
-
-    const searchLower = searchTerm.toLowerCase();
-    return formattedTranscript.filter((entry) =>
-      entry.text.toLowerCase().includes(searchLower),
-    );
-  }, [formattedTranscript, searchTerm]);
-
-  const highlightText = (text: string, search: string) => {
-    if (!search) return text;
-
-    const regex = new RegExp(`(${search})`, "gi");
-    const parts = text.split(regex);
-
-    return parts.map((part, index) =>
-      regex.test(part) ? (
-        <mark
-          key={index}
-          className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
-        >
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
-    );
-  };
+  const filtered = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+    if (!search) return lines;
+    return lines.filter((line) => line.text.toLowerCase().includes(search));
+  }, [lines, searchTerm]);
 
   const copyTranscript = async () => {
     try {
       await navigator.clipboard.writeText(transcript);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy transcript:", error);
     }
   };
 
-  if (!transcript) {
+  if (!transcript || lines.length === 0) {
     return null;
   }
 
   return (
-    <Card className="p-4">
-      <BookmarkSectionTitle icon={Book} text="Transcript" />
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground">
+          Transcript
+          <span className="ml-1.5 tabular-nums text-muted-foreground/70">
+            {lines.length} lines
+          </span>
+        </h2>
+        <InlineTooltip title={copied ? "Copied" : "Copy transcript"}>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Copy transcript"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => void copyTranscript()}
+          >
+            {copied ? <Check /> : <Copy />}
+          </Button>
+        </InlineTooltip>
+      </div>
 
-      {/* Search functionality */}
-      {isExpanded && (
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
-            <Input
-              placeholder="Search transcript..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          <InlineTooltip title="Copy transcript">
-            <Button variant="ghost" size="sm" onClick={copyTranscript}>
-              <Copy className="size-4" />
-            </Button>
-          </InlineTooltip>
-          <InlineTooltip title="Close transcript">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <X className="size-4" />
-            </Button>
-          </InlineTooltip>
-        </div>
-      )}
-
-      {/* Transcript content */}
-      <div className="space-y-2">
+      <div className="overflow-hidden rounded-xl bg-muted/40 ring-1 ring-foreground/5">
         {isExpanded ? (
-          <div className="max-h-60 overflow-y-auto space-y-2">
-            {filteredTranscript.map((entry) => (
-              <div key={entry.id} className="flex gap-3 text-sm">
-                {entry.timestamp && (
-                  <span className="text-gray-500 font-mono text-xs mt-0.5 shrink-0">
-                    {entry.timestamp}
-                  </span>
-                )}
-                <span className="text-gray-700 dark:text-gray-300">
-                  {searchTerm
-                    ? highlightText(entry.text, searchTerm)
-                    : entry.text}
-                </span>
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="relative border-b border-border/70">
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search the transcript…"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="h-10 rounded-none border-0 bg-transparent pl-10 shadow-none focus-visible:ring-0 dark:bg-transparent"
+              />
+            </div>
+            <ol className="max-h-80 overflow-y-auto px-4 py-3">
+              {filtered.length === 0 ? (
+                <li className="py-2 text-[13px] text-muted-foreground">
+                  No line mentions “{searchTerm}”.
+                </li>
+              ) : (
+                filtered.map((line) => (
+                  <li
+                    key={line.id}
+                    className="flex gap-3 py-1 text-[14px] leading-relaxed"
+                  >
+                    {line.timestamp ? (
+                      <span className="mt-0.5 w-10 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+                        {line.timestamp}
+                      </span>
+                    ) : null}
+                    <span className="text-foreground/85">
+                      {highlight(line.text, searchTerm.trim())}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ol>
+          </>
         ) : (
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <Typography variant="muted">
-              {formattedTranscript
-                .slice(0, 3)
-                .map((entry) => entry.text)
+          <div className="px-4 py-3">
+            <p className="line-clamp-3 text-[14px] leading-relaxed text-foreground/80">
+              {lines
+                .slice(0, PREVIEW_LINES)
+                .map((line) => line.text)
                 .join(" ")}
-              {formattedTranscript.length > 3 && "..."}
-            </Typography>
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 mt-2"
-              onClick={() => setIsExpanded(true)}
-            >
-              Show full transcript ({formattedTranscript.length} lines)
-            </Button>
+            </p>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setIsExpanded((value) => !value)}
+          className="flex w-full items-center justify-center gap-1 border-t border-border/70 py-2 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
+        >
+          {isExpanded ? "Collapse transcript" : "Show full transcript"}
+          <ChevronDown
+            className={cn(
+              "size-3.5 transition-transform",
+              isExpanded && "rotate-180",
+            )}
+          />
+        </button>
       </div>
-    </Card>
+    </section>
   );
 };

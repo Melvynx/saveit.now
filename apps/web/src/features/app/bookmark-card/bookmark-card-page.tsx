@@ -1,54 +1,70 @@
 "use client";
 
-import { ImageWithPlaceholder } from "@/components/image-with-placeholder";
-
+import { useCallback, useState } from "react";
+import { BookmarkCardActions } from "./bookmark-card-actions";
+import { BookmarkCardContainer } from "./bookmark-card-container";
 import {
-  BookmarkCardActions,
-  BookmarkCardContainer,
-  BookmarkCardContent,
-  BookmarkCardDescription,
-  BookmarkCardHeader,
-  BookmarkCardTitle,
-} from "./bookmark-card-base";
+  CardBody,
+  CardFallbackTile,
+  CardLink,
+  CardMedia,
+  getDomain,
+  isUnread,
+} from "./bookmark-card-parts";
 import { BookmarkCardData } from "./bookmark.types";
-import { LinkWithQuery } from "./link-with-query";
 
 interface BookmarkCardPageProps {
   bookmark: BookmarkCardData;
 }
 
 export const BookmarkCardPage = ({ bookmark }: BookmarkCardPageProps) => {
-  const domainName = new URL(bookmark.url).hostname.replace("www.", "");
+  const domain = getDomain(bookmark.url);
+  const title = bookmark.title || domain;
+  const summary = bookmark.summary || bookmark.ogDescription;
+  const unread = isUnread(bookmark);
+  const fallback = (
+    <CardFallbackTile
+      title={title}
+      faviconUrl={bookmark.faviconUrl}
+      type={bookmark.type}
+    />
+  );
+  const [mediaFailed, setMediaFailed] = useState(false);
+  const hasImage =
+    Boolean(bookmark.preview || bookmark.ogImageUrl) && !mediaFailed;
+  const onUnavailable = useCallback(() => setMediaFailed(true), []);
 
   return (
     <BookmarkCardContainer bookmark={bookmark} testId="bookmark-card-page">
-      <BookmarkCardHeader>
-        <LinkWithQuery
-          to={`/app/b/${bookmark.id}`}
-          className="h-full w-full flex-1"
-        >
-          <ImageWithPlaceholder
-            src={bookmark.preview ?? ""}
-            fallbackImage={bookmark.ogImageUrl ?? null}
-            className="h-full w-full object-cover object-center mx-auto"
-            alt={bookmark.title ?? "Preview"}
-            style={{ objectFit: "cover" }}
+      <CardLink bookmarkId={bookmark.id} label={title}>
+        {hasImage ? (
+          <CardMedia
+            src={bookmark.ogImageUrl}
+            fallbackSrc={bookmark.preview}
+            alt=""
+            fallback={fallback}
+            onUnavailable={onUnavailable}
           />
-        </LinkWithQuery>
-
-        <BookmarkCardActions
-          url={bookmark.url}
-          bookmarkId={bookmark.id}
-          starred={bookmark.starred || false}
-          read={bookmark.read || false}
-          bookmarkType={bookmark.type}
+        ) : (
+          fallback
+        )}
+        <CardBody
+          title={hasImage ? title : null}
+          summary={summary}
+          domain={domain}
+          faviconUrl={bookmark.faviconUrl}
+          type={bookmark.type}
+          unread={unread}
         />
-      </BookmarkCardHeader>
-
-      <BookmarkCardContent bookmark={bookmark}>
-        <BookmarkCardTitle>{domainName}</BookmarkCardTitle>
-        <BookmarkCardDescription>{bookmark.title}</BookmarkCardDescription>
-      </BookmarkCardContent>
+      </CardLink>
+      <BookmarkCardActions
+        url={bookmark.url}
+        bookmarkId={bookmark.id}
+        starred={bookmark.starred || false}
+        read={bookmark.read || false}
+        bookmarkType={bookmark.type}
+        title={bookmark.title}
+      />
     </BookmarkCardContainer>
   );
 };

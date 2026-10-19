@@ -28,10 +28,7 @@ export const InterceptDialog = ({
       return;
     }
 
-    void router.navigate({
-      to: fallbackTo as any,
-      replace: true,
-    });
+    router.history.replace(fallbackTo);
   };
 
   return (

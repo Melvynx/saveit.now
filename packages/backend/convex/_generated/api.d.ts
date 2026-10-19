@@ -35,6 +35,7 @@ import type * as bookmarks_mutations from "../bookmarks/mutations.js";
 import type * as bookmarks_onboarding from "../bookmarks/onboarding.js";
 import type * as bookmarks_queries from "../bookmarks/queries.js";
 import type * as bookmarks_seed from "../bookmarks/seed.js";
+import type * as bookmarks_validators from "../bookmarks/validators.js";
 import type * as changelog_mutations from "../changelog/mutations.js";
 import type * as changelog_queries from "../changelog/queries.js";
 import type * as chat_actions from "../chat/actions.js";
@@ -147,6 +148,7 @@ declare const fullApi: ApiFromModules<{
   "bookmarks/onboarding": typeof bookmarks_onboarding;
   "bookmarks/queries": typeof bookmarks_queries;
   "bookmarks/seed": typeof bookmarks_seed;
+  "bookmarks/validators": typeof bookmarks_validators;
   "changelog/mutations": typeof changelog_mutations;
   "changelog/queries": typeof changelog_queries;
   "chat/actions": typeof chat_actions;

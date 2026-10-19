@@ -41,27 +41,29 @@ export const BookmarkNote = ({
 
   if (variant === "plain") {
     return (
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <Typography
-            variant="muted"
-            className="text-[11px] font-medium tracking-wider uppercase"
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <label
+            htmlFor={`bookmark-note-${bookmarkId}`}
+            className="text-xs font-medium text-muted-foreground"
           >
             Note
-          </Typography>
-          {isSaving && (
-            <Typography variant="muted" className="text-xs">
-              Saving...
-            </Typography>
-          )}
+          </label>
+          <span
+            aria-live="polite"
+            className="text-xs text-muted-foreground tabular-nums"
+          >
+            {isSaving ? "Saving…" : null}
+          </span>
         </div>
         <Textarea
+          id={`bookmark-note-${bookmarkId}`}
           onChange={(e) => onUpdate(e.target.value)}
           defaultValue={note ?? ""}
-          placeholder="Add your personal notes about this bookmark..."
-          className="min-h-20 resize-none"
+          placeholder="Why did you save this? Jot it down…"
+          className="min-h-24 resize-none rounded-xl border-transparent bg-muted/50 px-3.5 py-3 text-[15px] leading-relaxed shadow-none placeholder:text-muted-foreground/70 hover:bg-muted/70 focus-visible:border-ring focus-visible:bg-background dark:bg-muted/40"
         />
-      </div>
+      </section>
     );
   }
 

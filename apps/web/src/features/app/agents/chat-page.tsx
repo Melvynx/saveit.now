@@ -8,14 +8,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { useConvex, useConvexAuth, useMutation } from "convex/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import {
-  ArrowDownIcon,
-  BookmarkIcon,
-  CornerDownLeftIcon,
-  Loader2Icon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
+import { ArrowDownIcon } from "lucide-react";
 import {
   lazy,
   Suspense,
@@ -28,11 +21,19 @@ import {
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { toast } from "sonner";
 import { Button } from "@workspace/ui/components/button";
-import { Textarea } from "@workspace/ui/components/textarea";
+import { Sheet, SheetContent, SheetTitle } from "@workspace/ui/components/sheet";
 import { cn } from "@workspace/ui/lib/utils";
-import { ChatHeader } from "./components/chat-header";
-import { MessageItem } from "./components/message-item";
 import { getConvexSiteUrl } from "@/lib/convex-url";
+import { ChatComposer, type ChatComposerHandle } from "./components/chat-composer";
+import { ChatEmptyState } from "./components/chat-empty-state";
+import { ChatHeader } from "./components/chat-header";
+import { ConversationHistory } from "./components/conversation-history";
+import { MessageItem } from "./components/message-item";
+import {
+  type ConversationListItem,
+  getFirstUserMessageText,
+} from "./chat-utils";
+import { useHistoryPanel } from "./use-history-panel";
 
 const CONVEX_SITE_URL = getConvexSiteUrl();
 const BookmarkDialog = lazy(() =>
@@ -41,88 +42,23 @@ const BookmarkDialog = lazy(() =>
   })),
 );
 
-const SUGGESTIONS = [
-  "Search my bookmarks",
-  "Show me recent articles",
-  "Find programming resources",
-  "What have I saved about React?",
-];
+type SearchUpdater = (previous: URLSearchParams) => URLSearchParams;
 
-function getFirstUserMessageText(messages: UIMessage[]) {
-  const firstUserMessage = messages.find((message) => message.role === "user");
-  const textPart = firstUserMessage?.parts.find((part) => part.type === "text");
-
-  return textPart?.type === "text" && textPart.text.trim()
-    ? textPart.text.trim()
-    : "New conversation";
-}
-
-function EmptyState({
-  onSuggestionClick,
-}: {
-  onSuggestionClick: (s: string) => void;
-}) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <div className="bg-muted flex size-16 items-center justify-center rounded-full">
-        <BookmarkIcon className="text-muted-foreground size-8" />
-      </div>
-      <div className="text-center">
-        <h2 className="text-lg font-semibold">SaveIt Chat</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Ask me anything about your bookmarks
-        </p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {SUGGESTIONS.map((s) => (
-          <Button
-            key={s}
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() => onSuggestionClick(s)}
-          >
-            {s}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ScrollButton() {
+function ScrollToBottomButton() {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   if (isAtBottom) return null;
 
   return (
     <Button
-      size="icon"
+      size="icon-sm"
       variant="outline"
-      className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full"
-      onClick={() => scrollToBottom()}
+      aria-label="Scroll to latest message"
+      className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-background shadow-sm"
+      onClick={() => void scrollToBottom()}
     >
-      <ArrowDownIcon className="size-4" />
+      <ArrowDownIcon />
     </Button>
-  );
-}
-
-function CreditsDisplay({
-  credits,
-}: {
-  credits: { used: number; limit: number; remaining: number } | null;
-}) {
-  if (!credits) return null;
-
-  return (
-    <span
-      className={cn(
-        "text-muted-foreground text-[11px] tabular-nums",
-        credits.remaining <= 3 && "text-destructive",
-      )}
-    >
-      {credits.used}/{credits.limit}
-    </span>
   );
 }
 
@@ -134,91 +70,88 @@ export function ChatPage() {
   >;
   const searchParams = useMemo(() => {
     const params = new URLSearchParams();
-
     Object.entries(routeSearch).forEach(([key, value]) => {
-      if (typeof value === "string") {
-        params.set(key, value);
-      }
+      if (typeof value === "string") params.set(key, value);
     });
-
     return params;
   }, [routeSearch]);
-  const setSearchParams = useCallback(
-    (
-      next:
-        | Record<string, string>
-        | ((previous: URLSearchParams) => URLSearchParams),
-      options?: { replace?: boolean },
-    ) => {
+
+  // Always derive from the router's live search state, never from a closure
+  // snapshot: a stale snapshot taken during hydration can drop `b` or `c`.
+  const updateSearchParams = useCallback(
+    (update: SearchUpdater) => {
       void navigate({
-        to: "/app/agents" as any,
-        // Functional updater: always derive from the router's live search
-        // state, never from a React-closure snapshot (a stale snapshot
-        // taken during hydration can drop params like `b`).
+        to: "/app/agents" as never,
         search: ((current: Record<string, unknown>) => {
           const params = new URLSearchParams();
           Object.entries(current ?? {}).forEach(([key, value]) => {
-            if (typeof value === "string") {
-              params.set(key, value);
-            }
+            if (typeof value === "string") params.set(key, value);
           });
-          const nextParams =
-            typeof next === "function" ? next(params) : new URLSearchParams(next);
-          return Object.fromEntries(nextParams.entries());
-        }) as any,
-        replace: options?.replace,
+          return Object.fromEntries(update(params).entries());
+        }) as never,
+        replace: true,
       });
     },
     [navigate],
   );
+  const deleteSearchParams = useCallback(
+    (...keys: string[]) =>
+      updateSearchParams((params) => {
+        keys.forEach((key) => params.delete(key));
+        return params;
+      }),
+    [updateSearchParams],
+  );
+
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(
     searchParams.get("c"),
   );
+  const [conversationTitle, setConversationTitle] = useState<string | null>(
+    null,
+  );
   const [isLoadingConversation, setIsLoadingConversation] = useState(
     !!searchParams.get("c"),
   );
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const composerRef = useRef<ChatComposerHandle>(null);
   const conversationIdRef = useRef(conversationId);
   const conversationCreationPromiseRef = useRef<Promise<string> | null>(null);
   const conversationVersionRef = useRef(0);
   const convex = useConvex();
   const { isAuthenticated } = useConvexAuth();
   const [isRatingConversation, setIsRatingConversation] = useState(false);
+  const history = useHistoryPanel();
+  const [autoFocusComposer] = useState(
+    () => window.matchMedia("(pointer: fine)").matches,
+  );
 
   const bookmarkId = searchParams.get("b");
 
   const handleCloseBookmark = useCallback(() => {
-    setSearchParams(
-      (prev) => {
-        const newParams = new URLSearchParams(prev.toString());
-        newParams.delete("b");
-        return newParams;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
+    deleteSearchParams("b");
+  }, [deleteSearchParams]);
 
   useEffect(() => {
     conversationIdRef.current = conversationId;
-    setSearchParams(
-      (prev) => {
-        const newParams = new URLSearchParams(prev.toString());
-        if (conversationId) {
-          newParams.set("c", conversationId);
-        } else {
-          newParams.delete("c");
-        }
-        return newParams;
-      },
-      { replace: true },
-    );
-  }, [conversationId, setSearchParams]);
+    updateSearchParams((params) => {
+      if (conversationId) params.set("c", conversationId);
+      else params.delete("c");
+      return params;
+    });
+  }, [conversationId, updateSearchParams]);
 
-  // Convex reactive query for chat usage
   const usage = useAuthedQuery(api.chat.queries.getChatUsage, {});
+  const conversations = useAuthedQuery(
+    api.chat.queries.listConversations,
+    {},
+  ) as ConversationListItem[] | undefined;
 
   const createConversation = useMutation(api.chat.mutations.createConversation);
+  const deleteConversation = useMutation(api.chat.mutations.deleteConversation);
+  const likeConversation = useMutation(api.chat.mutations.likeConversation);
+  const dislikeConversation = useMutation(
+    api.chat.mutations.dislikeConversation,
+  );
 
   const ensureConversationForFirstMessage = useCallback(
     async (firstMessage: string) => {
@@ -241,6 +174,7 @@ export function ChatPage() {
             ) {
               conversationIdRef.current = nextConversationId;
               setConversationId(nextConversationId);
+              setConversationTitle(data.title ?? null);
             }
 
             return nextConversationId;
@@ -255,14 +189,6 @@ export function ChatPage() {
       return await conversationCreationPromiseRef.current;
     },
     [createConversation],
-  );
-
-  // Convex mutation for liking a conversation
-  const likeConversation = useMutation(api.chat.mutations.likeConversation);
-
-  // Convex mutation for disliking a conversation
-  const dislikeConversation = useMutation(
-    api.chat.mutations.dislikeConversation,
   );
 
   const handleLike = useCallback(() => {
@@ -316,10 +242,15 @@ export function ChatPage() {
       },
     }),
     onFinish: () => {
-      setTimeout(() => textareaRef.current?.focus(), 0);
+      setTimeout(() => composerRef.current?.focus(), 0);
     },
     onError: (err) => {
       console.error("[Chat] Error:", err);
+      toast.error(
+        err.message.includes("limit")
+          ? "You've reached this month's question limit"
+          : "The answer couldn't be generated. Try again.",
+      );
     },
   });
 
@@ -337,16 +268,19 @@ export function ChatPage() {
         .then((data) => {
           if (!data) {
             toast.error("Conversation not found");
-            setSearchParams({}, { replace: true });
+            setConversationId(null);
+            deleteSearchParams("c");
             return;
           }
           setConversationId(data._id as string);
+          setConversationTitle(data.title ?? null);
           setMessages(data.messages as UIMessage[]);
           conversationIdRef.current = data._id as string;
         })
         .catch(() => {
           toast.error("Failed to load conversation");
-          setSearchParams({}, { replace: true });
+          setConversationId(null);
+          deleteSearchParams("c");
         })
         .finally(() => {
           setIsLoadingConversation(false);
@@ -357,36 +291,9 @@ export function ChatPage() {
 
   const isGenerating = status === "submitted" || status === "streaming";
 
-  const handleSubmit = useCallback(() => {
-    if (!input.trim() || isGenerating) return;
-
-    const messageText = input.trim();
-    setInput("");
-
-    // Send message immediately for instant optimistic update
-    void sendMessage({ text: messageText }).catch((error) => {
-      console.error("Send failed:", error);
-      toast.error("Failed to send message");
-    });
-  }, [
-    input,
-    isGenerating,
-    sendMessage,
-  ]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const handleSuggestionClick = useCallback(
-    (s: string) => {
-      textareaRef.current?.focus();
-
-      // Send message immediately for instant optimistic update
-      void sendMessage({ text: s }).catch((error) => {
+  const send = useCallback(
+    (text: string) => {
+      void sendMessage({ text }).catch((error) => {
         console.error("Send failed:", error);
         toast.error("Failed to send message");
       });
@@ -394,34 +301,53 @@ export function ChatPage() {
     [sendMessage],
   );
 
-  // Handle ?q= param for auto-submit from agentic search card
+  const handleSubmit = useCallback(() => {
+    const messageText = input.trim();
+    if (!messageText || isGenerating) return;
+    setInput("");
+    send(messageText);
+  }, [input, isGenerating, send]);
+
+  const handleSuggestion = useCallback(
+    (prompt: string) => {
+      composerRef.current?.focus();
+      send(prompt);
+    },
+    [send],
+  );
+
+  // ?q= auto-submits once, then only `q` is stripped so `c` / `b` survive.
   const hasAutoSubmittedRef = useRef(false);
   useEffect(() => {
     const queryParam = searchParams.get("q");
     if (queryParam && !hasAutoSubmittedRef.current && !isLoadingConversation) {
       hasAutoSubmittedRef.current = true;
-      handleSuggestionClick(decodeURIComponent(queryParam));
-      setSearchParams({}, { replace: true });
+      send(queryParam);
+      deleteSearchParams("q");
     }
-  }, [
-    searchParams,
-    isLoadingConversation,
-    handleSuggestionClick,
-    setSearchParams,
-  ]);
+  }, [searchParams, isLoadingConversation, send, deleteSearchParams]);
 
-  const handleNewConversation = useCallback(() => {
+  const resetConversation = useCallback(() => {
     conversationVersionRef.current += 1;
     conversationCreationPromiseRef.current = null;
-    setConversationId(null);
-    setMessages([]);
-    setInput("");
     conversationIdRef.current = null;
-    setSearchParams({}, { replace: true });
-  }, [setMessages, setSearchParams]);
+    setConversationId(null);
+    setConversationTitle(null);
+    setMessages([]);
+  }, [setMessages]);
+
+  const handleNewConversation = useCallback(() => {
+    if (isGenerating) void stop();
+    resetConversation();
+    setInput("");
+    deleteSearchParams("c", "q");
+    setTimeout(() => composerRef.current?.focus(), 0);
+  }, [deleteSearchParams, isGenerating, resetConversation, stop]);
 
   const handleSelectConversation = useCallback(
     async (id: string) => {
+      history.closeSheet();
+      if (id === conversationIdRef.current) return;
       try {
         const data = await convex.query(api.chat.queries.getConversation, {
           conversationId: id as Id<"chatConversations">,
@@ -430,16 +356,37 @@ export function ChatPage() {
           toast.error("Conversation not found");
           return;
         }
+        if (isGenerating) void stop();
         conversationVersionRef.current += 1;
         conversationCreationPromiseRef.current = null;
-        setConversationId(data._id as string);
-        setMessages(data.messages as UIMessage[]);
         conversationIdRef.current = data._id as string;
+        setConversationId(data._id as string);
+        setConversationTitle(data.title ?? null);
+        setMessages(data.messages as UIMessage[]);
       } catch {
         toast.error("Failed to load conversation");
       }
     },
-    [convex, setMessages],
+    [convex, history, isGenerating, setMessages, stop],
+  );
+
+  const handleDeleteConversation = useCallback(
+    async (id: string) => {
+      try {
+        await deleteConversation({
+          conversationId: id as Id<"chatConversations">,
+        });
+        if (id === conversationIdRef.current) {
+          resetConversation();
+          deleteSearchParams("c");
+        }
+        toast.success("Conversation deleted");
+      } catch {
+        toast.error("Failed to delete conversation");
+        throw new Error("delete failed");
+      }
+    },
+    [deleteConversation, deleteSearchParams, resetConversation],
   );
 
   const handleEditMessage = useCallback(
@@ -449,176 +396,174 @@ export function ChatPage() {
       if (messageIndex === -1 || !originalMessage) return;
 
       const updatedMessages = messages.slice(0, messageIndex);
-      const editedMessage: UIMessage = {
+      updatedMessages.push({
         ...originalMessage,
         parts: [{ type: "text", text: newContent }],
-      };
-      updatedMessages.push(editedMessage);
+      });
 
       setMessages(updatedMessages);
-
-      void sendMessage({ text: newContent }).catch((error) => {
-        console.error("Send failed:", error);
-        toast.error("Failed to send message");
-      });
+      send(newContent);
     },
-    [messages, setMessages, sendMessage],
+    [messages, setMessages, send],
   );
 
-  const handleClearInput = () => {
-    setInput("");
-    textareaRef.current?.focus();
-  };
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.shiftKey && event.key.toLowerCase() === "o") {
+        event.preventDefault();
+        handleNewConversation();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleNewConversation]);
+
+  const listTitle = conversations?.find(
+    (conversation) => conversation._id === conversationId,
+  )?.title;
+  const title =
+    conversationId || messages.length
+      ? (listTitle ?? conversationTitle ?? "New conversation")
+      : "Ask AI";
+
+  const composer = (
+    <ChatComposer
+      ref={composerRef}
+      value={input}
+      onChange={setInput}
+      onSubmit={handleSubmit}
+      onStop={() => void stop()}
+      isGenerating={isGenerating}
+      usage={usage ?? null}
+      autoFocus={autoFocusComposer}
+    />
+  );
+
+  const historyPanel = (
+    <ConversationHistory
+      conversations={conversations}
+      currentConversationId={conversationId}
+      onSelect={(id) => void handleSelectConversation(id)}
+      onDelete={handleDeleteConversation}
+    />
+  );
 
   return (
-    <div className="bg-muted fixed inset-0 flex flex-col overflow-hidden">
+    <div className="flex h-[calc(100dvh-3.25rem)] min-h-0 flex-col md:h-dvh">
       <ChatHeader
-        conversationId={conversationId}
+        title={title}
+        historyOpen={history.isOpen}
+        canStartNew={!!conversationId || messages.length > 0 || !!input}
         onNewConversation={handleNewConversation}
-        onSelectConversation={handleSelectConversation}
+        onToggleHistory={history.toggle}
       />
 
-      {messages.length === 0 ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center">
-          <div className="flex min-h-0 w-full max-w-3xl flex-1 flex-col">
-            <EmptyState onSuggestionClick={handleSuggestionClick} />
-            <div className="p-3">
-              <div
-                className={cn(
-                  "rounded-2xl",
-                  "border-2 border-primary",
-                  "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
-                  "flex items-center gap-1 p-1.5",
-                )}
+      <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          {isLoadingConversation ? (
+            <ConversationSkeleton />
+          ) : messages.length === 0 ? (
+            <ChatEmptyState
+              onSuggestion={handleSuggestion}
+              composer={composer}
+            />
+          ) : (
+            <>
+              <StickToBottom
+                className="relative min-h-0 flex-1"
+                initial="instant"
+                resize="smooth"
               >
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about your bookmarks..."
-                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
-                  rows={1}
-                  disabled={isGenerating && status !== "streaming"}
-                />
-                <div className="flex items-center gap-1">
-                  {input.trim() && !isGenerating && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-8 rounded-lg"
-                      onClick={handleClearInput}
-                    >
-                      <XIcon className="size-4" />
-                    </Button>
-                  )}
-                  <Button
-                    size="icon"
-                    className="size-8 rounded-lg"
-                    onClick={isGenerating ? () => stop() : handleSubmit}
-                    disabled={!isGenerating && !input.trim()}
-                  >
-                    {isGenerating && status === "streaming" ? (
-                      <SquareIcon className="size-4" />
-                    ) : isGenerating ? (
-                      <Loader2Icon className="size-4 animate-spin" />
-                    ) : (
-                      <CornerDownLeftIcon className="size-4" />
-                    )}
-                  </Button>
+                <StickToBottom.Content
+                  scrollClassName="overscroll-contain"
+                  className="mx-auto flex w-full max-w-[720px] flex-col gap-8 px-4 pt-6 pb-10 md:px-6"
+                >
+                  {messages.map((message, index) => (
+                    <MessageItem
+                      key={message.id}
+                      message={message}
+                      isLast={index === messages.length - 1}
+                      isLoading={isGenerating}
+                      onEdit={isGenerating ? undefined : handleEditMessage}
+                      onLike={
+                        message.role === "assistant" && conversationId
+                          ? handleLike
+                          : undefined
+                      }
+                      onDislike={
+                        message.role === "assistant" && conversationId
+                          ? handleDislike
+                          : undefined
+                      }
+                    />
+                  ))}
+                </StickToBottom.Content>
+                <ScrollToBottomButton />
+              </StickToBottom>
+              <div className="shrink-0 bg-gradient-to-t from-background from-70% to-transparent">
+                <div className="mx-auto w-full max-w-[720px] px-4 pt-1 md:px-6">
+                  {composer}
                 </div>
               </div>
-              <div className="mt-2 flex justify-center">
-                <CreditsDisplay credits={usage ?? null} />
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
-      ) : (
-        <StickToBottom
-          className="relative min-h-0 flex-1"
-          initial="smooth"
-          resize="smooth"
+
+        <aside
+          aria-label="Conversation history"
+          className={cn(
+            "hidden w-[280px] shrink-0 flex-col border-l border-border bg-sidebar/60",
+            history.isPanelVisible && "xl:flex",
+          )}
         >
-          <StickToBottom.Content className="flex flex-col items-center pb-28">
-            <div className="flex w-full max-w-3xl flex-col gap-3 p-4">
-              {messages.map((m, i) => (
-                <MessageItem
-                  key={m.id}
-                  message={m}
-                  isLast={i === messages.length - 1}
-                  isLoading={isGenerating}
-                  onEdit={handleEditMessage}
-                  onLike={m.role === "assistant" ? handleLike : undefined}
-                  onDislike={m.role === "assistant" ? handleDislike : undefined}
-                />
-              ))}
-            </div>
-          </StickToBottom.Content>
-          <ScrollButton />
-          <div className="bg-muted/80 sticky bottom-0 w-full backdrop-blur-sm">
-            <div className="mx-auto max-w-3xl p-3">
-              <div
-                className={cn(
-                  "rounded-2xl",
-                  "border-2 border-primary",
-                  "shadow-[0_0_40px_rgba(59,130,246,0.4)]",
-                  "flex items-center gap-1 p-1.5",
-                )}
-              >
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about your bookmarks..."
-                  className="min-h-[36px] max-h-[120px] flex-1 resize-none border-0 !bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0"
-                  rows={1}
-                  disabled={isGenerating && status !== "streaming"}
-                />
-                <div className="flex items-center gap-1">
-                  {input.trim() && !isGenerating && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-8 rounded-lg"
-                      onClick={handleClearInput}
-                    >
-                      <XIcon className="size-4" />
-                    </Button>
-                  )}
-                  <Button
-                    size="icon"
-                    className="size-8 rounded-lg"
-                    onClick={isGenerating ? () => stop() : handleSubmit}
-                    disabled={!isGenerating && !input.trim()}
-                  >
-                    {isGenerating && status === "streaming" ? (
-                      <SquareIcon className="size-4" />
-                    ) : isGenerating ? (
-                      <Loader2Icon className="size-4 animate-spin" />
-                    ) : (
-                      <CornerDownLeftIcon className="size-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div className="mt-2 flex justify-center">
-                <CreditsDisplay credits={usage ?? null} />
-              </div>
-            </div>
-          </div>
-        </StickToBottom>
-      )}
+          {historyPanel}
+        </aside>
+      </div>
+
+      <Sheet open={history.isSheetOpen} onOpenChange={history.setSheetOpen}>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="w-[320px] max-w-[88vw] gap-0 p-0 data-[side=right]:w-[320px] xl:hidden"
+        >
+          <SheetTitle className="sr-only">Conversation history</SheetTitle>
+          <ConversationHistory
+            conversations={conversations}
+            currentConversationId={conversationId}
+            onSelect={(id) => void handleSelectConversation(id)}
+            onDelete={handleDeleteConversation}
+            onClose={history.closeSheet}
+          />
+        </SheetContent>
+      </Sheet>
 
       {bookmarkId && (
         <Suspense fallback={null}>
-          <BookmarkDialog
-            bookmarkId={bookmarkId}
-            onClose={handleCloseBookmark}
-          />
+          <BookmarkDialog bookmarkId={bookmarkId} onClose={handleCloseBookmark} />
         </Suspense>
       )}
+    </div>
+  );
+}
+
+function ConversationSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading conversation"
+      className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 px-4 pt-6 md:px-6"
+    >
+      <div className="ml-auto h-10 w-2/5 animate-pulse rounded-2xl bg-muted" />
+      <div className="flex flex-col gap-2">
+        <div className="h-4 w-3/5 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="h-40 animate-pulse rounded-xl bg-muted" />
+        ))}
+      </div>
     </div>
   );
 }

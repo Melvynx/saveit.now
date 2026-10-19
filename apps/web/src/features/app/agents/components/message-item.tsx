@@ -2,64 +2,40 @@
 
 import { copyToClipboard } from "@/lib/tools/tool-utils";
 import { Button } from "@workspace/ui/components/button";
-import { Textarea } from "@workspace/ui/components/textarea";
+import { InlineTooltip } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
 import type { ToolUIPart, UIMessage } from "ai";
 import {
   BrainIcon,
   CheckIcon,
+  ChevronRightIcon,
   CopyIcon,
   DownloadIcon,
+  FileTextIcon,
+  LinkIcon,
   Loader2Icon,
   PencilIcon,
   SearchIcon,
   TagIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
+  TriangleAlertIcon,
+  type LucideIcon,
 } from "lucide-react";
-import { lazy, memo, Suspense, useState } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
-import type { BookmarkCardData } from "../../bookmark-card/bookmark.types";
-
-type BookmarkData = BookmarkCardData;
-
-const BookmarkCard = lazy(() =>
-  import("../../bookmark-card").then((module) => ({
-    default: module.BookmarkCard,
-  })),
-);
-
-function BookmarkGridDisplay({ bookmarks }: { bookmarks: BookmarkData[] }) {
-  if (bookmarks.length === 0) {
-    return <p className="text-muted-foreground text-sm">No bookmarks found.</p>;
-  }
-
-  const shouldBreakout = bookmarks.length >= 4;
-
-  return (
-    <div
-      className={cn(
-        "relative",
-        "w-full",
-        shouldBreakout && "lg:w-[140%] lg:-ml-[20%]",
-        shouldBreakout && "xl:w-[160%] xl:-ml-[30%]",
-        shouldBreakout && "2xl:w-[180%] 2xl:-ml-[40%]",
-      )}
-    >
-      <div className="flex flex-wrap justify-center gap-3 [&>*]:w-full [&>*]:sm:w-72 [&>*]:lg:w-80">
-        {bookmarks.map((b) => (
-          <Suspense
-            key={b.id}
-            fallback={<div className="bg-muted h-40 rounded-xl border" />}
-          >
-            <BookmarkCard bookmark={b} />
-          </Suspense>
-        ))}
-      </div>
-    </div>
-  );
-}
+import {
+  type ChatSource,
+  getDomain,
+  getMessageSources,
+  getMessageText,
+  getSourceTitle,
+  getSourcesTitle,
+  getToolName,
+  sourcesToMarkdown,
+} from "../chat-utils";
+import { CitationChip, SourceGrid } from "./chat-sources";
 
 type MessageItemProps = {
   message: UIMessage;
@@ -70,446 +46,495 @@ type MessageItemProps = {
   onDislike?: () => void;
 };
 
-export const MessageItem = memo(function MessageItem({
-  message,
-  isLast,
-  isLoading,
-  onEdit,
-  onLike,
-  onDislike,
-}: MessageItemProps) {
-  const isUser = message.role === "user";
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
-  const [copied, setCopied] = useState(false);
-  const parts = message.parts ?? [];
+export const MessageItem = memo(function MessageItem(props: MessageItemProps) {
+  return props.message.role === "user" ? (
+    <UserMessage {...props} />
+  ) : (
+    <AssistantMessage {...props} />
+  );
+});
 
-  const getTextContent = () => {
-    const textPart = parts.find((p) => p.type === "text");
-    return textPart?.type === "text" ? textPart.text : "";
-  };
+function useCopy() {
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const handleCopy = async () => {
-    const text = getTextContent();
+  const copy = async (key: string, text: string, label: string) => {
     if (!text) return;
-
     try {
       await copyToClipboard(text);
-      setCopied(true);
-      toast.success("Copied!");
-      setTimeout(() => setCopied(false), 2000);
+      setCopied(key);
+      toast.success(label);
+      setTimeout(() => setCopied(null), 1600);
     } catch {
-      toast.error("Failed to copy");
+      toast.error("Couldn't copy to clipboard");
     }
   };
 
-  const handleStartEdit = () => {
-    setEditContent(getTextContent());
-    setIsEditing(true);
-  };
+  return { copied, copy };
+}
 
-  const handleCancelEdit = () => {
+function ActionButton({
+  label,
+  icon: Icon,
+  onClick,
+  active,
+  children,
+}: {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  active?: boolean;
+  children?: React.ReactNode;
+}) {
+  const button = (
+    <Button
+      type="button"
+      size={children ? "xs" : "icon-xs"}
+      variant="ghost"
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        "text-muted-foreground hover:text-foreground",
+        active && "text-foreground",
+      )}
+    >
+      {active ? <CheckIcon className="text-primary" /> : <Icon />}
+      {children}
+    </Button>
+  );
+
+  return children ? button : <InlineTooltip title={label}>{button}</InlineTooltip>;
+}
+
+function UserMessage({ message, onEdit }: MessageItemProps) {
+  const text = getMessageText(message);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const { copied, copy } = useCopy();
+  const editRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = editRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+  }, [draft, isEditing]);
+
+  const save = () => {
+    const next = draft.trim();
+    if (next && onEdit && next !== text) onEdit(message.id, next);
     setIsEditing(false);
-    setEditContent("");
   };
 
-  const handleSaveEdit = () => {
-    if (editContent.trim() && onEdit) {
-      onEdit(message.id, editContent.trim());
-    }
-    setIsEditing(false);
-    setEditContent("");
-  };
-
-  if (isEditing && isUser) {
+  if (isEditing) {
     return (
       <div className="flex w-full justify-end">
-        <div className="max-w-[85%] space-y-2">
-          <div className="bg-muted rounded-xl border p-2">
-            <Textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="min-h-[60px] resize-none border-0 bg-transparent text-sm focus-visible:ring-0"
-              autoFocus
-            />
-            <div className="flex justify-end gap-1 pt-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleCancelEdit}
-                className="h-7 px-2"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSaveEdit}
-                className="h-7 px-2"
-                disabled={!editContent.trim()}
-              >
-                Save & Resend
-              </Button>
-            </div>
+        <div className="w-full max-w-[85%] rounded-2xl bg-card p-2 ring-2 ring-ring/50">
+          <textarea
+            ref={editRef}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsEditing(false);
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                save();
+              }
+            }}
+            aria-label="Edit message"
+            autoFocus
+            className="block w-full resize-none bg-transparent px-2 py-1.5 text-[15px] leading-6 outline-none"
+          />
+          <div className="flex justify-end gap-1.5 pt-1">
+            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={save} disabled={!draft.trim()}>
+              Save & resend
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  const hasContent = parts.some(
-    (p) =>
-      p.type === "text" ||
-      p.type === "reasoning" ||
-      (p.type.startsWith("tool-") &&
-        (p as ToolUIPart).state === "output-available"),
+  return (
+    <div className="group/message relative flex w-full flex-col items-end">
+      <div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2.5 text-[15px] leading-6 text-foreground">
+        <p className="break-words whitespace-pre-wrap">{text}</p>
+      </div>
+      <div className="absolute top-full right-0 mt-1 flex gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/message:opacity-100 group-hover/message:opacity-100 [@media(hover:none)]:opacity-100">
+        <ActionButton
+          label="Copy message"
+          icon={CopyIcon}
+          active={copied === "text"}
+          onClick={() => void copy("text", text, "Message copied")}
+        />
+        {onEdit ? (
+          <ActionButton
+            label="Edit and resend"
+            icon={PencilIcon}
+            onClick={() => {
+              setDraft(text);
+              setIsEditing(true);
+            }}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+type Step = {
+  key: string;
+  icon: LucideIcon;
+  label: React.ReactNode;
+  pending: boolean;
+  error?: boolean;
+  detail?: React.ReactNode;
+};
+
+function formatSearchFilters(input: Record<string, unknown> | undefined) {
+  const parts: string[] = [];
+  const types = (input?.types as string[] | undefined) ?? [];
+  const tags = (input?.tags as string[] | undefined) ?? [];
+  const filters = (input?.filters as string[] | undefined) ?? [];
+  if (types.length) parts.push(types.map((t) => t.toLowerCase()).join(", "));
+  if (tags.length) parts.push(tags.map((t) => `#${t}`).join(" "));
+  if (filters.length) parts.push(filters.map((f) => f.toLowerCase()).join(", "));
+  return parts.join(" · ");
+}
+
+function getSteps(message: UIMessage, isStreaming: boolean): Step[] {
+  const steps: Step[] = [];
+  const parts = message.parts ?? [];
+
+  parts.forEach((part, index) => {
+    if (part.type === "reasoning") {
+      if (!part.text.trim()) return;
+      steps.push({
+        key: `reasoning-${index}`,
+        icon: BrainIcon,
+        label: "Thought it through",
+        pending: isStreaming && part.state === "streaming",
+        detail: (
+          <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed text-muted-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <Streamdown>{part.text}</Streamdown>
+          </div>
+        ),
+      });
+      return;
+    }
+
+    const toolName = getToolName(part);
+    if (!toolName) return;
+    const tool = part as ToolUIPart;
+    const done = tool.state === "output-available";
+    const errored = tool.state === "output-error";
+    const input = tool.input as Record<string, unknown> | undefined;
+    const key = `${toolName}-${index}`;
+
+    if (toolName === "searchBookmarks") {
+      const query = (input?.query as string | undefined) ?? "";
+      const filters = formatSearchFilters(input);
+      const results = done && Array.isArray(tool.output)
+        ? (tool.output as ChatSource[])
+        : [];
+      steps.push({
+        key,
+        icon: SearchIcon,
+        pending: !done && !errored,
+        error: errored,
+        label: (
+          <>
+            {errored ? "Search failed for" : done ? "Searched your library for" : "Searching your library for"}{" "}
+            <span className="text-foreground/80">“{query}”</span>
+            {filters ? <span> · {filters}</span> : null}
+            {done ? (
+              <span className="tabular-nums">
+                {" "}
+                · {results.length} result{results.length === 1 ? "" : "s"}
+              </span>
+            ) : null}
+          </>
+        ),
+        detail: results.length ? (
+          <ul className="flex flex-col gap-1">
+            {results.map((result) => (
+              <li
+                key={result.id}
+                className="flex min-w-0 items-center gap-2 text-[12px] text-muted-foreground"
+              >
+                <span className="truncate text-foreground/80">
+                  {getSourceTitle(result)}
+                </span>
+                <span className="shrink-0 truncate">
+                  {getDomain(result.url)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : undefined,
+      });
+      return;
+    }
+
+    if (toolName === "getBookmark") {
+      steps.push({
+        key,
+        icon: FileTextIcon,
+        pending: !done && !errored,
+        error: errored,
+        label: done ? "Read bookmark details" : "Reading bookmark details",
+      });
+      return;
+    }
+
+    if (toolName === "updateTags") {
+      const output = done
+        ? (tool.output as {
+            bookmarksUpdated?: number;
+            addedTags?: string[];
+            removedTags?: string[];
+            error?: string;
+          })
+        : undefined;
+      const add = output?.addedTags ?? (input?.add as string[] | undefined) ?? [];
+      const remove =
+        output?.removedTags ?? (input?.remove as string[] | undefined) ?? [];
+      const changes = [
+        ...add.map((tag) => `+${tag}`),
+        ...remove.map((tag) => `−${tag}`),
+      ].join(" ");
+      steps.push({
+        key,
+        icon: TagIcon,
+        pending: !done && !errored,
+        error: errored || !!output?.error,
+        label: output?.error
+          ? output.error
+          : done
+            ? `Updated tags on ${output?.bookmarksUpdated ?? 0} bookmark${output?.bookmarksUpdated === 1 ? "" : "s"}${changes ? ` · ${changes}` : ""}`
+            : `Updating tags${changes ? ` · ${changes}` : ""}`,
+      });
+    }
+  });
+
+  return steps;
+}
+
+function StepLine({ step }: { step: Step }) {
+  const Icon = step.error ? TriangleAlertIcon : step.icon;
+  const content = (
+    <>
+      <span className="flex size-4 shrink-0 items-center justify-center">
+        {step.pending ? (
+          <Loader2Icon className="size-3.5 animate-spin" />
+        ) : (
+          <Icon className={cn("size-3.5", step.error && "text-destructive")} />
+        )}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{step.label}</span>
+    </>
+  );
+
+  if (!step.detail) {
+    return (
+      <div className="flex h-7 items-center gap-2 px-1 text-[13px] text-muted-foreground">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <details className="group/step">
+      <summary className="flex h-7 cursor-pointer list-none items-center gap-2 rounded-md px-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 [&::-webkit-details-marker]:hidden">
+        {content}
+        <ChevronRightIcon className="size-3.5 shrink-0 transition-transform duration-150 group-open/step:rotate-90" />
+      </summary>
+      <div className="mt-1 mb-2 ml-3 border-l border-border pl-4">
+        {step.detail}
+      </div>
+    </details>
+  );
+}
+
+function DownloadParts({ message }: { message: UIMessage }) {
+  const downloads = (message.parts ?? []).flatMap((part, index) => {
+    if (getToolName(part) !== "downloadBookmarks") return [];
+    const tool = part as ToolUIPart;
+    if (tool.state !== "output-available") {
+      return [
+        <div
+          key={index}
+          className="flex h-7 items-center gap-2 px-1 text-[13px] text-muted-foreground"
+        >
+          <Loader2Icon className="size-3.5 animate-spin" />
+          Preparing download…
+        </div>,
+      ];
+    }
+    const output = tool.output as {
+      content?: string;
+      filename?: string;
+      mimeType?: string;
+      bookmarkCount?: number;
+      error?: string;
+    };
+    if (output.error) {
+      return [
+        <p key={index} className="px-1 text-[13px] text-muted-foreground">
+          {output.error}
+        </p>,
+      ];
+    }
+
+    const download = () => {
+      if (!output.content || !output.filename || !output.mimeType) return;
+      const blob = new Blob([output.content], { type: output.mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = output.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    };
+
+    return [
+      <div key={index} className="flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={download}>
+          <DownloadIcon />
+          {output.filename}
+        </Button>
+        <span className="text-[12px] text-muted-foreground tabular-nums">
+          {output.bookmarkCount} bookmark{output.bookmarkCount === 1 ? "" : "s"}
+        </span>
+      </div>,
+    ];
+  });
+
+  return downloads.length ? <>{downloads}</> : null;
+}
+
+function AssistantMessage({
+  message,
+  isLast,
+  isLoading,
+  onLike,
+  onDislike,
+}: MessageItemProps) {
+  const isStreaming = isLast && isLoading;
+  const text = getMessageText(message);
+  const sources = useMemo(() => getMessageSources(message), [message]);
+  const sourcesTitle = getSourcesTitle(message);
+  const steps = getSteps(message, isStreaming);
+  const { copied, copy } = useCopy();
+  const [rating, setRating] = useState<"like" | "dislike" | null>(null);
+  const hasVisibleContent = !!text || sources.length > 0 || steps.length > 0;
+  const textParts = (message.parts ?? []).flatMap((part, index) =>
+    part.type === "text" && part.text.trim()
+      ? [{ key: index, text: part.text }]
+      : [],
   );
 
   return (
-    <div className="group flex w-full flex-col gap-3">
-      {parts.map((part, index) => {
-        if (part.type === "text") {
-          return (
-            <div
-              key={index}
-              className={cn(
-                "flex w-full",
-                isUser ? "justify-end" : "justify-start",
-              )}
-            >
-              <div className="relative max-w-[85%]">
-                <div
-                  className={cn(
-                    "rounded-2xl px-3 py-2",
-                    isUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 text-foreground",
-                  )}
-                >
-                  {isUser ? (
-                    <p className="whitespace-pre-wrap text-sm">{part.text}</p>
-                  ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      <Streamdown>{part.text}</Streamdown>
-                    </div>
-                  )}
-                </div>
-
-                {isUser ? (
-                  <div className="absolute right-full top-0 mr-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-6"
-                      onClick={handleCopy}
-                    >
-                      {copied ? (
-                        <CheckIcon className="size-3 text-green-500" />
-                      ) : (
-                        <CopyIcon className="size-3" />
-                      )}
-                    </Button>
-                    {onEdit && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="size-6"
-                        onClick={handleStartEdit}
-                      >
-                        <PencilIcon className="size-3" />
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 gap-1 px-2 text-xs"
-                      onClick={handleCopy}
-                    >
-                      {copied ? (
-                        <CheckIcon className="size-3 text-green-500" />
-                      ) : (
-                        <CopyIcon className="size-3" />
-                      )}
-                      {copied ? "Copied" : "Copy"}
-                    </Button>
-                    {onLike && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="size-6"
-                        onClick={onLike}
-                      >
-                        <ThumbsUpIcon className="size-3" />
-                      </Button>
-                    )}
-                    {onDislike && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="size-6"
-                        onClick={onDislike}
-                      >
-                        <ThumbsDownIcon className="size-3" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-
-        if (part.type === "reasoning") {
-          return (
-            <details key={index}>
-              <summary className="text-muted-foreground flex cursor-pointer items-center gap-1.5 text-sm list-none [&::-webkit-details-marker]:hidden">
-                <BrainIcon className="size-3.5" />
-                <span>Thinking process</span>
-              </summary>
-              <div className="bg-muted/50 mt-2 max-w-[85%] rounded-lg border px-3 py-2">
-                <div className="prose prose-sm dark:prose-invert max-w-none text-xs leading-relaxed">
-                  <Streamdown>{part.text}</Streamdown>
-                </div>
-              </div>
-            </details>
-          );
-        }
-
-        if (part.type.startsWith("tool-")) {
-          const tool = part as ToolUIPart;
-          const toolName = part.type.replace("tool-", "");
-          const isCompleted = tool.state === "output-available";
-          const toolInput = (
-            tool as unknown as { input?: Record<string, unknown> }
-          ).input;
-
-          if (toolName === "searchBookmarks") {
-            const query = (toolInput?.query as string) ?? "";
-            const types = (toolInput?.types as string[]) ?? [];
-            const tags = (toolInput?.tags as string[]) ?? [];
-            const filters = (toolInput?.filters as string[]) ?? [];
-
-            const hasFilters =
-              types.length > 0 || tags.length > 0 || filters.length > 0;
-
-            const filterParts: string[] = [];
-            if (types.length) {
-              filterParts.push(types.map((t) => t.toLowerCase()).join(", "));
-            }
-            if (tags.length) {
-              filterParts.push(`#${tags.join(", #")}`);
-            }
-            if (filters.length) {
-              filterParts.push(filters.map((f) => f.toLowerCase()).join(", "));
-            }
-            const filterText = hasFilters
-              ? ` [${filterParts.join(" | ")}]`
-              : "";
-
-            let resultCount: number | undefined;
-            if (isCompleted && tool.output && Array.isArray(tool.output)) {
-              resultCount = tool.output.length;
-            }
-
-            return (
-              <div
-                key={index}
-                className="text-muted-foreground flex items-center gap-1.5 text-sm"
-              >
-                {isCompleted ? (
-                  <>
-                    <CheckIcon className="size-3.5" />
-                    <span>
-                      Found {resultCount ?? 0} result
-                      {resultCount === 1 ? "" : "s"} for "{query}"{filterText}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <SearchIcon className="size-3.5" />
-                    <span>
-                      Searching "{query}"{filterText}
-                    </span>
-                  </>
-                )}
-              </div>
-            );
-          }
-
-          if (toolName === "showBookmarks" && isCompleted) {
-            const output = tool.output as { bookmarks: BookmarkData[] };
-            return (
-              <div key={index} className="w-full">
-                <BookmarkGridDisplay bookmarks={output.bookmarks} />
-              </div>
-            );
-          }
-
-          if (toolName === "showBookmark" && isCompleted) {
-            const output = tool.output as { bookmark: BookmarkData };
-            return (
-              <div key={index} className="w-full">
-                <BookmarkGridDisplay bookmarks={[output.bookmark]} />
-              </div>
-            );
-          }
-
-          if (toolName === "getBookmark") {
-            return (
-              <div
-                key={index}
-                className="text-muted-foreground flex items-center gap-1.5 text-sm"
-              >
-                {isCompleted ? (
-                  <>
-                    <CheckIcon className="size-3.5" />
-                    <span>Loaded bookmark details</span>
-                  </>
-                ) : (
-                  <>
-                    <Loader2Icon className="size-3.5 animate-spin" />
-                    <span>Loading bookmark details</span>
-                  </>
-                )}
-              </div>
-            );
-          }
-
-          if (toolName === "updateTags") {
-            const addTags = (toolInput?.add as string[]) ?? [];
-            const removeTags = (toolInput?.remove as string[]) ?? [];
-            const output = isCompleted
-              ? (tool.output as {
-                  tagsAdded?: number;
-                  tagsRemoved?: number;
-                  bookmarksUpdated?: number;
-                  addedTags?: string[];
-                  removedTags?: string[];
-                })
-              : undefined;
-
-            if (isCompleted && output) {
-              const parts: string[] = [];
-              if (output.addedTags && output.addedTags.length > 0) {
-                parts.push(`+${output.addedTags.join(", +")}`);
-              }
-              if (output.removedTags && output.removedTags.length > 0) {
-                parts.push(`-${output.removedTags.join(", -")}`);
-              }
-              return (
-                <div
-                  key={index}
-                  className="text-muted-foreground flex items-center gap-1.5 text-sm"
-                >
-                  <CheckIcon className="size-3.5" />
-                  <span>
-                    Updated tags on {output.bookmarksUpdated} bookmark
-                    {output.bookmarksUpdated === 1 ? "" : "s"}
-                    {parts.length > 0 ? `: ${parts.join(", ")}` : ""}
-                  </span>
-                </div>
-              );
-            }
-
-            const parts: string[] = [];
-            if (addTags.length > 0) parts.push(`+${addTags.join(", +")}`);
-            if (removeTags.length > 0) parts.push(`-${removeTags.join(", -")}`);
-
-            return (
-              <div
-                key={index}
-                className="text-muted-foreground flex items-center gap-1.5 text-sm"
-              >
-                <TagIcon className="size-3.5" />
-                <span>
-                  Updating tags{parts.length > 0 ? `: ${parts.join(", ")}` : ""}
-                </span>
-              </div>
-            );
-          }
-
-          if (toolName === "downloadBookmarks") {
-            if (isCompleted) {
-              const output = tool.output as {
-                content?: string;
-                filename?: string;
-                mimeType?: string;
-                bookmarkCount?: number;
-                error?: string;
-              };
-
-              if (output.error) {
-                return (
-                  <div
-                    key={index}
-                    className="text-muted-foreground flex items-center gap-1.5 text-sm"
-                  >
-                    <CheckIcon className="size-3.5" />
-                    <span>{output.error}</span>
-                  </div>
-                );
-              }
-
-              const handleDownload = () => {
-                if (!output.content || !output.filename || !output.mimeType)
-                  return;
-                const blob = new Blob([output.content], {
-                  type: output.mimeType,
-                });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = output.filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-              };
-
-              return (
-                <div key={index} className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5"
-                    onClick={handleDownload}
-                  >
-                    <DownloadIcon className="size-3.5" />
-                    {output.filename}
-                  </Button>
-                  <span className="text-muted-foreground text-xs">
-                    {output.bookmarkCount} bookmark
-                    {output.bookmarkCount === 1 ? "" : "s"}
-                  </span>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={index}
-                className="text-muted-foreground flex items-center gap-1.5 text-sm"
-              >
-                <Loader2Icon className="size-3.5 animate-spin" />
-                <span>Preparing download...</span>
-              </div>
-            );
-          }
-
-          return null;
-        }
-
-        return null;
-      })}
-
-      {!isUser && isLoading && isLast && !hasContent && (
-        <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
-          <Loader2Icon className="size-3.5 animate-spin" />
-          <span>Thinking...</span>
+    <div className="group/message flex w-full flex-col gap-3">
+      {steps.length ? (
+        <div className="flex flex-col">
+          {steps.map((step) => (
+            <StepLine key={step.key} step={step} />
+          ))}
         </div>
-      )}
+      ) : null}
+
+      {!hasVisibleContent && isStreaming ? (
+        <div className="flex h-7 items-center gap-2 px-1 text-[13px] text-muted-foreground">
+          <Loader2Icon className="size-3.5 animate-spin" />
+          Thinking…
+        </div>
+      ) : null}
+
+      {textParts.length ? (
+        <div className="prose dark:prose-invert max-w-none text-[15px] leading-[1.65] text-foreground prose-p:my-2 prose-a:text-primary prose-headings:font-semibold [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          {textParts.map((part) => (
+            <Streamdown key={part.key}>{part.text}</Streamdown>
+          ))}
+        </div>
+      ) : null}
+
+      {sources.length ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {sources.map((source, index) => (
+            <CitationChip key={source.id} source={source} index={index + 1} />
+          ))}
+        </div>
+      ) : null}
+
+      {sources.length ? (
+        <SourceGrid sources={sources} title={sourcesTitle} />
+      ) : null}
+
+      <DownloadParts message={message} />
+
+      {!isStreaming && (text || sources.length) ? (
+        <div className="-ml-1 flex flex-wrap items-center gap-0.5 opacity-60 transition-opacity duration-150 group-focus-within/message:opacity-100 group-hover/message:opacity-100 [@media(hover:none)]:opacity-100">
+          {text ? (
+            <ActionButton
+              label="Copy answer"
+              icon={CopyIcon}
+              active={copied === "answer"}
+              onClick={() =>
+                void copy(
+                  "answer",
+                  sources.length
+                    ? `${text}\n\nSources:\n${sourcesToMarkdown(sources)}`
+                    : text,
+                  "Answer copied",
+                )
+              }
+            />
+          ) : null}
+          {sources.length ? (
+            <ActionButton
+              label="Copy source links"
+              icon={LinkIcon}
+              active={copied === "links"}
+              onClick={() =>
+                void copy(
+                  "links",
+                  sourcesToMarkdown(sources),
+                  `${sources.length} link${sources.length === 1 ? "" : "s"} copied`,
+                )
+              }
+            >
+              Copy {sources.length} link{sources.length === 1 ? "" : "s"}
+            </ActionButton>
+          ) : null}
+          {onLike ? (
+            <ActionButton
+              label="Good answer"
+              icon={ThumbsUpIcon}
+              active={rating === "like"}
+              onClick={() => {
+                setRating("like");
+                onLike();
+              }}
+            />
+          ) : null}
+          {onDislike ? (
+            <ActionButton
+              label="Bad answer"
+              icon={ThumbsDownIcon}
+              active={rating === "dislike"}
+              onClick={() => {
+                setRating("dislike");
+                onDislike();
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
-});
+}

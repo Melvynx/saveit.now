@@ -1,131 +1,143 @@
 import { BookmarkType } from "@/lib/bookmark-types";
+import {
+  CirclePlay,
+  FileText,
+  Globe,
+  Image,
+  type LucideIcon,
+  MessageSquareQuote,
+  Newspaper,
+  ShoppingBag,
+  Video,
+} from "lucide-react";
 
-export type MentionType = "type" | "tag" | "special";
+export type SpecialSyntaxFilter = "STAR" | "UNREAD" | "READ";
 
-export interface ParsedMention {
-  mention: string;
-  startIndex: number;
-  endIndex: number;
-  type: MentionType;
-  symbol: "@" | "#" | "$";
+/** `type:<alias>` values accepted in the search field. */
+export const TYPE_ALIASES: Record<string, BookmarkType> = {
+  video: BookmarkType.YOUTUBE,
+  videos: BookmarkType.YOUTUBE,
+  youtube: BookmarkType.YOUTUBE,
+  tweet: BookmarkType.TWEET,
+  tweets: BookmarkType.TWEET,
+  x: BookmarkType.TWEET,
+  pdf: BookmarkType.PDF,
+  pdfs: BookmarkType.PDF,
+  image: BookmarkType.IMAGE,
+  images: BookmarkType.IMAGE,
+  article: BookmarkType.ARTICLE,
+  articles: BookmarkType.ARTICLE,
+  product: BookmarkType.PRODUCT,
+  products: BookmarkType.PRODUCT,
+  page: BookmarkType.PAGE,
+  pages: BookmarkType.PAGE,
+};
+
+/** `is:<alias>` values accepted in the search field. */
+export const SPECIAL_ALIASES: Record<string, SpecialSyntaxFilter> = {
+  starred: "STAR",
+  star: "STAR",
+  unread: "UNREAD",
+  read: "READ",
+};
+
+export type SyntaxToken =
+  | { kind: "tag"; value: string; raw: string }
+  | { kind: "type"; value: BookmarkType; raw: string }
+  | { kind: "special"; value: SpecialSyntaxFilter; raw: string };
+
+/** Parses a single word like `#react`, `type:video` or `is:starred`. */
+export function parseSyntaxToken(word: string): SyntaxToken | null {
+  if (word.length > 1 && word.startsWith("#")) {
+    const value = word.slice(1).replace(/[,]+$/, "");
+    return value ? { kind: "tag", value, raw: word } : null;
+  }
+  const match = /^(type|is):(.+)$/i.exec(word);
+  if (!match?.[1] || !match[2]) return null;
+  const key = match[1].toLowerCase();
+  const alias = match[2].toLowerCase();
+  if (key === "type") {
+    const value = TYPE_ALIASES[alias];
+    return value ? { kind: "type", value, raw: word } : null;
+  }
+  const value = SPECIAL_ALIASES[alias];
+  return value ? { kind: "special", value, raw: word } : null;
 }
 
-export const parseAtMention = (
+export type ExtractedSyntax = {
+  /** Input with every recognised token removed. */
+  text: string;
+  tags: string[];
+  types: BookmarkType[];
+  special: SpecialSyntaxFilter[];
+  tokens: SyntaxToken[];
+};
+
+/**
+ * Pulls recognised filter tokens out of the search text. Only words followed
+ * by whitespace count as finished unless `includeTrailing` is set (Enter), so
+ * a half-typed `#rea` is left alone while the user is still typing.
+ */
+export function extractSyntaxTokens(
   input: string,
-  cursorPosition: number,
-): ParsedMention | null => {
-  const beforeCursor = input.substring(0, cursorPosition);
-  const atIndex = beforeCursor.lastIndexOf("@");
-
-  if (atIndex === -1) return null;
-
-  const afterAt = beforeCursor.substring(atIndex + 1);
-  const spaceIndex = afterAt.indexOf(" ");
-
-  if (spaceIndex !== -1) return null;
-
-  return {
-    mention: afterAt,
-    startIndex: atIndex,
-    endIndex: cursorPosition,
-    type: "type",
-    symbol: "@",
+  { includeTrailing = false }: { includeTrailing?: boolean } = {},
+): ExtractedSyntax {
+  const result: ExtractedSyntax = {
+    text: input,
+    tags: [],
+    types: [],
+    special: [],
+    tokens: [],
   };
-};
+  const parts = input.split(/(\s+)/);
+  const kept: string[] = [];
 
-export const parseHashMention = (
+  parts.forEach((part, index) => {
+    const isWord = part !== "" && !/^\s+$/.test(part);
+    const isFinished = includeTrailing || index < parts.length - 1;
+    const token = isWord && isFinished ? parseSyntaxToken(part) : null;
+    if (!token) {
+      kept.push(part);
+      return;
+    }
+    result.tokens.push(token);
+    if (token.kind === "tag") result.tags.push(token.value);
+    if (token.kind === "type") result.types.push(token.value);
+    if (token.kind === "special") result.special.push(token.value);
+  });
+
+  if (result.tokens.length === 0) return result;
+
+  result.text = kept
+    .join("")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^\s+/, "");
+  return result;
+}
+
+/** The word under the caret when it looks like the start of a `#tag` token. */
+export function getTagTokenAtCaret(
   input: string,
-  cursorPosition: number,
-): ParsedMention | null => {
-  const beforeCursor = input.substring(0, cursorPosition);
-  const hashIndex = beforeCursor.lastIndexOf("#");
-
-  if (hashIndex === -1) return null;
-
-  const afterHash = beforeCursor.substring(hashIndex + 1);
-  const spaceIndex = afterHash.indexOf(" ");
-
-  if (spaceIndex !== -1) return null;
-
+  caret: number,
+): { prefix: string; start: number; end: number } | null {
+  const before = input.slice(0, caret);
+  const match = /(^|\s)#([^\s#]*)$/.exec(before);
+  if (!match) return null;
+  const start = before.length - (match[2]?.length ?? 0) - 1;
+  const afterMatch = /^[^\s]*/.exec(input.slice(caret));
   return {
-    mention: afterHash,
-    startIndex: hashIndex,
-    endIndex: cursorPosition,
-    type: "tag",
-    symbol: "#",
+    prefix: match[2] ?? "",
+    start,
+    end: caret + (afterMatch?.[0].length ?? 0),
   };
-};
-
-export const parseSpecialMention = (
-  input: string,
-  cursorPosition: number,
-): ParsedMention | null => {
-  const beforeCursor = input.substring(0, cursorPosition);
-  const dollarIndex = beforeCursor.lastIndexOf("$");
-
-  if (dollarIndex === -1) return null;
-
-  const afterDollar = beforeCursor.substring(dollarIndex + 1);
-  const spaceIndex = afterDollar.indexOf(" ");
-
-  if (spaceIndex !== -1) return null;
-
-  // Only allow specific special filters
-  const validSpecialFilters = ["READ", "UNREAD", "STAR"];
-  const upperMention = afterDollar.toUpperCase();
-
-  if (!validSpecialFilters.some((filter) => filter.startsWith(upperMention))) {
-    return null;
-  }
-
-  return {
-    mention: afterDollar,
-    startIndex: dollarIndex,
-    endIndex: cursorPosition,
-    type: "special",
-    symbol: "$",
-  };
-};
-
-export const parseMention = (
-  input: string,
-  cursorPosition: number,
-): ParsedMention | null => {
-  // Check for $ first, then #, then @
-  const specialMention = parseSpecialMention(input, cursorPosition);
-  if (specialMention) return specialMention;
-
-  const hashMention = parseHashMention(input, cursorPosition);
-  if (hashMention) return hashMention;
-
-  const atMention = parseAtMention(input, cursorPosition);
-  if (atMention) return atMention;
-
-  return null;
-};
-
-export const removeAtMention = (
-  input: string,
-  startIndex: number,
-  endIndex: number,
-): string => {
-  return input.substring(0, startIndex) + input.substring(endIndex);
-};
-
-export const removeMention = (
-  input: string,
-  startIndex: number,
-  endIndex: number,
-): string => {
-  return input.substring(0, startIndex) + input.substring(endIndex);
-};
+}
 
 export const getTypeDisplayName = (type: BookmarkType): string => {
   const displayNames: Record<BookmarkType, string> = {
     VIDEO: "Video",
     PAGE: "Page",
     IMAGE: "Image",
-    YOUTUBE: "YouTube",
+    YOUTUBE: "Video",
     TWEET: "Tweet",
     ARTICLE: "Article",
     PDF: "PDF",
@@ -133,27 +145,33 @@ export const getTypeDisplayName = (type: BookmarkType): string => {
   };
   return displayNames[type] || type;
 };
-export const getTypeColor = (type: BookmarkType): string => {
-  const colors: Record<BookmarkType, string> = {
-    VIDEO:
-      "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-    PAGE: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70",
-    IMAGE:
-      "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30",
-    YOUTUBE:
-      "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-    TWEET:
-      "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30",
-    ARTICLE:
-      "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30",
-    PDF: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
-    PRODUCT:
-      "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
+
+export const getTypePluralName = (type: BookmarkType): string => {
+  const names: Record<BookmarkType, string> = {
+    VIDEO: "Videos",
+    PAGE: "Pages",
+    IMAGE: "Images",
+    YOUTUBE: "Videos",
+    TWEET: "Tweets",
+    ARTICLE: "Articles",
+    PDF: "PDFs",
+    PRODUCT: "Products",
   };
-  return (
-    colors[type] ||
-    "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70"
-  );
+  return names[type] || type;
+};
+
+export const getTypeIcon = (type: BookmarkType): LucideIcon => {
+  const icons: Record<BookmarkType, LucideIcon> = {
+    VIDEO: Video,
+    PAGE: Globe,
+    IMAGE: Image,
+    YOUTUBE: CirclePlay,
+    TWEET: MessageSquareQuote,
+    ARTICLE: Newspaper,
+    PDF: FileText,
+    PRODUCT: ShoppingBag,
+  };
+  return icons[type] ?? Globe;
 };
 
 export const getSpecialFilterDisplayName = (filter: string): string => {
@@ -163,17 +181,4 @@ export const getSpecialFilterDisplayName = (filter: string): string => {
     STAR: "Starred",
   };
   return displayNames[filter.toUpperCase()] || filter;
-};
-
-export const getSpecialFilterColor = (filter: string): string => {
-  const colors: Record<string, string> = {
-    READ: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30",
-    UNREAD:
-      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30",
-    STAR: "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30",
-  };
-  return (
-    colors[filter.toUpperCase()] ||
-    "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800/70"
-  );
 };

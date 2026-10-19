@@ -7,6 +7,8 @@
 import { cancel, type WorkflowId } from "@convex-dev/workflow";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { authMutation, internalMutation } from "../functions";
 import {
   throwLimitReached,
@@ -150,6 +152,80 @@ export async function bumpBookmarkCount(
     });
     return bookmarkCount;
   }
+}
+
+export const MAX_BULK_BOOKMARK_IDS = 100;
+
+/** Dedupes bulk ids and enforces the per-call cap. */
+export function assertBulkIds<T extends string>(ids: T[]): T[] {
+  const unique = Array.from(new Set(ids));
+  if (unique.length > MAX_BULK_BOOKMARK_IDS) {
+    throwValidationError(
+      `At most ${MAX_BULK_BOOKMARK_IDS} bookmarks per bulk operation`,
+    );
+  }
+  return unique;
+}
+
+/**
+ * Deletes one already ownership-checked bookmark and everything hanging off
+ * it: workflow run, tag joins, opens, embedding, counter, R2 objects.
+ */
+async function deleteBookmarkCore(
+  ctx: MutationCtx,
+  userId: string,
+  doc: Doc<"bookmarks">,
+): Promise<void> {
+  const id = doc._id;
+
+  // Cancel an in-flight processing workflow so it stops writing to a
+  // bookmark that no longer exists.
+  if (doc.workflowId) {
+    try {
+      await cancel(ctx, components.workflow, doc.workflowId as WorkflowId);
+    } catch {
+      // workflow already finished or was cleaned up
+    }
+  }
+
+  // Delete bookmarkTags join rows.
+  const tagRows = await ctx.db
+    .query("bookmarkTags")
+    .withIndex("by_bookmark", (q) => q.eq("bookmarkId", id))
+    .take(500);
+  for (const row of tagRows) {
+    await ctx.db.delete(row._id);
+  }
+
+  // Delete bookmarkOpens rows.
+  const openRows = await ctx.db
+    .query("bookmarkOpens")
+    .withIndex("by_bookmark_user", (q) => q.eq("bookmarkId", id))
+    .take(500);
+  for (const row of openRows) {
+    await ctx.db.delete(row._id);
+  }
+
+  await removeBookmarkEmbedding(ctx, doc);
+
+  // Decrement counter (same mutation = atomic).
+  await bumpBookmarkCount(ctx, userId, -1);
+
+  // Schedule R2 cleanup for bookmark files.
+  await ctx.scheduler.runAfter(0, internal.files.actions.deleteObjects, {
+    keys: [
+      `users/${userId}/bookmarks/${id}/screenshot.png`,
+      `users/${userId}/bookmarks/${id}/pdf-screenshot.png`,
+      `users/${userId}/bookmarks/${id}/og-image.jpg`,
+      `users/${userId}/bookmarks/${id}/og-image.png`,
+      `users/${userId}/bookmarks/${id}/og-image.webp`,
+      `users/${userId}/bookmarks/${id}/favicon.ico`,
+      `users/${userId}/bookmarks/${id}/favicon.png`,
+    ],
+  });
+
+  // Delete the bookmark.
+  await ctx.db.delete(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -388,56 +464,70 @@ export const remove = authMutation({
       throwNotFound("Bookmark not found");
     }
 
-    // Cancel an in-flight processing workflow so it stops writing to a
-    // bookmark that no longer exists.
-    if (doc.workflowId) {
-      try {
-        await cancel(ctx, components.workflow, doc.workflowId as WorkflowId);
-      } catch {
-        // workflow already finished or was cleaned up
-      }
-    }
-
-    // Delete bookmarkTags join rows.
-    const tagRows = await ctx.db
-      .query("bookmarkTags")
-      .withIndex("by_bookmark", (q: any) => q.eq("bookmarkId", args.id))
-      .take(500);
-    for (const row of tagRows) {
-      await ctx.db.delete(row._id);
-    }
-
-    // Delete bookmarkOpens rows.
-    const openRows = await ctx.db
-      .query("bookmarkOpens")
-      .withIndex("by_bookmark_user", (q: any) => q.eq("bookmarkId", args.id))
-      .take(500);
-    for (const row of openRows) {
-      await ctx.db.delete(row._id);
-    }
-
-    await removeBookmarkEmbedding(ctx, doc);
-
-    // Decrement counter (same mutation = atomic).
-    await bumpBookmarkCount(ctx, userId, -1);
-
-    // Schedule R2 cleanup for bookmark files.
-    await ctx.scheduler.runAfter(0, internal.files.actions.deleteObjects, {
-      keys: [
-        `users/${userId}/bookmarks/${args.id}/screenshot.png`,
-        `users/${userId}/bookmarks/${args.id}/pdf-screenshot.png`,
-        `users/${userId}/bookmarks/${args.id}/og-image.jpg`,
-        `users/${userId}/bookmarks/${args.id}/og-image.png`,
-        `users/${userId}/bookmarks/${args.id}/og-image.webp`,
-        `users/${userId}/bookmarks/${args.id}/favicon.ico`,
-        `users/${userId}/bookmarks/${args.id}/favicon.png`,
-      ],
-    });
-
-    // Delete the bookmark.
-    await ctx.db.delete(args.id);
+    await deleteBookmarkCore(ctx, userId, doc);
 
     return { id: args.id };
+  },
+});
+
+export const bulkUpdate = authMutation({
+  args: {
+    ids: v.array(v.id("bookmarks")),
+    starred: v.optional(v.boolean()),
+    read: v.optional(v.boolean()),
+  },
+  returns: v.object({ updated: v.number() }),
+  handler: async (ctx, args): Promise<{ updated: number }> => {
+    const userId = ctx.user.id;
+    const ids = assertBulkIds(args.ids);
+    if (args.starred === undefined && args.read === undefined) {
+      throwValidationError("Nothing to update");
+    }
+
+    const now = Date.now();
+    let updated = 0;
+    for (const id of ids) {
+      const doc = await ctx.db.get(id);
+      if (!doc || doc.userId !== userId) continue;
+
+      const patch: { starred?: boolean; read?: boolean } = {};
+      if (args.starred !== undefined && doc.starred !== args.starred) {
+        patch.starred = args.starred;
+      }
+      // Same type guard as setRead: non-readable types are skipped, not failed.
+      if (
+        args.read !== undefined &&
+        doc.read !== args.read &&
+        READABLE_BOOKMARK_TYPES.includes(doc.type as any)
+      ) {
+        patch.read = args.read;
+      }
+      if (Object.keys(patch).length === 0) continue;
+
+      await ctx.db.patch(id, { ...patch, updatedAt: now });
+      updated += 1;
+    }
+    return { updated };
+  },
+});
+
+export const bulkRemove = authMutation({
+  args: {
+    ids: v.array(v.id("bookmarks")),
+  },
+  returns: v.object({ removed: v.number() }),
+  handler: async (ctx, args): Promise<{ removed: number }> => {
+    const userId = ctx.user.id;
+    const ids = assertBulkIds(args.ids);
+
+    let removed = 0;
+    for (const id of ids) {
+      const doc = await ctx.db.get(id);
+      if (!doc || doc.userId !== userId) continue;
+      await deleteBookmarkCore(ctx, userId, doc);
+      removed += 1;
+    }
+    return { removed };
   },
 });
 

@@ -14,7 +14,7 @@ export const BookmarkCardDescription = ({
   className,
 }: BookmarkCardDescriptionProps) => {
   return (
-    <CardDescription className={cn("line-clamp-1", className)}>
+    <CardDescription className={cn("line-clamp-2 text-[13px] text-muted-foreground", className)}>
       {children}
     </CardDescription>
   );

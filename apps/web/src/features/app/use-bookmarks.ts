@@ -55,7 +55,12 @@ function buildListFilter(types: string[], special: string[]) {
 
 export const useBookmarks = ({
   enabled: enabledProp = true,
-}: { enabled?: boolean } = {}) => {
+  order = "newest",
+}: {
+  enabled?: boolean;
+  /** Browse order; search results stay ranked by relevance. */
+  order?: "newest" | "oldest";
+} = {}) => {
   // Don't fire authQueries until the Convex client holds an auth token —
   // the Better Auth session resolves before the JWT exchange completes,
   // and an early call throws UNAUTHORIZED into the error boundary.
@@ -100,7 +105,9 @@ export const useBookmarks = ({
 
   const browse = usePaginatedQuery(
     api.bookmarks.queries.list,
-    enabled && isBrowsing ? { filter: buildListFilter(types, special) } : "skip",
+    enabled && isBrowsing
+      ? { filter: buildListFilter(types, special), order }
+      : "skip",
     { initialNumItems: PAGE_SIZE },
   );
 
@@ -243,6 +250,8 @@ export const useBookmarks = ({
     special,
     matchingDistance,
     isTyping,
+    isBrowsing,
+    order,
     bookmarkCount,
   };
 };

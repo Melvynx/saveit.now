@@ -6,7 +6,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { BookmarksPage } from "@/features/app/bookmarks-page";
-import { ExtensionInstallPrompt } from "@/features/app/extension-install-prompt";
+import { AppShell } from "@/features/app/shell/app-shell";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { useSession } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
@@ -75,62 +75,61 @@ function GuardedAppRoute() {
     return <AppRouteLoading />;
   }
 
-  if (!isAppIndex) {
-    return <Outlet />;
-  }
-
-  return (
-    <>
-      <BookmarksPage />
-      <ExtensionInstallPrompt />
-    </>
-  );
+  return <AppShell>{isAppIndex ? <BookmarksPage /> : <Outlet />}</AppShell>;
 }
 
 function AppRouteLoading() {
   return (
-    <main
+    <div
       aria-busy="true"
       aria-label="Loading your bookmark library"
-      className="min-h-dvh bg-background text-foreground"
+      className="flex min-h-dvh bg-background text-foreground"
     >
       <span className="sr-only">Loading your bookmark library…</span>
       <div
         aria-hidden="true"
-        className="mx-auto flex w-full flex-col gap-4 px-4 py-4 lg:px-12"
-        style={{ maxWidth: 3000 }}
+        className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-3 md:flex"
       >
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-24" />
-          <div className="flex-1" />
-          <div className="hidden items-center gap-2 md:flex">
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="size-8" />
-          </div>
-          <Skeleton className="size-8" />
-          <Skeleton className="size-8 rounded-full" />
+        <div className="flex h-10 items-center gap-2">
+          <Skeleton className="size-6 rounded-md" />
+          <Skeleton className="h-4 w-20" />
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Skeleton className="h-10 min-w-[200px] max-w-md flex-1" />
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-24" />
+        <div className="flex gap-1.5">
+          <Skeleton className="h-8 flex-1 rounded-lg" />
+          <Skeleton className="size-8 rounded-lg" />
         </div>
-
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] place-items-start gap-4 lg:gap-6 [&>*]:w-full">
-          {Array.from({ length: 12 }).map((_, index) => (
-            <Skeleton key={index} className="h-72 rounded-md" />
+        <div className="mt-2 flex flex-col gap-1.5">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-[26px] rounded-md" />
           ))}
         </div>
+        <div className="mt-4 flex flex-col gap-1.5">
+          {Array.from({ length: 7 }).map((_, index) => (
+            <Skeleton key={index} className="h-[26px] w-4/5 rounded-md" />
+          ))}
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2 px-1 py-2">
+          <Skeleton className="size-6 rounded-full" />
+          <Skeleton className="h-4 flex-1" />
+        </div>
       </div>
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed bottom-6 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4"
-      >
-        <Skeleton className="h-14 rounded-2xl border border-border" />
+      <div aria-hidden="true" className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-13 items-center gap-2 border-b border-border px-2 md:hidden">
+          <Skeleton className="size-9 rounded-lg" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <div className="flex flex-col gap-4 px-4 py-4 md:px-6">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-10 w-full max-w-xl rounded-lg" />
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-4">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <Skeleton key={index} className="h-64 rounded-xl" />
+            ))}
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

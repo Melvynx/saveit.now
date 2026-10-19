@@ -1,176 +1,381 @@
 import { InterceptDialog } from "@/components/intercept-dialog";
-import { BookmarkTagSelector } from "@/features/app/bookmark-card/bookmark-tag-selector";
-import { BookmarkFavicon } from "@/features/app/bookmark-favicon";
-import { TranscriptViewer } from "@/features/bookmarks/transcript-viewer";
-import { useSession } from "@/lib/auth-client";
+import { PageHeader } from "@/features/app/shell/page-header";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { BookmarkDetailDTO } from "@convex/bookmarks/dto";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { Button } from "@workspace/ui/components/button";
-import { Badge } from "@workspace/ui/components/badge";
-import { DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
-import { Separator } from "@workspace/ui/components/separator";
+import { SheetContent, SheetTitle } from "@workspace/ui/components/sheet";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { InlineTooltip } from "@workspace/ui/components/tooltip";
-import { Typography } from "@workspace/ui/components/typography";
+import { cn } from "@workspace/ui/lib/utils";
 import { useMutation } from "convex/react";
-import { toUserFacingProcessingError } from "@convex/processing/detect";
-import { AlertCircle, BookmarkX, ExternalLink, X } from "lucide-react";
-import { ReBookmarkButton } from "../bookmark-card/bookmark-card-error";
-import { type ReactNode, useRef } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
-import { toast } from "sonner";
-import { ExternalLinkTracker } from "../external-link-tracker";
-import { CopyLinkButton, ShareButton } from "./bookmark-actions-button";
-import { BookmarkHeroPreview } from "./bookmark-hero-preview";
-import { BookmarkMoreMenu } from "./bookmark-more-menu";
-import { BookmarkNote } from "./bookmark-note";
-import { EditableText } from "./editable-text";
-import { ReadButton } from "./read-button";
-import { StarButton } from "./star-button";
+import {
+  ArrowLeft,
+  BookmarkX,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+  X,
+} from "lucide-react";
+import { type ReactNode, useEffect, useRef } from "react";
+import {
+  ActionTooltip,
+  BookmarkPageActions,
+  BookmarkPanelActions,
+} from "./bookmark-detail-toolbar";
+import { type BookmarkDetailMode, getDomain } from "./bookmark-detail-utils";
+import { BookmarkMetaPanel } from "./bookmark-meta-panel";
+import { BookmarkReadingColumn } from "./bookmark-reading-column";
+import {
+  type BookmarkDetailActions,
+  useBookmarkDetailActions,
+} from "./use-bookmark-detail-actions";
 import { useBookmark } from "./use-bookmark";
+import { useLibraryStepper } from "./use-detail-navigation";
 
-function hasMarkdownContent(metadata: unknown): boolean {
-  if (!metadata || typeof metadata !== "object") return false;
-  const m = metadata as Record<string, unknown>;
-  return typeof m.markdown === "string" && m.markdown.length > 0;
-}
-
-function getEmbeddedText(bookmark: BookmarkDetailDTO): string | null {
-  const title = bookmark.title?.trim() || "";
-  const body = bookmark.vectorSummary?.trim() || bookmark.summary?.trim() || "";
-
-  return [title, body].filter(Boolean).join("\n") || null;
-}
-
-function formatSavedDate(createdAt: number): string {
-  return new Date(createdAt).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-const SectionLabel = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <Typography
-      variant="muted"
-      className="text-[11px] font-medium tracking-wider uppercase"
-    >
-      {children}
-    </Typography>
-  );
+type BookmarkDetailProps = {
+  bookmarkId: string;
+  mode: BookmarkDetailMode;
+  onClose?: () => void;
 };
 
-function BookmarkDetailSkeletonContent() {
+function useRecordOpen(bookmarkId: Id<"bookmarks"> | undefined) {
+  const recordOpen = useMutation(api.bookmarks.mutations.recordOpen);
+  const recordedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!bookmarkId || recordedRef.current === bookmarkId) return;
+    recordedRef.current = bookmarkId;
+    void recordOpen({ id: bookmarkId }).catch(() => {
+      // Open history is best effort; never block reading on it.
+    });
+  }, [bookmarkId, recordOpen]);
+}
+
+function DetailSkeleton({ mode }: { mode: BookmarkDetailMode }) {
   return (
     <div
       aria-busy="true"
       data-testid="bookmark-detail-skeleton"
-      className="flex h-full min-h-0 flex-col overflow-hidden md:grid md:grid-cols-[1.4fr_1fr] xl:grid-cols-[1fr_minmax(24rem,32rem)]"
+      className={cn(
+        "flex flex-col gap-8",
+        mode === "page" &&
+          "@min-[56rem]:grid @min-[56rem]:grid-cols-[minmax(0,720px)_300px] @min-[56rem]:justify-between @min-[56rem]:gap-12",
+      )}
     >
       <span className="sr-only">Loading bookmark details</span>
-
-      <div className="bg-muted/30 flex flex-col border-b md:min-h-0 md:border-r md:border-b-0">
-        <Skeleton className="h-56 w-full rounded-none md:h-auto md:min-h-0 md:flex-1" />
-        <div className="bg-background flex items-center gap-2 border-t px-4 py-2.5">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="ml-auto h-3 w-28" />
+      <div className="flex flex-col gap-6">
+        <Skeleton className="aspect-[16/10] w-full rounded-xl" />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-8 w-4/5" />
+          <Skeleton className="h-4 w-2/5" />
+        </div>
+        <div className="flex flex-col gap-2 border-l-2 border-border pl-4">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       </div>
-
-      <div className="flex min-h-0 flex-col gap-4 p-5">
-        <div className="flex items-start gap-3">
-          <Skeleton className="size-9 shrink-0" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-4 w-4/5" />
-            <Skeleton className="h-3 w-3/5" />
-          </div>
-          <Skeleton className="size-8 shrink-0" />
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-3 w-12" />
+        <div className="flex gap-1.5">
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-20 rounded-full" />
         </div>
-
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 flex-1" />
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="size-9 shrink-0" />
-          ))}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3.5 w-full" />
-          <Skeleton className="h-3.5 w-11/12" />
-          <Skeleton className="h-3.5 w-2/3" />
-        </div>
-
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-10" />
-          <Skeleton className="h-9 w-full" />
-        </div>
-
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-20 w-full" />
-        </div>
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-20 w-full" />
       </div>
     </div>
   );
 }
 
-type BookmarkDetailProps = {
-  bookmarkId: string;
-  renderMode: "dialog" | "page";
-  onClose?: () => void;
-};
+function NotFound({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-center">
+      <BookmarkX className="size-8 text-muted-foreground" aria-hidden="true" />
+      <p className="font-serif text-2xl text-foreground">Bookmark not found</p>
+      <p className="max-w-sm text-[13px] text-muted-foreground">
+        It was deleted or belongs to another account.
+      </p>
+      <Button variant="outline" size="sm" onClick={onBack} className="mt-1">
+        Back to library
+      </Button>
+    </div>
+  );
+}
 
-function BookmarkDetailShell({
-  renderMode,
-  onClose,
-  title,
-  children,
-}: Pick<BookmarkDetailProps, "renderMode" | "onClose"> & {
-  title: string;
-  children: ReactNode;
+function DetailBody({
+  bookmark,
+  actions,
+  mode,
+}: {
+  bookmark: BookmarkDetailDTO;
+  actions: BookmarkDetailActions;
+  mode: BookmarkDetailMode;
 }) {
-  if (renderMode === "page") {
+  if (mode === "dialog") {
     return (
-      <main className="bg-muted/40 min-h-dvh p-4">
-        <section className="bg-background mx-auto h-[calc(100dvh-2rem)] w-full max-w-[min(96vw,1800px)] overflow-hidden rounded-lg border">
-          <h1 className="sr-only">{title}</h1>
-          {children}
-        </section>
-      </main>
+      <div className="flex flex-col gap-8">
+        <BookmarkReadingColumn bookmark={bookmark} actions={actions} mode={mode} />
+        <BookmarkMetaPanel
+          bookmark={bookmark}
+          actions={actions}
+          mode={mode}
+          className="border-t border-border pt-6"
+        />
+      </div>
     );
   }
 
   return (
+    <div className="flex flex-col gap-10 @min-[56rem]:grid @min-[56rem]:grid-cols-[minmax(0,720px)_300px] @min-[56rem]:justify-between @min-[56rem]:gap-12">
+      <BookmarkReadingColumn bookmark={bookmark} actions={actions} mode={mode} />
+      <BookmarkMetaPanel
+        bookmark={bookmark}
+        actions={actions}
+        mode={mode}
+        className="border-t border-border pt-6 @min-[56rem]:sticky @min-[56rem]:top-19 @min-[56rem]:max-h-[calc(100dvh-6rem)] @min-[56rem]:self-start @min-[56rem]:-mx-2 @min-[56rem]:overflow-x-hidden @min-[56rem]:overflow-y-auto @min-[56rem]:border-t-0 @min-[56rem]:px-2 @min-[56rem]:pt-1 @min-[56rem]:pb-4"
+      />
+    </div>
+  );
+}
+
+function PageLayout({
+  bookmark,
+  actions,
+  state,
+  onBack,
+}: {
+  bookmark: BookmarkDetailDTO | undefined;
+  actions: BookmarkDetailActions;
+  state: "loading" | "missing" | "ready";
+  onBack: () => void;
+}) {
+  const title =
+    state === "missing"
+      ? "Not found"
+      : bookmark
+        ? bookmark.title || getDomain(bookmark.url)
+        : "Bookmark";
+
+  return (
+    <>
+      <PageHeader
+        title={
+          <span className="flex min-w-0 items-center gap-1.5">
+            <ActionTooltip label="Back to library">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Back to library"
+                data-testid="back-button"
+                className="-ml-1.5 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={onBack}
+              >
+                <ArrowLeft />
+              </Button>
+            </ActionTooltip>
+            <span className="truncate">{title}</span>
+          </span>
+        }
+        actions={
+          bookmark ? (
+            <BookmarkPageActions bookmark={bookmark} actions={actions} />
+          ) : null
+        }
+      />
+      <div className="@container mx-auto w-full max-w-[1120px] px-4 pt-6 pb-24 md:px-6 md:pt-8">
+        {state === "missing" ? (
+          <NotFound onBack={onBack} />
+        ) : bookmark ? (
+          <DetailBody key={bookmark.id} bookmark={bookmark} actions={actions} mode="page" />
+        ) : (
+          <DetailSkeleton mode="page" />
+        )}
+      </div>
+    </>
+  );
+}
+
+function PanelLayout({
+  bookmarkId,
+  bookmark,
+  actions,
+  state,
+  stepper,
+  onClose,
+}: {
+  bookmarkId: string;
+  bookmark: BookmarkDetailDTO | undefined;
+  actions: BookmarkDetailActions;
+  state: "loading" | "missing" | "ready";
+  stepper: ((delta: 1 | -1) => void) | null;
+  onClose: () => void;
+}) {
+  const title = bookmark?.title || (bookmark ? getDomain(bookmark.url) : "Bookmark");
+  // Focusing the body (not the close button) keeps its tooltip from opening
+  // and swallowing the first Escape.
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  return (
     <InterceptDialog fallbackTo="/app" onClose={onClose}>
-      <DialogContent
-        disableClose
-        className="flex h-[min(92dvh,1100px)] w-[min(92vw,1800px)] max-w-[min(92vw,1800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(92vw,1800px)]"
-        onEscapeKeyDown={onClose}
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        initialFocus={bodyRef}
+        data-testid="bookmark-panel"
+        className="w-full gap-0 bg-background p-0 duration-200 ease-(--ease-out-soft) data-[side=right]:w-full data-[side=right]:sm:max-w-[560px] motion-reduce:transition-none"
       >
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        {children}
-      </DialogContent>
+        <SheetTitle className="sr-only">{title}</SheetTitle>
+        <div className="flex h-13 shrink-0 items-center gap-0.5 border-b border-border px-3">
+          <ActionTooltip label="Close" keys={["Esc"]}>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Close"
+              data-testid="back-button"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={onClose}
+            >
+              <X />
+            </Button>
+          </ActionTooltip>
+          <ActionTooltip label="Open full page">
+            <Button
+              asChild
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Open full page"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Link
+                to="/app/b/$bookmarkId"
+                params={{ bookmarkId }}
+                replace
+                data-testid="open-full-page"
+              >
+                <Maximize2 />
+              </Link>
+            </Button>
+          </ActionTooltip>
+          {stepper ? <PanelStepper step={stepper} /> : null}
+          <div className="flex-1" />
+          {bookmark ? (
+            <div className="flex items-center gap-0.5">
+              <BookmarkPanelActions bookmark={bookmark} actions={actions} />
+            </div>
+          ) : null}
+        </div>
+        <div
+          ref={bodyRef}
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none"
+        >
+          <div className="px-5 pt-5 pb-16 sm:px-6">
+            {state === "missing" ? (
+              <NotFound onBack={onClose} />
+            ) : bookmark ? (
+              <DetailBody key={bookmark.id} bookmark={bookmark} actions={actions} mode="dialog" />
+            ) : (
+              <DetailSkeleton mode="dialog" />
+            )}
+          </div>
+        </div>
+      </SheetContent>
     </InterceptDialog>
   );
 }
 
-function BookmarkDetailSkeleton({
-  renderMode,
-  onClose,
-}: Pick<BookmarkDetailProps, "renderMode" | "onClose">) {
+function PanelStepper({ step }: { step: (delta: 1 | -1) => void }) {
   return (
-    <BookmarkDetailShell
-      renderMode={renderMode}
-      onClose={onClose}
-      title="Loading bookmark"
-    >
-      <BookmarkDetailSkeletonContent />
-    </BookmarkDetailShell>
+    <div className="ml-1 hidden items-center gap-0.5 border-l border-border pl-1.5 sm:flex">
+      <ActionTooltip label="Previous" keys={["K"]}>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label="Previous bookmark"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => step(-1)}
+        >
+          <ChevronUp />
+        </Button>
+      </ActionTooltip>
+      <ActionTooltip label="Next" keys={["J"]}>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label="Next bookmark"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => step(1)}
+        >
+          <ChevronDown />
+        </Button>
+      </ActionTooltip>
+    </div>
+  );
+}
+
+function BookmarkDetail({ bookmarkId, mode, onClose }: BookmarkDetailProps) {
+  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  // Escape and the overlay both route through the dialog's onOpenChange and
+  // the close button; run the parent's onClose once per open.
+  const closedRef = useRef(false);
+  const handleClose = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    onClose?.();
+  };
+
+  const query = useBookmark(bookmarkId);
+  const bookmark = (query.data?.bookmark ?? undefined) as
+    | BookmarkDetailDTO
+    | undefined;
+  const state: "loading" | "missing" | "ready" =
+    query.data === null ? "missing" : bookmark ? "ready" : "loading";
+
+  const goBack = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+    void router.navigate({ to: "/app" });
+  };
+
+  const actions = useBookmarkDetailActions({
+    bookmark,
+    mode,
+    onDeleted:
+      mode === "dialog"
+        ? handleClose
+        : () => void router.navigate({ to: "/app", replace: true }),
+  });
+
+  const canStep = mode === "dialog" && pathname === "/app";
+  const step = useLibraryStepper({ bookmarkId, enabled: canStep });
+  useRecordOpen(bookmark?._id);
+
+  if (mode === "page") {
+    return (
+      <PageLayout
+        bookmark={bookmark}
+        actions={actions}
+        state={state}
+        onBack={goBack}
+      />
+    );
+  }
+
+  return (
+    <PanelLayout
+      bookmarkId={bookmarkId}
+      bookmark={bookmark}
+      actions={actions}
+      state={state}
+      stepper={canStep ? step : null}
+      onClose={handleClose}
+    />
   );
 }
 
@@ -180,313 +385,13 @@ type BookmarkDialogProps = {
 };
 
 export function BookmarkDialog({ bookmarkId, onClose }: BookmarkDialogProps) {
-  return (
-    <BookmarkDetail
-      bookmarkId={bookmarkId}
-      renderMode="dialog"
-      onClose={onClose}
-    />
-  );
+  return <BookmarkDetail bookmarkId={bookmarkId} mode="dialog" onClose={onClose} />;
 }
 
-function BookmarkDetail({
-  bookmarkId,
-  renderMode,
-  onClose,
-}: BookmarkDetailProps) {
-  // Escape triggers both the content keydown handler and the dialog's own
-  // dismissal (onOpenChange) — guard so onClose runs once per open.
-  const closedRef = useRef(false);
-  const handleClose = () => {
-    if (closedRef.current) return;
-    closedRef.current = true;
-    onClose?.();
-  };
-  const router = useRouter();
-  const query = useBookmark(bookmarkId);
-  const bookmark = query.data?.bookmark as BookmarkDetailDTO | undefined;
-  const session = useSession();
-  const updateBookmark = useMutation(api.bookmarks.mutations.update);
-  const isAdmin =
-    (session.data?.user as { role?: string } | undefined)?.role === "admin";
-
-  useHotkeys("c", () => {
-    if (!bookmark) return;
-    window.navigator.clipboard.writeText(bookmark.url);
-    toast.success("Copied to clipboard");
-  });
-
-  useHotkeys("o", () => {
-    if (!bookmark) return;
-    window.open(bookmark.url, "_blank");
-  });
-
-  if (query.data === null) {
-    return (
-      <BookmarkDetailShell
-        renderMode={renderMode}
-        onClose={renderMode === "dialog" ? handleClose : undefined}
-        title="Bookmark not found"
-      >
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-          <BookmarkX className="text-muted-foreground size-8" aria-hidden="true" />
-          <Typography variant="large">Bookmark not found</Typography>
-          <Typography variant="muted" className="max-w-sm text-sm">
-            It was deleted or belongs to another account.
-          </Typography>
-          <Button
-            variant="outline"
-            onClick={
-              renderMode === "dialog"
-                ? handleClose
-                : () => void router.navigate({ to: "/app" })
-            }
-          >
-            Back to bookmarks
-          </Button>
-        </div>
-      </BookmarkDetailShell>
-    );
-  }
-
-  if (!bookmark) {
-    return (
-      <BookmarkDetailSkeleton
-        renderMode={renderMode}
-        onClose={renderMode === "dialog" ? handleClose : undefined}
-      />
-    );
-  }
-
-  const metadata = bookmark.metadata as Record<string, unknown> | null;
-  const processingProblem =
-    bookmark.status === "ERROR"
-      ? toUserFacingProcessingError(
-          bookmark.processingError ||
-            (typeof metadata?.error === "string" ? metadata.error : undefined),
-        )
-      : bookmark.status === "READY" &&
-          metadata?.fetchFailed === true &&
-          !bookmark.summary
-        ? "We couldn't read this page, so it has no summary or tags yet."
-        : null;
-  const transcript = metadata?.transcript as string | undefined;
-  const embeddedText = isAdmin ? getEmbeddedText(bookmark) : null;
-  const isContentEditable =
-    bookmark.status !== "PENDING" && bookmark.status !== "PROCESSING";
-  const readUrl = hasMarkdownContent(bookmark.metadata)
-    ? `/p/${bookmark.id}/read`
-    : undefined;
-
-  const closeDetail =
-    renderMode === "dialog" ? handleClose : () => router.history.back();
-
-  const content = (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto md:grid md:grid-cols-[1.4fr_1fr] md:overflow-hidden xl:grid-cols-[1fr_minmax(24rem,32rem)]">
-      {/* Left pane — hero preview */}
-      <div className="bg-muted/30 flex flex-col border-b md:min-h-0 md:border-r md:border-b-0">
-        <div className="relative h-56 overflow-hidden md:h-auto md:min-h-0 md:flex-1">
-          <BookmarkHeroPreview bookmark={bookmark} />
-        </div>
-        <div className="bg-background text-muted-foreground flex items-center gap-2 border-t px-4 py-2 text-xs">
-          <span className="capitalize">
-            {(bookmark.type ?? "page").toLowerCase()}
-          </span>
-          <span className="ml-auto">
-            Saved {formatSavedDate(bookmark.createdAt)}
-          </span>
-        </div>
-      </div>
-
-      {/* Right pane — inspector */}
-      <div className="flex flex-col gap-4 p-5 md:min-h-0 md:overflow-y-auto">
-        <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border">
-            <BookmarkFavicon
-              faviconUrl={bookmark.faviconUrl ?? undefined}
-              bookmarkType={bookmark.type ?? "PAGE"}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <EditableText
-              value={bookmark.title}
-              displayValue={bookmark.title || bookmark.url}
-              variant="large"
-              className="line-clamp-2 text-base leading-snug"
-              onSave={async (title) => {
-                await updateBookmark({
-                  id: bookmark._id,
-                  patch: { title },
-                });
-              }}
-              commitOnEnter
-              allowEmpty={false}
-              ariaLabel="Bookmark title"
-              disabled={!isContentEditable}
-              maxLength={500}
-            />
-            <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
-              <Typography
-                variant="muted"
-                className="line-clamp-1 cursor-pointer text-xs break-all hover:underline"
-              >
-                {bookmark.url}
-              </Typography>
-            </ExternalLinkTracker>
-          </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 shrink-0"
-            data-testid="back-button"
-            onClick={closeDetail}
-          >
-            <X className="text-muted-foreground size-4" />
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <InlineTooltip title="Open (O)">
-            <ExternalLinkTracker url={bookmark.url} surface="bookmark_detail">
-              <Button
-                variant="default"
-                className="flex-1"
-                data-testid="external-link-button"
-              >
-                <ExternalLink className="size-4" />
-                <span>Open</span>
-              </Button>
-            </ExternalLinkTracker>
-          </InlineTooltip>
-          <StarButton
-            bookmarkId={bookmark.id}
-            starred={bookmark.starred || false}
-          />
-          {bookmark.type === "ARTICLE" && (
-            <ReadButton
-              bookmarkId={bookmark.id}
-              read={bookmark.read || false}
-            />
-          )}
-          <CopyLinkButton url={bookmark.url} />
-          <ShareButton bookmarkId={bookmark.id} />
-          <BookmarkMoreMenu bookmarkId={bookmark.id} readUrl={readUrl} />
-        </div>
-
-        {processingProblem && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3"
-          >
-            <AlertCircle className="text-destructive mt-0.5 size-4 shrink-0" />
-            <Typography variant="muted" className="flex-1 text-sm">
-              {processingProblem}
-            </Typography>
-            <ReBookmarkButton bookmarkId={bookmark.id}>Retry</ReBookmarkButton>
-          </div>
-        )}
-
-        <Separator />
-
-        <div className="flex flex-col gap-1.5">
-          <SectionLabel>Summary</SectionLabel>
-          <EditableText
-            value={bookmark.summary}
-            displayValue={bookmark.summary || "No summary generated"}
-            variant="muted"
-            className="text-sm leading-relaxed"
-            onSave={async (summary) => {
-              await updateBookmark({
-                id: bookmark._id,
-                patch: { summary },
-              });
-            }}
-            commitOnEnter={false}
-            allowEmpty
-            ariaLabel="Bookmark summary"
-            disabled={!isContentEditable}
-            maxLength={5000}
-          />
-        </div>
-
-        {bookmark.type === "PRODUCT" && metadata && (
-          <div className="flex flex-col gap-1.5">
-            <SectionLabel>Product</SectionLabel>
-            {typeof metadata.brand === "string" && (
-              <div className="flex items-center gap-8">
-                <Typography className="w-full max-w-24" variant="muted">
-                  Brand
-                </Typography>
-                <Typography variant="small">{metadata.brand}</Typography>
-              </div>
-            )}
-            {typeof metadata.price !== "undefined" && (
-              <div className="flex items-center gap-8">
-                <Typography variant="muted" className="w-full max-w-24">
-                  Price
-                </Typography>
-                <Typography variant="small">
-                  {(metadata.currency as string) || "USD"}{" "}
-                  {String(metadata.price)}
-                </Typography>
-              </div>
-            )}
-          </div>
-        )}
-
-        {bookmark.type === "YOUTUBE" && transcript && (
-          <TranscriptViewer transcript={transcript} />
-        )}
-
-        <div className="flex flex-col gap-1.5">
-          <SectionLabel>Tags</SectionLabel>
-          <BookmarkTagSelector
-            bookmarkId={bookmark.id}
-            placeholder="Search or create tags..."
-          />
-        </div>
-
-        <BookmarkNote
-          note={bookmark.note}
-          bookmarkId={bookmark.id}
-          variant="plain"
-        />
-
-        {embeddedText && (
-          <div className="flex flex-col gap-2 rounded-md border border-dashed border-yellow-500/50 bg-yellow-500/5 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <SectionLabel>Embedded text</SectionLabel>
-              <Badge
-                variant="outline"
-                className="border-yellow-500/40 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300"
-              >
-                Admin
-              </Badge>
-            </div>
-            <pre className="text-foreground max-h-72 overflow-auto rounded-md border border-yellow-500/20 bg-background/70 p-3 text-sm leading-relaxed whitespace-pre-wrap">
-              {embeddedText}
-            </pre>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <BookmarkDetailShell
-      renderMode={renderMode}
-      onClose={renderMode === "dialog" ? handleClose : undefined}
-      title={bookmark.title || "Bookmark details"}
-    >
-      {content}
-    </BookmarkDetailShell>
-  );
-}
-
-export function BookmarkPage({ bookmarkId }: { bookmarkId: string }) {
+export function BookmarkPage({ bookmarkId }: { bookmarkId: string }): ReactNode {
   if (!bookmarkId) {
     return null;
   }
 
-  return <BookmarkDetail bookmarkId={bookmarkId} renderMode="page" />;
+  return <BookmarkDetail bookmarkId={bookmarkId} mode="page" />;
 }
