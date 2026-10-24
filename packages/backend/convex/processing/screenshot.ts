@@ -149,8 +149,9 @@ export async function analyzeScreenshot(
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    return analyzeImageBase64(base64, IMAGE_ANALYSIS_PROMPT);
-  } catch {
+    return await analyzeImageBase64(base64, IMAGE_ANALYSIS_PROMPT);
+  } catch (error) {
+    logAnalysisFailure(error);
     return {
       description: null,
       isInvalid: true,
@@ -171,8 +172,9 @@ export async function analyzeScreenshotWithPrompt(
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    return analyzeImageBase64(base64, customPrompt);
-  } catch {
+    return await analyzeImageBase64(base64, customPrompt);
+  } catch (error) {
+    logAnalysisFailure(error);
     return {
       description: null,
       isInvalid: true,
@@ -186,14 +188,20 @@ export async function analyzeScreenshotBuffer(
 ): Promise<ScreenshotAnalysisResult> {
   try {
     const base64 = buffer.toString("base64");
-    return analyzeImageBase64(base64, IMAGE_ANALYSIS_PROMPT);
-  } catch {
+    return await analyzeImageBase64(base64, IMAGE_ANALYSIS_PROMPT);
+  } catch (error) {
+    logAnalysisFailure(error);
     return {
       description: null,
       isInvalid: true,
       invalidReason: "Failed to analyze screenshot buffer",
     };
   }
+}
+
+function logAnalysisFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[screenshot] image analysis failed: ${message}`);
 }
 
 async function analyzeImageBase64(
