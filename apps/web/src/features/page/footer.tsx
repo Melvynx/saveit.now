@@ -106,6 +106,18 @@ export function Footer() {
             </p>
             <nav className="flex gap-6">
               <a
+                href="https://lumail.io?ref=melvynx"
+                className="text-[#666] hover:text-[#fafafa] text-sm transition-colors"
+              >
+                Email sent by Lumail.io
+              </a>
+              <a
+                href="https://codelynx.dev/melvyn-malherbe"
+                className="text-[#666] hover:text-[#fafafa] text-sm transition-colors"
+              >
+                Made by Melvyn Malherbe
+              </a>
+              <a
                 href="/privacy"
                 className="text-[#666] hover:text-[#fafafa] text-sm transition-colors"
               >
