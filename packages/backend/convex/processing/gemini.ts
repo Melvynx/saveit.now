@@ -2,7 +2,10 @@
 
 import { generateObject, generateText } from "ai";
 import type { ZodSchema } from "zod";
-import { GEMINI_GENERATION_MODELS } from "../lib/gemini_models";
+import {
+  BOOKMARK_TEXT_PROCESSING_PROVIDER_OPTIONS,
+  GEMINI_GENERATION_MODELS,
+} from "../lib/gemini_models";
 import { withGeminiFallback } from "../lib/gemini_provider";
 import { EMBEDDING_MODEL } from "./embedding_format";
 
@@ -25,6 +28,7 @@ export async function generateSummary(
       model: google(model ?? GEMINI_MODEL_IDS.cheap),
       system: systemPrompt,
       prompt: userInput,
+      providerOptions: BOOKMARK_TEXT_PROCESSING_PROVIDER_OPTIONS,
     }),
   );
   return result.text || "";
@@ -45,6 +49,7 @@ export async function generateStructured<T>(
       system: systemPrompt,
       prompt: userPrompt,
       schema,
+      providerOptions: BOOKMARK_TEXT_PROCESSING_PROVIDER_OPTIONS,
     }),
   );
   return result.object as T;
