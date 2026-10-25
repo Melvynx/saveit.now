@@ -36,7 +36,11 @@ const isAppStoreTestLogin = (email: string) => {
   return email.trim().toLowerCase() === appStoreTestEmail;
 };
 
-// --- Origin / host helpers (Phase 17 B9: accept preview deploys) ---
+// --- Origin / host helpers ---
+// Every allowed host becomes a trusted callbackURL origin, and crossDomain
+// appends a session `ott` to that redirect. Never add wildcards on shared
+// domains (e.g. `*.vercel.app`): anyone can deploy there. List preview
+// deploys explicitly in BETTER_AUTH_TRUSTED_ORIGINS / TRUSTED_ORIGINS.
 
 const normalizeOrigin = (origin: string) => {
   try {
@@ -72,7 +76,6 @@ const getAllowedHosts = () => {
         "localhost:*",
         "127.0.0.1:*",
         "[::1]:*",
-        "*.vercel.app",
         getSiteHost(),
         ...configuredHosts,
       ].filter((host): host is string => Boolean(host)),
@@ -233,7 +236,11 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
   // REQUIRED so custom user fields are returned (typed) on getSession().user
   user: {
     additionalFields: {
-      stripeCustomerId: { type: "string" as const, required: false },
+      stripeCustomerId: {
+        type: "string" as const,
+        required: false,
+        input: false,
+      },
       onboarding: {
         type: "boolean" as const,
         required: false,
@@ -245,9 +252,21 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => ({
         required: false,
         input: false,
       },
-      unsubscribed: { type: "boolean" as const, required: false },
-      publicLinkSlug: { type: "string" as const, required: false },
-      publicLinkEnabled: { type: "boolean" as const, required: false },
+      unsubscribed: {
+        type: "boolean" as const,
+        required: false,
+        input: false,
+      },
+      publicLinkSlug: {
+        type: "string" as const,
+        required: false,
+        input: false,
+      },
+      publicLinkEnabled: {
+        type: "boolean" as const,
+        required: false,
+        input: false,
+      },
     },
     deleteUser: {
       enabled: true,
