@@ -7,7 +7,10 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
 
-const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const webRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const publicRoot = path.join(webRoot, "public");
 const canonicalOrigin = "https://saveit.now";
 const verifyBuildOutput = process.argv.includes("--build-output");
@@ -97,7 +100,9 @@ async function getContentRoutes(directory, routePrefix) {
   return entries
     .filter(
       (entry) =>
-        entry.isFile() && entry.name.endsWith(".mdx") && entry.name !== "index.mdx",
+        entry.isFile() &&
+        entry.name.endsWith(".mdx") &&
+        entry.name !== "index.mdx",
     )
     .map((entry) => `${routePrefix}/${entry.name.replace(/\.mdx$/, "")}`)
     .sort();
@@ -112,7 +117,10 @@ async function verifyRobots() {
       .filter(Boolean),
   );
 
-  assert(directives.has("User-agent: *"), "robots.txt must target all crawlers");
+  assert(
+    directives.has("User-agent: *"),
+    "robots.txt must target all crawlers",
+  );
   assert(
     directives.has(`Sitemap: ${canonicalOrigin}/sitemap.xml`),
     "robots.txt must advertise the canonical sitemap",
@@ -153,9 +161,21 @@ async function verifySitemaps() {
   const routeLocations = new Set(
     locations.map((location) => {
       const url = new URL(location);
-      assert.equal(url.origin, canonicalOrigin, `Non-canonical sitemap URL: ${location}`);
-      assert.equal(url.search, "", `Sitemap URL must not contain a query: ${location}`);
-      assert.equal(url.hash, "", `Sitemap URL must not contain a hash: ${location}`);
+      assert.equal(
+        url.origin,
+        canonicalOrigin,
+        `Non-canonical sitemap URL: ${location}`,
+      );
+      assert.equal(
+        url.search,
+        "",
+        `Sitemap URL must not contain a query: ${location}`,
+      );
+      assert.equal(
+        url.hash,
+        "",
+        `Sitemap URL must not contain a hash: ${location}`,
+      );
 
       for (const privateRoute of privateRoutePrefixes) {
         assert(
@@ -174,7 +194,10 @@ async function verifySitemaps() {
     ...(await getContentRoutes("docs", "/docs")),
   ];
   for (const route of requiredContentRoutes) {
-    assert(routeLocations.has(route), `Missing content route in sitemap.xml: ${route}`);
+    assert(
+      routeLocations.has(route),
+      `Missing content route in sitemap.xml: ${route}`,
+    );
   }
 
   const sitemapIndex = parseXml(
@@ -197,10 +220,32 @@ async function verifyStaticPayloads() {
   const health = JSON.parse(
     await readPublicFile(path.join("api", "health.json")),
   );
-  assert.deepEqual(health, { status: "ok" }, "/api/health payload must stay stable");
+  assert.deepEqual(
+    health,
+    { status: "ok" },
+    "/api/health payload must stay stable",
+  );
 
   const appAds = await readPublicFile("app-ads.txt");
   assert(appAds.trim(), "app-ads.txt must not be empty");
+}
+
+// The Vercel override does not apply to node_server builds, so /api/health
+// must be answered by the TanStack server route instead of the SSR 404.
+async function verifyNodeServerHealthRoute() {
+  const ssrRoot = path.join(buildOutputRoot, "server", "_ssr");
+  const chunks = (await readdir(ssrRoot)).filter((file) =>
+    file.endsWith(".mjs"),
+  );
+  const healthHandler =
+    /createFileRoute\("\/api\/health"\)\(\{\s*server:\s*\{\s*handlers:\s*\{[^}]*\bGET\b/;
+  const sources = await Promise.all(
+    chunks.map((file) => readFile(path.join(ssrRoot, file), "utf8")),
+  );
+  assert(
+    sources.some((source) => healthHandler.test(source)),
+    "/api/health must have a GET server route handler in the node_server build",
+  );
 }
 
 async function verifyBuiltOutput() {
@@ -218,13 +263,17 @@ async function verifyBuiltOutput() {
   await readFile(path.join(staticOutputRoot, "apple-icon.png"));
 
   if (!isVercelBuild) {
+    await verifyNodeServerHealthRoute();
     return;
   }
 
   const config = JSON.parse(
     await readFile(path.join(buildOutputRoot, "config.json"), "utf8"),
   );
-  assert(Array.isArray(config.routes), "Vercel output must contain a routes array");
+  assert(
+    Array.isArray(config.routes),
+    "Vercel output must contain a routes array",
+  );
 
   const filesystemIndex = config.routes.findIndex(
     (route) => route.handle === "filesystem",
@@ -232,7 +281,10 @@ async function verifyBuiltOutput() {
   const ssrCatchAllIndex = config.routes.findIndex(
     (route) => route.src === "/(.*)" && route.dest === "/__server",
   );
-  assert(filesystemIndex >= 0, "Vercel output must contain a filesystem handler");
+  assert(
+    filesystemIndex >= 0,
+    "Vercel output must contain a filesystem handler",
+  );
   assert(
     ssrCatchAllIndex > filesystemIndex,
     "Vercel filesystem routing must run before the SSR catch-all",
@@ -273,7 +325,11 @@ async function verifyBuiltOutput() {
       routeIndex >= 0 && routeIndex < filesystemIndex,
       `${alias} must redirect before filesystem and SSR routing`,
     );
-    assert.equal(routeRule.status, 308, `${alias} must use a permanent redirect`);
+    assert.equal(
+      routeRule.status,
+      308,
+      `${alias} must use a permanent redirect`,
+    );
     assert.equal(
       routeRule.headers?.Location,
       "/apple-icon.png",

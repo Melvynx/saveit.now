@@ -60,6 +60,7 @@ import { Route as ChangelogVersionsRouteImport } from "./routes/changelog.versio
 import { Route as AuthMobileLoginRouteImport } from "./routes/auth.mobile-login";
 import { Route as AppAgentsRouteImport } from "./routes/app.agents";
 import { Route as ApiTagsRouteImport } from "./routes/api.tags";
+import { Route as ApiHealthRouteImport } from "./routes/api.health";
 import { Route as ApiBugReportRouteImport } from "./routes/api.bug-report";
 import { Route as ApiBookmarksRouteImport } from "./routes/api.bookmarks";
 import { Route as AdminUsersRouteImport } from "./routes/admin.users";
@@ -334,6 +335,11 @@ const ApiTagsRoute = ApiTagsRouteImport.update({
   path: "/api/tags",
   getParentRoute: () => rootRouteImport,
 } as any);
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: "/api/health",
+  path: "/api/health",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ApiBugReportRoute = ApiBugReportRouteImport.update({
   id: "/api/bug-report",
   path: "/api/bug-report",
@@ -465,6 +471,7 @@ export interface FileRoutesByFullPath {
   "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
+  "/api/health": typeof ApiHealthRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/auth/mobile-login": typeof AuthMobileLoginRoute;
@@ -535,6 +542,7 @@ export interface FileRoutesByTo {
   "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
+  "/api/health": typeof ApiHealthRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/auth/mobile-login": typeof AuthMobileLoginRoute;
@@ -607,6 +615,7 @@ export interface FileRoutesById {
   "/admin/users": typeof AdminUsersRoute;
   "/api/bookmarks": typeof ApiBookmarksRouteWithChildren;
   "/api/bug-report": typeof ApiBugReportRoute;
+  "/api/health": typeof ApiHealthRoute;
   "/api/tags": typeof ApiTagsRoute;
   "/app/agents": typeof AppAgentsRoute;
   "/auth/mobile-login": typeof AuthMobileLoginRoute;
@@ -680,6 +689,7 @@ export interface FileRouteTypes {
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
+    | "/api/health"
     | "/api/tags"
     | "/app/agents"
     | "/auth/mobile-login"
@@ -750,6 +760,7 @@ export interface FileRouteTypes {
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
+    | "/api/health"
     | "/api/tags"
     | "/app/agents"
     | "/auth/mobile-login"
@@ -821,6 +832,7 @@ export interface FileRouteTypes {
     | "/admin/users"
     | "/api/bookmarks"
     | "/api/bug-report"
+    | "/api/health"
     | "/api/tags"
     | "/app/agents"
     | "/auth/mobile-login"
@@ -889,6 +901,7 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute;
   ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren;
   ApiBugReportRoute: typeof ApiBugReportRoute;
+  ApiHealthRoute: typeof ApiHealthRoute;
   ApiTagsRoute: typeof ApiTagsRoute;
   AuthMobileLoginRoute: typeof AuthMobileLoginRoute;
   LandingHeaderRoute: typeof LandingHeaderRoute;
@@ -1263,6 +1276,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiTagsRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/api/health": {
+      id: "/api/health";
+      path: "/api/health";
+      fullPath: "/api/health";
+      preLoaderRoute: typeof ApiHealthRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/api/bug-report": {
       id: "/api/bug-report";
       path: "/api/bug-report";
@@ -1572,6 +1592,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
   ApiBugReportRoute: ApiBugReportRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiTagsRoute: ApiTagsRoute,
   AuthMobileLoginRoute: AuthMobileLoginRoute,
   LandingHeaderRoute: LandingHeaderRoute,
