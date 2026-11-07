@@ -163,6 +163,14 @@ export function getYouTubeVideoId(url: string): string | null {
 
 const PROCESSING_ERROR_FALLBACK = "We couldn't process this link.";
 
+export const AI_PROVIDER_ERROR_MESSAGE =
+  "Our AI service had a temporary problem. Retry in a few minutes.";
+
+// AI SDK error names (AI_APICallError, AI_RetryError…) and legacy provider
+// API messages expose our vendor billing state and console links to users.
+const AI_PROVIDER_ERROR =
+  /\bAI_[A-Za-z]+Error\b|platform\.openai\.com\/docs|ai\.google\.dev\/gemini-api|You exceeded your current quota/;
+
 /**
  * Workflow failures arrive as "Error: Uncaught Error: <msg>\n    at handler
  * (../../convex/…)". Keep only the human sentence for the bookmark card.
@@ -182,6 +190,13 @@ export function toUserFacingProcessingError(
     .replace(/\b(?:Uncaught\s+)?(?:Convex)?Error:\s*/g, "")
     .replace(/\{.*\}/, extractConvexErrorMessage)
     .trim();
+  // A user's saved provider docs page can fail to fetch like any other URL.
+  if (
+    !message.startsWith("Failed to fetch ") &&
+    AI_PROVIDER_ERROR.test(message)
+  ) {
+    return AI_PROVIDER_ERROR_MESSAGE;
+  }
   return message || PROCESSING_ERROR_FALLBACK;
 }
 

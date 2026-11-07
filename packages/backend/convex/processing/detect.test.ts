@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AI_PROVIDER_ERROR_MESSAGE,
   getTweetId,
   isTweetUrl,
   isUsableRenderedHtml,
@@ -110,6 +111,47 @@ describe("toUserFacingProcessingError", () => {
     );
     expect(toUserFacingProcessingError("Processing was canceled")).toBe(
       "Processing was canceled",
+    );
+  });
+
+  it("hides AI provider errors behind one actionable sentence", () => {
+    for (const raw of [
+      "Error: Uncaught AI_APICallError: Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing\n    at run (../../../../node_modules/.pnpm/@convex-dev+workflow@0.4.4_/x.js:1:1)",
+      "Uncaught AI_APICallError: Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/...",
+      "Uncaught AI_APICallError: Invalid JSON response",
+      "AI_RetryError: Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details.",
+      "'$.input' is invalid. Please check the API reference: https://platform.openai.com/docs/api-reference.",
+    ]) {
+      const message = toUserFacingProcessingError(raw);
+      expect(message).toBe(AI_PROVIDER_ERROR_MESSAGE);
+      for (const leak of ["AI_", "ai.studio", "billing", "http"]) {
+        expect(message).not.toContain(leak);
+      }
+    }
+  });
+
+  it("keeps URL fetch failures that merely mention a provider domain", () => {
+    expect(
+      toUserFacingProcessingError(
+        "Failed to fetch https://chat.openai.com/: Error: No response",
+      ),
+    ).toBe("Failed to fetch https://chat.openai.com/: No response");
+    expect(
+      toUserFacingProcessingError(
+        "Failed to fetch https://platform.openai.com/docs/guides/text: Error: No response",
+      ),
+    ).toBe(
+      "Failed to fetch https://platform.openai.com/docs/guides/text: No response",
+    );
+    expect(
+      toUserFacingProcessingError(
+        "Failed to fetch https://ai.google.dev/gemini-api/docs/pricing: Error: No response",
+      ),
+    ).toBe(
+      "Failed to fetch https://ai.google.dev/gemini-api/docs/pricing: No response",
+    );
+    expect(toUserFacingProcessingError("TypeError: fetch failed")).toBe(
+      "TypeError: fetch failed",
     );
   });
 
