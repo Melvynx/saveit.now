@@ -32,6 +32,7 @@ export default defineConfig({
       "@/hooks": path.resolve(__dirname, "./src/hooks"),
       "@test": path.resolve(__dirname, "./test"),
       "@workspace/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      "@convex": path.resolve(__dirname, "../../packages/backend/convex"),
     },
   },
 });
