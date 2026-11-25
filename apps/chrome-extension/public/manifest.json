@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SaveIt.now",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Organize nothing. Find everything.",
   "author": "@melvynxdev",
   "homepage_url": "https://saveit.now",
@@ -32,9 +32,7 @@
     {
       "resources": [
         "images/icon48.png",
-        "content.css",
-        "fonts/instrument-serif-regular.woff2",
-        "fonts/instrument-serif-italic.woff2"
+        "content.css"
       ],
       "matches": ["<all_urls>"]
     },

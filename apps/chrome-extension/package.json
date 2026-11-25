@@ -1,6 +1,6 @@
 {
   "name": "chrome-extension",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "private": true,
   "scripts": {
     "dev": "node scripts/copy-assets.js --dev --watch",

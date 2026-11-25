@@ -126,32 +126,6 @@ export type SaverUI = {
   setMessage: (message: string) => void;
 };
 
-const BRAND_FONT_FILES: Array<{ file: string; style: "normal" | "italic" }> = [
-  { file: "fonts/instrument-serif-regular.woff2", style: "normal" },
-  { file: "fonts/instrument-serif-italic.woff2", style: "italic" },
-];
-
-// Instrument Serif is registered on the page's FontFaceSet because @font-face
-// rules inside a shadow root never load fonts in Chromium. Pages with a strict
-// font-src CSP fall back to the system serif stack from content.css.
-function loadBrandFonts(): void {
-  for (const { file, style } of BRAND_FONT_FILES) {
-    try {
-      const face = new FontFace(
-        "SaveIt Serif",
-        `url("${chrome.runtime.getURL(file)}")`,
-        { style, weight: "400", display: "swap" },
-      );
-      void face
-        .load()
-        .then((loadedFace) => document.fonts.add(loadedFace))
-        .catch(() => undefined);
-    } catch {
-      // Fall back to the system serif stack.
-    }
-  }
-}
-
 function itemLabel(saveType: SaveType): string {
   return saveType === "page" ? "page" : saveType;
 }
@@ -205,7 +179,6 @@ function waitForRenderedFrame(): Promise<void> {
 
 export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
   document.getElementById(UI_ROOT_ID)?.remove();
-  loadBrandFonts();
 
   const host = document.createElement("div");
   host.id = UI_ROOT_ID;

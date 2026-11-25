@@ -12,8 +12,6 @@ const ignoredAssetNames = new Set([".DS_Store"]);
 const publicAssetFiles = [
   "content.css",
   "manifest.json",
-  "fonts/instrument-serif-regular.woff2",
-  "fonts/instrument-serif-italic.woff2",
   "images/icon16.png",
   "images/icon32.png",
   "images/icon48.png",
@@ -47,7 +45,7 @@ function listRelativeFiles(
         const relativeDirectory = toPortablePath(
           path.relative(root, absolutePath),
         );
-        if (relativeDirectory !== "images" && relativeDirectory !== "fonts") {
+        if (relativeDirectory !== "images") {
           throw new Error(`Unexpected asset directory: ${relativeDirectory}`);
         }
         return listRelativeFiles(absolutePath, root, ignoreKnownJunk);
