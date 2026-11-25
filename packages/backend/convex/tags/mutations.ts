@@ -11,6 +11,7 @@ import { throwNotFound, throwValidationError } from "../utils/errors";
 import type { TagDTO } from "../bookmarks/dto";
 import { assertBulkIds } from "../bookmarks/mutations";
 import { tagDTOValidator } from "../bookmarks/validators";
+import { applyManualTagChanges, recordManualTagUse } from "./manualUsage";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -165,6 +166,7 @@ export const setBookmarkTagsByName = authMutation({
           tagId: tag._id,
           userId,
         });
+        await recordManualTagUse(ctx, tag);
       }
     }
 
@@ -227,8 +229,56 @@ export const bulkAddTag = authMutation({
       });
       tagged += 1;
     }
+    if (tagged > 0) await recordManualTagUse(ctx, tag);
 
     return { tagged, tag: await resolveTagDTO(tag) };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// updateBookmarkTags — additive add/remove by name (quick-tag rows). Unlike
+// setBookmarkTagsByName it never drops tags the caller did not mention, so AI
+// tags that land while the user is tagging stay put.
+// ---------------------------------------------------------------------------
+
+export const updateBookmarkTags = authMutation({
+  args: {
+    bookmarkId: v.id("bookmarks"),
+    add: v.array(v.string()),
+    remove: v.optional(v.array(v.string())),
+  },
+  returns: v.array(tagDTOValidator),
+  handler: async (ctx, args): Promise<TagDTO[]> => {
+    const userId = ctx.user.id;
+    const bookmark = await ctx.db.get(args.bookmarkId);
+    if (!bookmark || bookmark.userId !== userId) {
+      throwNotFound("Bookmark not found");
+    }
+    return await applyManualTagChanges(ctx, userId, args.bookmarkId, {
+      add: args.add,
+      remove: args.remove ?? [],
+    });
+  },
+});
+
+/** Extension variant: the httpAction resolves the session user itself. */
+export const updateBookmarkTagsForUser = internalMutation({
+  args: {
+    userId: v.string(),
+    bookmarkId: v.string(),
+    add: v.array(v.string()),
+    remove: v.array(v.string()),
+  },
+  returns: v.union(v.array(tagDTOValidator), v.null()),
+  handler: async (ctx, args): Promise<TagDTO[] | null> => {
+    const bookmarkId = ctx.db.normalizeId("bookmarks", args.bookmarkId);
+    if (!bookmarkId) return null;
+    const bookmark = await ctx.db.get(bookmarkId);
+    if (!bookmark || bookmark.userId !== args.userId) return null;
+    return await applyManualTagChanges(ctx, args.userId, bookmarkId, {
+      add: args.add,
+      remove: args.remove,
+    });
   },
 });
 

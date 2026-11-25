@@ -1,23 +1,35 @@
 :host {
-  --saveit-background: #120a10;
-  --saveit-card: #1a0e15;
-  --saveit-foreground: #f7ede8;
-  --saveit-muted-foreground: #a89099;
+  --saveit-background: #1c1c1e;
+  --saveit-card: #1c1c1e;
+  --saveit-foreground: #f5f5f7;
+  --saveit-muted-foreground: rgba(235, 235, 245, 0.6);
   --saveit-primary: #ff8f70;
   --saveit-lavender: #c9a3e8;
   --saveit-border: rgba(255, 255, 255, 0.1);
+  /* Apple dark-mode system fills: fills, never strokes */
+  --saveit-fill: rgba(118, 118, 128, 0.24);
+  --saveit-fill-hover: rgba(118, 118, 128, 0.36);
+  --saveit-tint: rgba(255, 143, 112, 0.2);
+  --saveit-tint-hover: rgba(255, 143, 112, 0.28);
+  --saveit-tint-label: #ffb49f;
   --saveit-destructive: #ff8a8a;
-  --saveit-gradient: linear-gradient(
-    100deg,
-    #ffd9a0 0%,
-    #ff8f70 40%,
-    #f0648e 70%,
-    #c9a3e8 100%
-  );
-  --saveit-serif:
-    "SaveIt Serif", "Instrument Serif", Georgia, "Times New Roman", serif;
   --saveit-shadow:
-    0 20px 60px rgba(10, 4, 8, 0.5), 0 4px 18px rgba(10, 4, 8, 0.32);
+    0 24px 48px -12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.28);
+  /* Spring curves (critically-ish damped), mirrored in saver-ui.ts */
+  --saveit-spring: linear(
+    0, 0.0389, 0.1338, 0.2583, 0.3929, 0.5243, 0.6442, 0.7478, 0.8333, 0.901,
+    0.9521, 0.9887, 1.0133, 1.0283, 1.036, 1.0384, 1.0372, 1.0337, 1.0289,
+    1.0238, 1.0187, 1.0141, 1.01, 1.0067, 1.004, 1.002, 1.0005, 0.9996, 0.999,
+    0.9986, 1
+  );
+  --saveit-snappy: linear(
+    0, 0.0581, 0.1869, 0.3391, 0.4875, 0.6184, 0.7265, 0.8113, 0.8752, 0.9215,
+    0.9538, 0.9755, 0.9893, 0.9976, 1.0022, 1.0043, 1.005, 1.0048, 1.0042,
+    1.0035, 1.0027, 1.002, 1
+  );
+  --saveit-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI",
+    sans-serif;
   all: initial;
   color-scheme: dark;
   display: block;
@@ -61,89 +73,16 @@
   visibility: hidden;
 }
 
-/* Frosted dusk glass */
+/* Graphite: one neutral, opaque material, lit only from the inner edge */
 .saveit-surface {
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  backdrop-filter: blur(20px) saturate(1.4);
-  background: rgba(22, 11, 18, 0.96);
-  border: 1px solid var(--saveit-border);
+  background: #1e1e20;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
   border-radius: 20px;
-  box-shadow: var(--saveit-shadow);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.1),
+    var(--saveit-shadow);
   overflow: hidden;
   position: relative;
-}
-
-.saveit-panel[data-state="success"] .saveit-surface {
-  box-shadow:
-    var(--saveit-shadow),
-    0 0 44px rgba(255, 143, 112, 0.16);
-}
-
-/* Dusk aurora drifting in from the top corners */
-.saveit-aurora {
-  background:
-    radial-gradient(
-      110% 120% at 88% -20%,
-      rgba(255, 143, 112, 0.18),
-      transparent 55%
-    ),
-    radial-gradient(
-      90% 110% at 8% -25%,
-      rgba(201, 163, 232, 0.13),
-      transparent 52%
-    );
-  inset: 0;
-  pointer-events: none;
-  position: absolute;
-}
-
-.saveit-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 250px;
-  inset: 0;
-  opacity: 0.06;
-  pointer-events: none;
-  position: absolute;
-}
-
-/* Signature hairline: the landing gradient resting on the top edge */
-.saveit-surface::before {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #ffd9a0 26%,
-    #ff8f70 48%,
-    #f0648e 70%,
-    transparent
-  );
-  content: "";
-  height: 1.5px;
-  inset: 0 18px auto;
-  opacity: 0.75;
-  position: absolute;
-  z-index: 1;
-}
-
-/* Error states trade the dusk gradient for an ember tint */
-.saveit-panel[data-state="error"] .saveit-surface::before,
-.saveit-panel[data-state="screenshot-error"] .saveit-surface::before {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #ff8a8a 40%,
-    #f0648e 62%,
-    transparent
-  );
-}
-
-.saveit-panel[data-state="error"] .saveit-aurora,
-.saveit-panel[data-state="screenshot-error"] .saveit-aurora {
-  background: radial-gradient(
-    110% 120% at 85% -20%,
-    rgba(255, 138, 138, 0.14),
-    transparent 55%
-  );
 }
 
 .saveit-row {
@@ -162,7 +101,7 @@
 
 .saveit-brand {
   display: block;
-  filter: drop-shadow(0 3px 9px rgba(255, 143, 112, 0.3));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
   flex: none;
   height: 27px;
   object-fit: contain;
@@ -174,6 +113,7 @@
 }
 
 .saveit-copy {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -184,11 +124,11 @@
 }
 
 .saveit-title {
-  color: var(--saveit-foreground);
-  font-family: var(--saveit-serif);
-  font-size: 17px;
-  font-weight: 400;
-  letter-spacing: -0.005em;
+  color: #fff;
+  font-family: var(--saveit-sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   line-height: 1.25;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -213,17 +153,6 @@
 
 .saveit-panel.saveit-has-message .saveit-message {
   display: block;
-}
-
-/* The wow moment: saved titles wear the landing gradient, serif italic */
-.saveit-panel[data-state="success"] .saveit-title,
-.saveit-panel[data-state="bookmark-exists"] .saveit-title {
-  -webkit-background-clip: text;
-  background: var(--saveit-gradient);
-  background-clip: text;
-  color: transparent;
-  font-style: italic;
-  padding-right: 3px;
 }
 
 .saveit-indicator {
@@ -275,13 +204,11 @@
 
 .saveit-badge--success {
   background: var(--saveit-primary);
-  box-shadow: 0 2px 10px rgba(255, 143, 112, 0.45);
   color: #23100a;
 }
 
 .saveit-badge--exists {
   background: var(--saveit-lavender);
-  box-shadow: 0 2px 10px rgba(201, 163, 232, 0.4);
   color: #1d1026;
 }
 
@@ -357,7 +284,7 @@
 
 .saveit-action--primary {
   background: #ffffff;
-  color: #16090f;
+  color: #000;
 }
 
 .saveit-action--primary:hover {
@@ -370,24 +297,23 @@
 }
 
 .saveit-action--secondary {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.13);
+  background: var(--saveit-fill);
   color: var(--saveit-foreground);
 }
 
 .saveit-action--secondary:hover {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--saveit-fill-hover);
 }
 
 /* Floating dismiss, revealed on hover just outside the corner */
 .saveit-dismiss {
   align-items: center;
   appearance: none;
-  background: #251621;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #3a3a3c;
+  border: 0;
   border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(10, 4, 8, 0.4);
-  color: rgba(247, 237, 232, 0.82);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: rgba(235, 235, 245, 0.75);
   cursor: pointer;
   display: flex;
   height: 22px;
@@ -422,7 +348,7 @@
 }
 
 .saveit-dismiss:hover {
-  background: #2f1c29;
+  background: #48484a;
   color: var(--saveit-foreground);
 }
 
@@ -456,10 +382,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    #ffd9a0,
-    #ff8f70,
-    #f0648e,
-    #c9a3e8,
+    rgba(255, 255, 255, 0.55),
     transparent
   );
   content: "";
@@ -467,6 +390,432 @@
   position: absolute;
   transform: translateX(-100%);
   width: 72%;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Quick tags                                                             */
+/* ---------------------------------------------------------------------- */
+
+.saveit-panel.is-tagging .saveit-surface {
+  width: min(360px, calc(100vw - 32px));
+}
+
+/* The Done pill carries the state while tagging; the badge steps aside */
+.saveit-panel.is-tagging .saveit-indicator {
+  display: none;
+}
+
+.saveit-tag-action {
+  align-items: center;
+  appearance: none;
+  background: var(--saveit-fill);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--saveit-foreground);
+  cursor: pointer;
+  display: none;
+  flex: none;
+  font-family: var(--saveit-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  height: 30px;
+  letter-spacing: -0.005em;
+  margin-left: 2px;
+  padding: 0 12px;
+  place-items: center;
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    transform 320ms var(--saveit-snappy);
+}
+
+.saveit-tag-action.is-visible {
+  animation: saveit-chip-in 520ms var(--saveit-spring) 180ms backwards;
+  display: grid;
+}
+
+.saveit-tag-action.is-retired {
+  display: none;
+}
+
+.saveit-tag-action:hover {
+  background: var(--saveit-fill-hover);
+}
+
+.saveit-tag-action:active {
+  transform: scale(0.94);
+}
+
+.saveit-tag-action.is-open {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000;
+}
+
+.saveit-tag-action.is-open:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Both faces share one grid cell so the pill never changes width */
+.saveit-tag-face {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  grid-area: 1 / 1;
+  justify-content: center;
+  transition:
+    filter 260ms ease,
+    opacity 200ms ease,
+    transform 420ms var(--saveit-spring);
+  white-space: nowrap;
+}
+
+.saveit-tag-face svg {
+  height: 13px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 13px;
+}
+
+.saveit-tag-face--done,
+.saveit-tag-action.is-open .saveit-tag-face--add {
+  filter: blur(3px);
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.saveit-tag-action.is-open .saveit-tag-face--done {
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+
+.saveit-tag-action:focus-visible,
+.saveit-chip:focus-visible,
+.saveit-add-button:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--saveit-card),
+    0 0 0 4px var(--saveit-primary);
+  outline: none;
+}
+
+.saveit-tray {
+  display: none;
+  position: relative;
+  z-index: 1;
+}
+
+.saveit-tray.is-open {
+  display: block;
+}
+
+.saveit-tray-inner {
+  margin: 0 13px;
+  padding: 2px 0 13px;
+}
+
+.saveit-chips {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.saveit-chip,
+.saveit-add {
+  border-radius: 999px;
+  height: 30px;
+}
+
+.saveit-chip {
+  align-items: center;
+  appearance: none;
+  background: var(--saveit-fill);
+  border: 1px solid transparent;
+  color: var(--saveit-foreground);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--saveit-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  max-width: 100%;
+  padding: 0 12px;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    padding 380ms var(--saveit-spring),
+    transform 320ms var(--saveit-snappy);
+}
+
+.saveit-chip:hover {
+  background: var(--saveit-fill-hover);
+}
+
+.saveit-chip:active {
+  transform: scale(0.93);
+}
+
+.saveit-chip[aria-pressed="true"] {
+  background: var(--saveit-tint);
+  color: var(--saveit-tint-label);
+  padding-left: 9px;
+}
+
+.saveit-chip[aria-pressed="true"]:hover {
+  background: var(--saveit-tint-hover);
+}
+
+.saveit-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saveit-chip-check {
+  flex: none;
+  height: 13px;
+  margin-right: 0;
+  opacity: 0;
+  stroke: currentColor;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+  transform: scale(0.5);
+  transition:
+    margin-right 380ms var(--saveit-spring),
+    opacity 160ms ease,
+    stroke-dashoffset 320ms ease 60ms,
+    transform 380ms var(--saveit-spring),
+    width 380ms var(--saveit-spring);
+  width: 0;
+}
+
+.saveit-chip[aria-pressed="true"] .saveit-chip-check {
+  margin-right: 5px;
+  opacity: 1;
+  stroke-dashoffset: 0;
+  transform: none;
+  width: 13px;
+}
+
+.saveit-chip.is-new,
+.saveit-add.is-entering {
+  animation: saveit-chip-in 520ms var(--saveit-spring)
+    calc(var(--i, 0) * 32ms + 40ms) backwards;
+}
+
+.saveit-skeleton {
+  animation:
+    saveit-chip-in 420ms var(--saveit-spring) calc(var(--i, 0) * 40ms)
+      backwards,
+    saveit-shimmer 1.2s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  display: inline-block;
+  height: 30px;
+  width: var(--w, 60px);
+}
+
+.saveit-add {
+  background: var(--saveit-fill);
+  border: 1px solid transparent;
+  flex: none;
+  overflow: hidden;
+  position: relative;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    width 460ms var(--saveit-spring);
+  width: 30px;
+}
+
+.saveit-add:hover {
+  background: var(--saveit-fill-hover);
+}
+
+.saveit-add.is-expanded {
+  background: var(--saveit-fill-hover);
+  width: 184px;
+}
+
+.saveit-add-button {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--saveit-foreground);
+  cursor: pointer;
+  display: flex;
+  height: 28px;
+  justify-content: center;
+  left: 0;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  transition:
+    color 200ms ease,
+    transform 420ms var(--saveit-spring);
+  width: 28px;
+  z-index: 1;
+}
+
+.saveit-add-button:active {
+  transform: scale(0.88);
+}
+
+.saveit-add-button svg,
+.saveit-option-icon svg {
+  fill: none;
+  height: 14px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.2;
+  width: 14px;
+}
+
+.saveit-add.is-expanded .saveit-add-button {
+  color: var(--saveit-primary);
+  pointer-events: none;
+  transform: rotate(90deg) scale(0.9);
+}
+
+.saveit-add-input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  caret-color: var(--saveit-primary);
+  color: var(--saveit-foreground);
+  font-family: var(--saveit-sans);
+  font-size: 13px;
+  height: 28px;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  outline: none;
+  padding: 0 12px 0 28px;
+  transition: opacity 180ms ease;
+  width: 100%;
+}
+
+.saveit-add-input::placeholder {
+  color: var(--saveit-muted-foreground);
+}
+
+.saveit-add.is-expanded .saveit-add-input {
+  opacity: 1;
+  transition-delay: 90ms;
+}
+
+.saveit-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 8px;
+}
+
+.saveit-suggest[hidden] {
+  display: none;
+}
+
+.saveit-option {
+  align-items: center;
+  animation: saveit-option-in 260ms var(--saveit-snappy) backwards;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--saveit-foreground);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--saveit-sans);
+  font-size: 13px;
+  gap: 8px;
+  height: 32px;
+  letter-spacing: -0.01em;
+  padding: 0 10px 0 8px;
+  text-align: left;
+  transition: background-color 140ms ease;
+  width: 100%;
+}
+
+.saveit-option[aria-selected="true"],
+.saveit-option:hover {
+  background: var(--saveit-fill);
+}
+
+.saveit-option-icon {
+  align-items: center;
+  color: var(--saveit-primary);
+  display: inline-flex;
+  flex: none;
+  height: 16px;
+  justify-content: center;
+  width: 16px;
+}
+
+.saveit-option-icon .saveit-chip-check {
+  margin: 0;
+  opacity: 1;
+  stroke-dashoffset: 0;
+  transform: none;
+  width: 13px;
+}
+
+.saveit-option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saveit-option-label strong {
+  color: #ffc1ad;
+  font-weight: 600;
+}
+
+.saveit-tray-status {
+  color: var(--saveit-muted-foreground);
+  display: none;
+  font-family: var(--saveit-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 9px 2px 0;
+}
+
+.saveit-tray.has-status .saveit-tray-status {
+  display: block;
+}
+
+.saveit-tray-status[data-tone="error"] {
+  color: var(--saveit-destructive);
+}
+
+@keyframes saveit-chip-in {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.88);
+  }
+}
+
+@keyframes saveit-option-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+@keyframes saveit-shimmer {
+  50% {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 @keyframes saveit-enter {
@@ -516,7 +865,16 @@
   .saveit-panel,
   .saveit-action,
   .saveit-badge,
-  .saveit-dismiss {
+  .saveit-dismiss,
+  .saveit-tag-action,
+  .saveit-tag-face,
+  .saveit-chip,
+  .saveit-chip-check,
+  .saveit-skeleton,
+  .saveit-add,
+  .saveit-add-button,
+  .saveit-add-input,
+  .saveit-option {
     animation-duration: 0.01ms !important;
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
@@ -540,7 +898,10 @@
   .saveit-surface,
   .saveit-badge,
   .saveit-action,
-  .saveit-dismiss {
+  .saveit-dismiss,
+  .saveit-tag-action,
+  .saveit-chip,
+  .saveit-add {
     border: 1px solid CanvasText;
     forced-color-adjust: auto;
   }

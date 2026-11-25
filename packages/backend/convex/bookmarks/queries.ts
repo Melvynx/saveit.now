@@ -12,6 +12,7 @@ import type { QueryCtx } from "../_generated/server";
 import { internalQuery, query, authQuery } from "../functions";
 import { bookmarkType } from "../schema";
 import { throwNotFound, throwValidationError } from "../utils/errors";
+import { cleanUrl } from "../utils/url";
 import { bookmarkDTOFields, bookmarkDTOValidator } from "./validators";
 import {
   buildBookmarkDTO,
@@ -867,5 +868,29 @@ export const listErrorBookmarks = internalQuery({
       _id: doc._id as string,
       processingError: doc.processingError ?? null,
     }));
+  },
+});
+
+// ---------------------------------------------------------------------------
+// findIdByUrlForUser — lets the extension tag a page that was saved before
+// ---------------------------------------------------------------------------
+
+export const findIdByUrlForUser = internalQuery({
+  args: { userId: v.string(), url: v.string() },
+  returns: v.union(v.id("bookmarks"), v.null()),
+  handler: async (ctx, args): Promise<Id<"bookmarks"> | null> => {
+    let cleanedUrl: string;
+    try {
+      cleanedUrl = cleanUrl(args.url);
+    } catch {
+      return null;
+    }
+    const existing = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user_url", (q) =>
+        q.eq("userId", args.userId).eq("url", cleanedUrl),
+      )
+      .first();
+    return existing?._id ?? null;
   },
 });

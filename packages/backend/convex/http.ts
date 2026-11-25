@@ -11,8 +11,9 @@ import {
   randomBookmark,
 } from "./api/v1";
 import {
+  extensionBookmarkSubroute,
+  extensionBookmarkTags,
   extensionCreateBookmark,
-  extensionUploadScreenshot,
 } from "./api/extensions";
 import { chatStreamHandler } from "./chat/stream";
 import {
@@ -195,8 +196,10 @@ for (const [path, handler] of toolRoutes) {
 http.route({ path: "/api/bookmarks", method: "POST", handler: extensionCreateBookmark });
 http.route({ path: "/api/bookmarks", method: "OPTIONS", handler: extensionCreateBookmark });
 // POST /api/bookmarks/:id/upload-screenshot — upload screenshot (Chrome only)
-http.route({ pathPrefix: "/api/bookmarks/", method: "POST", handler: extensionUploadScreenshot });
-http.route({ pathPrefix: "/api/bookmarks/", method: "OPTIONS", handler: extensionUploadScreenshot });
+// GET|POST /api/bookmarks/:id/tags — quick-tag row in the Chrome toast
+http.route({ pathPrefix: "/api/bookmarks/", method: "POST", handler: extensionBookmarkSubroute });
+http.route({ pathPrefix: "/api/bookmarks/", method: "GET", handler: extensionBookmarkTags });
+http.route({ pathPrefix: "/api/bookmarks/", method: "OPTIONS", handler: extensionBookmarkSubroute });
 
 // --- Tokenized unsubscribe (HMAC verified inside the handler) ---
 http.route({ pathPrefix: "/unsubscribe/", method: "GET", handler: unsubscribe });

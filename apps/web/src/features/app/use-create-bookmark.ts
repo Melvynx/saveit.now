@@ -7,7 +7,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useState } from "react";
 
-export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
+export type CreatedBookmark = { id: string; url: string };
+
+export const useCreateBookmarkAction = (props: {
+  onSuccess?: (created: CreatedBookmark) => void;
+}) => {
   const navigate = useNavigate();
   const createBookmark = useMutation(api.bookmarks.mutations.create);
   const [isPending, setIsPending] = useState(false);
@@ -24,15 +28,16 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
     });
   };
 
-  /** Resolves true when the bookmark was created; errors are toasted. */
-  const execute = (input: { url: string }): Promise<boolean> => {
+  /** Resolves with the new bookmark, or null on failure (errors are toasted). */
+  const execute = (input: { url: string }): Promise<CreatedBookmark | null> => {
     setIsPending(true);
     setError(null);
     return createBookmark(input)
-      .then(() => {
+      .then((bookmark) => {
         trackAnalyticsEvent(ANALYTICS_EVENTS.BOOKMARK_CREATED);
-        props.onSuccess?.();
-        return true;
+        const created = { id: bookmark.id, url: bookmark.url };
+        props.onSuccess?.(created);
+        return created;
       })
       .catch((error: unknown) => {
         setError(error);
@@ -49,7 +54,7 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
           typedError?.type === BookmarkErrorType.MAX_BOOKMARKS
         ) {
           showLimitToast();
-          return false;
+          return null;
         }
 
         if (
@@ -57,11 +62,11 @@ export const useCreateBookmarkAction = (props: { onSuccess?: () => void }) => {
           typedError?.type === BookmarkErrorType.BOOKMARK_ALREADY_EXISTS
         ) {
           toast.error("This link is already in your library");
-          return false;
+          return null;
         }
 
         toast.error(typedError?.message ?? "Failed to create bookmark");
-        return false;
+        return null;
       })
       .finally(() => setIsPending(false));
   };

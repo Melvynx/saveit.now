@@ -273,3 +273,47 @@ test("classifies only transient upload failures as retryable", () => {
   assert.equal(isRetryableUploadError("NOT_FOUND"), false);
   assert.equal(isRetryableUploadError("UNKNOWN"), false);
 });
+
+test("parses bounded tag requests", () => {
+  assert.deepEqual(
+    parseRuntimeRequest({ type: "GET_BOOKMARK_TAGS", bookmarkId: "b1" }),
+    { type: "GET_BOOKMARK_TAGS", bookmarkId: "b1" },
+  );
+  assert.deepEqual(
+    parseRuntimeRequest({
+      type: "GET_BOOKMARK_TAGS",
+      bookmarkId: "b1",
+      query: "rea",
+    }),
+    { type: "GET_BOOKMARK_TAGS", bookmarkId: "b1", query: "rea" },
+  );
+  assert.deepEqual(
+    parseRuntimeRequest({
+      type: "UPDATE_BOOKMARK_TAGS",
+      bookmarkId: "b1",
+      add: ["design"],
+      remove: [],
+    }),
+    { type: "UPDATE_BOOKMARK_TAGS", bookmarkId: "b1", add: ["design"], remove: [] },
+  );
+});
+
+test("rejects malformed tag requests", () => {
+  for (const value of [
+    { type: "GET_BOOKMARK_TAGS" },
+    { type: "GET_BOOKMARK_TAGS", bookmarkId: "b1", query: "x".repeat(65) },
+    { type: "GET_BOOKMARK_TAGS", bookmarkId: "b1", query: 4 },
+    { type: "UPDATE_BOOKMARK_TAGS", bookmarkId: "b1", add: [], remove: [] },
+    { type: "UPDATE_BOOKMARK_TAGS", bookmarkId: "b1", add: ["  "], remove: [] },
+    { type: "UPDATE_BOOKMARK_TAGS", bookmarkId: "b1", add: ["x".repeat(49)], remove: [] },
+    { type: "UPDATE_BOOKMARK_TAGS", bookmarkId: "b1", add: "design", remove: [] },
+    {
+      type: "UPDATE_BOOKMARK_TAGS",
+      bookmarkId: "b1",
+      add: Array.from({ length: 21 }, (_, i) => `t${i}`),
+      remove: [],
+    },
+  ]) {
+    assert.equal(parseRuntimeRequest(value), null);
+  }
+});

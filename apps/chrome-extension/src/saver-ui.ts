@@ -1,5 +1,11 @@
 import { config } from "./config";
-import type { OpenSaveItPath, SaveType } from "./protocol";
+import type {
+  OpenSaveItPath,
+  SaveType,
+  TagStateResult,
+  TagUpdateResult,
+} from "./protocol";
+import { createTagTray } from "./tag-tray";
 
 const UI_ROOT_ID = "saveit-now-root";
 
@@ -96,12 +102,20 @@ export type SaverUIRenderOptions = {
   allowRetry?: boolean;
   retryLabel?: string;
   link?: LinkAction | null;
+  /** Offer the quick-tag tray for this bookmark (saved / already saved). */
+  tagBookmarkId?: string;
 };
 
 type SaverUICallbacks = {
   onDismiss: () => void;
   onRetry: () => void;
   onOpenPath: (path: OpenSaveItPath) => void;
+  loadTags: (bookmarkId: string, query?: string) => Promise<TagStateResult>;
+  updateTags: (
+    bookmarkId: string,
+    add: string[],
+    remove: string[],
+  ) => Promise<TagUpdateResult>;
 };
 
 export type SaverUI = {
@@ -166,6 +180,21 @@ function setProtectedHostStyles(host: HTMLElement): void {
   }
 }
 
+// Spring curves (CSS linear()), mirrored in content.css. "spring" carries a
+// soft overshoot for size changes; reduced motion skips the morph entirely.
+const SPRING_EASING =
+  "linear(0, 0.0389, 0.1338, 0.2583, 0.3929, 0.5243, 0.6442, 0.7478, 0.8333, 0.901, 0.9521, 0.9887, 1.0133, 1.0283, 1.036, 1.0384, 1.0372, 1.0337, 1.0289, 1.0238, 1.0187, 1.0141, 1.01, 1.0067, 1.004, 1.002, 1.0005, 0.9996, 0.999, 0.9986, 1)";
+const MORPH_DURATION_MS = 560;
+const HOVER_RESUME_MS = 1800;
+const TAGGED_HIDE_MS = 1900;
+
+const TAG_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 12.1V5a1.5 1.5 0 0 1 1.5-1.5h7.1a1.5 1.5 0 0 1 1.06.44l7.4 7.4a1.5 1.5 0 0 1 0 2.12l-7.1 7.1a1.5 1.5 0 0 1-2.12 0l-7.4-7.4a1.5 1.5 0 0 1-.44-1.06Z" /><circle cx="8.25" cy="8.25" r="1.25" /></svg>';
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function waitForRenderedFrame(): Promise<void> {
   return new Promise((resolve) => {
     window.requestAnimationFrame(() =>
@@ -217,8 +246,6 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
   panel.setAttribute("role", "status");
   panel.innerHTML = `
     <div class="saveit-surface">
-      <div class="saveit-aurora" aria-hidden="true"></div>
-      <div class="saveit-noise" aria-hidden="true"></div>
       <div class="saveit-row">
         <img class="saveit-brand" aria-hidden="true" src="${chrome.runtime.getURL("images/icon48.png")}" alt="" />
         <div class="saveit-copy">
@@ -230,11 +257,16 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
           <span class="saveit-badge saveit-badge--success"><svg class="saveit-state-icon saveit-icon-success" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" /></svg></span>
           <span class="saveit-badge saveit-badge--exists"><svg class="saveit-state-icon saveit-icon-info" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" /></svg></span>
         </div>
+        <button id="saveit-tag-action" class="saveit-tag-action" type="button" aria-expanded="false" aria-controls="saveit-tray">
+          <span class="saveit-tag-face saveit-tag-face--add">${TAG_ICON_SVG}<span>Add tags</span></span>
+          <span class="saveit-tag-face saveit-tag-face--done" aria-hidden="true">Done</span>
+        </button>
         <div id="saveit-actions" class="saveit-actions">
           <button id="saveit-retry-action" class="saveit-action saveit-action--primary" type="button">Try again</button>
           <button id="saveit-link-action" class="saveit-action saveit-action--secondary" type="button">Open SaveIt</button>
         </div>
       </div>
+      <div id="saveit-tray" class="saveit-tray"></div>
       <div class="saveit-progress" aria-hidden="true"></div>
     </div>
     <button class="saveit-dismiss" type="button" aria-label="Dismiss SaveIt message">
@@ -256,6 +288,10 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
   );
   const dismissButton =
     shadowRoot.querySelector<HTMLButtonElement>(".saveit-dismiss");
+  const surface = shadowRoot.querySelector<HTMLDivElement>(".saveit-surface");
+  const tagButton =
+    shadowRoot.querySelector<HTMLButtonElement>("#saveit-tag-action");
+  const trayRoot = shadowRoot.querySelector<HTMLDivElement>("#saveit-tray");
 
   if (
     !title ||
@@ -263,7 +299,10 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     !actions ||
     !retryButton ||
     !linkButton ||
-    !dismissButton
+    !dismissButton ||
+    !surface ||
+    !tagButton ||
+    !trayRoot
   ) {
     host.remove();
     throw new Error("SaveIt UI failed to initialize");
@@ -271,7 +310,10 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
 
   let currentState: SaverState = SAVER_STATE.HIDDEN;
   let hideTimer: number | undefined;
+  let hideDelayMs: number | undefined;
   let activeLinkPath: OpenSaveItPath = "/app";
+  let morphAnimation: Animation | null = null;
+  let pointerInside = false;
 
   const clearHideTimer = () => {
     if (hideTimer === undefined) return;
@@ -279,8 +321,99 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     hideTimer = undefined;
   };
 
+  // Measure, apply the change, measure again, then spring the surface from
+  // the old size to the new one. Interruptible: a running morph starts the
+  // next one from wherever it currently is.
+  const morph = (change: () => void) => {
+    if (
+      currentState === SAVER_STATE.HIDDEN ||
+      prefersReducedMotion() ||
+      host.style.getPropertyValue("display") === "none"
+    ) {
+      change();
+      return;
+    }
+    const before = surface.getBoundingClientRect();
+    morphAnimation?.cancel();
+    change();
+    const after = surface.getBoundingClientRect();
+    if (
+      Math.abs(before.width - after.width) < 0.5 &&
+      Math.abs(before.height - after.height) < 0.5
+    ) {
+      return;
+    }
+    morphAnimation = surface.animate(
+      [
+        { width: `${before.width}px`, height: `${before.height}px` },
+        { width: `${after.width}px`, height: `${after.height}px` },
+      ],
+      { duration: MORPH_DURATION_MS, easing: SPRING_EASING },
+    );
+    morphAnimation.addEventListener("finish", () => {
+      morphAnimation = null;
+    });
+  };
+
+  const tray = createTagTray(trayRoot, {
+    loadTags: callbacks.loadTags,
+    updateTags: callbacks.updateTags,
+    morph,
+  });
+
+  const shouldHoldOpen = () => pointerInside || tray.isOpen();
+
+  const scheduleHide = (delayMs: number | undefined) => {
+    clearHideTimer();
+    hideDelayMs = delayMs;
+    if (delayMs === undefined || shouldHoldOpen()) return;
+    hideTimer = window.setTimeout(hide, delayMs);
+  };
+
+  const setTagButtonOpen = (isOpen: boolean) => {
+    tagButton.classList.toggle("is-open", isOpen);
+    tagButton.setAttribute("aria-expanded", String(isOpen));
+    tagButton.setAttribute("aria-label", isOpen ? "Done tagging" : "Add tags");
+    panel.classList.toggle("is-tagging", isOpen);
+  };
+
+  const openTray = () => {
+    clearHideTimer();
+    morph(() => {
+      setTagButtonOpen(true);
+      tray.open();
+    });
+  };
+
+  const finishTagging = () => {
+    const names = tray.selectedNames();
+    void tray.flush();
+    morph(() => {
+      tray.close();
+      setTagButtonOpen(false);
+      tagButton.classList.add("is-retired");
+      if (names.length > 0) {
+        panel.dataset.state = SAVER_STATE.SUCCESS;
+        title.textContent = names.length === 1 ? "Tagged" : `${names.length} tags added`;
+        message.textContent = names.join(" · ");
+        panel.classList.toggle("saveit-has-message", true);
+      }
+    });
+    tagButton.blur();
+    pointerInside = false;
+    scheduleHide(TAGGED_HIDE_MS);
+  };
+
   const hide = () => {
     clearHideTimer();
+    currentState = SAVER_STATE.HIDDEN;
+    morphAnimation?.cancel();
+    morphAnimation = null;
+    void tray.flush();
+    tray.close();
+    setTagButtonOpen(false);
+    tagButton.classList.remove("is-visible", "is-retired");
+    pointerInside = false;
     currentState = SAVER_STATE.HIDDEN;
     setDevelopmentHook("saveitState", SAVER_STATE.HIDDEN);
     setDevelopmentHook("saveitRetry", "false");
@@ -347,6 +480,19 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
       actions.classList.contains("is-visible"),
     );
 
+    const canTag =
+      Boolean(options.tagBookmarkId) &&
+      (options.state === SAVER_STATE.SUCCESS ||
+        options.state === SAVER_STATE.BOOKMARK_EXISTS);
+    tray.close();
+    setTagButtonOpen(false);
+    tagButton.classList.remove("is-retired");
+    tagButton.classList.toggle("is-visible", canTag);
+    panel.classList.toggle("saveit-can-tag", canTag);
+    if (canTag && options.tagBookmarkId) {
+      tray.prepare(options.tagBookmarkId);
+    }
+
     shouldReveal = true;
     if (stylesheetReady) {
       host.style.setProperty("display", "block", "important");
@@ -354,9 +500,12 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     panel.classList.remove("is-hidden", "is-entering");
     window.requestAnimationFrame(() => panel.classList.add("is-entering"));
 
-    if (descriptor.autoHideMs) {
-      hideTimer = window.setTimeout(hide, descriptor.autoHideMs);
-    }
+    // A tag offer needs a beat longer to be noticed and reached.
+    scheduleHide(
+      descriptor.autoHideMs && canTag
+        ? descriptor.autoHideMs + 1800
+        : descriptor.autoHideMs,
+    );
   };
 
   dismissButton.addEventListener("click", () => {
@@ -364,6 +513,35 @@ export function createSaverUI(callbacks: SaverUICallbacks): SaverUI {
     callbacks.onDismiss();
   });
   retryButton.addEventListener("click", callbacks.onRetry);
+  tagButton.addEventListener("click", () => {
+    if (tray.isOpen()) finishTagging();
+    else openTray();
+  });
+  panel.addEventListener("pointerenter", () => {
+    pointerInside = true;
+    clearHideTimer();
+  });
+  panel.addEventListener("pointerleave", () => {
+    pointerInside = false;
+    if (hideDelayMs !== undefined && !shouldHoldOpen()) {
+      scheduleHide(Math.min(hideDelayMs, HOVER_RESUME_MS));
+    }
+  });
+  // Keep typing inside the toast from reaching the page's own shortcuts
+  // (YouTube, GitHub, Gmail…). Escape closes the tray, then the toast.
+  for (const type of ["keydown", "keyup", "keypress"] as const) {
+    panel.addEventListener(type, (event) => {
+      event.stopPropagation();
+      if (type !== "keydown" || (event as KeyboardEvent).key !== "Escape") {
+        return;
+      }
+      if (tray.isOpen()) finishTagging();
+      else {
+        hide();
+        callbacks.onDismiss();
+      }
+    });
+  }
   linkButton.addEventListener("click", () =>
     callbacks.onOpenPath(activeLinkPath),
   );

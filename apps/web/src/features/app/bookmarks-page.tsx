@@ -8,11 +8,10 @@ import {
   useRouter,
   useSearch,
 } from "@tanstack/react-router";
-import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
-import { Plus } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BookmarkCardLoadMore } from "./bookmark-card";
 import { AddBookmarkCard } from "./add-bookmark-card";
@@ -27,6 +26,8 @@ import {
 } from "./library/library-empty-state";
 import { LibraryList } from "./library/library-list";
 import { LibraryMasonry } from "./library/library-masonry";
+import { FADE } from "./library/motion";
+import { PostSaveTags } from "./library/post-save-tags";
 import {
   type LibraryView,
   useLibraryPreferences,
@@ -83,6 +84,13 @@ function getLibraryTitle({
   return "Library";
 }
 
+const EMPTY_BOOKMARKS: BookmarkCardData[] = [];
+
+const sameItems = (a: BookmarkCardData[] | null, b: BookmarkCardData[]) =>
+  a !== null &&
+  a.length === b.length &&
+  a.every((item, index) => item === b[index]);
+
 export function BookmarksPage() {
   const session = useSession();
   const router = useRouter();
@@ -111,7 +119,21 @@ export function BookmarksPage() {
     error: searchError,
     retrySearch,
   } = useBookmarks({ enabled: Boolean(session.data?.user), order: sort });
-  const bookmarks = rawBookmarks as unknown as BookmarkCardData[];
+  const freshBookmarks = rawBookmarks as unknown as BookmarkCardData[];
+  // While a filter, sort or query change is loading, keep the previous
+  // results on screen (dimmed) instead of flashing a skeleton.
+  const [settledBookmarks, setSettledBookmarks] = useState<
+    BookmarkCardData[] | null
+  >(null);
+  if (!isPending && !sameItems(settledBookmarks, freshBookmarks)) {
+    setSettledBookmarks(freshBookmarks);
+  }
+  const isRefreshing = isPending && settledBookmarks !== null;
+  // `settledBookmarks` keeps one identity across renders with equal rows.
+  const bookmarks = settledBookmarks ?? EMPTY_BOOKMARKS;
+  const showSkeleton = isPending && settledBookmarks === null;
+  const reduceMotion = useReducedMotion();
+  const selectionCount = useLibrarySelection((state) => state.selectedIds.size);
   const sidebarCounts = useSidebarCounts();
   const searchInputRef = useRef<SearchInputRef>(null);
 
@@ -129,7 +151,7 @@ export function BookmarksPage() {
     !hasQuery &&
     !hasActiveFilters &&
     !isPending &&
-    bookmarks.length === 0;
+    freshBookmarks.length === 0;
   const knownTotal = (() => {
     if (bookmarkCount === undefined || isPending) return undefined;
     if (bookmarkCount >= bookmarks.length) return bookmarkCount;
@@ -201,6 +223,15 @@ export function BookmarksPage() {
   }
 
   const showResults = !urlQuery && !isPending && bookmarks.length > 0;
+  const resultsKey = urlQuery
+    ? "add"
+    : showSkeleton
+      ? "skeleton"
+      : searchError && bookmarks.length === 0
+        ? "error"
+        : bookmarks.length === 0
+          ? "empty"
+          : view;
   const showRediscover =
     !hasQuery && !hasActiveFilters && !isFirstRun && bookmarks.length > 0;
 
@@ -213,15 +244,6 @@ export function BookmarksPage() {
           <>
             <SortMenu disabled={!isBrowsing} />
             <ViewSwitcher />
-            <Button
-              size="sm"
-              className="ml-1 hidden h-8 gap-1.5 px-3 md:inline-flex"
-              onClick={() => palette.open({ mode: "add" })}
-              data-testid="library-add-button"
-            >
-              <Plus className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Add</span>
-            </Button>
           </>
         }
       >
@@ -237,7 +259,7 @@ export function BookmarksPage() {
       <LibraryCardProvider highlightQuery={isSearchMode ? query : null}>
         <div
           className={cn(
-            "flex w-full min-w-0 flex-col gap-5 px-4 pt-3 pb-28 md:px-6",
+            "flex w-full min-w-0 flex-col gap-6 px-4 pt-2 pb-28 md:px-6",
           )}
           data-view={view}
         >
@@ -258,26 +280,39 @@ export function BookmarksPage() {
                 />
               ) : null}
 
-              {urlQuery ? (
-                <AddBookmarkCard url={urlQuery} />
-              ) : isPending ? (
-                <LibrarySkeleton view={view} />
-              ) : searchError && bookmarks.length === 0 ? (
-                <LibrarySearchErrorState onRetry={retrySearch} />
-              ) : bookmarks.length === 0 ? (
-                <SearchEmptyState
-                  query={isSearchMode ? query : ""}
-                  hasFilters={hasActiveFilters}
-                />
-              ) : view === "grid" ? (
-                <LibraryMasonry bookmarks={bookmarks} />
-              ) : (
-                <LibraryList
-                  bookmarks={bookmarks}
-                  density={view}
-                  groupByDate={!isSearchMode}
-                />
-              )}
+              <motion.div
+                key={resultsKey}
+                initial={
+                  reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }
+                }
+                animate={{ opacity: isRefreshing ? 0.5 : 1, y: 0 }}
+                transition={FADE}
+                aria-busy={isRefreshing || showSkeleton || undefined}
+                className="min-w-0"
+              >
+                {urlQuery ? (
+                  <AddBookmarkCard url={urlQuery} />
+                ) : showSkeleton ? (
+                  <LibrarySkeleton view={view} />
+                ) : searchError && bookmarks.length === 0 ? (
+                  <LibrarySearchErrorState onRetry={retrySearch} />
+                ) : bookmarks.length === 0 ? (
+                  isRefreshing ? null : (
+                    <SearchEmptyState
+                      query={isSearchMode ? query : ""}
+                      hasFilters={hasActiveFilters}
+                    />
+                  )
+                ) : view === "grid" ? (
+                  <LibraryMasonry bookmarks={bookmarks} />
+                ) : (
+                  <LibraryList
+                    bookmarks={bookmarks}
+                    density={view}
+                    groupByDate={!isSearchMode}
+                  />
+                )}
+              </motion.div>
 
               {showResults && isSearchMode ? (
                 <div className="flex justify-center">
@@ -296,7 +331,11 @@ export function BookmarksPage() {
         </div>
       </LibraryCardProvider>
 
-      <LibraryBulkPill bookmarks={bookmarks} />
+      {/* Zero-height sticky dock: the pill and the tray float above the page. */}
+      <div className="pointer-events-none sticky bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-40 mt-auto h-0">
+        <PostSaveTags suppressed={selectionCount > 0} />
+        <LibraryBulkPill bookmarks={bookmarks} />
+      </div>
 
       {search.bookmarkId ? (
         <BookmarkDialog
@@ -308,12 +347,12 @@ export function BookmarksPage() {
   );
 }
 
-const SKELETON_HEIGHTS = [260, 200, 300, 220, 180, 280, 240, 210, 290, 190, 250, 230];
+const SKELETON_HEIGHTS = [260, 200, 300, 220, 180, 280, 240, 210];
 
 function LibrarySkeleton({ view }: { view: LibraryView }) {
   if (view !== "grid") {
     return (
-      <div className="flex flex-col gap-1" aria-busy="true">
+      <div className="flex flex-col" aria-hidden>
         {Array.from({ length: 10 }).map((_, index) => (
           <div
             key={index}
@@ -325,10 +364,10 @@ function LibrarySkeleton({ view }: { view: LibraryView }) {
             <Skeleton
               className={cn(
                 "shrink-0 rounded-lg",
-                view === "list" ? "size-8" : "size-4",
+                view === "list" ? "size-8" : "size-5 rounded-md",
               )}
             />
-            <Skeleton className="h-3.5 flex-1 max-w-md" />
+            <Skeleton className="h-3.5 max-w-md flex-1" />
             <Skeleton className="h-3 w-12" />
           </div>
         ))}
@@ -338,13 +377,13 @@ function LibrarySkeleton({ view }: { view: LibraryView }) {
 
   return (
     <div
-      className="columns-2 gap-3 sm:columns-[256px] sm:gap-4"
-      aria-busy="true"
+      className="grid grid-cols-2 items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] sm:gap-4"
+      aria-hidden
     >
       {SKELETON_HEIGHTS.map((height, index) => (
         <Skeleton
           key={index}
-          className="mb-3 w-full break-inside-avoid rounded-xl sm:mb-4"
+          className="w-full rounded-xl"
           style={{ height }}
         />
       ))}

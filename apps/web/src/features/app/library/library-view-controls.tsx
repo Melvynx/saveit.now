@@ -17,6 +17,8 @@ import {
   Rows3,
   type LucideIcon,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { SPRING_SNAPPY } from "./motion";
 import {
   type LibrarySort,
   type LibraryView,
@@ -33,6 +35,7 @@ const VIEW_OPTIONS: { value: LibraryView; label: string; icon: LucideIcon }[] = 
 export function ViewSwitcher() {
   const view = useLibraryPreferences((state) => state.view);
   const setView = useLibraryPreferences((state) => state.setView);
+  const reduceMotion = useReducedMotion();
 
   return (
     <div
@@ -60,12 +63,19 @@ export function ViewSwitcher() {
               data-testid={`view-${option.value}`}
               onClick={() => setView(option.value)}
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,box-shadow] duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                active &&
-                  "bg-background text-foreground shadow-xs ring-1 ring-foreground/6",
+                "relative flex h-7 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                active && "text-foreground",
               )}
             >
-              <Icon className="size-3.5" aria-hidden />
+              {active ? (
+                <motion.span
+                  layoutId="library-view-thumb"
+                  aria-hidden
+                  transition={reduceMotion ? { duration: 0 } : SPRING_SNAPPY}
+                  className="absolute inset-0 rounded-md bg-background shadow-xs ring-1 ring-foreground/8"
+                />
+              ) : null}
+              <Icon className="relative size-3.5" aria-hidden />
             </button>
           </InlineTooltip>
         );

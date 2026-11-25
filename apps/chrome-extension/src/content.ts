@@ -11,6 +11,8 @@ import {
   type SaveType,
   type SessionResult,
   type TabSaveMessage,
+  type TagStateResult,
+  type TagUpdateResult,
   type UploadResult,
 } from "./protocol";
 import { createSaverUI, SAVER_STATE, type SaverUI } from "./saver-ui";
@@ -37,6 +39,8 @@ const RUNTIME_TIMEOUTS: Record<RuntimeRequestType, number> = {
   CAPTURE_SCREENSHOT: 12_000,
   UPLOAD_SCREENSHOT: 32_000,
   OPEN_SAVEIT: 5_000,
+  GET_BOOKMARK_TAGS: 12_000,
+  UPDATE_BOOKMARK_TAGS: 15_000,
 };
 
 function sendRuntimeMessage<T extends RuntimeRequest>(
@@ -128,6 +132,7 @@ class SaveController {
             state: SAVER_STATE.SUCCESS,
             saveType: this.currentTarget.type,
             message: "Preview added.",
+            tagBookmarkId: retry.bookmarkId,
           });
         }
         return;
@@ -235,6 +240,7 @@ class SaveController {
         this.ui.render({
           state: SAVER_STATE.BOOKMARK_EXISTS,
           saveType: this.currentTarget.type,
+          tagBookmarkId: result.existingBookmarkId,
         });
         return;
       case "MAX_BOOKMARKS":
@@ -458,7 +464,43 @@ class SaveController {
     this.ui.render({
       state: SAVER_STATE.SUCCESS,
       saveType: target.type,
+      tagBookmarkId: result.bookmarkId,
     });
+  }
+
+  loadTags(bookmarkId: string, query?: string): Promise<TagStateResult> {
+    return sendRuntimeMessage({
+      type: "GET_BOOKMARK_TAGS",
+      bookmarkId,
+      ...(query ? { query } : {}),
+    }).then(
+      (response) =>
+        response ?? {
+          success: false,
+          error: "The extension could not reach SaveIt.",
+          errorType: "NETWORK_ERROR",
+        },
+    );
+  }
+
+  updateTags(
+    bookmarkId: string,
+    add: string[],
+    remove: string[],
+  ): Promise<TagUpdateResult> {
+    return sendRuntimeMessage({
+      type: "UPDATE_BOOKMARK_TAGS",
+      bookmarkId,
+      add,
+      remove,
+    }).then(
+      (response) =>
+        response ?? {
+          success: false,
+          error: "The extension could not reach SaveIt.",
+          errorType: "NETWORK_ERROR",
+        },
+    );
   }
 }
 
@@ -472,6 +514,22 @@ function initializeContentScript(): void {
     onDismiss: () => undefined,
     onRetry: () => controller?.retry(),
     onOpenPath: (path) => controller?.openSaveIt(path),
+    loadTags: (bookmarkId, query) =>
+      controller
+        ? controller.loadTags(bookmarkId, query)
+        : Promise.resolve({
+            success: false,
+            error: "SaveIt is still starting.",
+            errorType: "UNKNOWN",
+          }),
+    updateTags: (bookmarkId, add, remove) =>
+      controller
+        ? controller.updateTags(bookmarkId, add, remove)
+        : Promise.resolve({
+            success: false,
+            error: "SaveIt is still starting.",
+            errorType: "UNKNOWN",
+          }),
   });
   controller = new SaveController(ui);
 

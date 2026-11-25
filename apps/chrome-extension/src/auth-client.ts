@@ -6,6 +6,10 @@ import type {
   SaveErrorType,
   Session,
   SessionResult,
+  TagErrorType,
+  TagItem,
+  TagStateResult,
+  TagUpdateResult,
   UploadErrorType,
   UploadResult,
 } from "./protocol";
@@ -105,20 +109,29 @@ export async function getSessionResult(): Promise<SessionResult> {
   }
 }
 
+async function readErrorPayload(
+  response: Response,
+  fallback: string,
+): Promise<{ message: string; payload: Record<string, unknown> | null }> {
+  try {
+    const payload = asRecord(await response.json());
+    const message =
+      typeof payload?.error === "string"
+        ? payload.error
+        : typeof payload?.message === "string"
+          ? payload.message
+          : fallback;
+    return { message, payload };
+  } catch {
+    return { message: fallback, payload: null };
+  }
+}
+
 async function readErrorMessage(
   response: Response,
   fallback: string,
 ): Promise<string> {
-  try {
-    const payload = asRecord(await response.json());
-    return typeof payload?.error === "string"
-      ? payload.error
-      : typeof payload?.message === "string"
-        ? payload.message
-        : fallback;
-  } catch {
-    return fallback;
-  }
+  return (await readErrorPayload(response, fallback)).message;
 }
 
 function classifySaveError(response: Response, message: string): SaveErrorType {
@@ -183,12 +196,20 @@ export async function saveBookmark(
     });
 
     if (!response.ok) {
-      const error = await readErrorMessage(response, "Failed to save bookmark");
-      return {
-        success: false,
-        error,
-        errorType: classifySaveError(response, error),
-      };
+      const { message: error, payload } = await readErrorPayload(
+        response,
+        "Failed to save bookmark",
+      );
+      const errorType = classifySaveError(response, error);
+      const existingBookmarkId = payload?.bookmarkId;
+      if (
+        errorType === "BOOKMARK_ALREADY_EXISTS" &&
+        typeof existingBookmarkId === "string" &&
+        existingBookmarkId.length > 0
+      ) {
+        return { success: false, error, errorType, existingBookmarkId };
+      }
+      return { success: false, error, errorType };
     }
 
     const responseData = asRecord(await response.json());
@@ -263,6 +284,99 @@ export async function uploadScreenshot(
     return {
       success: false,
       error: "Network error while uploading the screenshot.",
+      errorType: "NETWORK_ERROR",
+    };
+  }
+}
+
+function classifyTagError(response: Response): TagErrorType {
+  if (response.status === 401) return "AUTH_REQUIRED";
+  if (response.status === 404) return "NOT_FOUND";
+  if (response.status >= 500) return "SERVER_ERROR";
+  return "UNKNOWN";
+}
+
+function parseTagList(value: unknown): TagItem[] {
+  if (!Array.isArray(value)) return [];
+  const tags: TagItem[] = [];
+  for (const entry of value) {
+    const record = asRecord(entry);
+    const id = record?.id ?? record?._id;
+    if (typeof id === "string" && typeof record?.name === "string") {
+      tags.push({ id, name: record.name });
+    }
+  }
+  return tags;
+}
+
+function bookmarkTagsUrl(bookmarkId: string): string {
+  return `${BASE_URL}/api/bookmarks/${encodeURIComponent(bookmarkId)}/tags`;
+}
+
+export async function getBookmarkTags(
+  bookmarkId: string,
+  query?: string,
+): Promise<TagStateResult> {
+  const url = new URL(bookmarkTagsUrl(bookmarkId));
+  if (query?.trim()) url.searchParams.set("q", query.trim());
+  try {
+    const response = await fetchWithTimeout(url, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+      mode: "cors",
+    });
+    if (!response.ok) {
+      return {
+        success: false,
+        error: await readErrorMessage(response, "Could not load tags"),
+        errorType: classifyTagError(response),
+      };
+    }
+    const payload = asRecord(await response.json());
+    return {
+      success: true,
+      tags: parseTagList(payload?.tags),
+      suggestions: parseTagList(payload?.suggestions),
+      matches: parseTagList(payload?.matches),
+    };
+  } catch {
+    return {
+      success: false,
+      error: "Network error while loading tags.",
+      errorType: "NETWORK_ERROR",
+    };
+  }
+}
+
+export async function updateBookmarkTags(
+  bookmarkId: string,
+  add: string[],
+  remove: string[],
+): Promise<TagUpdateResult> {
+  try {
+    const response = await fetchWithTimeout(bookmarkTagsUrl(bookmarkId), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+      mode: "cors",
+      body: JSON.stringify({ add, remove }),
+    });
+    if (!response.ok) {
+      return {
+        success: false,
+        error: await readErrorMessage(response, "Could not update tags"),
+        errorType: classifyTagError(response),
+      };
+    }
+    const payload = asRecord(await response.json());
+    return { success: true, tags: parseTagList(payload?.tags) };
+  } catch {
+    return {
+      success: false,
+      error: "Network error while updating tags.",
       errorType: "NETWORK_ERROR",
     };
   }

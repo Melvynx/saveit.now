@@ -86,7 +86,9 @@ export function SelectCheckbox({
         else toggle(id);
       }}
       className={cn(
-        "flex size-5 items-center justify-center rounded-md text-primary-foreground ring-1 transition-[opacity,background-color,box-shadow] duration-150 ease-(--ease-out-soft) outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex size-5 items-center justify-center rounded-full text-primary-foreground ring-1 transition-[opacity,background-color,box-shadow,scale] duration-150 ease-(--ease-out-soft) outline-none active:scale-90 focus-visible:ring-2 focus-visible:ring-ring",
+        // 44px hit target without growing the visual.
+        "before:absolute before:-inset-2.5 before:content-['']",
         selected
           ? "bg-primary ring-primary opacity-100"
           : "bg-background/90 ring-foreground/20 backdrop-blur-md hover:ring-foreground/40",
@@ -97,7 +99,10 @@ export function SelectCheckbox({
       )}
     >
       <Check
-        className={cn("size-3.5 stroke-3", selected ? "opacity-100" : "opacity-0")}
+        className={cn(
+          "size-3 stroke-3 transition-[opacity,scale] duration-150 ease-(--ease-out-soft)",
+          selected ? "scale-100 opacity-100" : "scale-50 opacity-0",
+        )}
         aria-hidden
       />
     </button>
@@ -128,11 +133,10 @@ export function LibraryGridItem({
       onPointerDown={interactions.onPointerDown}
       onFocus={interactions.onFocus}
       className={cn(
-        "group/item relative scroll-mt-40 rounded-xl animate-rise-in md:scroll-mt-32",
-        "after:pointer-events-none after:absolute after:-inset-1 after:rounded-[16px] after:ring-2 after:ring-transparent after:transition-[box-shadow] after:duration-150",
-        focused && "after:ring-primary",
-        selected &&
-          "after:ring-primary/70 [&_[data-slot=card]]:ring-primary/40",
+        "group/item relative scroll-mt-40 rounded-xl md:scroll-mt-32",
+        "after:pointer-events-none after:absolute after:-inset-[3px] after:z-30 after:rounded-[15px] after:ring-2 after:ring-transparent after:transition-[box-shadow] after:duration-150 after:ease-(--ease-out-soft)",
+        focused && "after:ring-ring",
+        selected && "after:ring-primary",
         interactions.selectionActive && "cursor-pointer",
       )}
     >
@@ -143,12 +147,13 @@ export function LibraryGridItem({
         forceVisible={interactions.selectionActive}
         className="absolute top-2.5 left-2.5 z-30"
       />
-      {selected ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-10 rounded-xl bg-primary/6"
-        />
-      ) : null}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0 z-10 rounded-xl bg-primary/8 transition-opacity duration-150 ease-(--ease-out-soft)",
+          selected ? "opacity-100" : "opacity-0",
+        )}
+      />
     </div>
   );
 }

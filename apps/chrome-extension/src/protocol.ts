@@ -14,6 +14,9 @@ export const MAX_METADATA_ENTRIES = 256;
 export const MAX_METADATA_ARRAY_LENGTH = 128;
 export const MAX_METADATA_KEY_LENGTH = 128;
 export const MAX_METADATA_STRING_LENGTH = 16_384;
+export const MAX_TAG_NAME_LENGTH = 48;
+export const MAX_TAG_CHANGES = 20;
+export const MAX_TAG_QUERY_LENGTH = 64;
 
 export type Session = {
   user: {
@@ -53,6 +56,44 @@ export type SaveBookmarkResult =
       success: false;
       error: string;
       errorType: SaveErrorType;
+      /** Set for BOOKMARK_ALREADY_EXISTS so the toast can still offer tags. */
+      existingBookmarkId?: string;
+    };
+
+export type TagItem = {
+  id: string;
+  name: string;
+};
+
+export type TagErrorType =
+  | "AUTH_REQUIRED"
+  | "NETWORK_ERROR"
+  | "NOT_FOUND"
+  | "SERVER_ERROR"
+  | "UNKNOWN";
+
+export type TagStateResult =
+  | {
+      success: true;
+      tags: TagItem[];
+      suggestions: TagItem[];
+      matches: TagItem[];
+    }
+  | {
+      success: false;
+      error: string;
+      errorType: TagErrorType;
+    };
+
+export type TagUpdateResult =
+  | {
+      success: true;
+      tags: TagItem[];
+    }
+  | {
+      success: false;
+      error: string;
+      errorType: TagErrorType;
     };
 
 export type UploadErrorType =
@@ -121,6 +162,17 @@ export type RuntimeRequestMap = {
     type: "OPEN_SAVEIT";
     path: OpenSaveItPath;
   };
+  GET_BOOKMARK_TAGS: {
+    type: "GET_BOOKMARK_TAGS";
+    bookmarkId: string;
+    query?: string;
+  };
+  UPDATE_BOOKMARK_TAGS: {
+    type: "UPDATE_BOOKMARK_TAGS";
+    bookmarkId: string;
+    add: string[];
+    remove: string[];
+  };
 };
 
 export type RuntimeResponseMap = {
@@ -129,6 +181,8 @@ export type RuntimeResponseMap = {
   CAPTURE_SCREENSHOT: CaptureResult;
   UPLOAD_SCREENSHOT: UploadResult;
   OPEN_SAVEIT: OpenSaveItResult;
+  GET_BOOKMARK_TAGS: TagStateResult;
+  UPDATE_BOOKMARK_TAGS: TagUpdateResult;
 };
 
 export type RuntimeRequestType = keyof RuntimeRequestMap;
@@ -178,6 +232,16 @@ function isBoundedNonEmptyString(
 
 function isOpenSaveItPath(value: unknown): value is OpenSaveItPath {
   return value === "/app" || value === "/signin" || value === "/upgrade";
+}
+
+function parseTagNames(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length > MAX_TAG_CHANGES) return null;
+  const names: string[] = [];
+  for (const entry of value) {
+    if (!isBoundedNonEmptyString(entry, MAX_TAG_NAME_LENGTH)) return null;
+    names.push(entry);
+  }
+  return names;
 }
 
 function hasSafeMetadataKey(key: string): boolean {
@@ -325,6 +389,34 @@ export function parseRuntimeRequest(value: unknown): RuntimeRequest | null {
     if (type === "OPEN_SAVEIT") {
       const path = readOwnDataProperty(record, "path");
       return isOpenSaveItPath(path) ? { type, path } : null;
+    }
+
+    if (type === "GET_BOOKMARK_TAGS") {
+      const bookmarkId = readOwnDataProperty(record, "bookmarkId");
+      const query = readOwnDataProperty(record, "query");
+      if (!isBoundedNonEmptyString(bookmarkId, MAX_BOOKMARK_ID_LENGTH)) {
+        return null;
+      }
+      if (query === undefined) return { type, bookmarkId };
+      if (typeof query !== "string" || query.length > MAX_TAG_QUERY_LENGTH) {
+        return null;
+      }
+      return { type, bookmarkId, query };
+    }
+
+    if (type === "UPDATE_BOOKMARK_TAGS") {
+      const bookmarkId = readOwnDataProperty(record, "bookmarkId");
+      const add = parseTagNames(readOwnDataProperty(record, "add"));
+      const remove = parseTagNames(readOwnDataProperty(record, "remove"));
+      if (
+        !isBoundedNonEmptyString(bookmarkId, MAX_BOOKMARK_ID_LENGTH) ||
+        !add ||
+        !remove ||
+        add.length + remove.length === 0
+      ) {
+        return null;
+      }
+      return { type, bookmarkId, add, remove };
     }
 
     return null;

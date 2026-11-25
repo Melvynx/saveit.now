@@ -1,6 +1,8 @@
 import {
+  getBookmarkTags,
   getSessionResult,
   saveBookmark,
+  updateBookmarkTags,
   uploadScreenshot,
 } from "./auth-client";
 import { config } from "./config";
@@ -332,6 +334,16 @@ async function handleRuntimeRequest<T extends RuntimeRequestType>(
       openSaveItPath(message.path);
       response = { success: true };
       break;
+    case "GET_BOOKMARK_TAGS":
+      response = await getBookmarkTags(message.bookmarkId, message.query);
+      break;
+    case "UPDATE_BOOKMARK_TAGS":
+      response = await updateBookmarkTags(
+        message.bookmarkId,
+        message.add,
+        message.remove,
+      );
+      break;
   }
   return response as RuntimeResponseFor<T>;
 }
@@ -366,6 +378,13 @@ function unexpectedResponse(message: RuntimeRequest): RuntimeResponse {
       return {
         success: false,
         error: "SaveIt could not open the requested page.",
+        errorType: "UNKNOWN",
+      };
+    case "GET_BOOKMARK_TAGS":
+    case "UPDATE_BOOKMARK_TAGS":
+      return {
+        success: false,
+        error: "SaveIt could not reach your tags.",
         errorType: "UNKNOWN",
       };
   }

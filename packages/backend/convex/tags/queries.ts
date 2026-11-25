@@ -11,6 +11,13 @@ import { authQuery, internalQuery } from "../functions";
 import { throwNotFound } from "../utils/errors";
 import type { TagDTO, TagManagementDTO } from "../bookmarks/dto";
 import type { Id } from "../_generated/dataModel";
+import {
+  DEFAULT_SUGGESTION_LIMIT,
+  getTopManualTags,
+  listBookmarkTags,
+  searchUserTags,
+  type SuggestedTagDTO,
+} from "./manualUsage";
 
 const LEGACY_TAG_SEARCH_SCAN_LIMIT = 500;
 
@@ -241,5 +248,47 @@ export const _getAllTagsWithCounts = internalQuery({
     result.sort((a, b) => b.bookmarkCount - a.bookmarkCount);
 
     return result;
+  },
+});
+
+// ---------------------------------------------------------------------------
+// topManualTags — the tags the user adds by hand most often (quick-tag row)
+// ---------------------------------------------------------------------------
+
+export const topManualTags = authQuery({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<SuggestedTagDTO[]> =>
+    getTopManualTags(ctx, ctx.user.id, args.limit ?? DEFAULT_SUGGESTION_LIMIT),
+});
+
+// ---------------------------------------------------------------------------
+// extensionTagState — what the extension's quick-tag row needs in one read
+// ---------------------------------------------------------------------------
+
+export const extensionTagState = internalQuery({
+  args: {
+    userId: v.string(),
+    bookmarkId: v.string(),
+    query: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    tags: TagDTO[];
+    suggestions: SuggestedTagDTO[];
+    matches: TagDTO[];
+  } | null> => {
+    const bookmarkId = ctx.db.normalizeId("bookmarks", args.bookmarkId);
+    if (!bookmarkId) return null;
+    const bookmark = await ctx.db.get(bookmarkId);
+    if (!bookmark || bookmark.userId !== args.userId) return null;
+
+    const query = args.query?.trim() ?? "";
+    return {
+      tags: await listBookmarkTags(ctx, bookmarkId),
+      suggestions: query ? [] : await getTopManualTags(ctx, args.userId),
+      matches: query ? await searchUserTags(ctx, args.userId, query) : [],
+    };
   },
 });

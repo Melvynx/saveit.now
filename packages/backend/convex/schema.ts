@@ -108,9 +108,15 @@ export default defineSchema({
     userId: v.string(),
     name: v.string(),
     type: tagType,
+    // How many times the user added this tag to a bookmark by hand (editor,
+    // bulk pill, extension). Drives the quick-tag suggestions; AI tagging
+    // never touches it.
+    manualUseCount: v.optional(v.number()),
+    lastManualUseAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
-    .index("by_user_name", ["userId", "name"]),
+    .index("by_user_name", ["userId", "name"])
+    .index("by_user_manual_use_count", ["userId", "manualUseCount"]),
 
   bookmarkTags: defineTable({
     bookmarkId: v.id("bookmarks"),

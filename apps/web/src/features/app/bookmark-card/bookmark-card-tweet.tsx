@@ -18,7 +18,7 @@ export const BookmarkCardTweet = ({ bookmark }: BookmarkCardTweetProps) => {
       <CardLink bookmarkId={bookmark.id} label={bookmark.title || "Tweet"}>
         <div
           className={
-            "pointer-events-none @container overflow-hidden @max-3xs:[&_article]:px-3 @max-3xs:[&_article_p]:text-[13px] @max-3xs:[&_footer>span]:hidden @max-3xs:[&_header_p+p]:hidden [&_article]:rounded-none [&_article]:border-0 [&_article]:bg-transparent [&_article]:px-3.5 [&_article]:py-3.5 [&_article]:shadow-none [&_article_p]:text-[14px] [&_article_p]:leading-[1.5]"
+            "pointer-events-none @container overflow-hidden @max-3xs:[&_article]:px-3 @max-3xs:[&_article>p]:text-[13px] @max-3xs:[&_footer>span]:hidden @max-3xs:[&_header_p+p]:hidden [&_article]:rounded-none [&_article]:border-0 [&_article]:bg-transparent [&_article]:px-3.5 [&_article]:py-3.5 [&_article]:shadow-none [&_article>p]:text-[14px] [&_article>p]:leading-[1.5] [&_header>div:first-child]:size-9 [&_header>div:first-child]:border-0 [&_header>div:first-child]:ring-1 [&_header>div:first-child]:ring-foreground/8 [&_header_p]:text-[13px] [&_header_p:first-child]:text-[14px]"
           }
         >
           <SafeTweet

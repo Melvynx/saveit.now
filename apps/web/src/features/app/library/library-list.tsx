@@ -1,6 +1,7 @@
 import { cn } from "@workspace/ui/lib/utils";
 import { AlertCircle, Star } from "lucide-react";
-import { Fragment, useMemo } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import { BookmarkCardActions } from "../bookmark-card/bookmark-card-actions";
 import {
@@ -8,7 +9,10 @@ import {
   getDomain,
   isUnread,
 } from "../bookmark-card/bookmark-card-parts";
-import type { BookmarkCardData } from "../bookmark-card/bookmark.types";
+import {
+  type BookmarkCardData,
+  sameBookmarkCardData,
+} from "../bookmark-card/bookmark.types";
 import { LinkWithQuery } from "../bookmark-card/link-with-query";
 import {
   groupByDay,
@@ -18,20 +22,25 @@ import {
 } from "./day-groups";
 import { HighlightedTitle } from "./library-card-context";
 import { SelectCheckbox, useLibraryItemInteractions } from "./library-item";
+import { FADE, SPRING_LAYOUT } from "./motion";
 import { useIsSelected, useShowsFocusRing } from "./selection-store";
 
 type RowDensity = "list" | "compact";
 
-function LibraryRow({
-  bookmark,
-  density,
-  showTime,
-}: {
+type LibraryRowProps = {
   bookmark: BookmarkCardData;
   density: RowDensity;
   /** Under a day header the date is redundant, so show the time. */
   showTime: boolean;
-}) {
+};
+
+const LibraryRow = memo(LibraryRowImpl, (previous, next) =>
+  previous.density === next.density &&
+  previous.showTime === next.showTime &&
+  sameBookmarkCardData(previous.bookmark, next.bookmark),
+);
+
+function LibraryRowImpl({ bookmark, density, showTime }: LibraryRowProps) {
   const selected = useIsSelected(bookmark.id);
   const focused = useShowsFocusRing(bookmark.id);
   const interactions = useLibraryItemInteractions(bookmark.id);
@@ -55,9 +64,9 @@ function LibraryRow({
       onFocus={interactions.onFocus}
       className={cn(
         "group/item group/card relative scroll-mt-40 rounded-lg transition-colors duration-100 md:scroll-mt-32",
-        "hover:bg-muted/70",
+        "hover:bg-muted/70 has-[[data-card-link]:active]:bg-muted",
         selected && "bg-primary/8 hover:bg-primary/10",
-        focused && "ring-2 ring-primary ring-inset",
+        focused && "ring-2 ring-ring ring-inset",
       )}
     >
       <LinkWithQuery
@@ -168,6 +177,50 @@ function LibraryRow({
   );
 }
 
+/** Rows and day headers grow in and collapse out, pushing their neighbors. */
+function Collapsible({
+  animateEnter,
+  className,
+  children,
+}: {
+  animateEnter: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const reduceMotion = useReducedMotion();
+  const collapsed = reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 };
+
+  return (
+    <motion.div
+      initial={animateEnter ? collapsed : false}
+      animate={
+        reduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }
+      }
+      exit={collapsed}
+      transition={{ height: SPRING_LAYOUT, opacity: FADE }}
+      className={cn("overflow-clip", className)}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/**
+ * True when at most a few rows are new since the last render: a save or a
+ * live update animates in, a freshly loaded page of results does not.
+ */
+function useAnimateNewRows(ids: string[]) {
+  const previousRef = useRef<Set<string> | null>(null);
+  const previous = previousRef.current;
+  const added = previous ? ids.filter((id) => !previous.has(id)).length : 0;
+
+  useEffect(() => {
+    previousRef.current = new Set(ids);
+  }, [ids]);
+
+  return added > 0 && added <= 3;
+}
+
 export function LibraryList({
   bookmarks,
   density,
@@ -184,33 +237,42 @@ export function LibraryList({
         : [{ key: "all", label: "", items: bookmarks }],
     [bookmarks, groupByDate],
   );
+  const ids = useMemo(() => bookmarks.map((bookmark) => bookmark.id), [bookmarks]);
+  const animateEnter = useAnimateNewRows(ids);
 
   return (
     <div className="flex w-full flex-col" data-testid={`library-${density}`}>
-      {groups.map((group, index) => (
-        <Fragment key={group.key}>
-          {group.label ? (
-            <h2
-              className={cn(
-                "px-2 pb-1.5 text-[12px] font-medium text-muted-foreground",
-                index === 0 ? "pt-1" : density === "list" ? "pt-6" : "pt-4",
-              )}
-            >
-              {group.label}
-            </h2>
-          ) : null}
-          <div className="flex flex-col animate-rise-in">
-            {group.items.map((bookmark) => (
-              <LibraryRow
-                key={bookmark.id}
-                bookmark={bookmark}
-                density={density}
-                showTime={groupByDate}
-              />
-            ))}
-          </div>
-        </Fragment>
-      ))}
+      <AnimatePresence initial={false}>
+        {groups.map((group, index) => (
+          <Collapsible key={group.key} animateEnter={animateEnter}>
+            <section aria-label={group.label || undefined}>
+              {group.label ? (
+                <h2
+                  className={cn(
+                    "px-2 pb-1.5 text-[12px] font-medium text-muted-foreground",
+                    index === 0 ? "pt-1" : density === "list" ? "pt-6" : "pt-4",
+                  )}
+                >
+                  {group.label}
+                </h2>
+              ) : null}
+              <div className="flex flex-col">
+                <AnimatePresence initial={false}>
+                  {group.items.map((bookmark) => (
+                    <Collapsible key={bookmark.id} animateEnter={animateEnter}>
+                      <LibraryRow
+                        bookmark={bookmark}
+                        density={density}
+                        showTime={groupByDate}
+                      />
+                    </Collapsible>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </section>
+          </Collapsible>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

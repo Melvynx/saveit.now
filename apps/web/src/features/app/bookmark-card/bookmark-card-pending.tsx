@@ -38,18 +38,14 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
       testId="bookmark-card-pending"
       aria-busy="true"
     >
-      <div className="relative flex min-h-36 flex-col justify-end gap-3 overflow-hidden bg-muted/70 p-4">
-        <div
-          aria-hidden
-          className="absolute inset-0 animate-pulse bg-linear-to-br from-transparent via-background/40 to-transparent"
-        />
+      <div className="relative flex min-h-36 flex-col justify-end gap-3 overflow-hidden bg-muted/60 p-4">
         <p className="relative line-clamp-3 font-serif text-[18px] leading-tight font-medium text-foreground/70">
           {bookmark.title || domain}
         </p>
         <div className="relative flex flex-col gap-2">
           <div className="h-0.5 w-full overflow-hidden rounded-full bg-foreground/8">
             <div
-              className="h-full rounded-full bg-primary transition-[width] duration-500 ease-(--ease-out-soft)"
+              className="h-full rounded-full bg-primary transition-[width] duration-700 ease-(--ease-out-soft) motion-reduce:transition-none"
               style={{ width: `${Math.max(progress, 0.06) * 100}%` }}
             />
           </div>
@@ -57,7 +53,7 @@ export const BookmarkCardPending = ({ bookmark }: BookmarkCardPendingProps) => {
             <Text
               variant="shine"
               key={step.name}
-              className="text-[12px] font-medium"
+              className="min-w-0 truncate text-[12px] font-medium"
             >
               {step.name}…
             </Text>

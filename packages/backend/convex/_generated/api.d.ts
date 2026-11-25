@@ -100,6 +100,7 @@ import type * as subscriptions_lifetime from "../subscriptions/lifetime.js";
 import type * as subscriptions_mutations from "../subscriptions/mutations.js";
 import type * as subscriptions_queries from "../subscriptions/queries.js";
 import type * as tags_actions from "../tags/actions.js";
+import type * as tags_manualUsage from "../tags/manualUsage.js";
 import type * as tags_mutations from "../tags/mutations.js";
 import type * as tags_queries from "../tags/queries.js";
 import type * as tchao from "../tchao.js";
@@ -213,6 +214,7 @@ declare const fullApi: ApiFromModules<{
   "subscriptions/mutations": typeof subscriptions_mutations;
   "subscriptions/queries": typeof subscriptions_queries;
   "tags/actions": typeof tags_actions;
+  "tags/manualUsage": typeof tags_manualUsage;
   "tags/mutations": typeof tags_mutations;
   "tags/queries": typeof tags_queries;
   tchao: typeof tchao;

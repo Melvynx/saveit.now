@@ -78,6 +78,7 @@ import { Route as ApiAuthSplatRouteImport } from "./routes/api.auth.$";
 import { Route as AdminUsersUserIdRouteImport } from "./routes/admin.users_.$userId";
 import { Route as AdminConversationsIdRouteImport } from "./routes/admin.conversations_.$id";
 import { Route as ApiBookmarksBookmarkIdUploadScreenshotRouteImport } from "./routes/api.bookmarks.$bookmarkId.upload-screenshot";
+import { Route as ApiBookmarksBookmarkIdTagsRouteImport } from "./routes/api.bookmarks.$bookmarkId.tags";
 
 const VerifyRoute = VerifyRouteImport.update({
   id: "/verify",
@@ -425,6 +426,12 @@ const ApiBookmarksBookmarkIdUploadScreenshotRoute =
     path: "/upload-screenshot",
     getParentRoute: () => ApiBookmarksBookmarkIdRoute,
   } as any);
+const ApiBookmarksBookmarkIdTagsRoute =
+  ApiBookmarksBookmarkIdTagsRouteImport.update({
+    id: "/tags",
+    path: "/tags",
+    getParentRoute: () => ApiBookmarksBookmarkIdRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
@@ -495,6 +502,7 @@ export interface FileRoutesByFullPath {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
 }
 export interface FileRoutesByTo {
@@ -565,6 +573,7 @@ export interface FileRoutesByTo {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
 }
 export interface FileRoutesById {
@@ -637,6 +646,7 @@ export interface FileRoutesById {
   "/api/webhooks/stripe": typeof ApiWebhooksStripeRoute;
   "/app/b/$bookmarkId": typeof AppBBookmarkIdRoute;
   "/p/$bookmarkId/read": typeof PBookmarkIdReadRoute;
+  "/api/bookmarks/$bookmarkId/tags": typeof ApiBookmarksBookmarkIdTagsRoute;
   "/api/bookmarks/$bookmarkId/upload-screenshot": typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
 }
 export interface FileRouteTypes {
@@ -710,6 +720,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/bookmarks/$bookmarkId/tags"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
   fileRoutesByTo: FileRoutesByTo;
   to:
@@ -780,6 +791,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/bookmarks/$bookmarkId/tags"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
   id:
     | "__root__"
@@ -851,6 +863,7 @@ export interface FileRouteTypes {
     | "/api/webhooks/stripe"
     | "/app/b/$bookmarkId"
     | "/p/$bookmarkId/read"
+    | "/api/bookmarks/$bookmarkId/tags"
     | "/api/bookmarks/$bookmarkId/upload-screenshot";
   fileRoutesById: FileRoutesById;
 }
@@ -1389,6 +1402,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ApiBookmarksBookmarkIdUploadScreenshotRouteImport;
       parentRoute: typeof ApiBookmarksBookmarkIdRoute;
     };
+    "/api/bookmarks/$bookmarkId/tags": {
+      id: "/api/bookmarks/$bookmarkId/tags";
+      path: "/tags";
+      fullPath: "/api/bookmarks/$bookmarkId/tags";
+      preLoaderRoute: typeof ApiBookmarksBookmarkIdTagsRouteImport;
+      parentRoute: typeof ApiBookmarksBookmarkIdRoute;
+    };
   }
 }
 
@@ -1499,11 +1519,13 @@ const UpgradeRouteWithChildren =
   UpgradeRoute._addFileChildren(UpgradeRouteChildren);
 
 interface ApiBookmarksBookmarkIdRouteChildren {
+  ApiBookmarksBookmarkIdTagsRoute: typeof ApiBookmarksBookmarkIdTagsRoute;
   ApiBookmarksBookmarkIdUploadScreenshotRoute: typeof ApiBookmarksBookmarkIdUploadScreenshotRoute;
 }
 
 const ApiBookmarksBookmarkIdRouteChildren: ApiBookmarksBookmarkIdRouteChildren =
   {
+    ApiBookmarksBookmarkIdTagsRoute: ApiBookmarksBookmarkIdTagsRoute,
     ApiBookmarksBookmarkIdUploadScreenshotRoute:
       ApiBookmarksBookmarkIdUploadScreenshotRoute,
   };

@@ -71,11 +71,15 @@ export function CardMedia({
   const [sourceIndex, setSourceIndex] = useState(0);
   const [ratio, setRatio] = useState<number | null>(initialRatio ?? null);
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
+  // Reset during render when the sources change. Doing it in an effect also
+  // ran on mount, after a cached image had already fired `load`, which left
+  // the picture invisible behind its placeholder.
+  const [trackedKey, setTrackedKey] = useState(sourcesKey);
+  if (trackedKey !== sourcesKey) {
+    setTrackedKey(sourcesKey);
     setSourceIndex(0);
     setLoaded(false);
-  }, [sourcesKey]);
+  }
 
   const activeSrc = sources[sourceIndex];
 
@@ -93,6 +97,13 @@ export function CardMedia({
       style={{ aspectRatio: aspect }}
     >
       <img
+        ref={(element) => {
+          // Cached images can finish before React attaches `onLoad`.
+          if (element?.complete && element.naturalWidth > 1 && !loaded) {
+            setRatio(element.naturalWidth / element.naturalHeight);
+            setLoaded(true);
+          }
+        }}
         src={activeSrc}
         alt={alt}
         loading="lazy"
@@ -114,9 +125,6 @@ export function CardMedia({
         }}
         onError={() => setSourceIndex((index) => index + 1)}
       />
-      {!loaded ? (
-        <div className="absolute inset-0 animate-pulse bg-muted" aria-hidden />
-      ) : null}
       {children}
     </div>
   );

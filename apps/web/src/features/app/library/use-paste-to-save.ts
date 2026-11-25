@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { isTypingTarget } from "../shell/shortcuts";
 import { normalizeBookmarkUrl } from "../schema";
 import { useCreateBookmarkAction } from "../use-create-bookmark";
+import { useSavedBookmarkTray } from "./saved-bookmark-store";
 
 const LOOKS_LIKE_LINK = /^(https?:\/\/)?[^\s/]+\.[^\s]{2,}$/i;
 
@@ -40,14 +41,9 @@ export function usePasteToSave({ enabled = true }: { enabled?: boolean } = {}) {
       void executeRef
         .current({ url })
         .then((created) => {
-          if (created) {
-            toast.success("Saved to your library", {
-              id: toastId,
-              description: url,
-            });
-          } else {
-            toast.dismiss(toastId);
-          }
+          // The tray confirms the save and offers tags; no second toast.
+          toast.dismiss(toastId);
+          if (created) useSavedBookmarkTray.getState().announce(created);
         })
         .finally(() => {
           inFlightRef.current.delete(url);

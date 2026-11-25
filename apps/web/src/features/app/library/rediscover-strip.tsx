@@ -1,7 +1,7 @@
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { api } from "@convex/_generated/api";
 import { Button } from "@workspace/ui/components/button";
-import { History, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { BookmarkFavicon } from "../bookmark-favicon";
 import {
@@ -42,19 +42,19 @@ function RediscoverCard({ bookmark }: { bookmark: RediscoverItem }) {
   return (
     <LinkWithQuery
       to={`/app/b/${bookmark.id}`}
-      className="group/rediscover flex w-64 shrink-0 snap-start items-center gap-3 rounded-xl bg-card p-2 pr-3 ring-1 ring-foreground/7 transition-[box-shadow,translate] duration-200 ease-(--ease-out-soft) outline-none hover:-translate-y-0.5 hover:ring-foreground/12 focus-visible:ring-2 focus-visible:ring-ring sm:w-auto sm:min-w-0 sm:flex-1"
+      className="group/rediscover flex w-64 shrink-0 snap-start items-center gap-3 rounded-xl p-1.5 pr-3 transition-[background-color,scale] duration-150 ease-(--ease-out-soft) outline-none hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] motion-reduce:active:scale-100 sm:w-auto sm:min-w-0"
     >
-      <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+      <div className="size-11 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-foreground/6">
         {image ? (
           <CardMedia
             src={image}
             alt=""
             minRatio={1}
             maxRatio={1}
-            className="size-14"
+            className="size-11"
             imgClassName="object-center"
             fallback={
-              <span className="flex size-14 items-center justify-center">
+              <span className="flex size-11 items-center justify-center">
                 <BookmarkFavicon
                   faviconUrl={bookmark.faviconUrl}
                   bookmarkType={bookmark.type ?? "PAGE"}
@@ -63,7 +63,7 @@ function RediscoverCard({ bookmark }: { bookmark: RediscoverItem }) {
             }
           />
         ) : (
-          <span className="flex size-14 items-center justify-center">
+          <span className="flex size-11 items-center justify-center">
             <BookmarkFavicon
               faviconUrl={bookmark.faviconUrl}
               bookmarkType={bookmark.type ?? "PAGE"}
@@ -72,11 +72,11 @@ function RediscoverCard({ bookmark }: { bookmark: RediscoverItem }) {
         )}
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <p className="line-clamp-2 font-serif text-[15px] leading-tight font-medium text-foreground">
+        <p className="truncate text-[13px] leading-snug font-medium text-foreground">
           {title}
         </p>
         <p className="truncate text-[12px] text-muted-foreground">
-          {domain} · saved {relativeAge(bookmark.createdAt)}
+          {domain} · {relativeAge(bookmark.createdAt)}
         </p>
       </div>
     </LinkWithQuery>
@@ -104,24 +104,20 @@ export function RediscoverStrip() {
   return (
     <section
       aria-labelledby="rediscover-heading"
-      className="flex flex-col gap-2.5 animate-rise-in"
+      className="flex flex-col gap-1.5"
       data-testid="rediscover-strip"
     >
-      <div className="flex items-center gap-2">
-        <History className="size-3.5 text-primary" aria-hidden />
+      <div className="flex h-6 items-center gap-2 px-2">
         <h2
           id="rediscover-heading"
-          className="text-[13px] font-medium text-foreground"
+          className="text-[12px] font-medium text-muted-foreground"
         >
           From your archive
         </h2>
-        <span className="hidden text-[12px] text-muted-foreground sm:inline">
-          Rediscover what you saved a while ago
-        </span>
         <Button
           variant="ghost"
           size="icon-xs"
-          className="ml-auto text-muted-foreground"
+          className="-mr-1 ml-auto text-muted-foreground"
           aria-label="Hide for today"
           title="Hide for today"
           onClick={dismiss}
@@ -129,7 +125,7 @@ export function RediscoverStrip() {
           <X />
         </Button>
       </div>
-      <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4">
+      <div className="-mx-4 flex snap-x scroll-px-4 gap-1 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0.5 xl:grid-cols-4">
         {items.slice(0, 4).map((bookmark) => (
           <RediscoverCard key={bookmark.id} bookmark={bookmark} />
         ))}

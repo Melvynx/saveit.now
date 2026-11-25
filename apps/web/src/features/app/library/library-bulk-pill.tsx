@@ -27,6 +27,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import type { BookmarkCardData } from "../bookmark-card/bookmark.types";
+import { FADE, SPRING_SNAPPY } from "./motion";
 import { useLibrarySelection } from "./selection-store";
 
 const BULK_LIMIT = 100;
@@ -48,7 +49,7 @@ function PillButton({
     <button
       type="button"
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-background/85 transition-colors outline-none hover:bg-background/12 hover:text-background focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-3.5 [&_svg]:shrink-0",
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-background/85 transition-[background-color,color,scale] duration-150 ease-(--ease-out-soft) outline-none hover:bg-background/12 hover:text-background focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-3.5 [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -173,8 +174,8 @@ function BulkTagPopover({
 }
 
 /**
- * Floating bottom-center bar for the current selection. Sticky inside the
- * page so it centers on the content column, not the window.
+ * Floating bottom-center bar for the current selection. Rendered inside the
+ * page's sticky dock so it centers on the content column, not the window.
  */
 export function LibraryBulkPill({ bookmarks }: { bookmarks: BookmarkCardData[] }) {
   const selectedIds = useLibrarySelection((state) => state.selectedIds);
@@ -249,7 +250,7 @@ export function LibraryBulkPill({ bookmarks }: { bookmarks: BookmarkCardData[] }
   };
 
   return (
-    <div className="pointer-events-none sticky bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-40 mt-auto flex h-0 items-start justify-center overflow-visible">
+    <div className="absolute inset-x-0 bottom-0 flex justify-center px-3">
       <AnimatePresence>
         {count > 0 ? (
           <motion.div
@@ -257,15 +258,37 @@ export function LibraryBulkPill({ bookmarks }: { bookmarks: BookmarkCardData[] }
             role="toolbar"
             aria-label="Selected bookmarks"
             data-testid="bulk-pill"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-            className="pointer-events-auto flex -translate-y-full items-center gap-0.5 rounded-full bg-foreground p-1 text-background shadow-[0_12px_32px_-12px_color-mix(in_oklch,var(--foreground)_45%,transparent)] ring-1 ring-foreground/10"
+            exit={
+              reduceMotion
+                ? { opacity: 0, transition: FADE }
+                : { opacity: 0, y: 16, scale: 0.96, transition: FADE }
+            }
+            transition={{ ...SPRING_SNAPPY, opacity: FADE }}
+            className="pointer-events-auto flex max-w-full items-center gap-0.5 rounded-full bg-foreground p-1 text-background shadow-[0_12px_32px_-12px_color-mix(in_oklch,var(--foreground)_45%,transparent)] ring-1 ring-foreground/10"
           >
-            <span className="flex h-8 items-center gap-2 pr-2 pl-3 text-[13px] font-semibold tabular-nums">
-              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] text-primary-foreground">
-                {count > 99 ? "99+" : count}
+            <span
+              className="flex h-9 items-center gap-1.5 pr-2 pl-3 text-[13px] font-semibold whitespace-nowrap tabular-nums"
+              aria-live="polite"
+            >
+              <span className="relative inline-flex h-5 min-w-[1ch] justify-center overflow-hidden">
+                <AnimatePresence initial={false} mode="popLayout">
+                  <motion.span
+                    key={count}
+                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      reduceMotion
+                        ? { opacity: 0, transition: FADE }
+                        : { opacity: 0, y: -8, transition: FADE }
+                    }
+                    transition={SPRING_SNAPPY}
+                    className="leading-5"
+                  >
+                    {count}
+                  </motion.span>
+                </AnimatePresence>
               </span>
               selected
             </span>
@@ -330,7 +353,7 @@ export function LibraryBulkPill({ bookmarks }: { bookmarks: BookmarkCardData[] }
               size="icon-sm"
               aria-label="Clear selection"
               onClick={clear}
-              className="size-8 rounded-full text-background/70 hover:bg-background/12 hover:text-background"
+              className="size-9 rounded-full text-background/70 hover:bg-background/12 hover:text-background"
             >
               <X className="size-3.5" />
             </Button>

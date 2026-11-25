@@ -210,7 +210,21 @@ export const extensionCreateBookmark = httpAction(async (ctx, request) => {
     const msg = err instanceof Error ? err.message : String(err);
     // Preserve error substrings the extension detects:
     if (msg.includes("already exists")) {
-      return errResponse("Bookmark already exists for this URL", 400, origin);
+      // Hand back the existing id so the extension can still offer tagging.
+      const existingId = await ctx
+        .runQuery(internal.bookmarks.queries.findIdByUrlForUser, {
+          userId: user.id,
+          url: bookmarkUrl,
+        })
+        .catch(() => null);
+      return new Response(
+        JSON.stringify({
+          error: "Bookmark already exists for this URL",
+          success: false,
+          bookmarkId: existingId,
+        }),
+        { status: 400, headers: corsHeaders(origin) },
+      );
     }
     if (msg.includes("maximum number of bookmarks")) {
       return errResponse(msg, 400, origin);
@@ -226,7 +240,12 @@ export const extensionCreateBookmark = httpAction(async (ctx, request) => {
 // Only used by Chrome extension (Firefox has no screenshot).
 // ---------------------------------------------------------------------------
 
-export const extensionUploadScreenshot = httpAction(async (ctx, request) => {
+type HttpCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
+
+async function handleUploadScreenshot(
+  ctx: HttpCtx,
+  request: Request,
+): Promise<Response> {
   const origin = request.headers.get("origin");
 
   if (request.method === "OPTIONS") {
@@ -334,4 +353,114 @@ export const extensionUploadScreenshot = httpAction(async (ctx, request) => {
     }),
     { status: 200, headers: corsHeaders(origin) },
   );
-});
+}
+
+export const extensionUploadScreenshot = httpAction(handleUploadScreenshot);
+
+// ---------------------------------------------------------------------------
+// /api/bookmarks/:id/tags — quick-tag row in the Chrome extension toast.
+//   GET  ?q=      → { tags, suggestions, matches }  (q switches to search)
+//   POST {add, remove} → { tags }
+// Session-cookie auth; tag adds count as manual uses (tags/manualUsage.ts).
+// ---------------------------------------------------------------------------
+
+const MAX_TAG_QUERY_LENGTH = 64;
+
+function readBookmarkIdFromTagsPath(request: Request): string | null {
+  // parts: ["", "api", "bookmarks", ":id", "tags"]
+  const parts = new URL(request.url).pathname.split("/");
+  if (parts.length !== 5 || parts[4] !== "tags" || !parts[3]) return null;
+  return decodeURIComponent(parts[3]);
+}
+
+function readStringArray(value: unknown): string[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 20) return null;
+  return value.every((entry) => typeof entry === "string") ? value : null;
+}
+
+function jsonResponse(body: unknown, origin: string | null): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: corsHeaders(origin),
+  });
+}
+
+export function isBookmarkTagsPath(request: Request): boolean {
+  return readBookmarkIdFromTagsPath(request) !== null;
+}
+
+async function handleBookmarkTags(
+  ctx: HttpCtx,
+  request: Request,
+): Promise<Response> {
+  const origin = request.headers.get("origin");
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  }
+
+  const bookmarkId = readBookmarkIdFromTagsPath(request);
+  if (!bookmarkId) return errResponse("Not found", 404, origin);
+
+  const user = await getSessionUser(ctx, request);
+  if (!user) return errResponse("You must be logged in", 401, origin);
+
+  if (request.method === "GET") {
+    const query =
+      new URL(request.url).searchParams
+        .get("q")
+        ?.slice(0, MAX_TAG_QUERY_LENGTH) ?? undefined;
+    const state = await ctx.runQuery(internal.tags.queries.extensionTagState, {
+      userId: user.id,
+      bookmarkId,
+      query,
+    });
+    if (!state) return errResponse("Bookmark not found", 404, origin);
+    return jsonResponse({ success: true, ...state }, origin);
+  }
+
+  if (request.method !== "POST") {
+    return errResponse("Method not allowed", 405, origin);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed: unknown = await request.json();
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return errResponse("Invalid body", 400, origin);
+    }
+    body = parsed as Record<string, unknown>;
+  } catch {
+    return errResponse("Invalid body", 400, origin);
+  }
+
+  const add = readStringArray(body.add);
+  const remove = readStringArray(body.remove);
+  if (!add || !remove) return errResponse("Invalid tags", 400, origin);
+
+  try {
+    const tags = await ctx.runMutation(
+      internal.tags.mutations.updateBookmarkTagsForUser,
+      { userId: user.id, bookmarkId, add, remove },
+    );
+    if (!tags) return errResponse("Bookmark not found", 404, origin);
+    return jsonResponse({ success: true, tags }, origin);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Tag names must be") || msg.includes("At most")) {
+      return errResponse(msg, 400, origin);
+    }
+    console.error("[ext /api/bookmarks/:id/tags]", err);
+    return errResponse("An error occurred", 500, origin);
+  }
+}
+
+export const extensionBookmarkTags = httpAction(handleBookmarkTags);
+
+/** POST /api/bookmarks/* — tags sub-route or the screenshot upload. */
+export const extensionBookmarkSubroute = httpAction(async (ctx, request) =>
+  isBookmarkTagsPath(request)
+    ? handleBookmarkTags(ctx, request)
+    : handleUploadScreenshot(ctx, request),
+);
