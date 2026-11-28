@@ -156,28 +156,22 @@ async function runVectorSearch(
 
   // 2. Vector search — Convex vector filters support eq/or, not AND, so keep
   // the ownership filter in the vector query and post-filter joined docs for
-  // model/type/tag/special-filter fidelity. The legacy inline index still
-  // answers for bookmarks that migration/split_embeddings has not moved yet.
-  const vectorQuery = {
-    vector,
-    limit: candidateLimit,
-    filter: (q: any) => q.eq("userId", userId),
-  };
-  type VectorHit = { _id: string; _score: number };
-  const [embeddingHits, legacyHits]: [VectorHit[], VectorHit[]] =
-    await Promise.all([
-      ctx.vectorSearch("bookmarkEmbeddings", "by_embedding", vectorQuery),
-      ctx.vectorSearch("bookmarks", "by_search_embedding", vectorQuery),
-    ]);
+  // model/type/tag/special-filter fidelity. Every vector lives in the split
+  // `bookmarkEmbeddings` store; the legacy inline index is no longer read.
+  const embeddingHits: Array<{ _id: string; _score: number }> =
+    await ctx.vectorSearch("bookmarkEmbeddings", "by_embedding", {
+      vector,
+      limit: candidateLimit,
+      filter: (q: any) => q.eq("userId", userId),
+    });
 
   // 3. Keep score-bearing results. Embedding model is also re-checked after
   // loading docs so stale index entries cannot leak into results.
   const scoredEmbeddingHits = embeddingHits.filter(
     (r) => r._score !== undefined,
   );
-  const scoredLegacyHits = legacyHits.filter((r) => r._score !== undefined);
 
-  if (scoredEmbeddingHits.length === 0 && scoredLegacyHits.length === 0) {
+  if (scoredEmbeddingHits.length === 0) {
     return mergeTitleMatches(ctx, [], titleFallbackArgs);
   }
 
@@ -197,7 +191,7 @@ async function runVectorSearch(
   const docs: any[] = await ctx.runQuery(
     internal.search.queries.loadForSearch,
     {
-      ids: scoredLegacyHits.map((r) => r._id) as any[],
+      ids: [],
       embeddingIds: scoredEmbeddingHits.map((r) => r._id) as any[],
       userId,
     },
@@ -207,13 +201,12 @@ async function runVectorSearch(
   const embeddingScores = new Map<string, number>(
     scoredEmbeddingHits.map((r) => [r._id, r._score]),
   );
-  const legacyScores = new Map<string, number>(
-    scoredLegacyHits.map((r) => [r._id, r._score]),
-  );
+  // Floor at 0 (legacy Math.max(..., 0) parity): negative cosine must not
+  // widen the spread cutoff or produce negative scores.
   const scoreOf = (doc: any) =>
     Math.max(
       (doc.embeddingId && embeddingScores.get(doc.embeddingId)) || 0,
-      legacyScores.get(doc._id) ?? 0,
+      0,
     );
 
   const eligibleDocs = docs
